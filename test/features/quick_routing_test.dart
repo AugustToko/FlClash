@@ -135,7 +135,15 @@ void main() {
 
       expect(
         targets,
-        ['DIRECT', 'REJECT', 'Proxy', 'Auto', 'HK-01', 'JP-01'],
+        [
+          'DIRECT',
+          'REJECT',
+          'REJECT-DROP',
+          'Proxy',
+          'Auto',
+          'HK-01',
+          'JP-01',
+        ],
       );
     });
 
@@ -237,8 +245,94 @@ void main() {
     });
   });
 
+  group('validateQuickRoutingSelection', () {
+    test('accepts a valid rule and automatic group fixed node', () {
+      final validation = validateQuickRoutingSelection(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.DOMAIN,
+          content: 'api.example.com',
+        ),
+        target: 'Auto',
+        groupOverride: const QuickRoutingGroupOverride(
+          groupName: 'Auto',
+          previousFixed: '',
+          desiredFixed: 'HK-01',
+        ),
+        groups: const [
+          Group(
+            type: GroupType.URLTest,
+            all: [
+              Proxy(name: 'HK-01', type: 'ss'),
+              Proxy(name: 'JP-01', type: 'vmess'),
+            ],
+            name: 'Auto',
+          ),
+        ],
+      );
+
+      expect(validation.isValid, isTrue);
+      expect(validation.issues, isEmpty);
+    });
+
+    test('rejects invalid CIDR, target and port values', () {
+      final invalidCidr = validateQuickRoutingSelection(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.IP_CIDR,
+          content: '2001:db8::/32',
+        ),
+        target: 'DIRECT',
+      );
+      final invalidPort = validateQuickRoutingSelection(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.DST_PORT,
+          content: '70000',
+        ),
+        target: '',
+      );
+
+      expect(
+        invalidCidr.issues,
+        contains(QuickRoutingValidationIssue.invalidCidr),
+      );
+      expect(
+        invalidPort.issues,
+        containsAll([
+          QuickRoutingValidationIssue.emptyTarget,
+          QuickRoutingValidationIssue.invalidPort,
+        ]),
+      );
+    });
+
+    test('rejects a fixed node outside the selected automatic group', () {
+      final validation = validateQuickRoutingSelection(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.DOMAIN_SUFFIX,
+          content: 'example.com',
+        ),
+        target: 'Auto',
+        groupOverride: const QuickRoutingGroupOverride(
+          groupName: 'Auto',
+          previousFixed: '',
+          desiredFixed: 'US-01',
+        ),
+        groups: const [
+          Group(
+            type: GroupType.Fallback,
+            all: [Proxy(name: 'HK-01', type: 'ss')],
+            name: 'Auto',
+          ),
+        ],
+      );
+
+      expect(
+        validation.issues,
+        contains(QuickRoutingValidationIssue.invalidGroupOverride),
+      );
+    });
+  });
+
   group('buildQuickRoutingRuleAnalysis', () {
-    test('finds an equivalent rule and counts known matches', () {
+    test('finds an equivalent rule and a certain first known match', () {
       final current = trackerInfo(
         host: 'api.example.com',
         process: 'com.example.app',
@@ -276,13 +370,45 @@ void main() {
       );
 
       expect(analysis.equivalentRule, equivalent);
+      expect(analysis.firstKnownMatch, equivalent);
+      expect(analysis.firstKnownMatchIndex, 0);
+      expect(analysis.firstKnownMatchIsCertain, isTrue);
       expect(analysis.matchingKnownRuleCount, 3);
+      expect(analysis.unknownKnownRuleCount, 0);
       expect(analysis.targetAlreadyInChain, isTrue);
       expect(analysis.targetMatchesEquivalentRule('DIRECT'), isFalse);
       expect(analysis.targetMatchesEquivalentRule('Proxy'), isTrue);
     });
 
-    test('ignores unsupported known rule types in the match count', () {
+    test('treats MATCH as a definite fallback rule', () {
+      const fallback = Rule(
+        id: 1,
+        ruleAction: RuleAction.MATCH,
+        ruleTarget: 'Proxy',
+      );
+      final analysis = buildQuickRoutingRuleAnalysis(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.DOMAIN,
+          content: 'example.com',
+        ),
+        target: 'DIRECT',
+        trackerInfo: trackerInfo(host: 'other.example'),
+        knownRules: const [fallback],
+      );
+
+      expect(analysis.firstKnownMatch, fallback);
+      expect(analysis.firstKnownMatchIndex, 0);
+      expect(analysis.firstKnownMatchIsCertain, isTrue);
+      expect(analysis.matchingKnownRuleCount, 1);
+    });
+
+    test('marks a first match uncertain when an opaque rule precedes it', () {
+      const domain = Rule(
+        id: 2,
+        ruleAction: RuleAction.DOMAIN,
+        content: 'example.com',
+        ruleTarget: 'DIRECT',
+      );
       final analysis = buildQuickRoutingRuleAnalysis(
         candidate: const QuickRoutingCandidate(
           ruleAction: RuleAction.DOMAIN,
@@ -293,14 +419,19 @@ void main() {
         knownRules: const [
           Rule(
             id: 1,
-            ruleAction: RuleAction.MATCH,
+            ruleAction: RuleAction.RULE_SET,
+            content: 'private',
             ruleTarget: 'Proxy',
           ),
+          domain,
         ],
       );
 
-      expect(analysis.equivalentRule, isNull);
-      expect(analysis.matchingKnownRuleCount, 0);
+      expect(analysis.firstKnownMatch, domain);
+      expect(analysis.firstKnownMatchIndex, 1);
+      expect(analysis.firstKnownMatchIsCertain, isFalse);
+      expect(analysis.unknownKnownRuleCount, 1);
+      expect(analysis.unknownRuleCountBeforeFirstMatch, 1);
     });
   });
 }
