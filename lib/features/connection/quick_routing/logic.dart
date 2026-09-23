@@ -169,6 +169,66 @@ QuickRoutingImpact buildQuickRoutingImpact(
   );
 }
 
+QuickRoutingRuleAnalysis buildQuickRoutingRuleAnalysis({
+  required QuickRoutingCandidate candidate,
+  required String target,
+  required TrackerInfo trackerInfo,
+  required Iterable<Rule> knownRules,
+}) {
+  final proposed = candidate.buildRule(target: target, id: -1);
+  Rule? equivalentRule;
+  var matchingKnownRuleCount = 0;
+  for (final rule in knownRules) {
+    if (equivalentRule == null &&
+        quickRoutingRulesHaveSameMatcher(rule, proposed)) {
+      equivalentRule = rule;
+    }
+    final knownCandidate = _quickRoutingCandidateFromRule(rule);
+    if (knownCandidate != null &&
+        _matchesQuickRoutingCandidate(knownCandidate, trackerInfo)) {
+      matchingKnownRuleCount++;
+    }
+  }
+  return QuickRoutingRuleAnalysis(
+    equivalentRule: equivalentRule,
+    matchingKnownRuleCount: matchingKnownRuleCount,
+    targetAlreadyInChain: trackerInfo.chains.contains(target),
+  );
+}
+
+QuickRoutingCandidate? _quickRoutingCandidateFromRule(Rule rule) {
+  final content = rule.realContent?.trim();
+  if (content == null || content.isEmpty) {
+    return null;
+  }
+  final supported = switch (rule.ruleAction) {
+    RuleAction.DOMAIN ||
+    RuleAction.DOMAIN_SUFFIX ||
+    RuleAction.IP_CIDR ||
+    RuleAction.IP_CIDR6 ||
+    RuleAction.SRC_IP_CIDR ||
+    RuleAction.GEOIP ||
+    RuleAction.SRC_GEOIP ||
+    RuleAction.IP_ASN ||
+    RuleAction.SRC_IP_ASN ||
+    RuleAction.PROCESS_NAME ||
+    RuleAction.PROCESS_PATH ||
+    RuleAction.UID ||
+    RuleAction.NETWORK ||
+    RuleAction.DST_PORT ||
+    RuleAction.SRC_PORT => true,
+    _ => false,
+  };
+  if (!supported) {
+    return null;
+  }
+  return QuickRoutingCandidate(
+    ruleAction: rule.ruleAction,
+    content: content,
+    noResolve: rule.noResolve,
+  );
+}
+
 bool _matchesQuickRoutingCandidate(
   QuickRoutingCandidate candidate,
   TrackerInfo trackerInfo,
@@ -219,10 +279,46 @@ bool _matchesQuickRoutingCandidate(
 }
 
 bool _matchesQuickRoutingAddress(String cidr, Iterable<String> values) {
-  final expected = cidr.split('/').first;
-  return values.any(
-    (value) => _normalizeQuickRoutingHost(value) == expected,
+  final parts = cidr.split('/');
+  final network = InternetAddress.tryParse(
+    _normalizeQuickRoutingHost(parts.first),
   );
+  if (network == null) {
+    return false;
+  }
+  final maxBits = network.type == InternetAddressType.IPv6 ? 128 : 32;
+  final prefix = parts.length > 1 ? int.tryParse(parts[1]) : maxBits;
+  if (prefix == null || prefix < 0 || prefix > maxBits) {
+    return false;
+  }
+  return values.any((value) {
+    final address = InternetAddress.tryParse(_normalizeQuickRoutingHost(value));
+    return address != null && _addressInPrefix(network, address, prefix);
+  });
+}
+
+bool _addressInPrefix(
+  InternetAddress network,
+  InternetAddress address,
+  int prefix,
+) {
+  if (network.type != address.type) {
+    return false;
+  }
+  final networkBytes = network.rawAddress;
+  final addressBytes = address.rawAddress;
+  final fullBytes = prefix ~/ 8;
+  final remainingBits = prefix % 8;
+  for (var index = 0; index < fullBytes; index++) {
+    if (networkBytes[index] != addressBytes[index]) {
+      return false;
+    }
+  }
+  if (remainingBits == 0) {
+    return true;
+  }
+  final mask = (0xff << (8 - remainingBits)) & 0xff;
+  return networkBytes[fullBytes] & mask == addressBytes[fullBytes] & mask;
 }
 
 bool _containsQuickRoutingValue(
