@@ -18,6 +18,8 @@ class QuickRoutingManager extends ConsumerStatefulWidget {
 
 class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     with WidgetsBindingObserver {
+  static const _reconcileRetryDelay = Duration(seconds: 30);
+
   Timer? _expiryTimer;
 
   @override
@@ -59,19 +61,28 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     if (!changed || ref.read(runTimeProvider) == null) {
       return;
     }
-    unawaited(_applyProfile());
+    unawaited(_reconcileProfile());
   }
 
-  Future<void> _applyProfile() async {
+  Future<void> _reconcileProfile() async {
+    if (ref.read(runTimeProvider) == null) {
+      return;
+    }
     final applied = await ref
         .read(setupActionProvider.notifier)
         .applyProfile(force: true, silence: true);
-    if (!applied) {
-      commonPrint.log(
-        'failed to remove expired quick routing rules from the active profile',
-        logLevel: LogLevel.warning,
-      );
+    if (applied) {
+      return;
     }
+    commonPrint.log(
+      'failed to reconcile expired quick routing rules; retrying',
+      logLevel: LogLevel.warning,
+    );
+    _expiryTimer?.cancel();
+    _expiryTimer = Timer(
+      _reconcileRetryDelay,
+      () => unawaited(_reconcileProfile()),
+    );
   }
 
   @override
