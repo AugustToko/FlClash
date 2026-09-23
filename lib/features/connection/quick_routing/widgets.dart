@@ -67,7 +67,7 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
       _busy = true;
     });
     try {
-      final rule = selection.lifetime.isRuntime
+      final result = selection.lifetime.isRuntime
           ? await _saveAndApplyRuntimeQuickRoutingRule(
               ref: ref,
               profileId: profileId,
@@ -94,12 +94,58 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         }
       }
       dialogs.showNotifier(
-        '${currentAppLocalizations.addRule}: ${rule.rawValue}',
+        '${currentAppLocalizations.addRule}: ${result.rule.rawValue}',
         level: MessageLevel.success,
+        actionState: MessageActionState(
+          actionText: currentAppLocalizations.undo,
+          action: () {
+            if (!mounted) {
+              return;
+            }
+            unawaited(_handleUndo(result));
+          },
+        ),
       );
     } catch (error, stackTrace) {
       commonPrint.log(
         'quick routing failed: ${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+      dialogs.showNotifier(
+        currentAppLocalizations.databaseWriteFailedTip,
+        level: MessageLevel.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleUndo(_QuickRoutingApplyResult result) async {
+    if (_busy) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+    });
+    try {
+      final undone = await result.undo();
+      if (!mounted) {
+        return;
+      }
+      dialogs.showNotifier(
+        undone
+            ? '${currentAppLocalizations.undo}: ${result.rule.rawValue}'
+            : '${currentAppLocalizations.undo}: '
+                  '${currentAppLocalizations.noData}',
+        level: undone ? MessageLevel.success : MessageLevel.warning,
+      );
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'quick routing undo failed: ${compactError(error)}, $stackTrace',
         logLevel: LogLevel.warning,
       );
       dialogs.showNotifier(
@@ -441,7 +487,7 @@ class _QuickRoutingRulesDialogState
         .read(quickRoutingRulesProvider.notifier)
         .remove(entry.profileId, entry.rule.id);
     try {
-      final rule = await _saveAndApplyPermanentQuickRoutingRule(
+      final result = await _saveAndApplyPermanentQuickRoutingRule(
         ref: ref,
         profileId: widget.profileId,
         overwriteType: overwriteType,
@@ -453,7 +499,7 @@ class _QuickRoutingRulesDialogState
         target: target,
       );
       dialogs.showNotifier(
-        '${currentAppLocalizations.save}: ${rule.rawValue}',
+        '${currentAppLocalizations.save}: ${result.rule.rawValue}',
         level: MessageLevel.success,
       );
     } catch (error, stackTrace) {
