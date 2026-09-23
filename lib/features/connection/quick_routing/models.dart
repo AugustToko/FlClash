@@ -51,3 +51,7 @@ class QuickRoutingSelection {
     required this.lifetime,
   });
 }
+
+extension _QuickRoutingApplyResultExt on _QuickRoutingApplyResult {
+  String get rawValue => rule.rawValue;
+}
