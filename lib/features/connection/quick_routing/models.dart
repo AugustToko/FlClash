@@ -1,5 +1,24 @@
 part of '../quick_routing.dart';
 
+enum QuickRoutingGroupOverrideMode {
+  unchanged,
+  automatic,
+  fixed,
+}
+
+enum QuickRoutingValidationIssue {
+  emptyContent,
+  emptyTarget,
+  unsupportedAction,
+  invalidDomain,
+  invalidCidr,
+  invalidPort,
+  invalidUid,
+  invalidNetwork,
+  invalidAsn,
+  invalidGroupOverride,
+}
+
 @immutable
 class QuickRoutingCandidate {
   final RuleAction ruleAction;
@@ -42,12 +61,20 @@ class QuickRoutingImpact {
 @immutable
 class QuickRoutingRuleAnalysis {
   final Rule? equivalentRule;
+  final Rule? firstKnownMatch;
+  final int firstKnownMatchIndex;
   final int matchingKnownRuleCount;
+  final int unknownKnownRuleCount;
+  final int unknownRuleCountBeforeFirstMatch;
   final bool targetAlreadyInChain;
 
   const QuickRoutingRuleAnalysis({
     required this.equivalentRule,
+    required this.firstKnownMatch,
+    required this.firstKnownMatchIndex,
     required this.matchingKnownRuleCount,
+    required this.unknownKnownRuleCount,
+    required this.unknownRuleCountBeforeFirstMatch,
     required this.targetAlreadyInChain,
   });
 
@@ -56,6 +83,34 @@ class QuickRoutingRuleAnalysis {
 
   bool targetMatchesEquivalentRule(String target) =>
       equivalentRule?.ruleTarget == target;
+
+  bool get firstKnownMatchIsCertain =>
+      firstKnownMatch != null && unknownRuleCountBeforeFirstMatch == 0;
+}
+
+@immutable
+class QuickRoutingValidation {
+  final List<QuickRoutingValidationIssue> issues;
+
+  const QuickRoutingValidation({required this.issues});
+
+  bool get isValid => issues.isEmpty;
+}
+
+@immutable
+class QuickRoutingGroupOverride {
+  final String groupName;
+  final String previousFixed;
+  final String desiredFixed;
+
+  const QuickRoutingGroupOverride({
+    required this.groupName,
+    required this.previousFixed,
+    required this.desiredFixed,
+  });
+
+  bool get changes => previousFixed != desiredFixed;
+  bool get clearsFixed => desiredFixed.isEmpty;
 }
 
 @immutable
@@ -63,10 +118,12 @@ class QuickRoutingSelection {
   final QuickRoutingCandidate candidate;
   final String target;
   final QuickRoutingLifetime lifetime;
+  final QuickRoutingGroupOverride? groupOverride;
 
   const QuickRoutingSelection({
     required this.candidate,
     required this.target,
     required this.lifetime,
+    this.groupOverride,
   });
 }
