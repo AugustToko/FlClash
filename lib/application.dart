@@ -27,11 +27,13 @@ Widget buildManagerStack({
   final platformApp = isDesktop
       ? WindowHeaderContainer(child: child)
       : VpnManager(child: child);
-  final state = AppStateManager(
-    child: CoreManager(
-      child: ConnectivityManager(
-        onConnectivityChanged: onConnectivityChanged,
-        child: platformApp,
+  final state = QuickRoutingManager(
+    child: AppStateManager(
+      child: CoreManager(
+        child: ConnectivityManager(
+          onConnectivityChanged: onConnectivityChanged,
+          child: platformApp,
+        ),
       ),
     ),
   );
@@ -59,6 +61,7 @@ class Application extends ConsumerStatefulWidget {
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
   bool _preHasVpn = false;
+  String? _networkSignature;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -128,12 +131,52 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
+  String _getNetworkSignature(List<ConnectivityResult> results) {
+    final values = results
+        .where(
+          (result) =>
+              result != ConnectivityResult.vpn &&
+              result != ConnectivityResult.none,
+        )
+        .map((result) => result.name)
+        .toList()
+      ..sort();
+    return values.join(',');
+  }
+
+  Future<void> _clearNetworkRoutingRulesIfNeeded(
+    List<ConnectivityResult> results,
+  ) async {
+    final nextSignature = _getNetworkSignature(results);
+    final previousSignature = _networkSignature;
+    _networkSignature = nextSignature;
+    if (previousSignature == null || previousSignature == nextSignature) {
+      return;
+    }
+    final changed = ref
+        .read(quickRoutingRulesProvider.notifier)
+        .clearNetworkBound();
+    if (!changed || ref.read(runTimeProvider) == null) {
+      return;
+    }
+    final applied = await ref
+        .read(setupActionProvider.notifier)
+        .applyProfile(force: true, silence: true);
+    if (!applied && mounted) {
+      context.showNotifier(
+        context.appLocalizations.databaseWriteFailedTip,
+        level: MessageLevel.error,
+      );
+    }
+  }
+
   Future<void> _handleConnectivityChanged(
     List<ConnectivityResult> results,
   ) async {
     commonPrint.log('connectivityChanged ${results.toString()}');
     unawaited(systemDnsCoordinator?.resync() ?? Future.value());
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
+    await _clearNetworkRoutingRulesIfNeeded(results);
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
       ref.read(checkIpNumProvider.notifier).add();
