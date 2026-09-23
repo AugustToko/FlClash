@@ -106,7 +106,17 @@ List<String> buildQuickRoutingTargets(Iterable<Group> groups) {
   return List.unmodifiable(targets);
 }
 
-String pickQuickRoutingTarget(TrackerInfo trackerInfo, List<String> targets) {
+String pickQuickRoutingTarget(
+  TrackerInfo trackerInfo,
+  List<String> targets, {
+  Iterable<String> preferredTargets = const [],
+}) {
+  final preferred = preferredTargets.toSet();
+  for (final chain in trackerInfo.chains) {
+    if (preferred.contains(chain) && targets.contains(chain)) {
+      return chain;
+    }
+  }
   for (final chain in trackerInfo.chains) {
     if (targets.contains(chain)) {
       return chain;
@@ -116,6 +126,17 @@ String pickQuickRoutingTarget(TrackerInfo trackerInfo, List<String> targets) {
     return RuleTarget.DIRECT.name;
   }
   return targets.first;
+}
+
+List<TrackerInfo> buildQuickRoutingImpactSource(
+  TrackerInfo current,
+  Iterable<TrackerInfo> recent,
+) {
+  final values = recent.toList(growable: true);
+  if (!values.any((trackerInfo) => trackerInfo.id == current.id)) {
+    values.insert(0, current);
+  }
+  return List.unmodifiable(values);
 }
 
 QuickRoutingImpact buildQuickRoutingImpact(
