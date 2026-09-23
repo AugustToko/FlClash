@@ -465,6 +465,18 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
         : widget.knownRules.indexOf(equivalentRule);
     final firstKnownMatch = analysis.firstKnownMatch;
     final computedGroup = _computedGroupForTarget();
+    final historicalPolicyChain = normalizeQuickRoutingHistoricalPolicyChain(
+      widget.trackerInfo.chains,
+    );
+    final proposedPolicyChain = buildQuickRoutingPolicyChainPreview(
+      target: _target,
+      groups: widget.groups,
+      fixedStates: widget.fixedStates,
+      groupOverride: groupOverride,
+    );
+    final proposedPolicyNodes = proposedPolicyChain.displayNodes(
+      appLocalizations.auto,
+    );
     return CommonDialog(
       title: appLocalizations.addRule,
       actions: [
@@ -565,8 +577,10 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                         '${_trackerRuleText(widget.trackerInfo)}',
                       ),
                       Text(
-                        '${appLocalizations.proxyChains}: '
-                        '${widget.trackerInfo.chains.join(' → ')}',
+                        '↶ ${appLocalizations.proxyChains}: '
+                        '${historicalPolicyChain.isEmpty ? appLocalizations.noData : historicalPolicyChain.join(' → ')}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       if (widget.coreMatch != null) ...[
                         const SizedBox(height: 6),
@@ -577,6 +591,14 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                       ],
                       const Divider(),
                       Text('→ ${nextRule.rawValue}'),
+                      if (proposedPolicyNodes.isNotEmpty)
+                        Text(
+                          '${proposedPolicyChain.complete ? '✓' : '≈'} '
+                          '${appLocalizations.proxyChains}: '
+                          '${proposedPolicyNodes.join(' → ')}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       if (groupOverride != null)
                         Text(
                           '${appLocalizations.proxyGroup}: '
