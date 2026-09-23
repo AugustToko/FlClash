@@ -36,7 +36,8 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
       return;
     }
 
-    final targets = buildQuickRoutingTargets(ref.read(groupsProvider));
+    final groups = ref.read(groupsProvider);
+    final targets = buildQuickRoutingTargets(groups);
     final overwriteType = ref.read(overwriteTypeProvider(profileId));
     final lifetimes = QuickRoutingLifetime.values
         .where(
@@ -51,7 +52,11 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         targets: targets,
         lifetimes: lifetimes,
         recentRequests: ref.read(requestsProvider).list,
-        initialTarget: pickQuickRoutingTarget(widget.trackerInfo, targets),
+        initialTarget: pickQuickRoutingTarget(
+          widget.trackerInfo,
+          targets,
+          preferredTargets: groups.map((group) => group.name),
+        ),
       ),
     );
     if (selection == null || !mounted) {
@@ -221,7 +226,10 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
     final appLocalizations = context.appLocalizations;
     final impact = buildQuickRoutingImpact(
       _candidate,
-      widget.recentRequests,
+      buildQuickRoutingImpactSource(
+        widget.trackerInfo,
+        widget.recentRequests,
+      ),
     );
     final nextRule = _candidate.buildRule(
       target: _target,
