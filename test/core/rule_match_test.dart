@@ -11,6 +11,7 @@ void main() {
       'ruleType': 'RuleSet',
       'payload': 'OpenAI',
       'target': 'Proxy',
+      'policyChain': ['Proxy', 'Auto', 'HK-01'],
       'providerNames': ['OpenAI'],
       'resolvedIP': '1.1.1.1',
       'complete': true,
@@ -22,6 +23,9 @@ void main() {
     expect(result.ruleIndex, 12);
     expect(result.ruleText, 'RuleSet(OpenAI)');
     expect(result.target, 'Proxy');
+    expect(result.policyChain, ['Proxy', 'Auto', 'HK-01']);
+    expect(result.policyText, 'Proxy → Auto → HK-01');
+    expect(result.finalPolicy, 'HK-01');
     expect(result.providerNames, ['OpenAI']);
     expect(result.resolvedIP, '1.1.1.1');
     expect(result.complete, isTrue);
@@ -41,6 +45,8 @@ void main() {
     expect(result.matched, isFalse);
     expect(result.ruleText, isEmpty);
     expect(result.target, 'DIRECT');
+    expect(result.policyChain, isEmpty);
+    expect(result.finalPolicy, 'DIRECT');
     expect(result.providerNames, isEmpty);
     expect(result.complete, isFalse);
     expect(result.warnings, [
