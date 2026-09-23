@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 
 void main() {
   TrackerInfo trackerInfo({
+    String id = 'connection-id',
     String host = '',
     String sourceIP = '',
     String sourcePort = '',
@@ -21,7 +22,7 @@ void main() {
     List<String> chains = const [],
   }) {
     return TrackerInfo(
-      id: 'connection-id',
+      id: id,
       start: DateTime.utc(2026),
       metadata: Metadata(
         network: network,
@@ -56,7 +57,7 @@ void main() {
           process: 'com.example.app',
           processPath: '/data/app/com.example.app/base.apk',
           network: 'tcp',
-          destinationIPASN: 'AS13335',
+          destinationIPASN: 'AS13335 Cloudflare',
           sourceIPASN: '4134',
           destinationGeoIP: const ['US'],
           sourceGeoIP: const ['CN'],
@@ -138,13 +139,13 @@ void main() {
       );
     });
 
-    test('prefers a policy group already present in the connection chain', () {
-      final info = trackerInfo(chains: const ['Proxy', 'Hong Kong']);
-      final target = pickQuickRoutingTarget(info, const [
-        'DIRECT',
-        'REJECT',
-        'Proxy',
-      ]);
+    test('prefers a policy group over a leaf node in the chain', () {
+      final info = trackerInfo(chains: const ['HK-01', 'Proxy']);
+      final target = pickQuickRoutingTarget(
+        info,
+        const ['DIRECT', 'REJECT', 'Proxy', 'HK-01'],
+        preferredTargets: const ['Proxy'],
+      );
 
       expect(target, 'Proxy');
     });
@@ -166,9 +167,9 @@ void main() {
         content: 'api.example.com',
       );
       final impact = buildQuickRoutingImpact(candidate, [
-        trackerInfo(host: 'api.example.com', process: 'app.a'),
-        trackerInfo(host: 'cdn.api.example.com', process: 'app.b'),
-        trackerInfo(host: 'example.com', process: 'app.c'),
+        trackerInfo(id: 'a', host: 'api.example.com', process: 'app.a'),
+        trackerInfo(id: 'b', host: 'cdn.api.example.com', process: 'app.b'),
+        trackerInfo(id: 'c', host: 'example.com', process: 'app.c'),
       ]);
 
       expect(impact.requestCount, 2);
@@ -182,11 +183,31 @@ void main() {
         content: '13335',
       );
       final impact = buildQuickRoutingImpact(candidate, [
-        trackerInfo(destinationIPASN: 'AS13335'),
-        trackerInfo(destinationIPASN: '4134'),
+        trackerInfo(id: 'a', destinationIPASN: 'AS13335 Cloudflare'),
+        trackerInfo(id: 'b', destinationIPASN: '4134'),
       ]);
 
       expect(impact.requestCount, 1);
+    });
+
+    test('adds a live connection missing from request history', () {
+      final current = trackerInfo(id: 'live', host: 'live.example.com');
+      final source = buildQuickRoutingImpactSource(current, [
+        trackerInfo(id: 'history', host: 'history.example.com'),
+      ]);
+
+      expect(source.map((trackerInfo) => trackerInfo.id), [
+        'live',
+        'history',
+      ]);
+    });
+
+    test('does not duplicate a connection already in request history', () {
+      final current = trackerInfo(id: 'same', host: 'live.example.com');
+      final source = buildQuickRoutingImpactSource(current, [current]);
+
+      expect(source, hasLength(1));
+      expect(source.single, same(current));
     });
   });
 }
