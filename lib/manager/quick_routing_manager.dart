@@ -66,12 +66,23 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
 
   Future<void> _reconcileProfile() async {
     if (ref.read(runTimeProvider) == null) {
+      _scheduleExpiry();
       return;
     }
-    final applied = await ref
-        .read(setupActionProvider.notifier)
-        .applyProfile(force: true, silence: true);
+    var applied = false;
+    try {
+      applied = await ref
+          .read(setupActionProvider.notifier)
+          .applyProfile(force: true, silence: true);
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'expired quick routing reconciliation failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+    }
     if (applied) {
+      _scheduleExpiry();
       return;
     }
     commonPrint.log(
