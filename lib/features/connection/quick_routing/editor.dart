@@ -97,12 +97,15 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         .toList(growable: false);
 
     _setBusy(true);
-    final knownRules = await _readEffectiveQuickRoutingRules(
-      ref: ref,
-      profileId: profileId,
-      overwriteType: overwriteType,
-    );
-    final fixedStates = await _readQuickRoutingGroupFixedStates(ref);
+    final (knownRules, fixedStates, coreMatch) = await (
+      _readEffectiveQuickRoutingRules(
+        ref: ref,
+        profileId: profileId,
+        overwriteType: overwriteType,
+      ),
+      _readQuickRoutingGroupFixedStates(ref),
+      _readCoreQuickRoutingMatch(ref, widget.trackerInfo),
+    ).wait;
     _setBusy(false);
     if (!mounted) {
       return;
@@ -117,6 +120,7 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         groups: groups,
         fixedStates: fixedStates,
         knownRules: knownRules,
+        coreMatch: coreMatch,
         recentRequests: ref.read(requestsProvider).list,
         initialTarget: pickQuickRoutingTarget(
           widget.trackerInfo,
@@ -243,6 +247,7 @@ class _QuickRoutingDialog extends StatefulWidget {
   final List<Group> groups;
   final Map<String, String> fixedStates;
   final List<Rule> knownRules;
+  final CoreRuleMatchResult? coreMatch;
   final List<TrackerInfo> recentRequests;
   final String initialTarget;
 
@@ -254,6 +259,7 @@ class _QuickRoutingDialog extends StatefulWidget {
     required this.groups,
     required this.fixedStates,
     required this.knownRules,
+    required this.coreMatch,
     required this.recentRequests,
     required this.initialTarget,
   });
@@ -562,6 +568,13 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                         '${appLocalizations.proxyChains}: '
                         '${widget.trackerInfo.chains.join(' → ')}',
                       ),
+                      if (widget.coreMatch != null) ...[
+                        const SizedBox(height: 6),
+                        ..._buildCoreQuickRoutingMatchPreview(
+                          context,
+                          widget.coreMatch!,
+                        ),
+                      ],
                       const Divider(),
                       Text('→ ${nextRule.rawValue}'),
                       if (groupOverride != null)
