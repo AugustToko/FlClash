@@ -34,6 +34,22 @@ String _trackerRuleText(TrackerInfo trackerInfo) {
   return '${trackerInfo.rule}($payload)';
 }
 
+void _ensureQuickRoutingRuleIsValid(
+  QuickRoutingCandidate candidate,
+  String target,
+) {
+  final validation = validateQuickRoutingSelection(
+    candidate: candidate,
+    target: target,
+  );
+  if (!validation.isValid) {
+    throw StateError(
+      'Invalid quick routing rule: '
+      '${validation.issues.map((issue) => issue.name).join(', ')}',
+    );
+  }
+}
+
 Future<List<Rule>> _readPermanentRules(
   int profileId,
   OverwriteType overwriteType,
@@ -212,6 +228,7 @@ Future<_QuickRoutingApplyResult> _saveAndApplyPermanentQuickRoutingRule({
   required QuickRoutingCandidate candidate,
   required String target,
 }) async {
+  _ensureQuickRoutingRuleIsValid(candidate, target);
   final rules = await _readPermanentRules(profileId, overwriteType);
   final previous = _findExistingQuickRoutingRule(rules, candidate);
   var rule = candidate.buildRule(
@@ -312,6 +329,7 @@ Future<_QuickRoutingApplyResult> _saveAndApplyRuntimeQuickRoutingRule({
   required QuickRoutingSelection selection,
   required TrackerInfo trackerInfo,
 }) async {
+  _ensureQuickRoutingRuleIsValid(selection.candidate, selection.target);
   final snapshot = ref.read(quickRoutingRulesProvider);
   final notifier = ref.read(quickRoutingRulesProvider.notifier);
   final entry = notifier.put(
@@ -357,6 +375,137 @@ Future<_QuickRoutingApplyResult> _saveAndApplyRuntimeQuickRoutingRule({
     }
     Error.throwWithStackTrace(error, stackTrace);
   }
+}
+
+Future<void> _setQuickRoutingGroupFixedState({
+  required WidgetRef ref,
+  required String groupName,
+  required String fixedProxy,
+}) async {
+  final message = await ref.read(coreHandlerProvider).changeProxy(
+        ChangeProxyParams(
+          groupName: groupName,
+          proxyName: fixedProxy,
+        ),
+      );
+  if (message.isNotEmpty) {
+    throw MessageException(message);
+  }
+  await ref.read(proxiesActionProvider.notifier).updateGroups();
+}
+
+Future<bool> _undoQuickRoutingGroupOverride({
+  required WidgetRef ref,
+  required _QuickRoutingApplyResult baseResult,
+  required QuickRoutingGroupOverride override,
+}) async {
+  final current = await ref
+      .read(coreHandlerProvider)
+      .getProxyGroupFixedStates();
+  if (current[override.groupName] != override.desiredFixed) {
+    return false;
+  }
+
+  var restoredGroup = false;
+  try {
+    await _setQuickRoutingGroupFixedState(
+      ref: ref,
+      groupName: override.groupName,
+      fixedProxy: override.previousFixed,
+    );
+    restoredGroup = true;
+    final undoneRule = await baseResult.undo();
+    if (undoneRule) {
+      return true;
+    }
+    await _setQuickRoutingGroupFixedState(
+      ref: ref,
+      groupName: override.groupName,
+      fixedProxy: override.desiredFixed,
+    );
+    return false;
+  } catch (error, stackTrace) {
+    if (restoredGroup) {
+      try {
+        await _setQuickRoutingGroupFixedState(
+          ref: ref,
+          groupName: override.groupName,
+          fixedProxy: override.desiredFixed,
+        );
+      } catch (rollbackError, rollbackStackTrace) {
+        commonPrint.log(
+          'quick routing group override undo rollback failed: '
+          '${compactError(rollbackError)}, $rollbackStackTrace',
+          logLevel: LogLevel.error,
+        );
+      }
+    }
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+}
+
+Future<_QuickRoutingApplyResult> _applyQuickRoutingGroupOverride({
+  required WidgetRef ref,
+  required _QuickRoutingApplyResult baseResult,
+  required QuickRoutingSelection selection,
+}) async {
+  final override = selection.groupOverride;
+  if (override == null || !override.changes) {
+    return baseResult;
+  }
+  final validation = validateQuickRoutingSelection(
+    candidate: selection.candidate,
+    target: selection.target,
+    groupOverride: override,
+    groups: ref.read(groupsProvider),
+  );
+  if (!validation.isValid) {
+    final undone = await baseResult.undo();
+    if (!undone) {
+      commonPrint.log(
+        'invalid quick routing group override could not undo its rule',
+        logLevel: LogLevel.error,
+      );
+    }
+    throw StateError(
+      'Invalid quick routing group override: '
+      '${validation.issues.map((issue) => issue.name).join(', ')}',
+    );
+  }
+
+  try {
+    await _setQuickRoutingGroupFixedState(
+      ref: ref,
+      groupName: override.groupName,
+      fixedProxy: override.desiredFixed,
+    );
+  } catch (error, stackTrace) {
+    try {
+      final undone = await baseResult.undo();
+      if (!undone) {
+        commonPrint.log(
+          'quick routing group override failure left a stale rule',
+          logLevel: LogLevel.error,
+        );
+      }
+    } catch (rollbackError, rollbackStackTrace) {
+      commonPrint.log(
+        'quick routing group override rule rollback failed: '
+        '${compactError(rollbackError)}, $rollbackStackTrace',
+        logLevel: LogLevel.error,
+      );
+    }
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+
+  return _QuickRoutingApplyResult(
+    rule: baseResult.rule,
+    undo: () => _undoQuickRoutingGroupOverride(
+      ref: ref,
+      baseResult: baseResult,
+      override: override,
+    ),
+  );
 }
 
 typedef _RuntimeQuickRoutingMutation = bool Function(
