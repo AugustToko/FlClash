@@ -15,32 +15,35 @@ import (
 	"github.com/metacubex/mihomo/tunnel"
 )
 
-const matchRuleMethod CoreMethod = "matchRule"
+const (
+	matchRuleMethod         CoreMethod = "matchRule"
+	maxRuleMatchPolicyDepth            = 64
+)
 
 type RuleMatchMetadata struct {
-	UID                uint32   `json:"uid"`
-	Network            string   `json:"network"`
-	SourceIP           string   `json:"sourceIP"`
-	SourcePort         string   `json:"sourcePort"`
-	DestinationIP      string   `json:"destinationIP"`
-	DestinationPort    string   `json:"destinationPort"`
-	Host               string   `json:"host"`
-	Process            string   `json:"process"`
-	ProcessPath        string   `json:"processPath"`
-	RemoteDestination  string   `json:"remoteDestination"`
-	SourceGeoIP        []string `json:"sourceGeoIP"`
-	DestinationGeoIP   []string `json:"destinationGeoIP"`
-	DestinationIPASN   string   `json:"destinationIPASN"`
-	SourceIPASN        string   `json:"sourceIPASN"`
-	SpecialRules       string   `json:"specialRules"`
-	SpecialProxy       string   `json:"specialProxy"`
-	InboundIP          string   `json:"inboundIP"`
-	InboundPort        string   `json:"inboundPort"`
-	InboundName        string   `json:"inboundName"`
-	InboundUser        string   `json:"inboundUser"`
-	InboundType        string   `json:"inboundType"`
-	RematchName        string   `json:"rematchName"`
-	DSCP               *uint8   `json:"dscp"`
+	UID               uint32   `json:"uid"`
+	Network           string   `json:"network"`
+	SourceIP          string   `json:"sourceIP"`
+	SourcePort        string   `json:"sourcePort"`
+	DestinationIP     string   `json:"destinationIP"`
+	DestinationPort   string   `json:"destinationPort"`
+	Host              string   `json:"host"`
+	Process           string   `json:"process"`
+	ProcessPath       string   `json:"processPath"`
+	RemoteDestination string   `json:"remoteDestination"`
+	SourceGeoIP       []string `json:"sourceGeoIP"`
+	DestinationGeoIP  []string `json:"destinationGeoIP"`
+	DestinationIPASN  string   `json:"destinationIPASN"`
+	SourceIPASN       string   `json:"sourceIPASN"`
+	SpecialRules      string   `json:"specialRules"`
+	SpecialProxy      string   `json:"specialProxy"`
+	InboundIP         string   `json:"inboundIP"`
+	InboundPort       string   `json:"inboundPort"`
+	InboundName       string   `json:"inboundName"`
+	InboundUser       string   `json:"inboundUser"`
+	InboundType       string   `json:"inboundType"`
+	RematchName       string   `json:"rematchName"`
+	DSCP              *uint8   `json:"dscp"`
 }
 
 type RuleMatchResult struct {
@@ -50,6 +53,7 @@ type RuleMatchResult struct {
 	RuleType      string   `json:"ruleType"`
 	Payload       string   `json:"payload"`
 	Target        string   `json:"target"`
+	PolicyChain   []string `json:"policyChain"`
 	ProviderNames []string `json:"providerNames"`
 	ResolvedIP    string   `json:"resolvedIP"`
 	Complete      bool     `json:"complete"`
@@ -60,6 +64,7 @@ func newRuleMatchResult() *RuleMatchResult {
 	return &RuleMatchResult{
 		Mode:          "rule",
 		RuleIndex:     -1,
+		PolicyChain:   []string{},
 		ProviderNames: []string{},
 		Warnings:      []string{},
 		Complete:      true,
@@ -276,6 +281,19 @@ func resolveRuleMatchMetadata(metadata *C.Metadata, result *RuleMatchResult) {
 	metadata.DstIP = address.Unmap()
 }
 
+func ruleMatchProxyIdentity(proxy C.Proxy) string {
+	return fmt.Sprintf("%s\x00%d", proxy.Name(), proxy.Type())
+}
+
+func proxyTypeMayContainPolicy(typeOf C.AdapterType) bool {
+	switch typeOf {
+	case C.Relay, C.Selector, C.Fallback, C.URLTest, C.LoadBalance:
+		return true
+	default:
+		return false
+	}
+}
+
 func matchProbePassTarget(
 	adapterName string,
 	metadata *C.Metadata,
@@ -285,27 +303,82 @@ func matchProbePassTarget(
 	if !ok {
 		return false
 	}
-	for current := adapter; current != nil; current = current.Unwrap(metadata, false) {
+	seen := make(map[string]struct{})
+	for depth, current := 0, adapter; current != nil; depth++ {
+		if depth >= maxRuleMatchPolicyDepth {
+			return false
+		}
+		identity := ruleMatchProxyIdentity(current)
+		if _, exists := seen[identity]; exists {
+			return false
+		}
+		seen[identity] = struct{}{}
 		if current.Type() == C.PassRule {
 			return true
 		}
+		current = current.Unwrap(metadata, false)
 	}
 	return false
 }
 
-func probeMatchedAdapter(
+func traceRuleMatchPolicy(
 	adapter C.Proxy,
 	metadata *C.Metadata,
-) (skip bool, rematch bool) {
-	for current := adapter; current != nil; current = current.Unwrap(metadata, false) {
+) (chain []string, skip bool, rematch bool, warning string) {
+	chain = make([]string, 0, 4)
+	seen := make(map[string]struct{})
+	for depth, current := 0, adapter; current != nil; depth++ {
+		if depth >= maxRuleMatchPolicyDepth {
+			return chain, false, false, "policy-chain-truncated"
+		}
+		identity := ruleMatchProxyIdentity(current)
+		if _, exists := seen[identity]; exists {
+			return chain, false, false, "policy-chain-cycle"
+		}
+		seen[identity] = struct{}{}
+		if name := strings.TrimSpace(current.Name()); name != "" &&
+			(len(chain) == 0 || chain[len(chain)-1] != name) {
+			chain = append(chain, name)
+		}
 		switch current.Type() {
 		case C.Pass:
-			return true, false
+			return chain, true, false, ""
 		case C.Rematch:
-			return false, true
+			return chain, false, true, ""
 		}
+		next := current.Unwrap(metadata, false)
+		if next == nil && proxyTypeMayContainPolicy(current.Type()) {
+			return chain, false, false, "policy-chain-unresolved"
+		}
+		current = next
 	}
-	return false, false
+	return chain, false, false, ""
+}
+
+func applyRuleMatchPolicyChain(
+	result *RuleMatchResult,
+	target string,
+	metadata *C.Metadata,
+	proxies map[string]C.Proxy,
+) (skip bool, rematch bool) {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return false, false
+	}
+	adapter, exists := proxies[target]
+	if !exists {
+		result.PolicyChain = []string{target}
+		return false, false
+	}
+	chain, skip, rematch, warning := traceRuleMatchPolicy(adapter, metadata)
+	if len(chain) == 0 {
+		chain = []string{target}
+	}
+	result.PolicyChain = chain
+	if warning != "" {
+		result.addWarning(warning)
+	}
+	return skip, rematch
 }
 
 func evaluateRuleMatch(
@@ -326,6 +399,15 @@ func evaluateRuleMatch(
 	if metadata.SpecialProxy != "" {
 		result.Mode = "special"
 		result.Target = metadata.SpecialProxy
+		_, rematch := applyRuleMatchPolicyChain(
+			result,
+			metadata.SpecialProxy,
+			metadata,
+			proxies,
+		)
+		if rematch {
+			result.addWarning("rematch-target-not-expanded")
+		}
 		return result, nil
 	}
 	if metadata.SpecialRules != "" {
@@ -337,10 +419,20 @@ func evaluateRuleMatch(
 	case tunnel.Direct:
 		result.Mode = "direct"
 		result.Target = "DIRECT"
+		applyRuleMatchPolicyChain(result, result.Target, metadata, proxies)
 		return result, nil
 	case tunnel.Global:
 		result.Mode = "global"
 		result.Target = "GLOBAL"
+		_, rematch := applyRuleMatchPolicyChain(
+			result,
+			result.Target,
+			metadata,
+			proxies,
+		)
+		if rematch {
+			result.addWarning("rematch-target-not-expanded")
+		}
 		return result, nil
 	}
 
@@ -379,7 +471,10 @@ func evaluateRuleMatch(
 			result.addWarning("matched-target-unavailable")
 			continue
 		}
-		skip, rematch := probeMatchedAdapter(adapter, metadata)
+		policyChain, skip, rematch, chainWarning := traceRuleMatchPolicy(
+			adapter,
+			metadata,
+		)
 		if skip {
 			continue
 		}
@@ -391,7 +486,14 @@ func evaluateRuleMatch(
 		result.RuleType = rule.RuleType().String()
 		result.Payload = rule.Payload()
 		result.Target = target
+		result.PolicyChain = policyChain
+		if len(result.PolicyChain) == 0 {
+			result.PolicyChain = []string{target}
+		}
 		result.ProviderNames = append([]string{}, rule.ProviderNames()...)
+		if chainWarning != "" {
+			result.addWarning(chainWarning)
+		}
 		if rematch {
 			result.addWarning("rematch-target-not-expanded")
 		}
@@ -402,6 +504,7 @@ func evaluateRuleMatch(
 	}
 
 	result.Target = "DIRECT"
+	applyRuleMatchPolicyChain(result, result.Target, metadata, proxies)
 	if metadata.DstIP.IsValid() {
 		result.ResolvedIP = metadata.DstIP.String()
 	}
