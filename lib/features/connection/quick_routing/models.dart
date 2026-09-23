@@ -40,6 +40,25 @@ class QuickRoutingImpact {
 }
 
 @immutable
+class QuickRoutingRuleAnalysis {
+  final Rule? equivalentRule;
+  final int matchingKnownRuleCount;
+  final bool targetAlreadyInChain;
+
+  const QuickRoutingRuleAnalysis({
+    required this.equivalentRule,
+    required this.matchingKnownRuleCount,
+    required this.targetAlreadyInChain,
+  });
+
+  bool get replacesEquivalentRule =>
+      equivalentRule != null && equivalentRule!.ruleTarget != null;
+
+  bool targetMatchesEquivalentRule(String target) =>
+      equivalentRule?.ruleTarget == target;
+}
+
+@immutable
 class QuickRoutingSelection {
   final QuickRoutingCandidate candidate;
   final String target;
