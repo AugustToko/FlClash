@@ -252,6 +252,17 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
   void replaceAll(List<QuickRoutingRuleEntry> entries) {
     state = List.unmodifiable(entries);
   }
+
+  List<QuickRoutingRuleEntry>? replaceAllIfCurrent({
+    required List<QuickRoutingRuleEntry> expected,
+    required List<QuickRoutingRuleEntry> entries,
+  }) {
+    if (!identical(state, expected)) {
+      return null;
+    }
+    state = List.unmodifiable(entries);
+    return state;
+  }
 }
 
 final quickRoutingRulesProvider =
