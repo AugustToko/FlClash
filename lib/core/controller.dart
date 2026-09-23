@@ -10,6 +10,22 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
+@visibleForTesting
+Map<String, String> extractProxyGroupFixedStates(ProxiesData data) {
+  final values = <String, String>{};
+  for (final entry in data.proxies.entries) {
+    final raw = entry.value;
+    if (raw is! Map) {
+      continue;
+    }
+    final fixed = raw['fixed'];
+    if (fixed is String) {
+      values[entry.key] = fixed;
+    }
+  }
+  return Map.unmodifiable(values);
+}
+
 class CoreController {
   static CoreController? _instance;
   late CoreHandlerInterface _interface;
@@ -138,6 +154,10 @@ class CoreController {
         defaultTestUrl: defaultTestUrl,
       ),
     );
+  }
+
+  Future<Map<String, String>> getProxyGroupFixedStates() async {
+    return extractProxyGroupFixedStates(await _interface.getProxies());
   }
 
   FutureOr<String> changeProxy(ChangeProxyParams changeProxyParams) async {
