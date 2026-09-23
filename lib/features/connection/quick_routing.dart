@@ -234,7 +234,15 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
       );
       final onRuleApplied = widget.onRuleApplied;
       if (onRuleApplied != null) {
-        await onRuleApplied();
+        try {
+          await onRuleApplied();
+        } catch (error, stackTrace) {
+          commonPrint.log(
+            'quick routing post-apply action failed: '
+            '${compactError(error)}, $stackTrace',
+            logLevel: LogLevel.warning,
+          );
+        }
       }
       dialogs.showNotifier(
         '${currentAppLocalizations.addRule}: ${rule.rawValue}',
