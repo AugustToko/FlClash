@@ -127,14 +127,27 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
               detailTitle: appLocalizations.details(
                 appLocalizations.connection,
               ),
-              trailingBuilder: (trackerInfo) => IconButton(
-                tooltip: appLocalizations.blockConnection,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.block, size: 20),
-                onPressed: () {
-                  _handleBlockConnection(trackerInfo.id);
-                },
-              ),
+              trailingBuilder: (trackerInfo) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    QuickRoutingButton(
+                      trackerInfo: trackerInfo,
+                      onRuleApplied: () {
+                        return _handleBlockConnection(trackerInfo.id);
+                      },
+                    ),
+                    IconButton(
+                      tooltip: appLocalizations.blockConnection,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.block, size: 20),
+                      onPressed: () {
+                        _handleBlockConnection(trackerInfo.id);
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           );
         },
