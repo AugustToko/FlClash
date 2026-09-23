@@ -27,16 +27,17 @@ extension QuickRoutingLifetimeExt on QuickRoutingLifetime {
 class QuickRoutingGroupOverride {
   final String groupName;
   final String previousFixed;
-  final String expectedFixed;
+  final String? _expectedFixed;
   final String desiredFixed;
 
   const QuickRoutingGroupOverride({
     required this.groupName,
     required this.previousFixed,
-    required this.expectedFixed,
+    String? expectedFixed,
     required this.desiredFixed,
-  });
+  }) : _expectedFixed = expectedFixed;
 
+  String get expectedFixed => _expectedFixed ?? previousFixed;
   bool get changes => expectedFixed != desiredFixed;
   bool get clearsFixed => desiredFixed.isEmpty;
 
@@ -74,11 +75,13 @@ class QuickRoutingGroupOverride {
 }
 
 class QuickRoutingGroupOverrideTransition {
+  final int profileId;
   final String groupName;
   final String expectedFixed;
   final String targetFixed;
 
   const QuickRoutingGroupOverrideTransition({
+    required this.profileId,
     required this.groupName,
     required this.expectedFixed,
     required this.targetFixed,
@@ -88,13 +91,19 @@ class QuickRoutingGroupOverrideTransition {
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is QuickRoutingGroupOverrideTransition &&
+            profileId == other.profileId &&
             groupName == other.groupName &&
             expectedFixed == other.expectedFixed &&
             targetFixed == other.targetFixed;
   }
 
   @override
-  int get hashCode => Object.hash(groupName, expectedFixed, targetFixed);
+  int get hashCode => Object.hash(
+    profileId,
+    groupName,
+    expectedFixed,
+    targetFixed,
+  );
 }
 
 class QuickRoutingRuleEntry {
@@ -209,20 +218,23 @@ bool quickRoutingRulesHaveSameMatcher(Rule first, Rule second) {
   );
 }
 
-Map<String, QuickRoutingGroupOverride> _quickRoutingGroupOverrides(
+Map<(int, String), QuickRoutingGroupOverride> _quickRoutingGroupOverrides(
   Iterable<QuickRoutingRuleEntry> entries, {
   DateTime? now,
   bool includeExpired = true,
 }) {
   final current = now ?? DateTime.now();
-  final values = <String, QuickRoutingGroupOverride>{};
+  final values = <(int, String), QuickRoutingGroupOverride>{};
   for (final entry in entries) {
     if (!includeExpired && entry.isExpired(current)) {
       continue;
     }
     final override = entry.groupOverride;
     if (override != null) {
-      values.putIfAbsent(override.groupName, () => override);
+      values.putIfAbsent(
+        (entry.profileId, override.groupName),
+        () => override,
+      );
     }
   }
   return values;
@@ -240,14 +252,14 @@ List<QuickRoutingGroupOverrideTransition>
     now: now,
     includeExpired: false,
   );
-  final groupNames = <String>{
+  final keys = <(int, String)>{
     ...previousOverrides.keys,
     ...nextOverrides.keys,
   };
   final transitions = <QuickRoutingGroupOverrideTransition>[];
-  for (final groupName in groupNames) {
-    final before = previousOverrides[groupName];
-    final after = nextOverrides[groupName];
+  for (final key in keys) {
+    final before = previousOverrides[key];
+    final after = nextOverrides[key];
     if (before == after) {
       continue;
     }
@@ -258,7 +270,8 @@ List<QuickRoutingGroupOverrideTransition>
     }
     transitions.add(
       QuickRoutingGroupOverrideTransition(
-        groupName: groupName,
+        profileId: key.$1,
+        groupName: key.$2,
         expectedFixed: expected,
         targetFixed: target,
       ),
@@ -332,14 +345,16 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
     var normalizedOverride = groupOverride;
     if (normalizedOverride != null) {
       for (var index = 0; index < entries.length; index++) {
-        final existingOverride = entries[index].groupOverride;
-        if (existingOverride?.groupName != normalizedOverride.groupName) {
+        final existingEntry = entries[index];
+        final existingOverride = existingEntry.groupOverride;
+        if (existingEntry.profileId != profileId ||
+            existingOverride?.groupName != normalizedOverride.groupName) {
           continue;
         }
         normalizedOverride = normalizedOverride.copyWith(
           previousFixed: existingOverride!.previousFixed,
         );
-        entries[index] = entries[index].copyWithGroupOverride(null);
+        entries[index] = existingEntry.copyWithGroupOverride(null);
       }
     }
 
