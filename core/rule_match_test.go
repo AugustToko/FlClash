@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	C "github.com/metacubex/mihomo/constant"
@@ -65,6 +66,7 @@ func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.
 		t.Fatalf("parse fallback rule: %v", err)
 	}
 	wrapped := RW.NewRuleWrapper(domainRule)
+	policyGroup := selectorGroup(t, "Proxy", "node-a", "node-b")
 	result, methodErr := evaluateRuleMatch(
 		&RuleMatchMetadata{
 			Network:         "tcp",
@@ -74,7 +76,7 @@ func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.
 		tunnel.Rule,
 		[]C.Rule{wrapped, fallbackRule},
 		map[string]C.Proxy{
-			"Proxy":  namedProxy("Proxy"),
+			"Proxy":  policyGroup,
 			"DIRECT": namedProxy("DIRECT"),
 		},
 	)
@@ -92,6 +94,9 @@ func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.
 	}
 	if result.Target != "Proxy" {
 		t.Fatalf("target = %q, want Proxy", result.Target)
+	}
+	if got := strings.Join(result.PolicyChain, " -> "); got != "Proxy -> node-a" {
+		t.Fatalf("policy chain = %q, want Proxy -> node-a", got)
 	}
 	if wrapped.HitCount() != 0 || wrapped.MissCount() != 0 {
 		t.Fatalf(
@@ -121,6 +126,9 @@ func TestEvaluateRuleMatchReportsDirectModeWithoutScanningRules(t *testing.T) {
 	}
 	if result.Matched || result.RuleIndex != -1 {
 		t.Fatalf("direct mode should not report a rule: %#v", result)
+	}
+	if got := strings.Join(result.PolicyChain, " -> "); got != "DIRECT" {
+		t.Fatalf("direct policy chain = %q, want DIRECT", got)
 	}
 }
 
