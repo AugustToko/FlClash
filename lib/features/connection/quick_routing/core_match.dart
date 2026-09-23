@@ -37,6 +37,8 @@ String _quickRoutingCoreWarningLabel(
     'sub-rule-context-unavailable' ||
     'special-rules-not-expanded' =>
       '${appLocalizations.unknown}: SUB-RULE',
+    'compound-rule-context-partial' =>
+      '${appLocalizations.unknown}: AND / OR / NOT',
     'process-lookup-source-unavailable' ||
     'process-lookup-failed' =>
       '${appLocalizations.unknown}: ${appLocalizations.application}',
@@ -46,8 +48,6 @@ String _quickRoutingCoreWarningLabel(
       '${appLocalizations.unknown}: ${appLocalizations.ruleTarget}',
     'rematch-target-not-expanded' =>
       '${appLocalizations.unknown}: REMATCH',
-    'udp-policy-capability-not-evaluated' =>
-      '${appLocalizations.unknown}: UDP',
     _ => warning,
   };
 }
@@ -63,7 +63,7 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
       ? '$ruleIndex${result.ruleText} → ${result.target}'
       : '${result.mode.toUpperCase()} → ${result.target}';
   return [
-    Text('$marker Core: $summary'),
+    Text('$marker ${appLocalizations.core}: $summary'),
     if (result.providerNames.isNotEmpty)
       Text(
         '${appLocalizations.providers}: '
@@ -71,8 +71,7 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
-    if (result.resolvedIP.isNotEmpty)
-      Text('${appLocalizations.intranetIP}: ${result.resolvedIP}'),
+    if (result.resolvedIP.isNotEmpty) Text('IP: ${result.resolvedIP}'),
     if (result.warnings.isNotEmpty)
       Text(
         result.warnings
