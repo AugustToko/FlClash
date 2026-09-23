@@ -34,6 +34,22 @@ class _PendingQuickRoutingGroupTransition {
     );
   }
 
+  factory _PendingQuickRoutingGroupTransition.activation(
+    int profileId,
+    QuickRoutingGroupOverride override,
+  ) {
+    return _PendingQuickRoutingGroupTransition(
+      profileId: profileId,
+      groupName: override.groupName,
+      acceptedFixed: {
+        override.previousFixed,
+        override.expectedFixed,
+        override.desiredFixed,
+      },
+      targetFixed: override.desiredFixed,
+    );
+  }
+
   _PendingQuickRoutingGroupTransition mergeTransition(
     QuickRoutingGroupOverrideTransition transition,
   ) {
@@ -83,6 +99,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   Timer? _groupOverrideRetryTimer;
   final _pendingGroupTransitions =
       <(int, String), _PendingQuickRoutingGroupTransition>{};
+  int? _groupsProfileId;
   String? _lastWifiSsid;
   bool _isRunning = false;
   bool _needsReconcileOnResume = false;
@@ -96,6 +113,9 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     WidgetsBinding.instance.addObserver(this);
     _isRunning = ref.read(runTimeProvider) != null;
     _lastWifiSsid = _normalizeSsid(ref.read(currentSSIDProvider));
+    if (ref.read(groupsProvider).isNotEmpty) {
+      _groupsProfileId = ref.read(currentProfileIdProvider);
+    }
     ref.listenManual<List<QuickRoutingRuleEntry>>(
       quickRoutingRulesProvider,
       (previous, next) {
@@ -123,17 +143,29 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       currentSSIDProvider,
       (_, ssid) => _handleSsidChanged(ssid),
     );
-    ref.listenManual<int?>(currentProfileIdProvider, (_, _) {
-      _queueCurrentProfileGroupActivations();
+    ref.listenManual<int?>(currentProfileIdProvider, (previous, next) {
+      if (previous == next) {
+        return;
+      }
+      _groupsProfileId = null;
+      _groupOverrideRetryTimer?.cancel();
+      _groupOverrideRetryTimer = null;
     });
-    ref.listenManual<List<Group>>(groupsProvider, (_, _) {
+    ref.listenManual<List<Group>>(groupsProvider, (_, groups) {
+      final profileId = ref.read(currentProfileIdProvider);
+      _groupsProfileId = groups.isEmpty ? null : profileId;
       _queueCurrentProfileGroupActivations();
     });
     ref.listenManual<CoreStatus>(coreStatusProvider, (_, status) {
-      if (status == CoreStatus.connected) {
-        _queueCurrentProfileGroupActivations();
-        _requestGroupOverrideReconcile();
+      if (status != CoreStatus.connected) {
+        _groupsProfileId = null;
+        return;
       }
+      if (ref.read(groupsProvider).isNotEmpty) {
+        _groupsProfileId = ref.read(currentProfileIdProvider);
+        _queueCurrentProfileGroupActivations();
+      }
+      _requestGroupOverrideReconcile();
     });
   }
 
@@ -309,42 +341,58 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       return;
     }
     final profileId = ref.read(currentProfileIdProvider);
-    if (profileId == null) {
+    if (profileId == null || _groupsProfileId != profileId) {
       return;
     }
     final entries = ref
         .read(quickRoutingRulesProvider.notifier)
         .activeEntriesFor(profileId);
-    _queueGroupTransitions(
-      buildQuickRoutingGroupOverrideTransitions(
-        previous: const <QuickRoutingRuleEntry>[],
-        next: entries,
-      ),
-    );
+    for (final entry in entries) {
+      final override = entry.groupOverride;
+      if (override == null) {
+        continue;
+      }
+      _queuePendingGroupTransition(
+        _PendingQuickRoutingGroupTransition.activation(
+          profileId,
+          override,
+        ),
+      );
+    }
+    _requestGroupOverrideReconcile();
   }
 
   void _queueGroupTransitions(
     Iterable<QuickRoutingGroupOverrideTransition> transitions,
   ) {
     for (final transition in transitions) {
-      final key = (transition.profileId, transition.groupName);
-      final existing = _pendingGroupTransitions[key];
-      final pending = existing == null
-          ? _PendingQuickRoutingGroupTransition.fromTransition(transition)
-          : existing.mergeTransition(transition);
-      if (pending.acceptedFixed.length == 1 &&
-          pending.acceptedFixed.single == pending.targetFixed) {
-        _pendingGroupTransitions.remove(key);
-      } else {
-        _pendingGroupTransitions[key] = pending;
-      }
+      _queuePendingGroupTransition(
+        _PendingQuickRoutingGroupTransition.fromTransition(transition),
+      );
     }
     _requestGroupOverrideReconcile();
+  }
+
+  void _queuePendingGroupTransition(
+    _PendingQuickRoutingGroupTransition transition,
+  ) {
+    final key = (transition.profileId, transition.groupName);
+    final existing = _pendingGroupTransitions[key];
+    final pending = existing == null
+        ? transition
+        : existing.mergePending(transition);
+    if (pending.acceptedFixed.length == 1 &&
+        pending.acceptedFixed.single == pending.targetFixed) {
+      _pendingGroupTransitions.remove(key);
+    } else {
+      _pendingGroupTransitions[key] = pending;
+    }
   }
 
   bool get _hasCurrentGroupTransitions {
     final profileId = ref.read(currentProfileIdProvider);
     return profileId != null &&
+        _groupsProfileId == profileId &&
         _pendingGroupTransitions.keys.any((key) => key.$1 == profileId);
   }
 
@@ -365,13 +413,14 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       return;
     }
     final profileId = ref.read(currentProfileIdProvider);
-    if (profileId == null) {
+    if (profileId == null || _groupsProfileId != profileId) {
       return;
     }
     _groupOverrideReconciling = true;
     try {
       while (mounted) {
-        if (ref.read(currentProfileIdProvider) != profileId) {
+        if (ref.read(currentProfileIdProvider) != profileId ||
+            _groupsProfileId != profileId) {
           return;
         }
         final batch = <(int, String), _PendingQuickRoutingGroupTransition>{};
