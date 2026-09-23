@@ -67,6 +67,25 @@ void main() {
     expect(result.automatic, isTrue);
   });
 
+  test('does not call an unavailable fixed-state snapshot automatic', () {
+    const groups = [
+      Group(
+        name: 'Automatic',
+        type: GroupType.URLTest,
+        now: 'HK-01',
+      ),
+    ];
+
+    final result = buildQuickRoutingPolicyChainPreview(
+      target: 'Automatic',
+      groups: groups,
+    );
+
+    expect(result.nodes, ['Automatic']);
+    expect(result.complete, isFalse);
+    expect(result.automatic, isFalse);
+  });
+
   test('a temporary fixed override predicts the selected member', () {
     const groups = [
       Group(
