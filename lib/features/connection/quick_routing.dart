@@ -23,11 +23,7 @@ class QuickRoutingCandidate {
 
   String get label => '${ruleAction.value} · $content';
 
-  Rule buildRule({
-    required String target,
-    required int id,
-    String? order,
-  }) {
+  Rule buildRule({required String target, required int id, String? order}) {
     return Rule(
       id: id,
       ruleAction: ruleAction,
@@ -44,10 +40,7 @@ class QuickRoutingSelection {
   final QuickRoutingCandidate candidate;
   final String target;
 
-  const QuickRoutingSelection({
-    required this.candidate,
-    required this.target,
-  });
+  const QuickRoutingSelection({required this.candidate, required this.target});
 }
 
 List<QuickRoutingCandidate> buildQuickRoutingCandidates(
@@ -134,10 +127,7 @@ List<String> buildQuickRoutingTargets(Iterable<Group> groups) {
   return List.unmodifiable(targets);
 }
 
-String pickQuickRoutingTarget(
-  TrackerInfo trackerInfo,
-  List<String> targets,
-) {
+String pickQuickRoutingTarget(TrackerInfo trackerInfo, List<String> targets) {
   for (final chain in trackerInfo.chains) {
     if (targets.contains(chain)) {
       return chain;
@@ -186,8 +176,7 @@ class QuickRoutingButton extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<QuickRoutingButton> createState() =>
-      _QuickRoutingButtonState();
+  ConsumerState<QuickRoutingButton> createState() => _QuickRoutingButtonState();
 }
 
 class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
@@ -314,27 +303,19 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
     }
   }
 
-  Future<List<Rule>> _readRules(
-    int profileId,
-    OverwriteType overwriteType,
-  ) {
+  Future<List<Rule>> _readRules(int profileId, OverwriteType overwriteType) {
     return switch (overwriteType) {
-      OverwriteType.standard => database.rulesDao
-          .queryProfileAddedRules(profileId)
-          .get(),
-      OverwriteType.custom => database.rulesDao
-          .queryProfileCustomRules(profileId)
-          .get(),
+      OverwriteType.standard =>
+        database.rulesDao.queryProfileAddedRules(profileId).get(),
+      OverwriteType.custom =>
+        database.rulesDao.queryProfileCustomRules(profileId).get(),
       OverwriteType.script => Future<List<Rule>>.error(
-          StateError('Script overwrite does not support quick routing rules'),
-        ),
+        StateError('Script overwrite does not support quick routing rules'),
+      ),
     };
   }
 
-  Rule? _findExistingRule(
-    List<Rule> rules,
-    QuickRoutingCandidate candidate,
-  ) {
+  Rule? _findExistingRule(List<Rule> rules, QuickRoutingCandidate candidate) {
     for (final rule in rules) {
       if (rule.ruleAction == candidate.ruleAction &&
           rule.content == candidate.content &&
@@ -378,9 +359,7 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         await database.rulesDao.delRules([rule.id]);
       }
       _invalidateRuleState(profileId, overwriteType);
-      await ref
-          .read(setupActionProvider.notifier)
-          .applyProfile(force: true);
+      await ref.read(setupActionProvider.notifier).applyProfile(force: true);
     } catch (error, stackTrace) {
       commonPrint.log(
         'quick routing rollback failed: ${compactError(error)}, $stackTrace',
@@ -389,10 +368,7 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
     }
   }
 
-  void _invalidateRuleState(
-    int profileId,
-    OverwriteType overwriteType,
-  ) {
+  void _invalidateRuleState(int profileId, OverwriteType overwriteType) {
     ref.invalidate(setupStateProvider(profileId));
     switch (overwriteType) {
       case OverwriteType.standard:
@@ -451,9 +427,9 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
   }
 
   void _handleSubmit() {
-    Navigator.of(context).pop(
-      QuickRoutingSelection(candidate: _candidate, target: _target),
-    );
+    Navigator.of(
+      context,
+    ).pop(QuickRoutingSelection(candidate: _candidate, target: _target));
   }
 
   @override
@@ -477,10 +453,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
             label: Text(appLocalizations.ruleName),
             dropdownMenuEntries: [
               for (final candidate in widget.candidates)
-                DropdownMenuEntry(
-                  value: candidate,
-                  label: candidate.label,
-                ),
+                DropdownMenuEntry(value: candidate, label: candidate.label),
             ],
             onSelected: (candidate) {
               if (candidate == null) {

@@ -51,10 +51,7 @@ void main() {
       }
 
       expect(candidate(RuleAction.DOMAIN).content, 'api.example.com');
-      expect(
-        candidate(RuleAction.DOMAIN_SUFFIX).content,
-        'api.example.com',
-      );
+      expect(candidate(RuleAction.DOMAIN_SUFFIX).content, 'api.example.com');
       expect(candidate(RuleAction.IP_CIDR).content, '1.1.1.1/32');
       expect(candidate(RuleAction.IP_CIDR).noResolve, isTrue);
       expect(candidate(RuleAction.PROCESS_NAME).content, 'com.example.app');
@@ -68,10 +65,7 @@ void main() {
 
     test('normalizes bracketed IPv6 and removes duplicate IP choices', () {
       final candidates = buildQuickRoutingCandidates(
-        trackerInfo(
-          host: '[2001:db8::1]:443',
-          destinationIP: '2001:db8::1',
-        ),
+        trackerInfo(host: '[2001:db8::1]:443', destinationIP: '2001:db8::1'),
       );
 
       expect(
@@ -103,10 +97,11 @@ void main() {
 
     test('prefers a policy group already present in the connection chain', () {
       final info = trackerInfo(chains: const ['Proxy', 'Hong Kong']);
-      final target = pickQuickRoutingTarget(
-        info,
-        const ['DIRECT', 'REJECT', 'Proxy'],
-      );
+      final target = pickQuickRoutingTarget(info, const [
+        'DIRECT',
+        'REJECT',
+        'Proxy',
+      ]);
 
       expect(target, 'Proxy');
     });
