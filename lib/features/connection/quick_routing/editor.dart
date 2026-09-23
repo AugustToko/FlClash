@@ -282,6 +282,9 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
   }
 
   Group? _computedGroupForTarget() {
+    if (!_lifetime.isRuntime) {
+      return null;
+    }
     for (final group in widget.groups) {
       if (group.name == _target &&
           group.type.isComputedSelected &&
@@ -320,6 +323,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
         _groupOverrideMode == QuickRoutingGroupOverrideMode.unchanged) {
       return null;
     }
+    final currentFixed = widget.fixedStates[group.name] ?? '';
     final desired = switch (_groupOverrideMode) {
       QuickRoutingGroupOverrideMode.automatic => '',
       QuickRoutingGroupOverrideMode.fixed => _fixedProxy?.trim() ?? '',
@@ -327,7 +331,8 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
     };
     return QuickRoutingGroupOverride(
       groupName: group.name,
-      previousFixed: widget.fixedStates[group.name] ?? '',
+      previousFixed: currentFixed,
+      expectedFixed: currentFixed,
       desiredFixed: desired,
     );
   }
@@ -530,6 +535,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                       onSelected: (_) {
                         setState(() {
                           _lifetime = lifetime;
+                          _resetGroupOverride();
                         });
                       },
                     ),
@@ -562,7 +568,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                         Text(
                           '${appLocalizations.proxyGroup}: '
                           '${groupOverride.groupName} · '
-                          '${groupOverride.previousFixed.isEmpty ? appLocalizations.auto : groupOverride.previousFixed}'
+                          '${groupOverride.expectedFixed.isEmpty ? appLocalizations.auto : groupOverride.expectedFixed}'
                           ' → '
                           '${groupOverride.desiredFixed.isEmpty ? appLocalizations.auto : groupOverride.desiredFixed}',
                         ),
