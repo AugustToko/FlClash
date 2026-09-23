@@ -245,7 +245,7 @@ class ApplicationState extends ConsumerState<Application> {
     commonPrint.log('connectivityChanged ${results.toString()}');
     unawaited(systemDnsCoordinator?.resync() ?? Future.value());
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
-    await _clearNetworkRoutingRulesIfNeeded(results);
+    unawaited(_clearNetworkRoutingRulesIfNeeded(results));
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
       ref.read(checkIpNumProvider.notifier).add();
