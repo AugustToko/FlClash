@@ -211,7 +211,9 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
     if (position == -1) {
       return false;
     }
-    final targetPosition = (position + offset).clamp(0, indexes.length - 1);
+    final targetPosition = (position + offset)
+        .clamp(0, indexes.length - 1)
+        .toInt();
     if (targetPosition == position) {
       return false;
     }
