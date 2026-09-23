@@ -1,13 +1,17 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
-import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/quick_routing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
+class _TestCommonAction extends CommonAction {
+  @override
+  Future<void> updateTraffic() async {}
+}
+
 class _TestSetupAction extends SetupAction {
-  Object? stopError;
+  Error? stopError;
 
   @override
   Future<bool> setCoreRunning(bool running) async {
@@ -31,7 +35,10 @@ void main() {
   setUp(() {
     action = _TestSetupAction();
     container = ProviderContainer(
-      overrides: [setupActionProvider.overrideWith(() => action)],
+      overrides: [
+        setupActionProvider.overrideWith(() => action),
+        commonActionProvider.overrideWith(_TestCommonAction.new),
+      ],
     );
     container.read(setupActionProvider.notifier);
   });
