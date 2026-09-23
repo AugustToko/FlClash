@@ -7,6 +7,7 @@ class CoreRuleMatchResult {
   final String ruleType;
   final String payload;
   final String target;
+  final List<String> policyChain;
   final List<String> providerNames;
   final String resolvedIP;
   final bool complete;
@@ -19,6 +20,7 @@ class CoreRuleMatchResult {
     required this.ruleType,
     required this.payload,
     required this.target,
+    required this.policyChain,
     required this.providerNames,
     required this.resolvedIP,
     required this.complete,
@@ -40,6 +42,7 @@ class CoreRuleMatchResult {
       ruleType: json['ruleType'] as String? ?? '',
       payload: json['payload'] as String? ?? '',
       target: json['target'] as String? ?? '',
+      policyChain: strings(json['policyChain']),
       providerNames: strings(json['providerNames']),
       resolvedIP: json['resolvedIP'] as String? ?? '',
       complete: json['complete'] as bool? ?? false,
@@ -56,6 +59,10 @@ class CoreRuleMatchResult {
     }
     return '$ruleType($payload)';
   }
+
+  String get policyText => policyChain.join(' → ');
+
+  String get finalPolicy => policyChain.isEmpty ? target : policyChain.last;
 }
 
 extension CoreControllerRuleMatchExt on CoreController {
