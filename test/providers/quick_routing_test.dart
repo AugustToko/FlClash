@@ -375,8 +375,8 @@ void main() {
         buildQuickRoutingGroupOverrideTransitions(
           previous: previous,
           next: next,
-        ).toSet(),
-        const {
+        ),
+        unorderedEquals(const [
           QuickRoutingGroupOverrideTransition(
             profileId: 1,
             groupName: 'Auto',
@@ -389,7 +389,7 @@ void main() {
             expectedFixed: '',
             targetFixed: 'JP-01',
           ),
-        },
+        ]),
       );
     });
   });
