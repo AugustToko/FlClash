@@ -235,6 +235,7 @@ void main() {
         ),
         const [
           QuickRoutingGroupOverrideTransition(
+            profileId: 1,
             groupName: 'Auto',
             expectedFixed: '',
             targetFixed: 'HK-01',
@@ -282,6 +283,7 @@ void main() {
         ),
         const [
           QuickRoutingGroupOverrideTransition(
+            profileId: 1,
             groupName: 'Auto',
             expectedFixed: 'HK-01',
             targetFixed: 'JP-01',
@@ -297,6 +299,7 @@ void main() {
         ),
         const [
           QuickRoutingGroupOverrideTransition(
+            profileId: 1,
             groupName: 'Auto',
             expectedFixed: 'JP-01',
             targetFixed: '',
@@ -328,11 +331,65 @@ void main() {
         ),
         const [
           QuickRoutingGroupOverrideTransition(
+            profileId: 1,
             groupName: 'Auto',
             expectedFixed: 'HK-01',
             targetFixed: '',
           ),
         ],
+      );
+    });
+
+    test('the same group name stays isolated between profiles', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(quickRoutingRulesProvider.notifier);
+      final previous = container.read(quickRoutingRulesProvider);
+
+      put(
+        notifier,
+        value: rule(id: 10, content: 'one.example', target: 'Auto'),
+        lifetime: QuickRoutingLifetime.session,
+        profileId: 1,
+        groupOverride: initialOverride,
+      );
+      put(
+        notifier,
+        value: rule(id: 20, content: 'two.example', target: 'Auto'),
+        lifetime: QuickRoutingLifetime.session,
+        profileId: 2,
+        groupOverride: const QuickRoutingGroupOverride(
+          groupName: 'Auto',
+          previousFixed: '',
+          expectedFixed: '',
+          desiredFixed: 'JP-01',
+        ),
+      );
+      final next = container.read(quickRoutingRulesProvider);
+
+      expect(
+        next.where((entry) => entry.groupOverride != null),
+        hasLength(2),
+      );
+      expect(
+        buildQuickRoutingGroupOverrideTransitions(
+          previous: previous,
+          next: next,
+        ).toSet(),
+        const {
+          QuickRoutingGroupOverrideTransition(
+            profileId: 1,
+            groupName: 'Auto',
+            expectedFixed: '',
+            targetFixed: 'HK-01',
+          ),
+          QuickRoutingGroupOverrideTransition(
+            profileId: 2,
+            groupName: 'Auto',
+            expectedFixed: '',
+            targetFixed: 'JP-01',
+          ),
+        },
       );
     });
   });
