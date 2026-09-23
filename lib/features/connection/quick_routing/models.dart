@@ -98,22 +98,6 @@ class QuickRoutingValidation {
 }
 
 @immutable
-class QuickRoutingGroupOverride {
-  final String groupName;
-  final String previousFixed;
-  final String desiredFixed;
-
-  const QuickRoutingGroupOverride({
-    required this.groupName,
-    required this.previousFixed,
-    required this.desiredFixed,
-  });
-
-  bool get changes => previousFixed != desiredFixed;
-  bool get clearsFixed => desiredFixed.isEmpty;
-}
-
-@immutable
 class QuickRoutingSelection {
   final QuickRoutingCandidate candidate;
   final String target;
