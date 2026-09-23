@@ -24,6 +24,79 @@ extension QuickRoutingLifetimeExt on QuickRoutingLifetime {
   bool get isRuntime => this != QuickRoutingLifetime.permanent;
 }
 
+class QuickRoutingGroupOverride {
+  final String groupName;
+  final String previousFixed;
+  final String expectedFixed;
+  final String desiredFixed;
+
+  const QuickRoutingGroupOverride({
+    required this.groupName,
+    required this.previousFixed,
+    required this.expectedFixed,
+    required this.desiredFixed,
+  });
+
+  bool get changes => expectedFixed != desiredFixed;
+  bool get clearsFixed => desiredFixed.isEmpty;
+
+  QuickRoutingGroupOverride copyWith({
+    String? groupName,
+    String? previousFixed,
+    String? expectedFixed,
+    String? desiredFixed,
+  }) {
+    return QuickRoutingGroupOverride(
+      groupName: groupName ?? this.groupName,
+      previousFixed: previousFixed ?? this.previousFixed,
+      expectedFixed: expectedFixed ?? this.expectedFixed,
+      desiredFixed: desiredFixed ?? this.desiredFixed,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is QuickRoutingGroupOverride &&
+            groupName == other.groupName &&
+            previousFixed == other.previousFixed &&
+            expectedFixed == other.expectedFixed &&
+            desiredFixed == other.desiredFixed;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    groupName,
+    previousFixed,
+    expectedFixed,
+    desiredFixed,
+  );
+}
+
+class QuickRoutingGroupOverrideTransition {
+  final String groupName;
+  final String expectedFixed;
+  final String targetFixed;
+
+  const QuickRoutingGroupOverrideTransition({
+    required this.groupName,
+    required this.expectedFixed,
+    required this.targetFixed,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is QuickRoutingGroupOverrideTransition &&
+            groupName == other.groupName &&
+            expectedFixed == other.expectedFixed &&
+            targetFixed == other.targetFixed;
+  }
+
+  @override
+  int get hashCode => Object.hash(groupName, expectedFixed, targetFixed);
+}
+
 class QuickRoutingRuleEntry {
   final int profileId;
   final Rule rule;
@@ -34,6 +107,7 @@ class QuickRoutingRuleEntry {
   final String sourceDesc;
   final String previousRule;
   final List<String> previousChains;
+  final QuickRoutingGroupOverride? groupOverride;
 
   const QuickRoutingRuleEntry({
     required this.profileId,
@@ -45,6 +119,7 @@ class QuickRoutingRuleEntry {
     required this.sourceDesc,
     required this.previousRule,
     required this.previousChains,
+    this.groupOverride,
   });
 
   factory QuickRoutingRuleEntry.create({
@@ -55,6 +130,7 @@ class QuickRoutingRuleEntry {
     required String sourceDesc,
     required String previousRule,
     required List<String> previousChains,
+    QuickRoutingGroupOverride? groupOverride,
     DateTime? now,
   }) {
     if (!lifetime.isRuntime) {
@@ -72,6 +148,24 @@ class QuickRoutingRuleEntry {
       sourceDesc: sourceDesc,
       previousRule: previousRule,
       previousChains: List.unmodifiable(previousChains),
+      groupOverride: groupOverride,
+    );
+  }
+
+  QuickRoutingRuleEntry copyWithGroupOverride(
+    QuickRoutingGroupOverride? value,
+  ) {
+    return QuickRoutingRuleEntry(
+      profileId: profileId,
+      rule: rule,
+      lifetime: lifetime,
+      createdAt: createdAt,
+      expiresAt: expiresAt,
+      sourceId: sourceId,
+      sourceDesc: sourceDesc,
+      previousRule: previousRule,
+      previousChains: previousChains,
+      groupOverride: value,
     );
   }
 
@@ -113,6 +207,64 @@ bool quickRoutingRulesHaveSameMatcher(Rule first, Rule second) {
     rules: rules,
     addedRules: [...runtimeRules, ...addedRules],
   );
+}
+
+Map<String, QuickRoutingGroupOverride> _quickRoutingGroupOverrides(
+  Iterable<QuickRoutingRuleEntry> entries, {
+  DateTime? now,
+  bool includeExpired = true,
+}) {
+  final current = now ?? DateTime.now();
+  final values = <String, QuickRoutingGroupOverride>{};
+  for (final entry in entries) {
+    if (!includeExpired && entry.isExpired(current)) {
+      continue;
+    }
+    final override = entry.groupOverride;
+    if (override != null) {
+      values.putIfAbsent(override.groupName, () => override);
+    }
+  }
+  return values;
+}
+
+List<QuickRoutingGroupOverrideTransition>
+    buildQuickRoutingGroupOverrideTransitions({
+  required Iterable<QuickRoutingRuleEntry> previous,
+  required Iterable<QuickRoutingRuleEntry> next,
+  DateTime? now,
+}) {
+  final previousOverrides = _quickRoutingGroupOverrides(previous);
+  final nextOverrides = _quickRoutingGroupOverrides(
+    next,
+    now: now,
+    includeExpired: false,
+  );
+  final groupNames = <String>{
+    ...previousOverrides.keys,
+    ...nextOverrides.keys,
+  };
+  final transitions = <QuickRoutingGroupOverrideTransition>[];
+  for (final groupName in groupNames) {
+    final before = previousOverrides[groupName];
+    final after = nextOverrides[groupName];
+    if (before == after) {
+      continue;
+    }
+    final expected = before?.desiredFixed ?? after!.expectedFixed;
+    final target = after?.desiredFixed ?? before!.previousFixed;
+    if (expected == target) {
+      continue;
+    }
+    transitions.add(
+      QuickRoutingGroupOverrideTransition(
+        groupName: groupName,
+        expectedFixed: expected,
+        targetFixed: target,
+      ),
+    );
+  }
+  return List.unmodifiable(transitions);
 }
 
 class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
@@ -161,6 +313,7 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
     required String sourceDesc,
     required String previousRule,
     required List<String> previousChains,
+    QuickRoutingGroupOverride? groupOverride,
     DateTime? now,
   }) {
     final current = now ?? DateTime.now();
@@ -175,6 +328,21 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
     final normalizedRule = existingIndex == -1
         ? rule
         : rule.copyWith(id: entries[existingIndex].rule.id);
+
+    var normalizedOverride = groupOverride;
+    if (normalizedOverride != null) {
+      for (var index = 0; index < entries.length; index++) {
+        final existingOverride = entries[index].groupOverride;
+        if (existingOverride?.groupName != normalizedOverride.groupName) {
+          continue;
+        }
+        normalizedOverride = normalizedOverride.copyWith(
+          previousFixed: existingOverride!.previousFixed,
+        );
+        entries[index] = entries[index].copyWithGroupOverride(null);
+      }
+    }
+
     final entry = QuickRoutingRuleEntry.create(
       profileId: profileId,
       rule: normalizedRule,
@@ -183,10 +351,15 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
       sourceDesc: sourceDesc,
       previousRule: previousRule,
       previousChains: previousChains,
+      groupOverride: normalizedOverride,
       now: current,
     );
     if (existingIndex != -1) {
-      entries.removeAt(existingIndex);
+      entries.removeWhere(
+        (value) =>
+            value.profileId == profileId &&
+            quickRoutingRulesHaveSameMatcher(value.rule, rule),
+      );
     }
     entries.insert(0, entry);
     state = List.unmodifiable(entries);
