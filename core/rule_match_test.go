@@ -49,18 +49,7 @@ func TestBuildRuleMatchMetadata(t *testing.T) {
 	}
 }
 
-func TestHandleRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.T) {
-	previousMode := tunnel.Mode()
-	previousRules := append([]C.Rule(nil), tunnel.Rules()...)
-	previousProxies := tunnel.Proxies()
-	previousProviders := tunnel.ProvidersSnapshot()
-	previousRuleProviders := tunnel.RuleProvidersSnapshot()
-	t.Cleanup(func() {
-		tunnel.SetMode(previousMode)
-		tunnel.UpdateRules(previousRules, nil, previousRuleProviders)
-		tunnel.UpdateProxies(previousProxies, previousProviders)
-	})
-
+func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.T) {
 	domainRule, err := R.ParseRule(
 		"DOMAIN-SUFFIX",
 		"example.com",
@@ -76,20 +65,21 @@ func TestHandleRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.T)
 		t.Fatalf("parse fallback rule: %v", err)
 	}
 	wrapped := RW.NewRuleWrapper(domainRule)
-	tunnel.UpdateRules([]C.Rule{wrapped, fallbackRule}, nil, nil)
-	tunnel.UpdateProxies(map[string]C.Proxy{
-		"Proxy":  namedProxy("Proxy"),
-		"DIRECT": namedProxy("DIRECT"),
-	}, nil)
-	tunnel.SetMode(tunnel.Rule)
-
-	result, methodErr := handleRuleMatch(&RuleMatchMetadata{
-		Network:         "tcp",
-		Host:            "api.example.com",
-		DestinationPort: "443",
-	})
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "tcp",
+			Host:            "api.example.com",
+			DestinationPort: "443",
+		},
+		tunnel.Rule,
+		[]C.Rule{wrapped, fallbackRule},
+		map[string]C.Proxy{
+			"Proxy":  namedProxy("Proxy"),
+			"DIRECT": namedProxy("DIRECT"),
+		},
+	)
 	if methodErr != nil {
-		t.Fatalf("handleRuleMatch: %v", methodErr)
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
 	}
 	if !result.Matched {
 		t.Fatal("compiled rule did not match")
@@ -112,24 +102,40 @@ func TestHandleRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.T)
 	}
 }
 
-func TestHandleRuleMatchReportsDirectModeWithoutScanningRules(t *testing.T) {
-	previousMode := tunnel.Mode()
-	t.Cleanup(func() { tunnel.SetMode(previousMode) })
-	tunnel.SetMode(tunnel.Direct)
-
-	result, methodErr := handleRuleMatch(&RuleMatchMetadata{
-		Network:         "udp",
-		DestinationIP:   "1.1.1.1",
-		DestinationPort: "53",
-	})
+func TestEvaluateRuleMatchReportsDirectModeWithoutScanningRules(t *testing.T) {
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "udp",
+			DestinationIP:   "1.1.1.1",
+			DestinationPort: "53",
+		},
+		tunnel.Direct,
+		nil,
+		nil,
+	)
 	if methodErr != nil {
-		t.Fatalf("handleRuleMatch: %v", methodErr)
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
 	}
 	if result.Mode != "direct" || result.Target != "DIRECT" {
 		t.Fatalf("direct result = %#v", result)
 	}
 	if result.Matched || result.RuleIndex != -1 {
 		t.Fatalf("direct mode should not report a rule: %#v", result)
+	}
+}
+
+func TestEvaluateRuleMatchRejectsInvalidMetadata(t *testing.T) {
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{Network: "quic"},
+		tunnel.Rule,
+		nil,
+		nil,
+	)
+	if result != nil {
+		t.Fatalf("invalid metadata returned a result: %#v", result)
+	}
+	if methodErr == nil || methodErr.Code != "invalid_arguments" {
+		t.Fatalf("method error = %#v, want invalid_arguments", methodErr)
 	}
 }
 
