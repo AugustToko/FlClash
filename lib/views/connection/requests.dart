@@ -114,6 +114,9 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                     detailTitle: appLocalizations.details(
                       appLocalizations.request,
                     ),
+                    trailingBuilder: (trackerInfo) {
+                      return QuickRoutingButton(trackerInfo: trackerInfo);
+                    },
                   ),
                 ),
               ),
