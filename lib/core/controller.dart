@@ -10,6 +10,8 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
+part 'rule_match.dart';
+
 @visibleForTesting
 Map<String, String> extractProxyGroupFixedStates(ProxiesData data) {
   final values = <String, String>{};
