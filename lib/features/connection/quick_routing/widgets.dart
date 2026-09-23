@@ -39,6 +39,27 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
     final groups = ref.read(groupsProvider);
     final targets = buildQuickRoutingTargets(groups);
     final overwriteType = ref.read(overwriteTypeProvider(profileId));
+    final knownRules = <Rule>[
+      ...ref
+          .read(quickRoutingRulesProvider.notifier)
+          .activeRulesFor(profileId),
+    ];
+    if (overwriteType != OverwriteType.script) {
+      try {
+        knownRules.addAll(
+          await _readPermanentRules(profileId, overwriteType),
+        );
+      } catch (error, stackTrace) {
+        commonPrint.log(
+          'quick routing explanation rules unavailable: '
+          '${compactError(error)}, $stackTrace',
+          logLevel: LogLevel.warning,
+        );
+      }
+    }
+    if (!mounted) {
+      return;
+    }
     final lifetimes = QuickRoutingLifetime.values
         .where(
           (lifetime) =>
@@ -51,6 +72,7 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         candidates: candidates,
         targets: targets,
         lifetimes: lifetimes,
+        knownRules: List.unmodifiable(knownRules),
         recentRequests: ref.read(requestsProvider).list,
         initialTarget: pickQuickRoutingTarget(
           widget.trackerInfo,
@@ -226,6 +248,7 @@ class _QuickRoutingDialog extends StatefulWidget {
   final List<QuickRoutingCandidate> candidates;
   final List<String> targets;
   final List<QuickRoutingLifetime> lifetimes;
+  final List<Rule> knownRules;
   final List<TrackerInfo> recentRequests;
   final String initialTarget;
 
@@ -234,6 +257,7 @@ class _QuickRoutingDialog extends StatefulWidget {
     required this.candidates,
     required this.targets,
     required this.lifetimes,
+    required this.knownRules,
     required this.recentRequests,
     required this.initialTarget,
   });
@@ -277,10 +301,17 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
         widget.recentRequests,
       ),
     );
+    final analysis = buildQuickRoutingRuleAnalysis(
+      candidate: _candidate,
+      target: _target,
+      trackerInfo: widget.trackerInfo,
+      knownRules: widget.knownRules,
+    );
     final nextRule = _candidate.buildRule(
       target: _target,
       id: -1,
     );
+    final equivalentRule = analysis.equivalentRule;
     return CommonDialog(
       title: appLocalizations.addRule,
       actions: [
@@ -374,6 +405,25 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                   ),
                   const Divider(),
                   Text('→ ${nextRule.rawValue}'),
+                  if (equivalentRule != null)
+                    Text(
+                      '${appLocalizations.edit}: '
+                      '${equivalentRule.rawValue}',
+                    ),
+                  if (equivalentRule != null)
+                    Text(
+                      equivalentRule.ruleTarget == _target
+                          ? '${appLocalizations.selected}: $_target'
+                          : '${appLocalizations.update}: '
+                                '${equivalentRule.ruleTarget ?? ''} → $_target',
+                    ),
+                  if (analysis.matchingKnownRuleCount > 0)
+                    Text(
+                      '${appLocalizations.rules}: '
+                      '${analysis.matchingKnownRuleCount}',
+                    ),
+                  if (analysis.targetAlreadyInChain)
+                    Text('${appLocalizations.selected}: $_target'),
                   Text(
                     '${appLocalizations.requests}: ${impact.requestCount}',
                   ),
