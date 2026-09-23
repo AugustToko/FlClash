@@ -351,10 +351,19 @@ class SetupAction extends _$SetupAction {
     if (scriptContent?.isNotEmpty == true) {
       rawConfig = await handleEvaluate(scriptContent!, rawConfig);
     }
+    final runtimeRules = ref
+        .read(quickRoutingRulesProvider.notifier)
+        .activeRulesFor(profileId);
+    final mergedRules = mergeQuickRoutingRules(
+      overwriteType: setupState.overwriteType,
+      runtimeRules: runtimeRules,
+      rules: rules,
+      addedRules: addedRules,
+    );
     final directory = await appPath.profilesPath;
     final res = makeRealProfileTask(
       MakeRealProfileState(
-        rules: rules,
+        rules: mergedRules.rules,
         proxyGroups: proxyGroups,
         profilesPath: directory,
         profileId: profileId,
@@ -362,7 +371,7 @@ class SetupAction extends _$SetupAction {
         realPatchConfig: realPatchConfig,
         overrideDns: overrideDns,
         appendSystemDns: appendSystemDns,
-        addedRules: addedRules,
+        addedRules: mergedRules.addedRules,
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
         matchTarget: setupState.matchTarget,
