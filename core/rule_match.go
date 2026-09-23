@@ -308,8 +308,11 @@ func probeMatchedAdapter(
 	return false, false
 }
 
-func handleRuleMatch(
+func evaluateRuleMatch(
 	params *RuleMatchMetadata,
+	mode tunnel.TunnelMode,
+	rules []C.Rule,
+	proxies map[string]C.Proxy,
 ) (*RuleMatchResult, *MethodError) {
 	metadata, err := buildRuleMatchMetadata(params)
 	if err != nil {
@@ -329,12 +332,6 @@ func handleRuleMatch(
 		result.addWarning("special-rules-not-expanded")
 		return result, nil
 	}
-
-	configMu.Lock()
-	mode := tunnel.Mode()
-	rules := append([]C.Rule(nil), tunnel.Rules()...)
-	proxies := tunnel.AllProxies()
-	configMu.Unlock()
 
 	switch mode {
 	case tunnel.Direct:
@@ -409,6 +406,17 @@ func handleRuleMatch(
 		result.ResolvedIP = metadata.DstIP.String()
 	}
 	return result, nil
+}
+
+func handleRuleMatch(
+	params *RuleMatchMetadata,
+) (*RuleMatchResult, *MethodError) {
+	configMu.Lock()
+	mode := tunnel.Mode()
+	rules := append([]C.Rule(nil), tunnel.Rules()...)
+	proxies := tunnel.AllProxies()
+	configMu.Unlock()
+	return evaluateRuleMatch(params, mode, rules, proxies)
 }
 
 func init() {
