@@ -154,16 +154,36 @@ class ApplicationState extends ConsumerState<Application> {
     if (previousSignature == null || previousSignature == nextSignature) {
       return;
     }
-    final changed = ref
-        .read(quickRoutingRulesProvider.notifier)
-        .clearNetworkBound();
-    if (!changed || ref.read(runTimeProvider) == null) {
+    final snapshot = ref.read(quickRoutingRulesProvider);
+    final notifier = ref.read(quickRoutingRulesProvider.notifier);
+    if (!notifier.clearNetworkBound() || ref.read(runTimeProvider) == null) {
       return;
     }
-    final applied = await ref
-        .read(setupActionProvider.notifier)
-        .applyProfile(force: true, silence: true);
-    if (!applied) {
+    try {
+      final applied = await ref
+          .read(setupActionProvider.notifier)
+          .applyProfile(force: true, silence: true);
+      if (!applied) {
+        throw StateError('Failed to clear network quick routing rules');
+      }
+    } catch (error, stackTrace) {
+      notifier.replaceAll(snapshot);
+      try {
+        await ref
+            .read(setupActionProvider.notifier)
+            .applyProfile(force: true, silence: true);
+      } catch (rollbackError, rollbackStackTrace) {
+        commonPrint.log(
+          'network quick routing rollback failed: '
+          '${compactError(rollbackError)}, $rollbackStackTrace',
+          logLevel: LogLevel.error,
+        );
+      }
+      commonPrint.log(
+        'network quick routing cleanup failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
       dialogs.showNotifier(
         currentAppLocalizations.databaseWriteFailedTip,
         level: MessageLevel.error,
