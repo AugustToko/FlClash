@@ -1,5 +1,116 @@
 part of '../quick_routing.dart';
 
+class QuickRoutingPolicyChainPreview {
+  final List<String> nodes;
+  final bool complete;
+  final bool automatic;
+
+  QuickRoutingPolicyChainPreview({
+    required Iterable<String> nodes,
+    required this.complete,
+    this.automatic = false,
+  }) : nodes = List.unmodifiable(nodes);
+
+  List<String> displayNodes(String automaticLabel) {
+    return List.unmodifiable([
+      ...nodes,
+      if (automatic) automaticLabel,
+    ]);
+  }
+}
+
+List<String> normalizeQuickRoutingHistoricalPolicyChain(
+  Iterable<String> values,
+) {
+  final nodes = values
+      .map((value) => value.trim())
+      .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+  return List.unmodifiable(nodes.reversed);
+}
+
+QuickRoutingPolicyChainPreview buildQuickRoutingPolicyChainPreview({
+  required String target,
+  required Iterable<Group> groups,
+  Map<String, String> fixedStates = const {},
+  QuickRoutingGroupOverride? groupOverride,
+}) {
+  final groupsByName = <String, Group>{
+    for (final group in groups) group.name: group,
+  };
+  final nodes = <String>[];
+  final visited = <String>{};
+  var current = target.trim();
+
+  for (var depth = 0; current.isNotEmpty && depth < 32; depth++) {
+    if (!visited.add(current)) {
+      return QuickRoutingPolicyChainPreview(
+        nodes: nodes,
+        complete: false,
+      );
+    }
+    nodes.add(current);
+    final group = groupsByName[current];
+    if (group == null) {
+      return QuickRoutingPolicyChainPreview(
+        nodes: nodes,
+        complete: true,
+      );
+    }
+    if (group.type == GroupType.LoadBalance ||
+        group.type == GroupType.Relay) {
+      return QuickRoutingPolicyChainPreview(
+        nodes: nodes,
+        complete: false,
+      );
+    }
+
+    final override = groupOverride != null &&
+            groupOverride.groupName == group.name &&
+            groupOverride.changes
+        ? groupOverride
+        : null;
+    if (override != null) {
+      final desired = override.desiredFixed.trim();
+      if (desired.isEmpty) {
+        return QuickRoutingPolicyChainPreview(
+          nodes: nodes,
+          complete: false,
+          automatic: true,
+        );
+      }
+      current = desired;
+      continue;
+    }
+
+    if (group.type.isComputedSelected) {
+      final fixed = fixedStates[group.name]?.trim() ?? '';
+      if (fixed.isEmpty) {
+        return QuickRoutingPolicyChainPreview(
+          nodes: nodes,
+          complete: false,
+          automatic: true,
+        );
+      }
+      current = fixed;
+      continue;
+    }
+
+    current = group.now?.trim() ?? '';
+    if (current.isEmpty) {
+      return QuickRoutingPolicyChainPreview(
+        nodes: nodes,
+        complete: false,
+      );
+    }
+  }
+
+  return QuickRoutingPolicyChainPreview(
+    nodes: nodes,
+    complete: false,
+  );
+}
+
 Future<CoreRuleMatchResult?> _readCoreQuickRoutingMatch(
   WidgetRef ref,
   TrackerInfo trackerInfo,
@@ -48,6 +159,10 @@ String _quickRoutingCoreWarningLabel(
       '${appLocalizations.unknown}: ${appLocalizations.ruleTarget}',
     'rematch-target-not-expanded' =>
       '${appLocalizations.unknown}: REMATCH',
+    'policy-chain-cycle' ||
+    'policy-chain-truncated' ||
+    'policy-chain-unresolved' =>
+      '${appLocalizations.unknown}: ${appLocalizations.proxyChains}',
     _ => warning,
   };
 }
@@ -64,6 +179,12 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
       : '${result.mode.toUpperCase()} → ${result.target}';
   return [
     Text('$marker ${appLocalizations.core}: $summary'),
+    if (result.policyChain.isNotEmpty)
+      Text(
+        '${appLocalizations.proxyChains}: ${result.policyText}',
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
     if (result.providerNames.isNotEmpty)
       Text(
         '${appLocalizations.providers}: '
