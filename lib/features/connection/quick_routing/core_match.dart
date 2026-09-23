@@ -84,6 +84,12 @@ QuickRoutingPolicyChainPreview buildQuickRoutingPolicyChainPreview({
     }
 
     if (group.type.isComputedSelected) {
+      if (!fixedStates.containsKey(group.name)) {
+        return QuickRoutingPolicyChainPreview(
+          nodes: nodes,
+          complete: false,
+        );
+      }
       final fixed = fixedStates[group.name]?.trim() ?? '';
       if (fixed.isEmpty) {
         return QuickRoutingPolicyChainPreview(
