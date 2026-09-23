@@ -260,7 +260,7 @@ class _QuickRoutingRuleManagerDialogState
       entry.previousRule,
       ...entry.previousChains,
     ].where((value) => value.isNotEmpty).join(' → ');
-    final materialLocalizations = MaterialLocalizations.of(context);
+    final widgetLocalizations = WidgetsLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -294,13 +294,13 @@ class _QuickRoutingRuleManagerDialogState
                     _menuItem(
                       value: _QuickRoutingRuleManagerAction.moveUp,
                       icon: Icons.arrow_upward,
-                      label: materialLocalizations.reorderItemUp,
+                      label: widgetLocalizations.reorderItemUp,
                     ),
                   if (index + 1 < length)
                     _menuItem(
                       value: _QuickRoutingRuleManagerAction.moveDown,
                       icon: Icons.arrow_downward,
-                      label: materialLocalizations.reorderItemDown,
+                      label: widgetLocalizations.reorderItemDown,
                     ),
                   if (canPersist)
                     _menuItem(
