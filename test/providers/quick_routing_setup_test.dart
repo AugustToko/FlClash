@@ -11,7 +11,8 @@ class _TestSetupAction extends SetupAction {
 
   @override
   Future<bool> setCoreRunning(bool running) async {
-    if (!running && stopError case final error?) {
+    final error = stopError;
+    if (!running && error != null) {
       throw error;
     }
     return true;
