@@ -195,10 +195,21 @@ class ApplicationState extends ConsumerState<Application> {
       final applied = await ref
           .read(setupActionProvider.notifier)
           .applyProfile(force: true, silence: true);
+      if (!mounted) {
+        return;
+      }
       if (!applied) {
         throw StateError('Failed to clear network quick routing rules');
       }
     } catch (error, stackTrace) {
+      if (!mounted) {
+        commonPrint.log(
+          'network quick routing cleanup stopped after disposal: '
+          '${compactError(error)}, $stackTrace',
+          logLevel: LogLevel.warning,
+        );
+        return;
+      }
       notifier.replaceAll(snapshot);
       _networkSignature = previousSignature;
       if (ref.read(runTimeProvider) != null) {
@@ -213,6 +224,9 @@ class ApplicationState extends ConsumerState<Application> {
             logLevel: LogLevel.error,
           );
         }
+      }
+      if (!mounted) {
+        return;
       }
       commonPrint.log(
         'network quick routing cleanup failed: '
@@ -241,7 +255,7 @@ class ApplicationState extends ConsumerState<Application> {
 
   Future<void> _handleConnectivityChanged(
     List<ConnectivityResult> results,
-  ) async {
+  ) {
     commonPrint.log('connectivityChanged ${results.toString()}');
     unawaited(systemDnsCoordinator?.resync() ?? Future.value());
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
@@ -251,6 +265,7 @@ class ApplicationState extends ConsumerState<Application> {
       ref.read(checkIpNumProvider.notifier).add();
     }
     _preHasVpn = hasVpn;
+    return Future<void>.value();
   }
 
   @override
