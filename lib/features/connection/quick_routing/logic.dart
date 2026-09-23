@@ -1,5 +1,31 @@
 part of '../quick_routing.dart';
 
+const quickRoutingRejectDropTarget = 'REJECT-DROP';
+
+const _quickRoutingSupportedActions = <RuleAction>{
+  RuleAction.DOMAIN,
+  RuleAction.DOMAIN_SUFFIX,
+  RuleAction.IP_CIDR,
+  RuleAction.IP_CIDR6,
+  RuleAction.SRC_IP_CIDR,
+  RuleAction.GEOIP,
+  RuleAction.SRC_GEOIP,
+  RuleAction.IP_ASN,
+  RuleAction.SRC_IP_ASN,
+  RuleAction.PROCESS_NAME,
+  RuleAction.PROCESS_PATH,
+  RuleAction.UID,
+  RuleAction.NETWORK,
+  RuleAction.DST_PORT,
+  RuleAction.SRC_PORT,
+};
+
+enum _QuickRoutingKnownRuleMatch {
+  match,
+  noMatch,
+  unknown,
+}
+
 List<QuickRoutingCandidate> buildQuickRoutingCandidates(
   TrackerInfo trackerInfo,
 ) {
@@ -95,6 +121,7 @@ List<String> buildQuickRoutingTargets(Iterable<Group> groups) {
   for (final target in RuleTarget.baseTargetNames) {
     add(target);
   }
+  add(quickRoutingRejectDropTarget);
   for (final group in groups) {
     add(group.name);
   }
@@ -169,64 +196,313 @@ QuickRoutingImpact buildQuickRoutingImpact(
   );
 }
 
+QuickRoutingValidation validateQuickRoutingSelection({
+  required QuickRoutingCandidate candidate,
+  required String target,
+  QuickRoutingGroupOverride? groupOverride,
+  Iterable<Group> groups = const <Group>[],
+}) {
+  final issues = <QuickRoutingValidationIssue>[];
+  final content = candidate.content.trim();
+  final normalizedTarget = target.trim();
+
+  if (content.isEmpty) {
+    issues.add(QuickRoutingValidationIssue.emptyContent);
+  }
+  if (normalizedTarget.isEmpty) {
+    issues.add(QuickRoutingValidationIssue.emptyTarget);
+  }
+  if (!_quickRoutingSupportedActions.contains(candidate.ruleAction)) {
+    issues.add(QuickRoutingValidationIssue.unsupportedAction);
+  } else if (content.isNotEmpty) {
+    switch (candidate.ruleAction) {
+      case RuleAction.DOMAIN:
+      case RuleAction.DOMAIN_SUFFIX:
+        if (!_isValidQuickRoutingDomain(content)) {
+          issues.add(QuickRoutingValidationIssue.invalidDomain);
+        }
+      case RuleAction.IP_CIDR:
+      case RuleAction.IP_CIDR6:
+      case RuleAction.SRC_IP_CIDR:
+        if (!_isValidQuickRoutingCidr(candidate.ruleAction, content)) {
+          issues.add(QuickRoutingValidationIssue.invalidCidr);
+        }
+      case RuleAction.DST_PORT:
+      case RuleAction.SRC_PORT:
+        final port = int.tryParse(content);
+        if (port == null || port < 1 || port > 65535) {
+          issues.add(QuickRoutingValidationIssue.invalidPort);
+        }
+      case RuleAction.UID:
+        final uid = int.tryParse(content);
+        if (uid == null || uid < 0) {
+          issues.add(QuickRoutingValidationIssue.invalidUid);
+        }
+      case RuleAction.NETWORK:
+        if (!const {'tcp', 'udp'}.contains(content.toLowerCase())) {
+          issues.add(QuickRoutingValidationIssue.invalidNetwork);
+        }
+      case RuleAction.IP_ASN:
+      case RuleAction.SRC_IP_ASN:
+        if (!RegExp(r'^(?:AS)?\d+$', caseSensitive: false).hasMatch(content) ||
+            int.tryParse(_normalizeQuickRoutingAsn(content)) == 0) {
+          issues.add(QuickRoutingValidationIssue.invalidAsn);
+        }
+      case RuleAction.GEOIP:
+      case RuleAction.SRC_GEOIP:
+      case RuleAction.PROCESS_NAME:
+      case RuleAction.PROCESS_PATH:
+        break;
+      default:
+        break;
+    }
+  }
+
+  if (groupOverride != null && groupOverride.changes) {
+    Group? group;
+    for (final value in groups) {
+      if (value.name == groupOverride.groupName) {
+        group = value;
+        break;
+      }
+    }
+    final desired = groupOverride.desiredFixed;
+    final validMember = desired.isEmpty ||
+        (group?.all.any((proxy) => proxy.name == desired) ?? false);
+    if (group == null ||
+        group.name != normalizedTarget ||
+        !group.type.isComputedSelected ||
+        !validMember) {
+      issues.add(QuickRoutingValidationIssue.invalidGroupOverride);
+    }
+  }
+
+  return QuickRoutingValidation(issues: List.unmodifiable(issues));
+}
+
 QuickRoutingRuleAnalysis buildQuickRoutingRuleAnalysis({
   required QuickRoutingCandidate candidate,
   required String target,
   required TrackerInfo trackerInfo,
   required Iterable<Rule> knownRules,
 }) {
+  final rules = knownRules.toList(growable: false);
   final proposed = candidate.buildRule(target: target, id: -1);
   Rule? equivalentRule;
+  Rule? firstKnownMatch;
+  var firstKnownMatchIndex = -1;
   var matchingKnownRuleCount = 0;
-  for (final rule in knownRules) {
+  var unknownKnownRuleCount = 0;
+  var unknownRuleCountBeforeFirstMatch = 0;
+
+  for (var index = 0; index < rules.length; index++) {
+    final rule = rules[index];
     if (equivalentRule == null &&
         quickRoutingRulesHaveSameMatcher(rule, proposed)) {
       equivalentRule = rule;
     }
-    final knownCandidate = _quickRoutingCandidateFromRule(rule);
-    if (knownCandidate != null &&
-        _matchesQuickRoutingCandidate(knownCandidate, trackerInfo)) {
-      matchingKnownRuleCount++;
+    final match = _matchKnownQuickRoutingRule(rule, trackerInfo);
+    switch (match) {
+      case _QuickRoutingKnownRuleMatch.match:
+        matchingKnownRuleCount++;
+        if (firstKnownMatch == null) {
+          firstKnownMatch = rule;
+          firstKnownMatchIndex = index;
+        }
+      case _QuickRoutingKnownRuleMatch.unknown:
+        unknownKnownRuleCount++;
+        if (firstKnownMatch == null) {
+          unknownRuleCountBeforeFirstMatch++;
+        }
+      case _QuickRoutingKnownRuleMatch.noMatch:
+        break;
     }
   }
+
   return QuickRoutingRuleAnalysis(
     equivalentRule: equivalentRule,
+    firstKnownMatch: firstKnownMatch,
+    firstKnownMatchIndex: firstKnownMatchIndex,
     matchingKnownRuleCount: matchingKnownRuleCount,
+    unknownKnownRuleCount: unknownKnownRuleCount,
+    unknownRuleCountBeforeFirstMatch: unknownRuleCountBeforeFirstMatch,
     targetAlreadyInChain: trackerInfo.chains.contains(target),
   );
 }
 
-QuickRoutingCandidate? _quickRoutingCandidateFromRule(Rule rule) {
+_QuickRoutingKnownRuleMatch _matchKnownQuickRoutingRule(
+  Rule rule,
+  TrackerInfo trackerInfo,
+) {
+  if (rule.ruleAction == RuleAction.MATCH) {
+    return _QuickRoutingKnownRuleMatch.match;
+  }
   final content = rule.realContent?.trim();
   if (content == null || content.isEmpty) {
-    return null;
+    return _QuickRoutingKnownRuleMatch.unknown;
   }
-  final supported = switch (rule.ruleAction) {
-    RuleAction.DOMAIN ||
-    RuleAction.DOMAIN_SUFFIX ||
-    RuleAction.IP_CIDR ||
-    RuleAction.IP_CIDR6 ||
-    RuleAction.SRC_IP_CIDR ||
-    RuleAction.GEOIP ||
-    RuleAction.SRC_GEOIP ||
-    RuleAction.IP_ASN ||
-    RuleAction.SRC_IP_ASN ||
-    RuleAction.PROCESS_NAME ||
-    RuleAction.PROCESS_PATH ||
-    RuleAction.UID ||
-    RuleAction.NETWORK ||
-    RuleAction.DST_PORT ||
-    RuleAction.SRC_PORT => true,
-    _ => false,
-  };
-  if (!supported) {
-    return null;
+  final metadata = trackerInfo.metadata;
+  switch (rule.ruleAction) {
+    case RuleAction.DOMAIN:
+    case RuleAction.DOMAIN_SUFFIX:
+      if (_normalizeQuickRoutingHost(metadata.host).isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        _matchesQuickRoutingCandidate(
+          QuickRoutingCandidate(
+            ruleAction: rule.ruleAction,
+            content: content,
+            noResolve: rule.noResolve,
+          ),
+          trackerInfo,
+        ),
+      );
+    case RuleAction.DOMAIN_KEYWORD:
+      final host = _normalizeQuickRoutingHost(metadata.host).toLowerCase();
+      if (host.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(host.contains(content.toLowerCase()));
+    case RuleAction.DOMAIN_REGEX:
+      return _matchQuickRoutingRegex(content, metadata.host);
+    case RuleAction.DOMAIN_WILDCARD:
+      return _matchQuickRoutingWildcard(content, metadata.host);
+    case RuleAction.IP_CIDR:
+    case RuleAction.IP_CIDR6:
+      final values = [metadata.destinationIP, metadata.host]
+          .map(_normalizeQuickRoutingHost)
+          .where((value) => InternetAddress.tryParse(value) != null)
+          .toList(growable: false);
+      if (values.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(_matchesQuickRoutingAddress(content, values));
+    case RuleAction.SRC_IP_CIDR:
+      if (InternetAddress.tryParse(metadata.sourceIP) == null) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        _matchesQuickRoutingAddress(content, [metadata.sourceIP]),
+      );
+    case RuleAction.GEOIP:
+      if (metadata.destinationGeoIP.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        _containsQuickRoutingValue(metadata.destinationGeoIP, content),
+      );
+    case RuleAction.SRC_GEOIP:
+      if (metadata.sourceGeoIP.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        _containsQuickRoutingValue(metadata.sourceGeoIP, content),
+      );
+    case RuleAction.IP_ASN:
+      final asn = _normalizeQuickRoutingAsn(metadata.destinationIPASN);
+      if (asn.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(asn == _normalizeQuickRoutingAsn(content));
+    case RuleAction.SRC_IP_ASN:
+      final asn = _normalizeQuickRoutingAsn(metadata.sourceIPASN);
+      if (asn.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(asn == _normalizeQuickRoutingAsn(content));
+    case RuleAction.PROCESS_NAME:
+      if (metadata.process.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        metadata.process.toLowerCase() == content.toLowerCase(),
+      );
+    case RuleAction.PROCESS_PATH:
+      if (metadata.processPath.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        metadata.processPath.toLowerCase() == content.toLowerCase(),
+      );
+    case RuleAction.PROCESS_NAME_REGEX:
+      return _matchQuickRoutingRegex(content, metadata.process);
+    case RuleAction.PROCESS_PATH_REGEX:
+      return _matchQuickRoutingRegex(content, metadata.processPath);
+    case RuleAction.PROCESS_NAME_WILDCARD:
+      return _matchQuickRoutingWildcard(content, metadata.process);
+    case RuleAction.PROCESS_PATH_WILDCARD:
+      return _matchQuickRoutingWildcard(content, metadata.processPath);
+    case RuleAction.UID:
+      if (metadata.uid <= 0) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(metadata.uid.toString() == content);
+    case RuleAction.NETWORK:
+      if (metadata.network.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(
+        metadata.network.toLowerCase() == content.toLowerCase(),
+      );
+    case RuleAction.DST_PORT:
+      if (metadata.destinationPort.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(metadata.destinationPort == content);
+    case RuleAction.SRC_PORT:
+      if (metadata.sourcePort.isEmpty) {
+        return _QuickRoutingKnownRuleMatch.unknown;
+      }
+      return _matchResult(metadata.sourcePort == content);
+    default:
+      return _QuickRoutingKnownRuleMatch.unknown;
   }
-  return QuickRoutingCandidate(
-    ruleAction: rule.ruleAction,
-    content: content,
-    noResolve: rule.noResolve,
-  );
+}
+
+_QuickRoutingKnownRuleMatch _matchQuickRoutingRegex(
+  String pattern,
+  String value,
+) {
+  if (value.isEmpty) {
+    return _QuickRoutingKnownRuleMatch.unknown;
+  }
+  try {
+    return _matchResult(
+      RegExp(pattern, caseSensitive: false).hasMatch(value),
+    );
+  } on FormatException {
+    return _QuickRoutingKnownRuleMatch.unknown;
+  }
+}
+
+_QuickRoutingKnownRuleMatch _matchQuickRoutingWildcard(
+  String pattern,
+  String value,
+) {
+  if (value.isEmpty) {
+    return _QuickRoutingKnownRuleMatch.unknown;
+  }
+  final expression = StringBuffer('^');
+  for (final rune in pattern.runes) {
+    final character = String.fromCharCode(rune);
+    switch (character) {
+      case '*':
+        expression.write('.*');
+      case '?':
+        expression.write('.');
+      default:
+        expression.write(RegExp.escape(character));
+    }
+  }
+  expression.write(r'$');
+  return _matchQuickRoutingRegex(expression.toString(), value);
+}
+
+_QuickRoutingKnownRuleMatch _matchResult(bool value) {
+  return value
+      ? _QuickRoutingKnownRuleMatch.match
+      : _QuickRoutingKnownRuleMatch.noMatch;
 }
 
 bool _matchesQuickRoutingCandidate(
@@ -276,6 +552,54 @@ bool _matchesQuickRoutingCandidate(
     default:
       return false;
   }
+}
+
+bool _isValidQuickRoutingDomain(String value) {
+  final domain = _normalizeQuickRoutingHost(value);
+  if (domain.isEmpty ||
+      domain.length > 253 ||
+      domain.contains(RegExp(r'\s')) ||
+      domain.contains('://') ||
+      domain.contains('/') ||
+      domain.contains(',') ||
+      InternetAddress.tryParse(domain) != null) {
+    return false;
+  }
+  final labels = domain.split('.');
+  return labels.every(
+    (label) =>
+        label.isNotEmpty &&
+        label.length <= 63 &&
+        !label.startsWith('-') &&
+        !label.endsWith('-'),
+  );
+}
+
+bool _isValidQuickRoutingCidr(RuleAction action, String value) {
+  final parts = value.split('/');
+  if (parts.length != 2) {
+    return false;
+  }
+  final address = InternetAddress.tryParse(
+    _normalizeQuickRoutingHost(parts.first),
+  );
+  if (address == null) {
+    return false;
+  }
+  final maxBits = address.type == InternetAddressType.IPv6 ? 128 : 32;
+  final prefix = int.tryParse(parts[1]);
+  if (prefix == null || prefix < 0 || prefix > maxBits) {
+    return false;
+  }
+  if (action == RuleAction.IP_CIDR &&
+      address.type != InternetAddressType.IPv4) {
+    return false;
+  }
+  if (action == RuleAction.IP_CIDR6 &&
+      address.type != InternetAddressType.IPv6) {
+    return false;
+  }
+  return true;
 }
 
 bool _matchesQuickRoutingAddress(String cidr, Iterable<String> values) {
