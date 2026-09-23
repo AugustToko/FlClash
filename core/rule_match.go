@@ -278,10 +278,34 @@ func resolveRuleMatchMetadata(metadata *C.Metadata, result *RuleMatchResult) {
 
 func matchProbePassTarget(
 	adapterName string,
+	metadata *C.Metadata,
 	proxies map[string]C.Proxy,
 ) bool {
 	adapter, ok := proxies[adapterName]
-	return ok && adapter.Type() == C.PassRule
+	if !ok {
+		return false
+	}
+	for current := adapter; current != nil; current = current.Unwrap(metadata, false) {
+		if current.Type() == C.PassRule {
+			return true
+		}
+	}
+	return false
+}
+
+func probeMatchedAdapter(
+	adapter C.Proxy,
+	metadata *C.Metadata,
+) (skip bool, rematch bool) {
+	for current := adapter; current != nil; current = current.Unwrap(metadata, false) {
+		switch current.Type() {
+		case C.Pass:
+			return true, false
+		case C.Rematch:
+			return false, true
+		}
+	}
+	return false, false
 }
 
 func handleRuleMatch(
@@ -299,7 +323,6 @@ func handleRuleMatch(
 	if metadata.SpecialProxy != "" {
 		result.Mode = "special"
 		result.Target = metadata.SpecialProxy
-		result.Complete = true
 		return result, nil
 	}
 	if metadata.SpecialRules != "" {
@@ -310,6 +333,7 @@ func handleRuleMatch(
 	configMu.Lock()
 	mode := tunnel.Mode()
 	rules := append([]C.Rule(nil), tunnel.Rules()...)
+	proxies := tunnel.AllProxies()
 	configMu.Unlock()
 
 	switch mode {
@@ -323,7 +347,6 @@ func handleRuleMatch(
 		return result, nil
 	}
 
-	proxies := tunnel.AllProxies()
 	helper := C.RuleMatchHelper{
 		ResolveIP: func() {
 			resolveRuleMatchMetadata(metadata, result)
@@ -332,7 +355,7 @@ func handleRuleMatch(
 			processRuleMatchMetadata(metadata, result)
 		},
 		CheckPassRule: func(adapterName string) bool {
-			return matchProbePassTarget(adapterName, proxies)
+			return matchProbePassTarget(adapterName, metadata, proxies)
 		},
 	}
 
@@ -345,6 +368,11 @@ func handleRuleMatch(
 			result.addWarning(warning)
 			continue
 		}
+		if rule.RuleType() == C.AND ||
+			rule.RuleType() == C.OR ||
+			rule.RuleType() == C.NOT {
+			result.addWarning("compound-rule-context-partial")
+		}
 		matched, target := rule.Match(metadata, helper)
 		if !matched {
 			continue
@@ -354,7 +382,11 @@ func handleRuleMatch(
 			result.addWarning("matched-target-unavailable")
 			continue
 		}
-		if adapter.Type() == C.Pass {
+		skip, rematch := probeMatchedAdapter(adapter, metadata)
+		if skip {
+			continue
+		}
+		if metadata.NetWork == C.UDP && !adapter.SupportUDP() {
 			continue
 		}
 		result.Matched = true
@@ -362,12 +394,9 @@ func handleRuleMatch(
 		result.RuleType = rule.RuleType().String()
 		result.Payload = rule.Payload()
 		result.Target = target
-		result.ProviderNames = append([]string(nil), rule.ProviderNames()...)
-		if adapter.Type() == C.Rematch {
+		result.ProviderNames = append([]string{}, rule.ProviderNames()...)
+		if rematch {
 			result.addWarning("rematch-target-not-expanded")
-		}
-		if metadata.NetWork == C.UDP {
-			result.addWarning("udp-policy-capability-not-evaluated")
 		}
 		if metadata.DstIP.IsValid() {
 			result.ResolvedIP = metadata.DstIP.String()
