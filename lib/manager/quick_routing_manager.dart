@@ -117,7 +117,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   void _scheduleExpiry() {
     _expiryTimer?.cancel();
     _expiryTimer = null;
-    if (!_isRunning) {
+    if (!mounted || !_isRunning) {
       return;
     }
     final nextExpiry = ref.read(quickRoutingRulesProvider.notifier).nextExpiry;
@@ -132,7 +132,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   }
 
   void _purgeExpired() {
-    if (!_isRunning) {
+    if (!mounted || !_isRunning) {
       _scheduleExpiry();
       return;
     }
@@ -147,7 +147,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   }
 
   void _requestReconcile() {
-    if (!_isRunning) {
+    if (!mounted || !_isRunning) {
       return;
     }
     _reconcilePending = true;
@@ -160,12 +160,12 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   }
 
   Future<void> _drainReconcileRequests() async {
-    if (_reconciling) {
+    if (_reconciling || !mounted) {
       return;
     }
     _reconciling = true;
     try {
-      while (_reconcilePending && _isRunning) {
+      while (_reconcilePending && _isRunning && mounted) {
         _reconcilePending = false;
         var applied = false;
         try {
@@ -179,6 +179,9 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
             logLevel: LogLevel.warning,
           );
         }
+        if (!mounted) {
+          return;
+        }
         if (!applied) {
           _reconcilePending = true;
           _scheduleReconcileRetry();
@@ -190,7 +193,8 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       _scheduleExpiry();
     } finally {
       _reconciling = false;
-      if (_reconcilePending &&
+      if (mounted &&
+          _reconcilePending &&
           _isRunning &&
           _reconcileRetryTimer == null) {
         _requestReconcile();
@@ -199,7 +203,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   }
 
   void _scheduleReconcileRetry() {
-    if (!_isRunning) {
+    if (!mounted || !_isRunning) {
       return;
     }
     commonPrint.log(
@@ -209,7 +213,9 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     _reconcileRetryTimer?.cancel();
     _reconcileRetryTimer = Timer(_reconcileRetryDelay, () {
       _reconcileRetryTimer = null;
-      _requestReconcile();
+      if (mounted) {
+        _requestReconcile();
+      }
     });
   }
 
