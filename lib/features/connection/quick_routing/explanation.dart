@@ -65,3 +65,18 @@ Future<List<Rule>> _readEffectiveQuickRoutingRules({
     }
   }
 }
+
+Future<Map<String, String>> _readQuickRoutingGroupFixedStates(
+  WidgetRef ref,
+) async {
+  try {
+    return await ref.read(coreHandlerProvider).getProxyGroupFixedStates();
+  } catch (error, stackTrace) {
+    commonPrint.log(
+      'quick routing group fixed states unavailable: '
+      '${compactError(error)}, $stackTrace',
+      logLevel: LogLevel.warning,
+    );
+    return const <String, String>{};
+  }
+}
