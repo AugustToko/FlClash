@@ -109,6 +109,55 @@ void main() {
     expect(entries.single.rule.content, 'session.example');
   });
 
+  test('conditional replacement restores the exact applied state', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(quickRoutingRulesProvider.notifier);
+    final snapshot = container.read(quickRoutingRulesProvider);
+
+    put(
+      notifier,
+      value: rule(id: 10, content: 'example.com', target: 'Proxy'),
+      lifetime: QuickRoutingLifetime.session,
+    );
+    final applied = container.read(quickRoutingRulesProvider);
+    final restored = notifier.replaceAllIfCurrent(
+      expected: applied,
+      entries: snapshot,
+    );
+
+    expect(restored, isNotNull);
+    expect(container.read(quickRoutingRulesProvider), isEmpty);
+  });
+
+  test('conditional replacement refuses to overwrite newer changes', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(quickRoutingRulesProvider.notifier);
+
+    put(
+      notifier,
+      value: rule(id: 10, content: 'first.example', target: 'Proxy'),
+      lifetime: QuickRoutingLifetime.session,
+    );
+    final stale = container.read(quickRoutingRulesProvider);
+    put(
+      notifier,
+      value: rule(id: 11, content: 'second.example', target: 'DIRECT'),
+      lifetime: QuickRoutingLifetime.session,
+    );
+    final current = container.read(quickRoutingRulesProvider);
+
+    final restored = notifier.replaceAllIfCurrent(
+      expected: stale,
+      entries: const [],
+    );
+
+    expect(restored, isNull);
+    expect(container.read(quickRoutingRulesProvider), same(current));
+    expect(current, hasLength(2));
+  });
+
   group('mergeQuickRoutingRules', () {
     final runtime = rule(id: 1, content: 'runtime.example', target: 'DIRECT');
     final custom = rule(id: 2, content: 'custom.example', target: 'Proxy');
