@@ -5,10 +5,12 @@ typedef _QuickRoutingUndo = Future<bool> Function();
 class _QuickRoutingApplyResult {
   final Rule rule;
   final _QuickRoutingUndo undo;
+  final QuickRoutingGroupOverride? groupOverride;
 
   const _QuickRoutingApplyResult({
     required this.rule,
     required this.undo,
+    this.groupOverride,
   });
 }
 
@@ -343,6 +345,7 @@ Future<_QuickRoutingApplyResult> _saveAndApplyRuntimeQuickRoutingRule({
     sourceDesc: trackerInfo.desc,
     previousRule: _trackerRuleText(trackerInfo),
     previousChains: trackerInfo.chains,
+    groupOverride: selection.groupOverride,
   );
   final appliedState = ref.read(quickRoutingRulesProvider);
   try {
@@ -354,6 +357,7 @@ Future<_QuickRoutingApplyResult> _saveAndApplyRuntimeQuickRoutingRule({
     }
     return _QuickRoutingApplyResult(
       rule: entry.rule,
+      groupOverride: entry.groupOverride,
       undo: () => _undoRuntimeQuickRoutingRule(
         ref: ref,
         expected: appliedState,
@@ -411,7 +415,7 @@ Future<bool> _undoQuickRoutingGroupOverride({
     await _setQuickRoutingGroupFixedState(
       ref: ref,
       groupName: override.groupName,
-      fixedProxy: override.previousFixed,
+      fixedProxy: override.expectedFixed,
     );
     restoredGroup = true;
     final undoneRule = await baseResult.undo();
@@ -449,9 +453,19 @@ Future<_QuickRoutingApplyResult> _applyQuickRoutingGroupOverride({
   required _QuickRoutingApplyResult baseResult,
   required QuickRoutingSelection selection,
 }) async {
-  final override = selection.groupOverride;
-  if (override == null || !override.changes) {
+  final override = baseResult.groupOverride ?? selection.groupOverride;
+  if (override == null) {
     return baseResult;
+  }
+  if (!selection.lifetime.isRuntime) {
+    final undone = await baseResult.undo();
+    if (!undone) {
+      commonPrint.log(
+        'permanent quick routing group override could not undo its rule',
+        logLevel: LogLevel.error,
+      );
+    }
+    throw StateError('Automatic group overrides require a runtime lifetime');
   }
   final validation = validateQuickRoutingSelection(
     candidate: selection.candidate,
@@ -474,11 +488,24 @@ Future<_QuickRoutingApplyResult> _applyQuickRoutingGroupOverride({
   }
 
   try {
-    await _setQuickRoutingGroupFixedState(
-      ref: ref,
-      groupName: override.groupName,
-      fixedProxy: override.desiredFixed,
-    );
+    final current = await ref
+        .read(coreHandlerProvider)
+        .getProxyGroupFixedStates();
+    final currentFixed = current[override.groupName];
+    if (currentFixed == null) {
+      throw StateError('Automatic group no longer exposes fixed state');
+    }
+    if (currentFixed != override.expectedFixed &&
+        currentFixed != override.desiredFixed) {
+      throw StateError('Automatic group fixed state changed while editing');
+    }
+    if (currentFixed != override.desiredFixed) {
+      await _setQuickRoutingGroupFixedState(
+        ref: ref,
+        groupName: override.groupName,
+        fixedProxy: override.desiredFixed,
+      );
+    }
   } catch (error, stackTrace) {
     try {
       final undone = await baseResult.undo();
@@ -500,6 +527,7 @@ Future<_QuickRoutingApplyResult> _applyQuickRoutingGroupOverride({
 
   return _QuickRoutingApplyResult(
     rule: baseResult.rule,
+    groupOverride: override,
     undo: () => _undoQuickRoutingGroupOverride(
       ref: ref,
       baseResult: baseResult,
