@@ -8,11 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 class _PendingQuickRoutingGroupTransition {
+  final int profileId;
   final String groupName;
   final Set<String> acceptedFixed;
   final String targetFixed;
 
   const _PendingQuickRoutingGroupTransition({
+    required this.profileId,
     required this.groupName,
     required this.acceptedFixed,
     required this.targetFixed,
@@ -22,6 +24,7 @@ class _PendingQuickRoutingGroupTransition {
     QuickRoutingGroupOverrideTransition transition,
   ) {
     return _PendingQuickRoutingGroupTransition(
+      profileId: transition.profileId,
       groupName: transition.groupName,
       acceptedFixed: {
         transition.expectedFixed,
@@ -31,10 +34,11 @@ class _PendingQuickRoutingGroupTransition {
     );
   }
 
-  _PendingQuickRoutingGroupTransition merge(
+  _PendingQuickRoutingGroupTransition mergeTransition(
     QuickRoutingGroupOverrideTransition transition,
   ) {
     return _PendingQuickRoutingGroupTransition(
+      profileId: profileId,
       groupName: groupName,
       acceptedFixed: {
         ...acceptedFixed,
@@ -42,6 +46,20 @@ class _PendingQuickRoutingGroupTransition {
         transition.targetFixed,
       },
       targetFixed: transition.targetFixed,
+    );
+  }
+
+  _PendingQuickRoutingGroupTransition mergePending(
+    _PendingQuickRoutingGroupTransition next,
+  ) {
+    return _PendingQuickRoutingGroupTransition(
+      profileId: profileId,
+      groupName: groupName,
+      acceptedFixed: {
+        ...acceptedFixed,
+        ...next.acceptedFixed,
+      },
+      targetFixed: next.targetFixed,
     );
   }
 }
@@ -64,7 +82,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   Timer? _reconcileRetryTimer;
   Timer? _groupOverrideRetryTimer;
   final _pendingGroupTransitions =
-      <String, _PendingQuickRoutingGroupTransition>{};
+      <(int, String), _PendingQuickRoutingGroupTransition>{};
   String? _lastWifiSsid;
   bool _isRunning = false;
   bool _needsReconcileOnResume = false;
@@ -105,8 +123,15 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       currentSSIDProvider,
       (_, ssid) => _handleSsidChanged(ssid),
     );
+    ref.listenManual<int?>(currentProfileIdProvider, (_, _) {
+      _queueCurrentProfileGroupActivations();
+    });
+    ref.listenManual<List<Group>>(groupsProvider, (_, _) {
+      _queueCurrentProfileGroupActivations();
+    });
     ref.listenManual<CoreStatus>(coreStatusProvider, (_, status) {
       if (status == CoreStatus.connected) {
+        _queueCurrentProfileGroupActivations();
         _requestGroupOverrideReconcile();
       }
     });
@@ -116,6 +141,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _purgeExpired();
+      _queueCurrentProfileGroupActivations();
       _requestGroupOverrideReconcile();
     }
   }
@@ -133,6 +159,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       _requestGroupOverrideReconcile();
       return;
     }
+    _queueCurrentProfileGroupActivations();
     _requestGroupOverrideReconcile();
     if (_needsReconcileOnResume || _reconcilePending) {
       _needsReconcileOnResume = false;
@@ -277,27 +304,53 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     });
   }
 
+  void _queueCurrentProfileGroupActivations() {
+    if (!mounted) {
+      return;
+    }
+    final profileId = ref.read(currentProfileIdProvider);
+    if (profileId == null) {
+      return;
+    }
+    final entries = ref
+        .read(quickRoutingRulesProvider.notifier)
+        .activeEntriesFor(profileId);
+    _queueGroupTransitions(
+      buildQuickRoutingGroupOverrideTransitions(
+        previous: const <QuickRoutingRuleEntry>[],
+        next: entries,
+      ),
+    );
+  }
+
   void _queueGroupTransitions(
     Iterable<QuickRoutingGroupOverrideTransition> transitions,
   ) {
     for (final transition in transitions) {
-      final existing = _pendingGroupTransitions[transition.groupName];
+      final key = (transition.profileId, transition.groupName);
+      final existing = _pendingGroupTransitions[key];
       final pending = existing == null
           ? _PendingQuickRoutingGroupTransition.fromTransition(transition)
-          : existing.merge(transition);
+          : existing.mergeTransition(transition);
       if (pending.acceptedFixed.length == 1 &&
           pending.acceptedFixed.single == pending.targetFixed) {
-        _pendingGroupTransitions.remove(transition.groupName);
+        _pendingGroupTransitions.remove(key);
       } else {
-        _pendingGroupTransitions[transition.groupName] = pending;
+        _pendingGroupTransitions[key] = pending;
       }
     }
     _requestGroupOverrideReconcile();
   }
 
+  bool get _hasCurrentGroupTransitions {
+    final profileId = ref.read(currentProfileIdProvider);
+    return profileId != null &&
+        _pendingGroupTransitions.keys.any((key) => key.$1 == profileId);
+  }
+
   void _requestGroupOverrideReconcile() {
     if (!mounted ||
-        _pendingGroupTransitions.isEmpty ||
+        !_hasCurrentGroupTransitions ||
         _groupOverrideReconciling ||
         ref.read(coreStatusProvider) != CoreStatus.connected) {
       return;
@@ -311,13 +364,28 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     if (_groupOverrideReconciling || !mounted) {
       return;
     }
+    final profileId = ref.read(currentProfileIdProvider);
+    if (profileId == null) {
+      return;
+    }
     _groupOverrideReconciling = true;
     try {
-      while (_pendingGroupTransitions.isNotEmpty && mounted) {
-        final batch = Map<String, _PendingQuickRoutingGroupTransition>.from(
-          _pendingGroupTransitions,
-        );
-        _pendingGroupTransitions.clear();
+      while (mounted) {
+        if (ref.read(currentProfileIdProvider) != profileId) {
+          return;
+        }
+        final batch = <(int, String), _PendingQuickRoutingGroupTransition>{};
+        for (final entry in _pendingGroupTransitions.entries) {
+          if (entry.key.$1 == profileId) {
+            batch[entry.key] = entry.value;
+          }
+        }
+        if (batch.isEmpty) {
+          return;
+        }
+        for (final key in batch.keys) {
+          _pendingGroupTransitions.remove(key);
+        }
         try {
           final fixedStates = Map<String, String>.from(
             await ref.read(coreHandlerProvider).getProxyGroupFixedStates(),
@@ -360,17 +428,11 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
             await ref.read(proxiesActionProvider.notifier).updateGroups();
           }
         } catch (error, stackTrace) {
-          for (final transition in batch.values) {
-            final existing = _pendingGroupTransitions[transition.groupName];
-            _pendingGroupTransitions[transition.groupName] = existing == null
-                ? transition
-                : transition.merge(
-                    QuickRoutingGroupOverrideTransition(
-                      groupName: existing.groupName,
-                      expectedFixed: existing.acceptedFixed.first,
-                      targetFixed: existing.targetFixed,
-                    ),
-                  );
+          for (final entry in batch.entries) {
+            final existing = _pendingGroupTransitions[entry.key];
+            _pendingGroupTransitions[entry.key] = existing == null
+                ? entry.value
+                : entry.value.mergePending(existing);
           }
           commonPrint.log(
             'quick routing automatic group reconciliation failed: '
@@ -384,7 +446,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     } finally {
       _groupOverrideReconciling = false;
       if (mounted &&
-          _pendingGroupTransitions.isNotEmpty &&
+          _hasCurrentGroupTransitions &&
           _groupOverrideRetryTimer == null) {
         _requestGroupOverrideReconcile();
       }
