@@ -193,6 +193,38 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
     return entry;
   }
 
+  bool move(int profileId, int ruleId, int offset, {DateTime? now}) {
+    if (offset == 0) {
+      return false;
+    }
+    final current = now ?? DateTime.now();
+    final indexes = <int>[];
+    for (var index = 0; index < state.length; index++) {
+      final entry = state[index];
+      if (entry.profileId == profileId && !entry.isExpired(current)) {
+        indexes.add(index);
+      }
+    }
+    final position = indexes.indexWhere(
+      (index) => state[index].rule.id == ruleId,
+    );
+    if (position == -1) {
+      return false;
+    }
+    final targetPosition = (position + offset).clamp(0, indexes.length - 1);
+    if (targetPosition == position) {
+      return false;
+    }
+    final sourceIndex = indexes[position];
+    final targetIndex = indexes[targetPosition];
+    final next = List<QuickRoutingRuleEntry>.from(state);
+    final source = next[sourceIndex];
+    next[sourceIndex] = next[targetIndex];
+    next[targetIndex] = source;
+    state = List.unmodifiable(next);
+    return true;
+  }
+
   bool remove(int profileId, int ruleId) {
     final next = state
         .where(
