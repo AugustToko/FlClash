@@ -216,12 +216,16 @@ class _QuickRoutingRuleManagerDialogState
     switch (action) {
       case _QuickRoutingRuleManagerAction.moveUp:
         unawaited(_move(entry, -1));
+        return;
       case _QuickRoutingRuleManagerAction.moveDown:
         unawaited(_move(entry, 1));
+        return;
       case _QuickRoutingRuleManagerAction.makePermanent:
         unawaited(_makePermanent(entry));
+        return;
       case _QuickRoutingRuleManagerAction.delete:
         unawaited(_remove(entry));
+        return;
     }
   }
 
