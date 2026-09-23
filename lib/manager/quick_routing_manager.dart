@@ -76,7 +76,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       _reconcileRetryTimer = null;
       return;
     }
-    if (_needsReconcileOnResume) {
+    if (_needsReconcileOnResume || _reconcilePending) {
       _needsReconcileOnResume = false;
       _requestReconcile();
       return;
