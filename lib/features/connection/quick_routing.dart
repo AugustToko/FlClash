@@ -11,7 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 part 'quick_routing/actions.dart';
+part 'quick_routing/editor.dart';
+part 'quick_routing/explanation.dart';
 part 'quick_routing/logic.dart';
 part 'quick_routing/models.dart';
 part 'quick_routing/rules_manager.dart';
-part 'quick_routing/widgets.dart';
