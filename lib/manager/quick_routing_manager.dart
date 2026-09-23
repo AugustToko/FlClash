@@ -58,7 +58,11 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     final changed = ref
         .read(quickRoutingRulesProvider.notifier)
         .purgeExpired();
-    if (!changed || ref.read(runTimeProvider) == null) {
+    if (!changed) {
+      _scheduleExpiry();
+      return;
+    }
+    if (ref.read(runTimeProvider) == null) {
       return;
     }
     unawaited(_reconcileProfile());
