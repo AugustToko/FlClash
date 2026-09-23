@@ -318,7 +318,8 @@ bool _addressInPrefix(
     return true;
   }
   final mask = (0xff << (8 - remainingBits)) & 0xff;
-  return networkBytes[fullBytes] & mask == addressBytes[fullBytes] & mask;
+  return (networkBytes[fullBytes] & mask) ==
+      (addressBytes[fullBytes] & mask);
 }
 
 bool _containsQuickRoutingValue(
