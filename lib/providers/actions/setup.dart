@@ -166,6 +166,7 @@ class SetupAction extends _$SetupAction {
     if (!_isCurrent(request)) {
       return true;
     }
+    ref.read(quickRoutingRulesProvider.notifier).clearAll();
     resetCoreTraffic();
     ref.read(trafficsProvider.notifier).clear();
     ref.read(totalTrafficProvider.notifier).value = const Traffic();
