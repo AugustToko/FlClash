@@ -177,6 +177,32 @@ void main() {
       expect(impact.processes, ['app.a', 'app.b']);
     });
 
+    test('matches complete IPv4 CIDR ranges', () {
+      const candidate = QuickRoutingCandidate(
+        ruleAction: RuleAction.IP_CIDR,
+        content: '10.0.0.0/24',
+      );
+      final impact = buildQuickRoutingImpact(candidate, [
+        trackerInfo(id: 'a', destinationIP: '10.0.0.42'),
+        trackerInfo(id: 'b', destinationIP: '10.0.1.42'),
+      ]);
+
+      expect(impact.requestCount, 1);
+    });
+
+    test('matches complete IPv6 CIDR ranges', () {
+      const candidate = QuickRoutingCandidate(
+        ruleAction: RuleAction.IP_CIDR6,
+        content: '2001:db8::/32',
+      );
+      final impact = buildQuickRoutingImpact(candidate, [
+        trackerInfo(id: 'a', destinationIP: '2001:db8:1::1'),
+        trackerInfo(id: 'b', destinationIP: '2001:db9::1'),
+      ]);
+
+      expect(impact.requestCount, 1);
+    });
+
     test('matches normalized ASN values', () {
       const candidate = QuickRoutingCandidate(
         ruleAction: RuleAction.IP_ASN,
@@ -208,6 +234,73 @@ void main() {
 
       expect(source, hasLength(1));
       expect(source.single, same(current));
+    });
+  });
+
+  group('buildQuickRoutingRuleAnalysis', () {
+    test('finds an equivalent rule and counts known matches', () {
+      final current = trackerInfo(
+        host: 'api.example.com',
+        process: 'com.example.app',
+        chains: const ['DIRECT'],
+      );
+      const candidate = QuickRoutingCandidate(
+        ruleAction: RuleAction.DOMAIN,
+        content: 'api.example.com',
+      );
+      const equivalent = Rule(
+        id: 1,
+        ruleAction: RuleAction.DOMAIN,
+        content: 'api.example.com',
+        ruleTarget: 'Proxy',
+      );
+      final analysis = buildQuickRoutingRuleAnalysis(
+        candidate: candidate,
+        target: 'DIRECT',
+        trackerInfo: current,
+        knownRules: const [
+          equivalent,
+          Rule(
+            id: 2,
+            ruleAction: RuleAction.DOMAIN_SUFFIX,
+            content: 'example.com',
+            ruleTarget: 'Proxy',
+          ),
+          Rule(
+            id: 3,
+            ruleAction: RuleAction.PROCESS_NAME,
+            content: 'com.example.app',
+            ruleTarget: 'DIRECT',
+          ),
+        ],
+      );
+
+      expect(analysis.equivalentRule, equivalent);
+      expect(analysis.matchingKnownRuleCount, 3);
+      expect(analysis.targetAlreadyInChain, isTrue);
+      expect(analysis.targetMatchesEquivalentRule('DIRECT'), isFalse);
+      expect(analysis.targetMatchesEquivalentRule('Proxy'), isTrue);
+    });
+
+    test('ignores unsupported known rule types in the match count', () {
+      final analysis = buildQuickRoutingRuleAnalysis(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.DOMAIN,
+          content: 'example.com',
+        ),
+        target: 'DIRECT',
+        trackerInfo: trackerInfo(host: 'example.com'),
+        knownRules: const [
+          Rule(
+            id: 1,
+            ruleAction: RuleAction.MATCH,
+            ruleTarget: 'Proxy',
+          ),
+        ],
+      );
+
+      expect(analysis.equivalentRule, isNull);
+      expect(analysis.matchingKnownRuleCount, 0);
     });
   });
 }
