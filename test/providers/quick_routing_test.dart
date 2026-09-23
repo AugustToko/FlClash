@@ -22,10 +22,11 @@ void main() {
     QuickRoutingRules notifier, {
     required Rule value,
     required QuickRoutingLifetime lifetime,
+    int profileId = 1,
     DateTime? now,
   }) {
     return notifier.put(
-      profileId: 1,
+      profileId: profileId,
       rule: value,
       lifetime: lifetime,
       sourceId: 'request',
@@ -57,6 +58,51 @@ void main() {
     expect(second.rule.id, first.rule.id);
     expect(entries.single.rule.ruleTarget, 'DIRECT');
     expect(entries.single.lifetime, QuickRoutingLifetime.oneHour);
+  });
+
+  test('runtime rule priorities can move without touching other profiles', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(quickRoutingRulesProvider.notifier);
+
+    put(
+      notifier,
+      value: rule(id: 10, content: 'first.example', target: 'Proxy'),
+      lifetime: QuickRoutingLifetime.session,
+    );
+    put(
+      notifier,
+      value: rule(id: 20, content: 'other.example', target: 'Proxy'),
+      lifetime: QuickRoutingLifetime.session,
+      profileId: 2,
+    );
+    put(
+      notifier,
+      value: rule(id: 11, content: 'second.example', target: 'DIRECT'),
+      lifetime: QuickRoutingLifetime.session,
+    );
+
+    expect(
+      container
+          .read(quickRoutingRulesProvider)
+          .map((entry) => entry.rule.id),
+      [11, 20, 10],
+    );
+    expect(notifier.move(1, 10, -1), isTrue);
+    expect(
+      container
+          .read(quickRoutingRulesProvider)
+          .map((entry) => entry.rule.id),
+      [10, 20, 11],
+    );
+    expect(notifier.move(1, 10, -1), isFalse);
+    expect(notifier.move(1, 10, 1), isTrue);
+    expect(
+      container
+          .read(quickRoutingRulesProvider)
+          .map((entry) => entry.rule.id),
+      [11, 20, 10],
+    );
   });
 
   test('timed entries expire and can be purged deterministically', () {
