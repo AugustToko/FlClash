@@ -60,9 +60,14 @@ class Application extends ConsumerStatefulWidget {
 }
 
 class ApplicationState extends ConsumerState<Application> {
+  static const _networkRuleRetryDelay = Duration(seconds: 30);
+
   Timer? _autoUpdateProfilesTaskTimer;
+  Timer? _networkRuleRetryTimer;
   bool _preHasVpn = false;
+  bool _networkCleanupRunning = false;
   String? _networkSignature;
+  List<ConnectivityResult>? _pendingNetworkResults;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -148,15 +153,42 @@ class ApplicationState extends ConsumerState<Application> {
   Future<void> _clearNetworkRoutingRulesIfNeeded(
     List<ConnectivityResult> results,
   ) async {
+    _pendingNetworkResults = List<ConnectivityResult>.unmodifiable(results);
+    if (_networkCleanupRunning) {
+      return;
+    }
+    _networkCleanupRunning = true;
+    try {
+      while (mounted) {
+        final pending = _pendingNetworkResults;
+        if (pending == null) {
+          break;
+        }
+        _pendingNetworkResults = null;
+        await _processNetworkRoutingChange(pending);
+      }
+    } finally {
+      _networkCleanupRunning = false;
+    }
+  }
+
+  Future<void> _processNetworkRoutingChange(
+    List<ConnectivityResult> results,
+  ) async {
     final nextSignature = _getNetworkSignature(results);
     final previousSignature = _networkSignature;
     _networkSignature = nextSignature;
     if (previousSignature == null || previousSignature == nextSignature) {
       return;
     }
+    _networkRuleRetryTimer?.cancel();
+    _networkRuleRetryTimer = null;
     final snapshot = ref.read(quickRoutingRulesProvider);
     final notifier = ref.read(quickRoutingRulesProvider.notifier);
-    if (!notifier.clearNetworkBound() || ref.read(runTimeProvider) == null) {
+    if (!notifier.clearNetworkBound()) {
+      return;
+    }
+    if (ref.read(runTimeProvider) == null) {
       return;
     }
     try {
@@ -168,16 +200,19 @@ class ApplicationState extends ConsumerState<Application> {
       }
     } catch (error, stackTrace) {
       notifier.replaceAll(snapshot);
-      try {
-        await ref
-            .read(setupActionProvider.notifier)
-            .applyProfile(force: true, silence: true);
-      } catch (rollbackError, rollbackStackTrace) {
-        commonPrint.log(
-          'network quick routing rollback failed: '
-          '${compactError(rollbackError)}, $rollbackStackTrace',
-          logLevel: LogLevel.error,
-        );
+      _networkSignature = previousSignature;
+      if (ref.read(runTimeProvider) != null) {
+        try {
+          await ref
+              .read(setupActionProvider.notifier)
+              .applyProfile(force: true, silence: true);
+        } catch (rollbackError, rollbackStackTrace) {
+          commonPrint.log(
+            'network quick routing rollback failed: '
+            '${compactError(rollbackError)}, $rollbackStackTrace',
+            logLevel: LogLevel.error,
+          );
+        }
       }
       commonPrint.log(
         'network quick routing cleanup failed: '
@@ -188,7 +223,20 @@ class ApplicationState extends ConsumerState<Application> {
         currentAppLocalizations.databaseWriteFailedTip,
         level: MessageLevel.error,
       );
+      _scheduleNetworkRuleRetry(results);
     }
+  }
+
+  void _scheduleNetworkRuleRetry(List<ConnectivityResult> results) {
+    _networkRuleRetryTimer?.cancel();
+    final retryResults = List<ConnectivityResult>.unmodifiable(results);
+    _networkRuleRetryTimer = Timer(_networkRuleRetryDelay, () {
+      _networkRuleRetryTimer = null;
+      if (!mounted) {
+        return;
+      }
+      unawaited(_clearNetworkRoutingRulesIfNeeded(retryResults));
+    });
   }
 
   Future<void> _handleConnectivityChanged(
@@ -264,6 +312,8 @@ class ApplicationState extends ConsumerState<Application> {
   void dispose() {
     linkManager.destroy();
     _autoUpdateProfilesTaskTimer?.cancel();
+    _networkRuleRetryTimer?.cancel();
+    _pendingNetworkResults = null;
     super.dispose();
   }
 }
