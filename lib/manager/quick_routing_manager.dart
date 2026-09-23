@@ -29,11 +29,6 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       (_, _) => _scheduleExpiry(),
       fireImmediately: true,
     );
-    ref.listenManual(runTimeProvider, (previous, next) {
-      if (previous != null && next == null) {
-        ref.read(quickRoutingRulesProvider.notifier).clearAll();
-      }
-    });
   }
 
   @override
