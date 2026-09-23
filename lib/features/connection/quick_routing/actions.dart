@@ -1,5 +1,17 @@
 part of '../quick_routing.dart';
 
+typedef _QuickRoutingUndo = Future<bool> Function();
+
+class _QuickRoutingApplyResult {
+  final Rule rule;
+  final _QuickRoutingUndo undo;
+
+  const _QuickRoutingApplyResult({
+    required this.rule,
+    required this.undo,
+  });
+}
+
 String _quickRoutingLifetimeLabel(
   BuildContext context,
   QuickRoutingLifetime lifetime,
@@ -46,6 +58,15 @@ Rule? _findExistingQuickRoutingRule(
         rule.content == candidate.content &&
         rule.noResolve == candidate.noResolve &&
         !rule.src) {
+      return rule;
+    }
+  }
+  return null;
+}
+
+Rule? _findRuleById(List<Rule> rules, int ruleId) {
+  for (final rule in rules) {
+    if (rule.id == ruleId) {
       return rule;
     }
   }
@@ -123,7 +144,68 @@ Future<void> _rollbackPermanentQuickRoutingRule({
   }
 }
 
-Future<Rule> _saveAndApplyPermanentQuickRoutingRule({
+Future<bool> _undoPermanentQuickRoutingRule({
+  required WidgetRef ref,
+  required int profileId,
+  required OverwriteType overwriteType,
+  required Rule appliedRule,
+  required Rule? previous,
+}) async {
+  final rules = await _readPermanentRules(profileId, overwriteType);
+  final current = _findRuleById(rules, appliedRule.id);
+  if (current != appliedRule) {
+    return false;
+  }
+
+  var restored = false;
+  try {
+    if (previous != null) {
+      await _writePermanentQuickRoutingRule(
+        profileId,
+        overwriteType,
+        previous,
+      );
+    } else {
+      await database.rulesDao.delRules([appliedRule.id]);
+    }
+    restored = true;
+    _invalidatePermanentQuickRoutingState(ref, profileId, overwriteType);
+    final applied = await ref
+        .read(setupActionProvider.notifier)
+        .applyProfile(force: true);
+    if (!applied) {
+      throw StateError('Failed to undo permanent quick routing rule');
+    }
+    return true;
+  } catch (error, stackTrace) {
+    if (restored) {
+      try {
+        await _writePermanentQuickRoutingRule(
+          profileId,
+          overwriteType,
+          appliedRule,
+        );
+        _invalidatePermanentQuickRoutingState(
+          ref,
+          profileId,
+          overwriteType,
+        );
+        await ref
+            .read(setupActionProvider.notifier)
+            .applyProfile(force: true, silence: true);
+      } catch (rollbackError, rollbackStackTrace) {
+        commonPrint.log(
+          'quick routing permanent undo rollback failed: '
+          '${compactError(rollbackError)}, $rollbackStackTrace',
+          logLevel: LogLevel.error,
+        );
+      }
+    }
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+}
+
+Future<_QuickRoutingApplyResult> _saveAndApplyPermanentQuickRoutingRule({
   required WidgetRef ref,
   required int profileId,
   required OverwriteType overwriteType,
@@ -156,7 +238,17 @@ Future<Rule> _saveAndApplyPermanentQuickRoutingRule({
     if (!applied) {
       throw StateError('Failed to apply permanent quick routing rule');
     }
-    return rule;
+    final appliedRule = rule;
+    return _QuickRoutingApplyResult(
+      rule: appliedRule,
+      undo: () => _undoPermanentQuickRoutingRule(
+        ref: ref,
+        profileId: profileId,
+        overwriteType: overwriteType,
+        appliedRule: appliedRule,
+        previous: previous,
+      ),
+    );
   } catch (error, stackTrace) {
     if (persisted) {
       await _rollbackPermanentQuickRoutingRule(
@@ -171,7 +263,50 @@ Future<Rule> _saveAndApplyPermanentQuickRoutingRule({
   }
 }
 
-Future<Rule> _saveAndApplyRuntimeQuickRoutingRule({
+Future<bool> _undoRuntimeQuickRoutingRule({
+  required WidgetRef ref,
+  required List<QuickRoutingRuleEntry> expected,
+  required List<QuickRoutingRuleEntry> previous,
+}) async {
+  final notifier = ref.read(quickRoutingRulesProvider.notifier);
+  final restored = notifier.replaceAllIfCurrent(
+    expected: expected,
+    entries: previous,
+  );
+  if (restored == null) {
+    return false;
+  }
+  try {
+    final applied = await ref
+        .read(setupActionProvider.notifier)
+        .applyProfile(force: true);
+    if (!applied) {
+      throw StateError('Failed to undo runtime quick routing rule');
+    }
+    return true;
+  } catch (error, stackTrace) {
+    final rolledBack = notifier.replaceAllIfCurrent(
+      expected: restored,
+      entries: expected,
+    );
+    if (rolledBack != null) {
+      try {
+        await ref
+            .read(setupActionProvider.notifier)
+            .applyProfile(force: true, silence: true);
+      } catch (rollbackError, rollbackStackTrace) {
+        commonPrint.log(
+          'quick routing runtime undo rollback failed: '
+          '${compactError(rollbackError)}, $rollbackStackTrace',
+          logLevel: LogLevel.error,
+        );
+      }
+    }
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+}
+
+Future<_QuickRoutingApplyResult> _saveAndApplyRuntimeQuickRoutingRule({
   required WidgetRef ref,
   required int profileId,
   required QuickRoutingSelection selection,
@@ -191,6 +326,7 @@ Future<Rule> _saveAndApplyRuntimeQuickRoutingRule({
     previousRule: _trackerRuleText(trackerInfo),
     previousChains: trackerInfo.chains,
   );
+  final appliedState = ref.read(quickRoutingRulesProvider);
   try {
     final applied = await ref
         .read(setupActionProvider.notifier)
@@ -198,7 +334,14 @@ Future<Rule> _saveAndApplyRuntimeQuickRoutingRule({
     if (!applied) {
       throw StateError('Failed to apply runtime quick routing rule');
     }
-    return entry.rule;
+    return _QuickRoutingApplyResult(
+      rule: entry.rule,
+      undo: () => _undoRuntimeQuickRoutingRule(
+        ref: ref,
+        expected: appliedState,
+        previous: snapshot,
+      ),
+    );
   } catch (error, stackTrace) {
     notifier.replaceAll(snapshot);
     try {
