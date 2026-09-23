@@ -330,6 +330,18 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
     DateTime? now,
   }) {
     final current = now ?? DateTime.now();
+    QuickRoutingGroupOverride? inheritedOverride;
+    if (groupOverride != null) {
+      for (final existingEntry in state) {
+        final existingOverride = existingEntry.groupOverride;
+        if (existingEntry.profileId == profileId &&
+            existingOverride?.groupName == groupOverride.groupName) {
+          inheritedOverride = existingOverride;
+          break;
+        }
+      }
+    }
+
     final entries = state
         .where((entry) => !entry.isExpired(current))
         .toList(growable: true);
@@ -343,6 +355,11 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
         : rule.copyWith(id: entries[existingIndex].rule.id);
 
     var normalizedOverride = groupOverride;
+    if (normalizedOverride != null && inheritedOverride != null) {
+      normalizedOverride = normalizedOverride.copyWith(
+        previousFixed: inheritedOverride.previousFixed,
+      );
+    }
     if (normalizedOverride != null) {
       for (var index = 0; index < entries.length; index++) {
         final existingEntry = entries[index];
@@ -351,9 +368,6 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
             existingOverride?.groupName != normalizedOverride.groupName) {
           continue;
         }
-        normalizedOverride = normalizedOverride.copyWith(
-          previousFixed: existingOverride!.previousFixed,
-        );
         entries[index] = existingEntry.copyWithGroupOverride(null);
       }
     }
