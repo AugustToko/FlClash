@@ -52,11 +52,13 @@ func TestBuildRuleMatchMetadata(t *testing.T) {
 func TestHandleRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.T) {
 	previousMode := tunnel.Mode()
 	previousRules := append([]C.Rule(nil), tunnel.Rules()...)
-	previousProxies := tunnel.AllProxies()
+	previousProxies := tunnel.Proxies()
+	previousProviders := tunnel.ProvidersSnapshot()
+	previousRuleProviders := tunnel.RuleProvidersSnapshot()
 	t.Cleanup(func() {
 		tunnel.SetMode(previousMode)
-		tunnel.UpdateRules(previousRules, nil, nil)
-		tunnel.UpdateProxies(previousProxies, nil)
+		tunnel.UpdateRules(previousRules, nil, previousRuleProviders)
+		tunnel.UpdateProxies(previousProxies, previousProviders)
 	})
 
 	domainRule, err := R.ParseRule(
@@ -128,5 +130,11 @@ func TestHandleRuleMatchReportsDirectModeWithoutScanningRules(t *testing.T) {
 	}
 	if result.Matched || result.RuleIndex != -1 {
 		t.Fatalf("direct mode should not report a rule: %#v", result)
+	}
+}
+
+func TestMatchRuleMethodIsRegistered(t *testing.T) {
+	if _, exists := methodHandlers[matchRuleMethod]; !exists {
+		t.Fatal("matchRule core method is not registered")
 	}
 }
