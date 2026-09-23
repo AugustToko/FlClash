@@ -23,6 +23,7 @@ void main() {
     required Rule value,
     required QuickRoutingLifetime lifetime,
     int profileId = 1,
+    QuickRoutingGroupOverride? groupOverride,
     DateTime? now,
   }) {
     return notifier.put(
@@ -33,6 +34,7 @@ void main() {
       sourceDesc: 'tcp://example.com:443',
       previousRule: 'MATCH',
       previousChains: const ['Proxy'],
+      groupOverride: groupOverride,
       now: now,
     );
   }
@@ -202,6 +204,137 @@ void main() {
     expect(restored, isNull);
     expect(container.read(quickRoutingRulesProvider), same(current));
     expect(current, hasLength(2));
+  });
+
+  group('automatic group override lifecycle', () {
+    const initialOverride = QuickRoutingGroupOverride(
+      groupName: 'Auto',
+      previousFixed: '',
+      expectedFixed: '',
+      desiredFixed: 'HK-01',
+    );
+
+    test('adding an override produces a fixed-state transition', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(quickRoutingRulesProvider.notifier);
+      final previous = container.read(quickRoutingRulesProvider);
+
+      put(
+        notifier,
+        value: rule(id: 10, content: 'example.com', target: 'Auto'),
+        lifetime: QuickRoutingLifetime.session,
+        groupOverride: initialOverride,
+      );
+      final next = container.read(quickRoutingRulesProvider);
+
+      expect(
+        buildQuickRoutingGroupOverrideTransitions(
+          previous: previous,
+          next: next,
+        ),
+        const [
+          QuickRoutingGroupOverrideTransition(
+            groupName: 'Auto',
+            expectedFixed: '',
+            targetFixed: 'HK-01',
+          ),
+        ],
+      );
+    });
+
+    test('a replacement keeps the original restoration baseline', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(quickRoutingRulesProvider.notifier);
+
+      put(
+        notifier,
+        value: rule(id: 10, content: 'first.example', target: 'Auto'),
+        lifetime: QuickRoutingLifetime.session,
+        groupOverride: initialOverride,
+      );
+      final previous = container.read(quickRoutingRulesProvider);
+      final second = put(
+        notifier,
+        value: rule(id: 11, content: 'second.example', target: 'Auto'),
+        lifetime: QuickRoutingLifetime.oneHour,
+        groupOverride: const QuickRoutingGroupOverride(
+          groupName: 'Auto',
+          previousFixed: 'HK-01',
+          expectedFixed: 'HK-01',
+          desiredFixed: 'JP-01',
+        ),
+      );
+      final next = container.read(quickRoutingRulesProvider);
+
+      expect(second.groupOverride?.previousFixed, '');
+      expect(second.groupOverride?.expectedFixed, 'HK-01');
+      expect(second.groupOverride?.desiredFixed, 'JP-01');
+      expect(
+        next.where((entry) => entry.groupOverride != null),
+        hasLength(1),
+      );
+      expect(
+        buildQuickRoutingGroupOverrideTransitions(
+          previous: previous,
+          next: next,
+        ),
+        const [
+          QuickRoutingGroupOverrideTransition(
+            groupName: 'Auto',
+            expectedFixed: 'HK-01',
+            targetFixed: 'JP-01',
+          ),
+        ],
+      );
+
+      expect(notifier.clearProfile(1), isTrue);
+      expect(
+        buildQuickRoutingGroupOverrideTransitions(
+          previous: next,
+          next: container.read(quickRoutingRulesProvider),
+        ),
+        const [
+          QuickRoutingGroupOverrideTransition(
+            groupName: 'Auto',
+            expectedFixed: 'JP-01',
+            targetFixed: '',
+          ),
+        ],
+      );
+    });
+
+    test('expiration restores the initial fixed state', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(quickRoutingRulesProvider.notifier);
+      final now = DateTime.utc(2026, 9, 23, 12);
+
+      put(
+        notifier,
+        value: rule(id: 10, content: 'example.com', target: 'Auto'),
+        lifetime: QuickRoutingLifetime.tenMinutes,
+        groupOverride: initialOverride,
+        now: now,
+      );
+      final entries = container.read(quickRoutingRulesProvider);
+
+      expect(
+        buildQuickRoutingGroupOverrideTransitions(
+          previous: entries,
+          next: entries,
+          now: now.add(const Duration(minutes: 10)),
+        ),
+        const [
+          QuickRoutingGroupOverrideTransition(
+            groupName: 'Auto',
+            expectedFixed: 'HK-01',
+            targetFixed: '',
+          ),
+        ],
+      );
+    });
   });
 
   group('mergeQuickRoutingRules', () {
