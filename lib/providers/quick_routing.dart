@@ -103,16 +103,16 @@ bool quickRoutingRulesHaveSameMatcher(Rule first, Rule second) {
   if (runtimeRules.isEmpty) {
     return (rules: rules, addedRules: addedRules);
   }
-  return switch (overwriteType) {
-    OverwriteType.custom => (
+  if (overwriteType == OverwriteType.custom && rules.isNotEmpty) {
+    return (
       rules: [...runtimeRules, ...rules],
       addedRules: addedRules,
-    ),
-    OverwriteType.standard || OverwriteType.script => (
-      rules: rules,
-      addedRules: [...runtimeRules, ...addedRules],
-    ),
-  };
+    );
+  }
+  return (
+    rules: rules,
+    addedRules: [...runtimeRules, ...addedRules],
+  );
 }
 
 class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
