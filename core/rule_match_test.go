@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	A "github.com/metacubex/mihomo/adapter"
+	O "github.com/metacubex/mihomo/adapter/outbound"
 	C "github.com/metacubex/mihomo/constant"
 	R "github.com/metacubex/mihomo/rules"
 	RW "github.com/metacubex/mihomo/rules/wrapper"
@@ -75,6 +77,7 @@ func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.
 		},
 		tunnel.Rule,
 		[]C.Rule{wrapped, fallbackRule},
+		nil,
 		map[string]C.Proxy{
 			"Proxy":  policyGroup,
 			"DIRECT": namedProxy("DIRECT"),
@@ -85,6 +88,9 @@ func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.
 	}
 	if !result.Matched {
 		t.Fatal("compiled rule did not match")
+	}
+	if result.RuleScope != defaultRuleMatchScope {
+		t.Fatalf("rule scope = %q, want %q", result.RuleScope, defaultRuleMatchScope)
 	}
 	if result.RuleIndex != 0 {
 		t.Fatalf("rule index = %d, want 0", result.RuleIndex)
@@ -98,12 +104,208 @@ func TestEvaluateRuleMatchUsesCompiledOrderWithoutChangingStatistics(t *testing.
 	if got := strings.Join(result.PolicyChain, " -> "); got != "Proxy -> node-a" {
 		t.Fatalf("policy chain = %q, want Proxy -> node-a", got)
 	}
+	if len(result.RuleTrace) != 1 || result.RuleTrace[0].Outcome != "final" {
+		t.Fatalf("rule trace = %#v, want one final step", result.RuleTrace)
+	}
 	if wrapped.HitCount() != 0 || wrapped.MissCount() != 0 {
 		t.Fatalf(
 			"diagnostic probe changed rule statistics: hit=%d miss=%d",
 			wrapped.HitCount(),
 			wrapped.MissCount(),
 		)
+	}
+}
+
+func TestEvaluateRuleMatchReplaysRematchIntoSubRule(t *testing.T) {
+	rematchName := "stage-two"
+	subRuleName := "secondary"
+	rematchAdapter, err := O.NewRematch(O.RematchOption{
+		Name:              "REMATCH-TO-SECONDARY",
+		TargetRematchName: &rematchName,
+		TargetSubRule:     &subRuleName,
+	})
+	if err != nil {
+		t.Fatalf("new rematch adapter: %v", err)
+	}
+	firstRule, err := R.ParseRule(
+		"MATCH",
+		"",
+		"REMATCH-TO-SECONDARY",
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("parse rematch rule: %v", err)
+	}
+	secondRule, err := R.ParseRule(
+		"REMATCH-NAME",
+		rematchName,
+		"Proxy",
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("parse rematch-name rule: %v", err)
+	}
+	policyGroup := selectorGroup(t, "Proxy", "node-a", "node-b")
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "tcp",
+			Host:            "api.example.com",
+			DestinationPort: "443",
+		},
+		tunnel.Rule,
+		[]C.Rule{firstRule},
+		map[string][]C.Rule{
+			subRuleName: {secondRule},
+		},
+		map[string]C.Proxy{
+			"REMATCH-TO-SECONDARY": A.NewProxy(rematchAdapter),
+			"Proxy":                policyGroup,
+		},
+	)
+	if methodErr != nil {
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
+	}
+	if !result.Matched || result.Target != "Proxy" {
+		t.Fatalf("rematched result = %#v", result)
+	}
+	if result.RuleScope != subRuleName || result.RuleIndex != 0 {
+		t.Fatalf(
+			"final rule location = %s#%d, want %s#0",
+			result.RuleScope,
+			result.RuleIndex,
+			subRuleName,
+		)
+	}
+	if got := strings.Join(result.PolicyChain, " -> "); got != "Proxy -> node-a" {
+		t.Fatalf("policy chain = %q, want Proxy -> node-a", got)
+	}
+	if !result.Complete || len(result.Warnings) != 0 {
+		t.Fatalf("exact rematch should be complete: %#v", result.Warnings)
+	}
+	if len(result.RuleTrace) != 2 {
+		t.Fatalf("rule trace length = %d, want 2", len(result.RuleTrace))
+	}
+	firstStep := result.RuleTrace[0]
+	if firstStep.Outcome != "rematch" ||
+		firstStep.RuleScope != defaultRuleMatchScope ||
+		firstStep.RematchName != rematchName ||
+		firstStep.SubRule != subRuleName {
+		t.Fatalf("rematch trace step = %#v", firstStep)
+	}
+	secondStep := result.RuleTrace[1]
+	if secondStep.Outcome != "final" || secondStep.RuleScope != subRuleName {
+		t.Fatalf("final trace step = %#v", secondStep)
+	}
+}
+
+func TestEvaluateRuleMatchStartsInsideRequestedSubRule(t *testing.T) {
+	defaultRule, err := R.ParseRule("MATCH", "", "DIRECT", nil, nil)
+	if err != nil {
+		t.Fatalf("parse default rule: %v", err)
+	}
+	scopedRule, err := R.ParseRule("MATCH", "", "Proxy", nil, nil)
+	if err != nil {
+		t.Fatalf("parse scoped rule: %v", err)
+	}
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "tcp",
+			SpecialRules:    "secondary",
+			DestinationPort: "443",
+		},
+		tunnel.Rule,
+		[]C.Rule{defaultRule},
+		map[string][]C.Rule{
+			"secondary": {scopedRule},
+		},
+		map[string]C.Proxy{
+			"Proxy": selectorGroup(t, "Proxy", "node-a"),
+		},
+	)
+	if methodErr != nil {
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
+	}
+	if !result.Matched || result.RuleScope != "secondary" || result.Target != "Proxy" {
+		t.Fatalf("scoped result = %#v", result)
+	}
+	if !result.Complete {
+		t.Fatalf("known sub-rule scope should be exact: %#v", result.Warnings)
+	}
+}
+
+func TestEvaluateRuleMatchEvaluatesCompiledSubRule(t *testing.T) {
+	innerRule, err := R.ParseRule("MATCH", "", "Proxy", nil, nil)
+	if err != nil {
+		t.Fatalf("parse inner rule: %v", err)
+	}
+	subRules := map[string][]C.Rule{
+		"secondary": {innerRule},
+	}
+	outerRule, err := R.ParseRule(
+		"SUB-RULE",
+		"(DOMAIN,example.com)",
+		"secondary",
+		nil,
+		subRules,
+	)
+	if err != nil {
+		t.Fatalf("parse sub-rule: %v", err)
+	}
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "tcp",
+			Host:            "example.com",
+			DestinationPort: "443",
+		},
+		tunnel.Rule,
+		[]C.Rule{outerRule},
+		subRules,
+		map[string]C.Proxy{
+			"Proxy": selectorGroup(t, "Proxy", "node-a"),
+		},
+	)
+	if methodErr != nil {
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
+	}
+	if !result.Matched || result.Target != "Proxy" || result.RuleType != "SubRules" {
+		t.Fatalf("compiled sub-rule result = %#v", result)
+	}
+	if !result.Complete || len(result.Warnings) != 0 {
+		t.Fatalf("compiled sub-rule should be exact: %#v", result.Warnings)
+	}
+}
+
+func TestEvaluateRuleMatchFallsBackWhenSubRuleScopeIsMissing(t *testing.T) {
+	defaultRule, err := R.ParseRule("MATCH", "", "Proxy", nil, nil)
+	if err != nil {
+		t.Fatalf("parse default rule: %v", err)
+	}
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "tcp",
+			SpecialRules:    "missing-scope",
+			DestinationPort: "443",
+		},
+		tunnel.Rule,
+		[]C.Rule{defaultRule},
+		nil,
+		map[string]C.Proxy{
+			"Proxy": selectorGroup(t, "Proxy", "node-a"),
+		},
+	)
+	if methodErr != nil {
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
+	}
+	if !result.Matched || result.RuleScope != defaultRuleMatchScope {
+		t.Fatalf("fallback result = %#v", result)
+	}
+	if result.Complete || !containsRuleMatchWarning(
+		result.Warnings,
+		"sub-rule-target-unavailable",
+	) {
+		t.Fatalf("missing sub-rule warning = %#v", result.Warnings)
 	}
 }
 
@@ -115,6 +317,7 @@ func TestEvaluateRuleMatchReportsDirectModeWithoutScanningRules(t *testing.T) {
 			DestinationPort: "53",
 		},
 		tunnel.Direct,
+		nil,
 		nil,
 		nil,
 	)
@@ -138,6 +341,7 @@ func TestEvaluateRuleMatchRejectsInvalidMetadata(t *testing.T) {
 		tunnel.Rule,
 		nil,
 		nil,
+		nil,
 	)
 	if result != nil {
 		t.Fatalf("invalid metadata returned a result: %#v", result)
@@ -151,4 +355,13 @@ func TestMatchRuleMethodIsRegistered(t *testing.T) {
 	if _, exists := methodHandlers[matchRuleMethod]; !exists {
 		t.Fatal("matchRule core method is not registered")
 	}
+}
+
+func containsRuleMatchWarning(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
 }
