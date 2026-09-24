@@ -28,18 +28,18 @@ class QuickRoutingVerification {
   bool get exact => status == QuickRoutingVerificationStatus.verified;
 
   String get marker => switch (status) {
-        QuickRoutingVerificationStatus.verified => '✓',
-        QuickRoutingVerificationStatus.approximate => '≈',
-        QuickRoutingVerificationStatus.mismatch => '⚠',
-        QuickRoutingVerificationStatus.unavailable => '?',
-      };
+    QuickRoutingVerificationStatus.verified => '✓',
+    QuickRoutingVerificationStatus.approximate => '≈',
+    QuickRoutingVerificationStatus.mismatch => '⚠',
+    QuickRoutingVerificationStatus.unavailable => '?',
+  };
 
   MessageLevel get messageLevel => switch (status) {
-        QuickRoutingVerificationStatus.verified => MessageLevel.success,
-        QuickRoutingVerificationStatus.approximate ||
-        QuickRoutingVerificationStatus.unavailable => MessageLevel.warning,
-        QuickRoutingVerificationStatus.mismatch => MessageLevel.error,
-      };
+    QuickRoutingVerificationStatus.verified => MessageLevel.success,
+    QuickRoutingVerificationStatus.approximate ||
+    QuickRoutingVerificationStatus.unavailable => MessageLevel.warning,
+    QuickRoutingVerificationStatus.mismatch => MessageLevel.error,
+  };
 }
 
 String? _quickRoutingExpectedCoreRuleType(RuleAction action) {
