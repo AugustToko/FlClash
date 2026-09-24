@@ -76,7 +76,14 @@ func TestAnalyzeDomainLeavesSingleLabelHostsNarrow(t *testing.T) {
 }
 
 func TestAnalyzeDomainRejectsInvalidInput(t *testing.T) {
-	for _, value := range []string{"", "bad domain.example", "-bad.example"} {
+	values := []string{
+		"",
+		"bad domain.example",
+		"-bad.example",
+		"example.com:notaport",
+		"https://example.com:70000/path",
+	}
+	for _, value := range values {
 		if _, err := analyzeDomain(value); err == nil {
 			t.Errorf("analyzeDomain(%q) accepted invalid input", value)
 		}
