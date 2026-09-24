@@ -20,3 +20,4 @@ part 'quick_routing/explanation.dart';
 part 'quick_routing/logic.dart';
 part 'quick_routing/models.dart';
 part 'quick_routing/rules_manager.dart';
+part 'quick_routing/verification.dart';
