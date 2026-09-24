@@ -210,6 +210,30 @@ String _quickRoutingCoreTraceOutcomeLabel(String outcome) {
   };
 }
 
+String _quickRoutingCoreTraceText(
+  BuildContext context,
+  CoreRuleMatchTraceStep step,
+) {
+  final marker = _quickRoutingCoreTraceMarker(step.outcome);
+  final scope = _quickRoutingCoreRuleScopeLabel(context, step.ruleScope);
+  final index = step.ruleIndex >= 0 ? '#${step.ruleIndex + 1} ' : '';
+  final outcome = _quickRoutingCoreTraceOutcomeLabel(step.outcome);
+  final outcomeSuffix = outcome.isEmpty ? '' : ' · $outcome';
+  return '$marker [$scope] $index${step.ruleText} → '
+      '${step.target}$outcomeSuffix';
+}
+
+String _quickRoutingCoreRematchTransition(
+  CoreRuleMatchTraceStep step,
+) {
+  final values = <String>[
+    if (step.rematchName.isNotEmpty)
+      'REMATCH-NAME=${step.rematchName}',
+    if (step.subRule.isNotEmpty) 'SUB-RULE=${step.subRule}',
+  ];
+  return values.join(' · ');
+}
+
 List<Widget> _buildCoreQuickRoutingTrace(
   BuildContext context,
   CoreRuleMatchResult result,
@@ -229,11 +253,7 @@ List<Widget> _buildCoreQuickRoutingTrace(
     ),
     for (final step in result.ruleTrace) ...[
       Text(
-        '${_quickRoutingCoreTraceMarker(step.outcome)} '
-        '[${_quickRoutingCoreRuleScopeLabel(context, step.ruleScope)}] '
-        '${step.ruleIndex >= 0 ? '#${step.ruleIndex + 1} ' : ''}'
-        '${step.ruleText} → ${step.target}'
-        '${_quickRoutingCoreTraceOutcomeLabel(step.outcome).isEmpty ? '' : ' · ${_quickRoutingCoreTraceOutcomeLabel(step.outcome)}'}',
+        _quickRoutingCoreTraceText(context, step),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
@@ -247,11 +267,7 @@ List<Widget> _buildCoreQuickRoutingTrace(
       if (step.outcome.startsWith('rematch') &&
           (step.rematchName.isNotEmpty || step.subRule.isNotEmpty))
         Text(
-          '  ↳ ${[
-            if (step.rematchName.isNotEmpty)
-              'REMATCH-NAME=${step.rematchName}',
-            if (step.subRule.isNotEmpty) 'SUB-RULE=${step.subRule}',
-          ].join(' · ')}',
+          '  ↳ ${_quickRoutingCoreRematchTransition(step)}',
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.bodySmall,
