@@ -16,8 +16,10 @@ import (
 )
 
 const (
-	matchRuleMethod         CoreMethod = "matchRule"
-	maxRuleMatchPolicyDepth            = 64
+	matchRuleMethod          CoreMethod = "matchRule"
+	defaultRuleMatchScope               = "default"
+	maxRuleMatchPolicyDepth             = 64
+	maxRuleMatchRematchDepth            = 64
 )
 
 type RuleMatchMetadata struct {
@@ -46,18 +48,32 @@ type RuleMatchMetadata struct {
 	DSCP              *uint8   `json:"dscp"`
 }
 
+type RuleMatchTraceStep struct {
+	RuleScope   string   `json:"ruleScope"`
+	RuleIndex   int      `json:"ruleIndex"`
+	RuleType    string   `json:"ruleType"`
+	Payload     string   `json:"payload"`
+	Target      string   `json:"target"`
+	PolicyChain []string `json:"policyChain"`
+	Outcome     string   `json:"outcome"`
+	RematchName string   `json:"rematchName"`
+	SubRule     string   `json:"subRule"`
+}
+
 type RuleMatchResult struct {
-	Mode          string   `json:"mode"`
-	Matched       bool     `json:"matched"`
-	RuleIndex     int      `json:"ruleIndex"`
-	RuleType      string   `json:"ruleType"`
-	Payload       string   `json:"payload"`
-	Target        string   `json:"target"`
-	PolicyChain   []string `json:"policyChain"`
-	ProviderNames []string `json:"providerNames"`
-	ResolvedIP    string   `json:"resolvedIP"`
-	Complete      bool     `json:"complete"`
-	Warnings      []string `json:"warnings"`
+	Mode          string               `json:"mode"`
+	Matched       bool                 `json:"matched"`
+	RuleScope     string               `json:"ruleScope"`
+	RuleIndex     int                  `json:"ruleIndex"`
+	RuleType      string               `json:"ruleType"`
+	Payload       string               `json:"payload"`
+	Target        string               `json:"target"`
+	PolicyChain   []string             `json:"policyChain"`
+	RuleTrace     []RuleMatchTraceStep `json:"ruleTrace"`
+	ProviderNames []string             `json:"providerNames"`
+	ResolvedIP    string               `json:"resolvedIP"`
+	Complete      bool                 `json:"complete"`
+	Warnings      []string             `json:"warnings"`
 }
 
 func newRuleMatchResult() *RuleMatchResult {
@@ -65,6 +81,7 @@ func newRuleMatchResult() *RuleMatchResult {
 		Mode:          "rule",
 		RuleIndex:     -1,
 		PolicyChain:   []string{},
+		RuleTrace:     []RuleMatchTraceStep{},
 		ProviderNames: []string{},
 		Warnings:      []string{},
 		Complete:      true,
@@ -72,6 +89,9 @@ func newRuleMatchResult() *RuleMatchResult {
 }
 
 func (result *RuleMatchResult) addWarning(value string) {
+	if value == "" {
+		return
+	}
 	for _, warning := range result.Warnings {
 		if warning == value {
 			return
@@ -227,8 +247,6 @@ func missingRuleMatchField(
 		if params.DSCP == nil {
 			return "missing-dscp"
 		}
-	case C.SubRules:
-		return "sub-rule-context-unavailable"
 	}
 	return ""
 }
@@ -324,16 +342,16 @@ func matchProbePassTarget(
 func traceRuleMatchPolicy(
 	adapter C.Proxy,
 	metadata *C.Metadata,
-) (chain []string, skip bool, rematch bool, warning string) {
+) (chain []string, skip bool, rematch C.Proxy, warning string) {
 	chain = make([]string, 0, 4)
 	seen := make(map[string]struct{})
 	for depth, current := 0, adapter; current != nil; depth++ {
 		if depth >= maxRuleMatchPolicyDepth {
-			return chain, false, false, "policy-chain-truncated"
+			return chain, false, nil, "policy-chain-truncated"
 		}
 		identity := ruleMatchProxyIdentity(current)
 		if _, exists := seen[identity]; exists {
-			return chain, false, false, "policy-chain-cycle"
+			return chain, false, nil, "policy-chain-cycle"
 		}
 		seen[identity] = struct{}{}
 		if name := strings.TrimSpace(current.Name()); name != "" &&
@@ -342,17 +360,17 @@ func traceRuleMatchPolicy(
 		}
 		switch current.Type() {
 		case C.Pass:
-			return chain, true, false, ""
+			return chain, true, nil, ""
 		case C.Rematch:
-			return chain, false, true, ""
+			return chain, false, current, ""
 		}
 		next := current.Unwrap(metadata, false)
 		if next == nil && proxyTypeMayContainPolicy(current.Type()) {
-			return chain, false, false, "policy-chain-unresolved"
+			return chain, false, nil, "policy-chain-unresolved"
 		}
 		current = next
 	}
-	return chain, false, false, ""
+	return chain, false, nil, ""
 }
 
 func applyRuleMatchPolicyChain(
@@ -360,31 +378,96 @@ func applyRuleMatchPolicyChain(
 	target string,
 	metadata *C.Metadata,
 	proxies map[string]C.Proxy,
-) (skip bool, rematch bool) {
+) (skip bool, rematch C.Proxy) {
 	target = strings.TrimSpace(target)
 	if target == "" {
-		return false, false
+		return false, nil
 	}
 	adapter, exists := proxies[target]
 	if !exists {
 		result.PolicyChain = []string{target}
-		return false, false
+		return false, nil
 	}
 	chain, skip, rematch, warning := traceRuleMatchPolicy(adapter, metadata)
 	if len(chain) == 0 {
 		chain = []string{target}
 	}
 	result.PolicyChain = chain
-	if warning != "" {
-		result.addWarning(warning)
-	}
+	result.addWarning(warning)
 	return skip, rematch
+}
+
+func activeRuleMatchRules(
+	metadata *C.Metadata,
+	rules []C.Rule,
+	subRules map[string][]C.Rule,
+	result *RuleMatchResult,
+) ([]C.Rule, string) {
+	if metadata.SpecialRules != "" {
+		if scoped, exists := subRules[metadata.SpecialRules]; exists {
+			return scoped, metadata.SpecialRules
+		}
+		result.addWarning("sub-rule-target-unavailable")
+	}
+	return rules, defaultRuleMatchScope
+}
+
+func isCompoundRuleMatchType(ruleType C.RuleType) bool {
+	return ruleType == C.AND || ruleType == C.OR || ruleType == C.NOT
+}
+
+func newRuleMatchTraceStep(
+	scope string,
+	index int,
+	rule C.Rule,
+	target string,
+	policyChain []string,
+	outcome string,
+	metadata *C.Metadata,
+) RuleMatchTraceStep {
+	return RuleMatchTraceStep{
+		RuleScope:   scope,
+		RuleIndex:   index,
+		RuleType:    rule.RuleType().String(),
+		Payload:     rule.Payload(),
+		Target:      target,
+		PolicyChain: append([]string(nil), policyChain...),
+		Outcome:     outcome,
+		RematchName: metadata.RematchName,
+		SubRule:     metadata.SpecialRules,
+	}
+}
+
+func finalizeRuleMatch(
+	result *RuleMatchResult,
+	scope string,
+	index int,
+	rule C.Rule,
+	target string,
+	policyChain []string,
+	metadata *C.Metadata,
+) {
+	result.Matched = true
+	result.RuleScope = scope
+	result.RuleIndex = index
+	result.RuleType = rule.RuleType().String()
+	result.Payload = rule.Payload()
+	result.Target = target
+	result.PolicyChain = append([]string(nil), policyChain...)
+	if len(result.PolicyChain) == 0 {
+		result.PolicyChain = []string{target}
+	}
+	result.ProviderNames = append([]string{}, rule.ProviderNames()...)
+	if metadata.DstIP.IsValid() {
+		result.ResolvedIP = metadata.DstIP.String()
+	}
 }
 
 func evaluateRuleMatch(
 	params *RuleMatchMetadata,
 	mode tunnel.TunnelMode,
 	rules []C.Rule,
+	subRules map[string][]C.Rule,
 	proxies map[string]C.Proxy,
 ) (*RuleMatchResult, *MethodError) {
 	metadata, err := buildRuleMatchMetadata(params)
@@ -405,13 +488,12 @@ func evaluateRuleMatch(
 			metadata,
 			proxies,
 		)
-		if rematch {
+		if rematch != nil {
 			result.addWarning("rematch-target-not-expanded")
 		}
-		return result, nil
-	}
-	if metadata.SpecialRules != "" {
-		result.addWarning("special-rules-not-expanded")
+		if metadata.DstIP.IsValid() {
+			result.ResolvedIP = metadata.DstIP.String()
+		}
 		return result, nil
 	}
 
@@ -419,7 +501,15 @@ func evaluateRuleMatch(
 	case tunnel.Direct:
 		result.Mode = "direct"
 		result.Target = "DIRECT"
-		applyRuleMatchPolicyChain(result, result.Target, metadata, proxies)
+		_, rematch := applyRuleMatchPolicyChain(
+			result,
+			result.Target,
+			metadata,
+			proxies,
+		)
+		if rematch != nil {
+			result.addWarning("rematch-target-not-expanded")
+		}
 		return result, nil
 	case tunnel.Global:
 		result.Mode = "global"
@@ -430,7 +520,7 @@ func evaluateRuleMatch(
 			metadata,
 			proxies,
 		)
-		if rematch {
+		if rematch != nil {
 			result.addWarning("rematch-target-not-expanded")
 		}
 		return result, nil
@@ -448,78 +538,223 @@ func evaluateRuleMatch(
 		},
 	}
 
-	for index, wrappedRule := range rules {
-		rule, enabled := unwrapRuleForMatchProbe(wrappedRule)
-		if !enabled {
-			continue
-		}
-		if warning := missingRuleMatchField(rule.RuleType(), params); warning != "" {
-			result.addWarning(warning)
-			continue
-		}
-		if rule.RuleType() == C.AND ||
-			rule.RuleType() == C.OR ||
-			rule.RuleType() == C.NOT {
-			result.addWarning("compound-rule-context-partial")
-		}
-		matched, target := rule.Match(metadata, helper)
-		if !matched {
-			continue
-		}
-		adapter, exists := proxies[target]
-		if !exists {
-			result.addWarning("matched-target-unavailable")
-			continue
-		}
-		policyChain, skip, rematch, chainWarning := traceRuleMatchPolicy(
-			adapter,
+	rematchSeen := make(map[string]struct{})
+	for {
+		activeRules, scope := activeRuleMatchRules(
 			metadata,
+			rules,
+			subRules,
+			result,
 		)
-		if skip {
-			continue
-		}
-		if metadata.NetWork == C.UDP && !adapter.SupportUDP() {
-			continue
-		}
-		result.Matched = true
-		result.RuleIndex = index
-		result.RuleType = rule.RuleType().String()
-		result.Payload = rule.Payload()
-		result.Target = target
-		result.PolicyChain = policyChain
-		if len(result.PolicyChain) == 0 {
-			result.PolicyChain = []string{target}
-		}
-		result.ProviderNames = append([]string{}, rule.ProviderNames()...)
-		if chainWarning != "" {
+		rematched := false
+		for index, wrappedRule := range activeRules {
+			rule, enabled := unwrapRuleForMatchProbe(wrappedRule)
+			if !enabled {
+				continue
+			}
+			if warning := missingRuleMatchField(rule.RuleType(), params); warning != "" {
+				result.addWarning(warning)
+				continue
+			}
+			matched, target := rule.Match(metadata, helper)
+			if !matched {
+				continue
+			}
+			if isCompoundRuleMatchType(rule.RuleType()) {
+				result.addWarning("compound-rule-context-partial")
+			}
+			adapter, exists := proxies[target]
+			if !exists {
+				result.RuleTrace = append(
+					result.RuleTrace,
+					newRuleMatchTraceStep(
+						scope,
+						index,
+						rule,
+						target,
+						[]string{target},
+						"target-unavailable",
+						metadata,
+					),
+				)
+				result.addWarning("matched-target-unavailable")
+				continue
+			}
+			policyChain, skip, rematchProxy, chainWarning := traceRuleMatchPolicy(
+				adapter,
+				metadata,
+			)
+			if len(policyChain) == 0 {
+				policyChain = []string{target}
+			}
 			result.addWarning(chainWarning)
+			if skip {
+				result.RuleTrace = append(
+					result.RuleTrace,
+					newRuleMatchTraceStep(
+						scope,
+						index,
+						rule,
+						target,
+						policyChain,
+						"pass",
+						metadata,
+					),
+				)
+				continue
+			}
+			if metadata.NetWork == C.UDP && !adapter.SupportUDP() {
+				result.RuleTrace = append(
+					result.RuleTrace,
+					newRuleMatchTraceStep(
+						scope,
+						index,
+						rule,
+						target,
+						policyChain,
+						"udp-unsupported",
+						metadata,
+					),
+				)
+				continue
+			}
+			if rematchProxy != nil {
+				step := newRuleMatchTraceStep(
+					scope,
+					index,
+					rule,
+					target,
+					policyChain,
+					"rematch",
+					metadata,
+				)
+				rematchName := rematchProxy.Name()
+				if _, exists := rematchSeen[rematchName]; exists {
+					step.Outcome = "rematch-cycle"
+					result.RuleTrace = append(result.RuleTrace, step)
+					result.addWarning("rematch-cycle")
+					finalizeRuleMatch(
+						result,
+						scope,
+						index,
+						rule,
+						target,
+						policyChain,
+						metadata,
+					)
+					return result, nil
+				}
+				if len(rematchSeen) >= maxRuleMatchRematchDepth {
+					step.Outcome = "rematch-truncated"
+					result.RuleTrace = append(result.RuleTrace, step)
+					result.addWarning("rematch-chain-truncated")
+					finalizeRuleMatch(
+						result,
+						scope,
+						index,
+						rule,
+						target,
+						policyChain,
+						metadata,
+					)
+					return result, nil
+				}
+				rematchSeen[rematchName] = struct{}{}
+				conn, rematchErr := rematchProxy.DialContext(
+					context.Background(),
+					metadata,
+				)
+				if conn != nil {
+					_ = conn.Close()
+				}
+				step.RematchName = metadata.RematchName
+				step.SubRule = metadata.SpecialRules
+				if rematchErr != nil {
+					step.Outcome = "rematch-error"
+					result.RuleTrace = append(result.RuleTrace, step)
+					result.addWarning("rematch-metadata-update-failed")
+					finalizeRuleMatch(
+						result,
+						scope,
+						index,
+						rule,
+						target,
+						policyChain,
+						metadata,
+					)
+					return result, nil
+				}
+				result.RuleTrace = append(result.RuleTrace, step)
+				rematched = true
+				break
+			}
+
+			result.RuleTrace = append(
+				result.RuleTrace,
+				newRuleMatchTraceStep(
+					scope,
+					index,
+					rule,
+					target,
+					policyChain,
+					"final",
+					metadata,
+				),
+			)
+			finalizeRuleMatch(
+				result,
+				scope,
+				index,
+				rule,
+				target,
+				policyChain,
+				metadata,
+			)
+			return result, nil
 		}
-		if rematch {
-			result.addWarning("rematch-target-not-expanded")
+		if rematched {
+			continue
 		}
+
+		result.RuleScope = scope
+		result.Target = "DIRECT"
+		applyRuleMatchPolicyChain(result, result.Target, metadata, proxies)
 		if metadata.DstIP.IsValid() {
 			result.ResolvedIP = metadata.DstIP.String()
 		}
 		return result, nil
 	}
+}
 
-	result.Target = "DIRECT"
-	applyRuleMatchPolicyChain(result, result.Target, metadata, proxies)
-	if metadata.DstIP.IsValid() {
-		result.ResolvedIP = metadata.DstIP.String()
+func snapshotRuleMatchConfiguration() (
+	mode tunnel.TunnelMode,
+	rules []C.Rule,
+	subRules map[string][]C.Rule,
+	proxies map[string]C.Proxy,
+) {
+	configMu.Lock()
+	defer configMu.Unlock()
+
+	mode = tunnel.Mode()
+	if currentConfig != nil {
+		rules = append([]C.Rule(nil), currentConfig.Rules...)
+		subRules = make(map[string][]C.Rule, len(currentConfig.SubRules))
+		for name, scopedRules := range currentConfig.SubRules {
+			subRules[name] = append([]C.Rule(nil), scopedRules...)
+		}
+	} else {
+		rules = append([]C.Rule(nil), tunnel.Rules()...)
+		subRules = map[string][]C.Rule{}
 	}
-	return result, nil
+	proxies = tunnel.AllProxies()
+	return
 }
 
 func handleRuleMatch(
 	params *RuleMatchMetadata,
 ) (*RuleMatchResult, *MethodError) {
-	configMu.Lock()
-	mode := tunnel.Mode()
-	rules := append([]C.Rule(nil), tunnel.Rules()...)
-	proxies := tunnel.AllProxies()
-	configMu.Unlock()
-	return evaluateRuleMatch(params, mode, rules, proxies)
+	mode, rules, subRules, proxies := snapshotRuleMatchConfiguration()
+	return evaluateRuleMatch(params, mode, rules, subRules, proxies)
 }
 
 func init() {
