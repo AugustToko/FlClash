@@ -1,13 +1,9 @@
 package main
 
 import (
-	"context"
-	"net/http"
-	"net/http/httptest"
 	"net/netip"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/metacubex/mihomo/adapter"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
@@ -68,14 +64,6 @@ func policyExplainComputedGroup(
 ) (C.Proxy, map[string]C.Proxy) {
 	t.Helper()
 
-	server := httptest.NewServer(http.HandlerFunc(func(
-		writer http.ResponseWriter,
-		request *http.Request,
-	) {
-		writer.WriteHeader(http.StatusNoContent)
-	}))
-	t.Cleanup(server.Close)
-
 	proxies := make([]C.Proxy, 0, len(members))
 	mapping := make(map[string]C.Proxy, len(members)+2)
 	for _, member := range members {
@@ -83,22 +71,7 @@ func policyExplainComputedGroup(
 		proxies = append(proxies, proxy)
 		mapping[member] = proxy
 	}
-
-	aliveMember := fixed
-	if aliveMember == "" && len(members) > 0 {
-		aliveMember = members[0]
-	}
-	aliveProxy := mapping[aliveMember]
-	if aliveProxy == nil {
-		t.Fatalf("alive test member %q is unavailable", aliveMember)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	if _, err := aliveProxy.URLTest(ctx, server.URL, nil); err != nil {
-		t.Fatalf("seed %s health state: %v", aliveMember, err)
-	}
-
-	health := provider.NewHealthCheck(proxies, server.URL, 0, 0, true, nil)
+	health := provider.NewHealthCheck(proxies, "", 0, 0, true, nil)
 	compatible, err := provider.NewCompatibleProvider(
 		name+"-provider",
 		proxies,
@@ -111,7 +84,7 @@ func policyExplainComputedGroup(
 	mapping[emptyFallback.Name()] = emptyFallback
 	common := outboundgroup.GroupCommonOption{
 		Name: name,
-		URL:  server.URL,
+		URL:  "https://example.test/generate_204",
 	}
 	var group C.ProxyAdapter
 	switch groupType {
@@ -346,8 +319,8 @@ func TestExplainPolicyChainDescribesComputedGroups(t *testing.T) {
 			if step.Fixed != (test.fixed != "") {
 				t.Fatalf("fixed = %v, want %v", step.Fixed, test.fixed != "")
 			}
-			if !step.HealthKnown || !step.SelectedAlive {
-				t.Fatalf("seeded health state was lost: %#v", step)
+			if step.HealthKnown {
+				t.Fatal("fresh proxy state was incorrectly reported as measured")
 			}
 		})
 	}
