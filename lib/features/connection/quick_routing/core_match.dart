@@ -171,8 +171,22 @@ String _quickRoutingCoreWarningLabel(
       '${appLocalizations.unknown}: REMATCH',
     'policy-chain-cycle' ||
     'policy-chain-truncated' ||
-    'policy-chain-unresolved' =>
+    'policy-chain-unresolved' ||
+    'policy-chain-target-mismatch' ||
+    'policy-chain-invalid-continuation' =>
       '${appLocalizations.unknown}: ${appLocalizations.proxyChains}',
+    'policy-target-empty' ||
+    'policy-proxy-unavailable' ||
+    'policy-chain-member-unavailable' =>
+      '${appLocalizations.unknown}: ${appLocalizations.ruleTarget}',
+    'policy-config-unavailable' =>
+      '${appLocalizations.unknown}: ${appLocalizations.proxyGroup} config',
+    'policy-selection-state-changed' =>
+      '${appLocalizations.unknown}: ${appLocalizations.status} changed',
+    'policy-strategy-state-hidden' =>
+      '${appLocalizations.unknown}: runtime strategy state',
+    'legacy-relay-unavailable' =>
+      '${appLocalizations.unknown}: legacy Relay',
     _ => warning,
   };
 }
@@ -276,12 +290,105 @@ List<Widget> _buildCoreQuickRoutingTrace(
   ];
 }
 
+String _quickRoutingPolicyReasonLabel(
+  BuildContext context,
+  CorePolicyExplainStep step,
+) {
+  final appLocalizations = context.appLocalizations;
+  return switch (step.reason) {
+    'leaf' => appLocalizations.selected,
+    'manual-selection' => appLocalizations.selected,
+    'manual-selection-state-changed' =>
+      '${appLocalizations.selected} · state changed',
+    'fixed-selection' => '${appLocalizations.selected} · FIXED',
+    'fixed-unavailable-fallback' => 'FIXED unavailable · fallback',
+    'first-alive' => 'first alive',
+    'no-alive-first-member' => 'no alive · first member',
+    'lowest-delay' => 'lowest delay',
+    'tolerance-hold' => 'tolerance hold',
+    'cached-selection-state-changed' => 'cached selection · state changed',
+    'consistent-hash' => 'consistent-hashing',
+    'consistent-hash-state-changed' =>
+      'consistent-hashing · state changed',
+    'round-robin-current-cursor' => 'round-robin · current cursor',
+    'sticky-session-cache' => 'sticky-sessions · cache',
+    'load-balance-config-unavailable' => 'load-balance · config unavailable',
+    'selected-member-unavailable' => 'member unavailable',
+    'proxy-unavailable' => 'proxy unavailable',
+    'non-group-chain-continuation' => 'invalid continuation',
+    'legacy-relay-unavailable' => 'legacy Relay unavailable',
+    'unsupported-policy-group' => 'unsupported group',
+    _ => step.reason,
+  };
+}
+
+List<String> _quickRoutingPolicyStepDetails(
+  CorePolicyExplainStep step,
+) {
+  return [
+    if (step.strategy.isNotEmpty) step.strategy,
+    if (step.selectedIndex >= 0 && step.candidateCount > 0)
+      '${step.selectedIndex + 1}/${step.candidateCount}',
+    if (step.key.isNotEmpty) '${step.keySource}: ${step.key}',
+    if (step.bucket >= 0) 'bucket ${step.bucket + 1}',
+    if (step.retry > 0) 'retry ${step.retry}',
+    if (step.hasSelectedDelay) '${step.selectedDelay} ms',
+    if (step.hasFastestDelay && step.fastest != step.selected)
+      'fastest ${step.fastest} ${step.fastestDelay} ms',
+    if (step.tolerance > 0) 'tolerance ${step.tolerance} ms',
+    if (step.healthKnown) step.selectedAlive ? 'alive' : 'dead',
+  ];
+}
+
+List<Widget> _buildCorePolicyExplanation(
+  BuildContext context,
+  CoreRuleMatchResult result,
+) {
+  final explanation = result.policyExplanation;
+  if (explanation == null) {
+    return const [];
+  }
+  final groupSteps = explanation.steps
+      .where((step) => step.selected.isNotEmpty)
+      .toList(growable: false);
+  if (groupSteps.isEmpty) {
+    return const [];
+  }
+  final appLocalizations = context.appLocalizations;
+  return [
+    const SizedBox(height: 6),
+    Text(
+      appLocalizations.proxyGroup,
+      style: context.textTheme.bodySmall,
+    ),
+    for (final step in groupSteps) ...[
+      Text(
+        '${step.complete ? '✓' : '≈'} ${step.name} [${step.type}] '
+        '→ ${step.selected} · '
+        '${_quickRoutingPolicyReasonLabel(context, step)}',
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      if (_quickRoutingPolicyStepDetails(step).isNotEmpty)
+        Text(
+          '  ${_quickRoutingPolicyStepDetails(step).join(' · ')}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: context.textTheme.bodySmall,
+        ),
+    ],
+  ];
+}
+
 List<Widget> _buildCoreQuickRoutingMatchPreview(
   BuildContext context,
   CoreRuleMatchResult result,
 ) {
   final appLocalizations = context.appLocalizations;
-  final marker = result.complete ? '✓' : '≈';
+  final policyExplanation = result.policyExplanation;
+  final isComplete =
+      result.complete && (policyExplanation?.complete ?? true);
+  final marker = isComplete ? '✓' : '≈';
   final ruleIndex = result.ruleIndex >= 0 ? '#${result.ruleIndex + 1} ' : '';
   final scope = result.ruleScope.isEmpty
       ? ''
@@ -289,6 +396,13 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
   final summary = result.matched
       ? '$scope$ruleIndex${result.ruleText} → ${result.target}'
       : '${result.mode.toUpperCase()} → ${result.target}';
+  final warningLabels = <String>{
+    ...result.warnings,
+    ...?policyExplanation?.warnings,
+  }
+      .map((warning) => _quickRoutingCoreWarningLabel(context, warning))
+      .toSet()
+      .toList(growable: false);
   return [
     Text('$marker ${appLocalizations.core}: $summary'),
     if (result.policyChain.isNotEmpty)
@@ -297,6 +411,7 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
+    ..._buildCorePolicyExplanation(context, result),
     ..._buildCoreQuickRoutingTrace(context, result),
     if (result.providerNames.isNotEmpty)
       Text(
@@ -306,11 +421,9 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
         overflow: TextOverflow.ellipsis,
       ),
     if (result.resolvedIP.isNotEmpty) Text('IP: ${result.resolvedIP}'),
-    if (result.warnings.isNotEmpty)
+    if (warningLabels.isNotEmpty)
       Text(
-        result.warnings
-            .map((warning) => _quickRoutingCoreWarningLabel(context, warning))
-            .join(' · '),
+        warningLabels.join(' · '),
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: context.textTheme.bodySmall?.copyWith(
