@@ -200,6 +200,50 @@ func TestEvaluateRuleMatchReplaysRematchIntoSubRule(t *testing.T) {
 	}
 }
 
+func TestEvaluateRuleMatchStopsRematchCycles(t *testing.T) {
+	rematchName := "loop"
+	rematchAdapter, err := O.NewRematch(O.RematchOption{
+		Name:              "REMATCH-LOOP",
+		TargetRematchName: &rematchName,
+	})
+	if err != nil {
+		t.Fatalf("new rematch adapter: %v", err)
+	}
+	rule, err := R.ParseRule("MATCH", "", "REMATCH-LOOP", nil, nil)
+	if err != nil {
+		t.Fatalf("parse loop rule: %v", err)
+	}
+	result, methodErr := evaluateRuleMatch(
+		&RuleMatchMetadata{
+			Network:         "tcp",
+			DestinationPort: "443",
+		},
+		tunnel.Rule,
+		[]C.Rule{rule},
+		nil,
+		map[string]C.Proxy{
+			"REMATCH-LOOP": A.NewProxy(rematchAdapter),
+		},
+	)
+	if methodErr != nil {
+		t.Fatalf("evaluateRuleMatch: %v", methodErr)
+	}
+	if !result.Matched || result.Target != "REMATCH-LOOP" {
+		t.Fatalf("cycle result = %#v", result)
+	}
+	if result.Complete || !containsRuleMatchWarning(
+		result.Warnings,
+		"rematch-cycle",
+	) {
+		t.Fatalf("cycle warnings = %#v", result.Warnings)
+	}
+	if len(result.RuleTrace) != 2 ||
+		result.RuleTrace[0].Outcome != "rematch" ||
+		result.RuleTrace[1].Outcome != "rematch-cycle" {
+		t.Fatalf("cycle trace = %#v", result.RuleTrace)
+	}
+}
+
 func TestEvaluateRuleMatchStartsInsideRequestedSubRule(t *testing.T) {
 	defaultRule, err := R.ParseRule("MATCH", "", "DIRECT", nil, nil)
 	if err != nil {
