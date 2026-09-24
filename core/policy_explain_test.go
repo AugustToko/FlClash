@@ -240,6 +240,34 @@ func TestExplainPolicyChainDescribesSelectorAndLeaf(t *testing.T) {
 	}
 }
 
+func TestExplainPolicyChainDetectsSelectorStateChanges(t *testing.T) {
+	group := selectorGroup(t, "Proxy", "node-a", "node-b")
+	proxies := map[string]C.Proxy{
+		"Proxy":  group,
+		"node-a": namedProxy("node-a"),
+		"node-b": namedProxy("node-b"),
+	}
+	result := explainPolicyChain(
+		&PolicyExplainParams{
+			Target:      "Proxy",
+			PolicyChain: []string{"Proxy", "node-b"},
+		},
+		&C.Metadata{},
+		proxies,
+		nil,
+		false,
+	)
+	if result.Complete || !containsRuleMatchWarning(
+		result.Warnings,
+		"policy-selection-state-changed",
+	) {
+		t.Fatalf("selector state change = %#v", result)
+	}
+	if result.Steps[0].Reason != "manual-selection-state-changed" {
+		t.Fatalf("selector step = %#v", result.Steps[0])
+	}
+}
+
 func TestExplainPolicyChainDescribesComputedGroups(t *testing.T) {
 	tests := []struct {
 		groupType string
@@ -264,7 +292,7 @@ func TestExplainPolicyChainDescribesComputedGroups(t *testing.T) {
 				"node-b",
 			)
 			descriptors := map[string]policyGroupDescriptor{}
-			if test.groupType == "url-test" {
+			if test.groupType == "url-test" && test.fixed == "" {
 				descriptors["Computed"] = policyGroupDescriptor{
 					Name:      "Computed",
 					Type:      "url-test",
