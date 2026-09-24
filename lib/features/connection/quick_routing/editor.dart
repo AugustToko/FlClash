@@ -77,8 +77,8 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
       return;
     }
 
-    final candidates = buildQuickRoutingCandidates(widget.trackerInfo);
-    if (candidates.isEmpty) {
+    final baseCandidates = buildQuickRoutingCandidates(widget.trackerInfo);
+    if (baseCandidates.isEmpty) {
       dialogs.showNotifier(
         currentAppLocalizations.nullTip(currentAppLocalizations.rule),
         level: MessageLevel.warning,
@@ -97,7 +97,7 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         .toList(growable: false);
 
     _setBusy(true);
-    final (knownRules, fixedStates, coreMatch) = await (
+    final (knownRules, fixedStates, coreMatch, domainAnalysis) = await (
       _readEffectiveQuickRoutingRules(
         ref: ref,
         profileId: profileId,
@@ -105,11 +105,16 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
       ),
       _readQuickRoutingGroupFixedStates(ref),
       _readCoreQuickRoutingMatch(ref, widget.trackerInfo),
+      _readCoreQuickRoutingDomainAnalysis(ref, widget.trackerInfo),
     ).wait;
     _setBusy(false);
     if (!mounted) {
       return;
     }
+    final candidates = augmentQuickRoutingCandidatesWithDomainAnalysis(
+      baseCandidates,
+      domainAnalysis,
+    );
 
     final selection = await dialogs.showCommonDialog<QuickRoutingSelection>(
       child: _QuickRoutingDialog(
