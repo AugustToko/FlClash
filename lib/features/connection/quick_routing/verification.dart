@@ -225,22 +225,55 @@ QuickRoutingVerification evaluateQuickRoutingVerification({
   );
 }
 
+QuickRoutingVerification unavailableQuickRoutingVerification(
+  String issue, {
+  int attempts = 0,
+}) {
+  return QuickRoutingVerification(
+    status: QuickRoutingVerificationStatus.unavailable,
+    result: null,
+    issues: List.unmodifiable([issue]),
+    attempts: attempts,
+  );
+}
+
+int? _resolveQuickRoutingVerificationProfileId({
+  required WidgetRef ref,
+  required TrackerInfo trackerInfo,
+  required QuickRoutingSelection selection,
+  int? profileId,
+}) {
+  if (profileId != null) {
+    return profileId;
+  }
+  for (final entry in ref.read(quickRoutingVerificationHistoryProvider)) {
+    if (identical(entry.selection, selection) &&
+        entry.trackerInfo.id == trackerInfo.id) {
+      return entry.profileId;
+    }
+  }
+  return ref.read(currentProfileIdProvider);
+}
+
 Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
   required WidgetRef ref,
   required TrackerInfo trackerInfo,
   required QuickRoutingSelection selection,
   int? profileId,
 }) async {
+  final historyProfileId = _resolveQuickRoutingVerificationProfileId(
+    ref: ref,
+    trackerInfo: trackerInfo,
+    selection: selection,
+    profileId: profileId,
+  );
+  final activeProfileId = ref.read(currentProfileIdProvider);
   late final QuickRoutingVerification verification;
 
-  if (ref.read(coreStatusProvider) != CoreStatus.connected) {
-    verification = evaluateQuickRoutingVerification(
-      candidate: selection.candidate,
-      target: selection.target,
-      result: null,
-      groupOverride: selection.groupOverride,
-      attempts: 0,
-    );
+  if (historyProfileId != null && activeProfileId != historyProfileId) {
+    verification = unavailableQuickRoutingVerification('profile-not-active');
+  } else if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+    verification = unavailableQuickRoutingVerification('core-unavailable');
   } else {
     try {
       final result = await ref
@@ -270,35 +303,11 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
         '${compactError(error)}, $stackTrace',
         logLevel: coreFailureLogLevel(error),
       );
-      verification = evaluateQuickRoutingVerification(
-        candidate: selection.candidate,
-        target: selection.target,
-        result: null,
-        groupOverride: selection.groupOverride,
-      );
+      verification = unavailableQuickRoutingVerification('core-unavailable');
     }
   }
 
-  int? historyProfileId = profileId;
-  if (historyProfileId == null) {
-    for (final entry
-        in ref.read(quickRoutingVerificationHistoryProvider)) {
-      if (identical(entry.selection, selection) &&
-          entry.trackerInfo.id == trackerInfo.id) {
-        historyProfileId = entry.profileId;
-        break;
-      }
-    }
-  }
-  final currentProfileId = ref.read(currentProfileIdProvider);
-  if (historyProfileId == null || historyProfileId == currentProfileId) {
-    _recordQuickRoutingVerification(
-      ref: ref,
-      trackerInfo: trackerInfo,
-      selection: selection,
-      verification: verification,
-    );
-  } else {
+  if (historyProfileId != null) {
     ref.read(quickRoutingVerificationHistoryProvider.notifier).upsert(
           profileId: historyProfileId,
           trackerInfo: trackerInfo,
@@ -319,8 +328,10 @@ String _quickRoutingVerificationSummary(
 ) {
   final result = verification.result;
   if (result == null) {
+    final issue = verification.issues.firstOrNull;
+    final suffix = issue == 'profile-not-active' ? ' · PROFILE' : '';
     return '${verification.marker} ${context.appLocalizations.core}: '
-        '${context.appLocalizations.unknown}';
+        '${context.appLocalizations.unknown}$suffix';
   }
   final rule = result.matched ? result.ruleText : result.mode.toUpperCase();
   final chain = result.policyChain.length > 1 ? ' · ${result.policyText}' : '';
