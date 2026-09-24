@@ -152,7 +152,8 @@ String _quickRoutingCoreWarningLabel(
       '${appLocalizations.unknown}: IN-TYPE',
     'missing-dscp' => '${appLocalizations.unknown}: DSCP',
     'sub-rule-context-unavailable' ||
-    'special-rules-not-expanded' =>
+    'special-rules-not-expanded' ||
+    'sub-rule-target-unavailable' =>
       '${appLocalizations.unknown}: SUB-RULE',
     'compound-rule-context-partial' =>
       '${appLocalizations.unknown}: AND / OR / NOT',
@@ -163,7 +164,10 @@ String _quickRoutingCoreWarningLabel(
       '${appLocalizations.unknown}: DNS',
     'matched-target-unavailable' =>
       '${appLocalizations.unknown}: ${appLocalizations.ruleTarget}',
-    'rematch-target-not-expanded' =>
+    'rematch-target-not-expanded' ||
+    'rematch-cycle' ||
+    'rematch-chain-truncated' ||
+    'rematch-metadata-update-failed' =>
       '${appLocalizations.unknown}: REMATCH',
     'policy-chain-cycle' ||
     'policy-chain-truncated' ||
@@ -173,6 +177,89 @@ String _quickRoutingCoreWarningLabel(
   };
 }
 
+String _quickRoutingCoreRuleScopeLabel(
+  BuildContext context,
+  String scope,
+) {
+  if (scope == 'default') {
+    return context.appLocalizations.defaultText;
+  }
+  return scope;
+}
+
+String _quickRoutingCoreTraceMarker(String outcome) {
+  return switch (outcome) {
+    'final' => '✓',
+    'rematch' => '↻',
+    'pass' => '↪',
+    _ => '≈',
+  };
+}
+
+String _quickRoutingCoreTraceOutcomeLabel(String outcome) {
+  return switch (outcome) {
+    'final' => '',
+    'rematch' => 'REMATCH',
+    'pass' => 'PASS',
+    'udp-unsupported' => 'UDP ×',
+    'target-unavailable' => 'TARGET ?',
+    'rematch-cycle' => 'REMATCH CYCLE',
+    'rematch-truncated' => 'REMATCH LIMIT',
+    'rematch-error' => 'REMATCH ERROR',
+    _ => outcome.toUpperCase(),
+  };
+}
+
+List<Widget> _buildCoreQuickRoutingTrace(
+  BuildContext context,
+  CoreRuleMatchResult result,
+) {
+  final appLocalizations = context.appLocalizations;
+  final shouldShow = result.ruleTrace.length > 1 ||
+      result.ruleTrace.any((step) => step.outcome != 'final');
+  if (!shouldShow) {
+    return const [];
+  }
+
+  return [
+    const SizedBox(height: 6),
+    Text(
+      appLocalizations.rules,
+      style: context.textTheme.bodySmall,
+    ),
+    for (final step in result.ruleTrace) ...[
+      Text(
+        '${_quickRoutingCoreTraceMarker(step.outcome)} '
+        '[${_quickRoutingCoreRuleScopeLabel(context, step.ruleScope)}] '
+        '${step.ruleIndex >= 0 ? '#${step.ruleIndex + 1} ' : ''}'
+        '${step.ruleText} → ${step.target}'
+        '${_quickRoutingCoreTraceOutcomeLabel(step.outcome).isEmpty ? '' : ' · ${_quickRoutingCoreTraceOutcomeLabel(step.outcome)}'}',
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      if (step.policyChain.length > 1)
+        Text(
+          '  ${appLocalizations.proxyChains}: ${step.policyText}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: context.textTheme.bodySmall,
+        ),
+      if (step.outcome.startsWith('rematch') &&
+          (step.rematchName.isNotEmpty || step.subRule.isNotEmpty))
+        Text(
+          '  ↳ ${[
+            if (step.rematchName.isNotEmpty)
+              'REMATCH-NAME=${step.rematchName}',
+            if (step.subRule.isNotEmpty) 'SUB-RULE=${step.subRule}',
+          ].join(' · ')}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: context.textTheme.bodySmall,
+        ),
+    ],
+  ];
+}
+
 List<Widget> _buildCoreQuickRoutingMatchPreview(
   BuildContext context,
   CoreRuleMatchResult result,
@@ -180,8 +267,11 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
   final appLocalizations = context.appLocalizations;
   final marker = result.complete ? '✓' : '≈';
   final ruleIndex = result.ruleIndex >= 0 ? '#${result.ruleIndex + 1} ' : '';
+  final scope = result.ruleScope.isEmpty
+      ? ''
+      : '[${_quickRoutingCoreRuleScopeLabel(context, result.ruleScope)}] ';
   final summary = result.matched
-      ? '$ruleIndex${result.ruleText} → ${result.target}'
+      ? '$scope$ruleIndex${result.ruleText} → ${result.target}'
       : '${result.mode.toUpperCase()} → ${result.target}';
   return [
     Text('$marker ${appLocalizations.core}: $summary'),
@@ -191,6 +281,7 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
+    ..._buildCoreQuickRoutingTrace(context, result),
     if (result.providerNames.isNotEmpty)
       Text(
         '${appLocalizations.providers}: '
