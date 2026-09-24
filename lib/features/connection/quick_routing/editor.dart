@@ -159,6 +159,14 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         baseResult: result,
         selection: selection,
       );
+      final verification = await _verifyAppliedQuickRoutingRule(
+        ref: ref,
+        trackerInfo: widget.trackerInfo,
+        selection: selection,
+      );
+      if (!mounted) {
+        return;
+      }
       final onRuleApplied = widget.onRuleApplied;
       if (onRuleApplied != null) {
         try {
@@ -172,8 +180,9 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
         }
       }
       dialogs.showNotifier(
-        '${currentAppLocalizations.addRule}: ${result.rule.rawValue}',
-        level: MessageLevel.success,
+        '${currentAppLocalizations.addRule}: ${result.rule.rawValue}\n'
+        '${_quickRoutingVerificationSummary(context, verification)}',
+        level: verification.messageLevel,
         actionState: MessageActionState(
           actionText: currentAppLocalizations.undo,
           action: () {
