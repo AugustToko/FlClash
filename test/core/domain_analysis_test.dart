@@ -17,10 +17,10 @@ void main() {
     expect(result.publicSuffix, 'co.uk');
     expect(result.registrableDomain, 'example.co.uk');
     expect(result.hasRegistrableDomain, isTrue);
-    expect(result.usesPrivateSuffix, isFalse);
+    expect(result.icannSuffix, isTrue);
   });
 
-  test('keeps private suffixes distinct from ICANN suffixes', () {
+  test('keeps non-ICANN suffixes explicit', () {
     final result = CoreDomainAnalysis.fromJson({
       'normalizedHost': 'bar.foo.github.io',
       'publicSuffix': 'github.io',
@@ -29,7 +29,7 @@ void main() {
     });
 
     expect(result.hasRegistrableDomain, isTrue);
-    expect(result.usesPrivateSuffix, isTrue);
+    expect(result.icannSuffix, isFalse);
   });
 
   test('does not expose an IP address as a domain scope', () {
