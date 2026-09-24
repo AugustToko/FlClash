@@ -30,8 +30,6 @@ class CoreDomainAnalysis {
 
   bool get hasRegistrableDomain =>
       !isIP && normalizedHost.isNotEmpty && registrableDomain.isNotEmpty;
-
-  bool get usesPrivateSuffix => publicSuffix.isNotEmpty && !icannSuffix;
 }
 
 extension CoreControllerDomainAnalysisExt on CoreController {
