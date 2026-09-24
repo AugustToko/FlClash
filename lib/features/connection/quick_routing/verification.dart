@@ -229,6 +229,7 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
   required WidgetRef ref,
   required TrackerInfo trackerInfo,
   required QuickRoutingSelection selection,
+  int? profileId,
 }) async {
   late final QuickRoutingVerification verification;
 
@@ -278,12 +279,37 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
     }
   }
 
-  _recordQuickRoutingVerification(
-    ref: ref,
-    trackerInfo: trackerInfo,
-    selection: selection,
-    verification: verification,
-  );
+  int? historyProfileId = profileId;
+  if (historyProfileId == null) {
+    for (final entry
+        in ref.read(quickRoutingVerificationHistoryProvider)) {
+      if (identical(entry.selection, selection) &&
+          entry.trackerInfo.id == trackerInfo.id) {
+        historyProfileId = entry.profileId;
+        break;
+      }
+    }
+  }
+  final currentProfileId = ref.read(currentProfileIdProvider);
+  if (historyProfileId == null || historyProfileId == currentProfileId) {
+    _recordQuickRoutingVerification(
+      ref: ref,
+      trackerInfo: trackerInfo,
+      selection: selection,
+      verification: verification,
+    );
+  } else {
+    ref.read(quickRoutingVerificationHistoryProvider.notifier).upsert(
+          profileId: historyProfileId,
+          trackerInfo: trackerInfo,
+          selection: selection,
+          appliedRule: selection.candidate.buildRule(
+            target: selection.target,
+            id: -1,
+          ),
+          verification: verification,
+        );
+  }
   return verification;
 }
 
