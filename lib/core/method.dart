@@ -19,6 +19,7 @@ enum CoreMethod {
   asyncTestDelay,
   getConnections,
   matchRule,
+  explainPolicy,
   closeConnections,
   resetConnections,
   closeConnection,
