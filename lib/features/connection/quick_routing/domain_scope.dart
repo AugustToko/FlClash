@@ -11,7 +11,10 @@ List<QuickRoutingCandidate> augmentQuickRoutingCandidatesWithDomainAnalysis(
 
   final host = analysis.normalizedHost.trim().toLowerCase();
   final registrable = analysis.registrableDomain.trim().toLowerCase();
-  if (host.isEmpty ||
+  final suffix = analysis.publicSuffix.trim().toLowerCase();
+  final suffixBoundaryIsKnown = analysis.icannSuffix || suffix.contains('.');
+  if (!suffixBoundaryIsKnown ||
+      host.isEmpty ||
       registrable.isEmpty ||
       host == registrable ||
       !host.endsWith('.$registrable') ||
