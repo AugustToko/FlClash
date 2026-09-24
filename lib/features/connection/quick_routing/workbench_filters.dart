@@ -358,7 +358,7 @@ class _QuickRoutingFilteredHistoryPanelState
     });
     try {
       for (final record in snapshot) {
-        if (!mounted) {
+        if (!mounted || !_ensureProfileActive()) {
           break;
         }
         final verification = await _recheck(record, notify: false);
@@ -422,7 +422,7 @@ class _QuickRoutingFilteredHistoryPanelState
     unawaited(
       Navigator.of(context).push<void>(
         MaterialPageRoute(
-          builder: (_) => _QuickRoutingVerificationDetailsPage(
+          builder: (_) => _QuickRoutingConflictDetailsPage(
             profileId: widget.profileId,
             recordId: record.id,
           ),
@@ -495,19 +495,17 @@ class _QuickRoutingFilteredHistoryPanelState
           ),
         ),
         const SizedBox(height: 8),
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: Text(
-                '${appLocalizations.status}: '
-                '${visibleRecords.length}/${allRecords.length}',
-              ),
+            Text(
+              '${appLocalizations.status}: '
+              '${visibleRecords.length}/${allRecords.length}',
             ),
-            if (_batchBusy)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Text('$_batchDone/$_batchTotal'),
-              ),
+            if (_batchBusy) Text('$_batchDone/$_batchTotal'),
             FilledButton.tonalIcon(
               onPressed: _batchBusy || visibleRecords.isEmpty
                   ? null
