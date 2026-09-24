@@ -54,7 +54,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       title: appLocalizations.requests,
       searchState: AppBarSearchState(onSearch: _listController.search),
       onKeywordsUpdate: _listController.updateKeywords,
-      actions: const [QuickRoutingWorkbenchButton()],
+      actions: const [QuickRoutingDiagnosticsButton()],
       floatingActionButton: ValueListenableBuilder(
         valueListenable: _listController,
         builder: (_, state, _) {
