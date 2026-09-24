@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
+part 'domain_analysis.dart';
 part 'rule_match.dart';
 
 @visibleForTesting
