@@ -24,14 +24,20 @@ class QuickRoutingCandidate {
   final RuleAction ruleAction;
   final String content;
   final bool noResolve;
+  final String scopeHint;
 
   const QuickRoutingCandidate({
     required this.ruleAction,
     required this.content,
     this.noResolve = false,
+    this.scopeHint = '',
   });
 
-  String get label => '${ruleAction.value} · $content';
+  String get label => [
+        ruleAction.value,
+        content,
+        if (scopeHint.isNotEmpty) scopeHint,
+      ].join(' · ');
 
   Rule buildRule({required String target, required int id, String? order}) {
     return Rule(
