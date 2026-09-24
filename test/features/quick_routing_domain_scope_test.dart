@@ -39,10 +39,11 @@ void main() {
       [
         'DOMAIN · api.service.example.co.uk',
         'DOMAIN-SUFFIX · api.service.example.co.uk',
-        'DOMAIN-SUFFIX · example.co.uk',
+        'DOMAIN-SUFFIX · example.co.uk · eTLD+1',
         'PROCESS-NAME · example-app',
       ],
     );
+    expect(result[2].scopeHint, 'eTLD+1');
   });
 
   test('supports private suffix boundaries without broadening to github.io', () {
@@ -70,6 +71,7 @@ void main() {
     );
 
     expect(result.last.content, 'foo.github.io');
+    expect(result.last.scopeHint, 'eTLD+1');
     expect(result.any((candidate) => candidate.content == 'github.io'), isFalse);
   });
 
