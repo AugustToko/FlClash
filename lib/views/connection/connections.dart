@@ -31,7 +31,7 @@ class _ConnectionsViewState extends ConsumerState<ConnectionsView>
 
   List<Widget> _buildActions() {
     return [
-      const QuickRoutingRuleManagerButton(),
+      const QuickRoutingWorkbenchButton(),
       IconButton(
         tooltip: context.appLocalizations.closeConnections,
         onPressed: () async {
