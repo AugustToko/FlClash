@@ -24,3 +24,4 @@ part 'quick_routing/models.dart';
 part 'quick_routing/rules_manager.dart';
 part 'quick_routing/verification.dart';
 part 'quick_routing/workbench.dart';
+part 'quick_routing/workbench_filters.dart';
