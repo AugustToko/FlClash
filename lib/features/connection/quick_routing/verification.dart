@@ -62,19 +62,51 @@ String? _quickRoutingExpectedCoreRuleType(RuleAction action) {
   };
 }
 
-String _normalizeQuickRoutingVerificationCidr(String value) {
+(InternetAddress, int)? _parseQuickRoutingVerificationCidr(String value) {
   final parts = value.trim().split('/');
   if (parts.length != 2) {
-    return value.trim().toLowerCase();
+    return null;
   }
   final address = InternetAddress.tryParse(
     _normalizeQuickRoutingHost(parts.first),
   );
   final prefix = int.tryParse(parts.last);
   if (address == null || prefix == null) {
-    return value.trim().toLowerCase();
+    return null;
   }
-  return '${address.address}/$prefix';
+  final maxBits = address.type == InternetAddressType.IPv6 ? 128 : 32;
+  if (prefix < 0 || prefix > maxBits) {
+    return null;
+  }
+  return (address, prefix);
+}
+
+bool _quickRoutingVerificationCidrsMatch(
+  String expected,
+  String actual,
+) {
+  final expectedCidr = _parseQuickRoutingVerificationCidr(expected);
+  final actualCidr = _parseQuickRoutingVerificationCidr(actual);
+  if (expectedCidr == null || actualCidr == null) {
+    return false;
+  }
+  final (expectedAddress, expectedPrefix) = expectedCidr;
+  final (actualAddress, actualPrefix) = actualCidr;
+  if (expectedAddress.type != actualAddress.type ||
+      expectedPrefix != actualPrefix) {
+    return false;
+  }
+  final expectedBytes = expectedAddress.rawAddress;
+  final actualBytes = actualAddress.rawAddress;
+  if (expectedBytes.length != actualBytes.length) {
+    return false;
+  }
+  for (var index = 0; index < expectedBytes.length; index++) {
+    if (expectedBytes[index] != actualBytes[index]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 String _normalizeQuickRoutingVerificationPayload(
@@ -85,10 +117,6 @@ String _normalizeQuickRoutingVerificationPayload(
   return switch (action) {
     RuleAction.DOMAIN || RuleAction.DOMAIN_SUFFIX =>
       _normalizeQuickRoutingHost(content).toLowerCase(),
-    RuleAction.IP_CIDR ||
-    RuleAction.IP_CIDR6 ||
-    RuleAction.SRC_IP_CIDR =>
-      _normalizeQuickRoutingVerificationCidr(content),
     RuleAction.GEOIP ||
     RuleAction.SRC_GEOIP ||
     RuleAction.NETWORK =>
@@ -105,6 +133,11 @@ bool _quickRoutingVerificationPayloadMatches(
   QuickRoutingCandidate candidate,
   String actual,
 ) {
+  if (candidate.ruleAction == RuleAction.IP_CIDR ||
+      candidate.ruleAction == RuleAction.IP_CIDR6 ||
+      candidate.ruleAction == RuleAction.SRC_IP_CIDR) {
+    return _quickRoutingVerificationCidrsMatch(candidate.content, actual);
+  }
   return _normalizeQuickRoutingVerificationPayload(
         candidate.ruleAction,
         candidate.content,
