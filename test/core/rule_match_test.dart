@@ -65,6 +65,120 @@ void main() {
     expect(result.resolvedIP, '1.1.1.1');
     expect(result.complete, isTrue);
     expect(result.warnings, isEmpty);
+    expect(result.policyExplanation, isNull);
+  });
+
+  test('parses policy group selection reasons and attaches them to a match', () {
+    final explanation = CorePolicyExplanation.fromJson({
+      'target': 'Proxy',
+      'policyChain': ['Proxy', 'Balance', 'HK-01'],
+      'steps': [
+        {
+          'name': 'Proxy',
+          'type': 'Selector',
+          'selected': 'Balance',
+          'reason': 'manual-selection',
+          'strategy': '',
+          'key': '',
+          'keySource': '',
+          'testURL': '',
+          'fastest': '',
+          'candidateCount': 4,
+          'selectedIndex': 2,
+          'bucket': -1,
+          'retry': -1,
+          'tolerance': 0,
+          'selectedDelay': 65535,
+          'fastestDelay': 0,
+          'fixed': false,
+          'healthKnown': false,
+          'selectedAlive': true,
+          'complete': true,
+        },
+        {
+          'name': 'Balance',
+          'type': 'LoadBalance',
+          'selected': 'HK-01',
+          'reason': 'consistent-hash',
+          'strategy': 'consistent-hashing',
+          'key': 'example.com',
+          'keySource': 'etld+1',
+          'testURL': 'https://www.gstatic.com/generate_204',
+          'fastest': '',
+          'candidateCount': 3,
+          'selectedIndex': 1,
+          'bucket': 1,
+          'retry': 0,
+          'tolerance': 0,
+          'selectedDelay': 42,
+          'fastestDelay': 0,
+          'fixed': false,
+          'healthKnown': true,
+          'selectedAlive': true,
+          'complete': true,
+        },
+        'malformed',
+      ],
+      'complete': true,
+      'warnings': <String>[],
+    });
+
+    expect(explanation.target, 'Proxy');
+    expect(explanation.policyChain, ['Proxy', 'Balance', 'HK-01']);
+    expect(explanation.steps, hasLength(2));
+    expect(explanation.steps.first.reason, 'manual-selection');
+    expect(explanation.steps.last.strategy, 'consistent-hashing');
+    expect(explanation.steps.last.key, 'example.com');
+    expect(explanation.steps.last.bucket, 1);
+    expect(explanation.steps.last.hasSelectedDelay, isTrue);
+    expect(explanation.steps.first.hasSelectedDelay, isFalse);
+    expect(explanation.complete, isTrue);
+
+    final match = CoreRuleMatchResult.fromJson({
+      'mode': 'rule',
+      'matched': true,
+      'ruleScope': 'default',
+      'ruleIndex': 0,
+      'ruleType': 'Domain',
+      'payload': 'example.com',
+      'target': 'Proxy',
+      'policyChain': ['Proxy', 'Balance', 'HK-01'],
+      'complete': true,
+    }).copyWith(policyExplanation: explanation);
+
+    expect(match.policyExplanation, same(explanation));
+    expect(match.finalPolicy, 'HK-01');
+  });
+
+  test('keeps hidden load-balance state explicit', () {
+    final explanation = CorePolicyExplanation.fromJson({
+      'target': 'Balance',
+      'policyChain': ['Balance', 'JP-01'],
+      'steps': [
+        {
+          'name': 'Balance',
+          'type': 'LoadBalance',
+          'selected': 'JP-01',
+          'reason': 'sticky-session-cache',
+          'strategy': 'sticky-sessions',
+          'key': '10.0.0.2example.com',
+          'keySource': 'source-ip+etld+1',
+          'candidateCount': 3,
+          'selectedIndex': 1,
+          'bucket': -1,
+          'retry': -1,
+          'complete': false,
+        },
+      ],
+      'complete': false,
+      'warnings': ['policy-strategy-state-hidden'],
+    });
+
+    expect(explanation.complete, isFalse);
+    expect(explanation.warnings, ['policy-strategy-state-hidden']);
+    expect(explanation.steps.single.reason, 'sticky-session-cache');
+    expect(explanation.steps.single.key, '10.0.0.2example.com');
+    expect(explanation.steps.single.hasSelectedDelay, isFalse);
   });
 
   test('keeps limitations explicit when metadata is incomplete', () {
@@ -118,21 +232,41 @@ void main() {
     expect(result.ruleTrace.single.policyChain, isEmpty);
   });
 
-  test('serializes and parses the matchRule protocol method name', () {
-    const call = CoreMethodCall(
+  test('serializes and parses the rule diagnostic protocol methods', () {
+    const matchCall = CoreMethodCall(
       id: 'request-1',
       method: CoreMethod.matchRule,
       arguments: {'network': 'tcp', 'host': 'example.com'},
     );
+    const explainCall = CoreMethodCall(
+      id: 'request-2',
+      method: CoreMethod.explainPolicy,
+      arguments: {
+        'target': 'Proxy',
+        'policyChain': ['Proxy', 'HK-01'],
+      },
+    );
 
-    expect(call.toJson(), {
+    expect(matchCall.toJson(), {
       'id': 'request-1',
       'method': 'matchRule',
       'arguments': {'network': 'tcp', 'host': 'example.com'},
     });
+    expect(explainCall.toJson(), {
+      'id': 'request-2',
+      'method': 'explainPolicy',
+      'arguments': {
+        'target': 'Proxy',
+        'policyChain': ['Proxy', 'HK-01'],
+      },
+    });
     expect(
-      CoreMethodCall.fromJson(call.toJson()).method,
+      CoreMethodCall.fromJson(matchCall.toJson()).method,
       CoreMethod.matchRule,
+    );
+    expect(
+      CoreMethodCall.fromJson(explainCall.toJson()).method,
+      CoreMethod.explainPolicy,
     );
   });
 }
