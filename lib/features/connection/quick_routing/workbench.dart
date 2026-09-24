@@ -235,7 +235,16 @@ class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
     required this.profileId,
   });
 
-  void _openManager(BuildContext context) {
+  void _openManager(BuildContext context, WidgetRef ref) {
+    if (ref.read(currentProfileIdProvider) != profileId) {
+      dialogs.showNotifier(
+        currentAppLocalizations.invalidPolicy(
+          currentAppLocalizations.profile,
+        ),
+        level: MessageLevel.warning,
+      );
+      return;
+    }
     unawaited(
       dialogs.showCommonDialog<void>(
         child: _QuickRoutingRuleManagerDialog(profileId: profileId),
@@ -256,17 +265,30 @@ class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
       ),
     );
     final appLocalizations = context.appLocalizations;
+    final profileActive = ref.watch(currentProfileIdProvider) == profileId;
 
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        if (!profileActive)
+          Card(
+            color: context.colorScheme.tertiaryContainer,
+            child: ListTile(
+              leading: const Icon(Icons.warning_amber_outlined),
+              title: Text(
+                appLocalizations.invalidPolicy(appLocalizations.profile),
+              ),
+            ),
+          ),
         Card(
           child: ListTile(
             leading: const Icon(Icons.rule_folder_outlined),
             title: Text('${appLocalizations.rules}: ${entries.length}'),
             subtitle: Text(appLocalizations.expireTime),
             trailing: TextButton(
-              onPressed: () => _openManager(context),
+              onPressed: profileActive
+                  ? () => _openManager(context, ref)
+                  : null,
               child: Text(appLocalizations.edit),
             ),
           ),
@@ -282,7 +304,9 @@ class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
             Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                onTap: () => _openManager(context),
+                onTap: profileActive
+                    ? () => _openManager(context, ref)
+                    : null,
                 leading: CircleAvatar(child: Text('${index + 1}')),
                 title: Text(
                   entries[index].rule.rawValue,
@@ -303,7 +327,9 @@ class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: profileActive
+                    ? const Icon(Icons.chevron_right)
+                    : const Icon(Icons.lock_outline),
               ),
             ),
       ],
