@@ -14,6 +14,7 @@ import 'package:material_ui/material_ui.dart';
 
 part 'quick_routing/actions.dart';
 part 'quick_routing/core_match.dart';
+part 'quick_routing/domain_scope.dart';
 part 'quick_routing/editor.dart';
 part 'quick_routing/explanation.dart';
 part 'quick_routing/logic.dart';
