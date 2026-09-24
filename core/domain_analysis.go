@@ -27,6 +27,16 @@ type DomainAnalysisResult struct {
 	ICANNSuffix       bool   `json:"icannSuffix"`
 }
 
+func validateDomainAnalysisPort(port string) error {
+	if port == "" {
+		return nil
+	}
+	if _, err := strconv.ParseUint(port, 10, 16); err != nil {
+		return fmt.Errorf("invalid port %q", port)
+	}
+	return nil
+}
+
 func normalizeDomainAnalysisHost(raw string) (string, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
@@ -38,18 +48,17 @@ func normalizeDomainAnalysisHost(raw string) (string, error) {
 		if err != nil || parsed.Hostname() == "" {
 			return "", fmt.Errorf("invalid host %q", raw)
 		}
+		if err := validateDomainAnalysisPort(parsed.Port()); err != nil {
+			return "", fmt.Errorf("invalid host %q: %w", raw, err)
+		}
 		value = parsed.Hostname()
-	} else if host, _, err := net.SplitHostPort(value); err == nil {
+	} else if host, port, err := net.SplitHostPort(value); err == nil {
+		if err := validateDomainAnalysisPort(port); err != nil {
+			return "", fmt.Errorf("invalid host %q: %w", raw, err)
+		}
 		value = host
 	} else if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
 		value = strings.TrimSuffix(strings.TrimPrefix(value, "["), "]")
-	} else if strings.Count(value, ":") == 1 {
-		separator := strings.LastIndexByte(value, ':')
-		if separator > 0 {
-			if _, err := strconv.ParseUint(value[separator+1:], 10, 16); err == nil {
-				value = value[:separator]
-			}
-		}
 	}
 
 	value = strings.TrimSpace(strings.TrimSuffix(value, "."))
