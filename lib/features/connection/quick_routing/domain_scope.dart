@@ -1,5 +1,22 @@
 part of '../quick_routing.dart';
 
+const _quickRoutingDomainAnalysisCacheLimit = 128;
+final _quickRoutingDomainAnalysisCache = <String, CoreDomainAnalysis>{};
+
+void _cacheQuickRoutingDomainAnalysis(
+  String host,
+  CoreDomainAnalysis analysis,
+) {
+  _quickRoutingDomainAnalysisCache.remove(host);
+  while (_quickRoutingDomainAnalysisCache.length >=
+      _quickRoutingDomainAnalysisCacheLimit) {
+    _quickRoutingDomainAnalysisCache.remove(
+      _quickRoutingDomainAnalysisCache.keys.first,
+    );
+  }
+  _quickRoutingDomainAnalysisCache[host] = analysis;
+}
+
 List<QuickRoutingCandidate> augmentQuickRoutingCandidatesWithDomainAnalysis(
   Iterable<QuickRoutingCandidate> baseCandidates,
   CoreDomainAnalysis? analysis,
@@ -54,12 +71,23 @@ Future<CoreDomainAnalysis?> _readCoreQuickRoutingDomainAnalysis(
   if (ref.read(coreStatusProvider) != CoreStatus.connected) {
     return null;
   }
-  final host = _normalizeQuickRoutingHost(trackerInfo.metadata.host);
-  if (host.isEmpty || InternetAddress.tryParse(host) != null) {
+  final host = _normalizeQuickRoutingHost(
+    trackerInfo.metadata.host,
+  ).toLowerCase();
+  if (host.isEmpty ||
+      !host.contains('.') ||
+      InternetAddress.tryParse(host) != null) {
     return null;
   }
+  final cached = _quickRoutingDomainAnalysisCache[host];
+  if (cached != null) {
+    _cacheQuickRoutingDomainAnalysis(host, cached);
+    return cached;
+  }
   try {
-    return await ref.read(coreHandlerProvider).analyzeDomain(host);
+    final analysis = await ref.read(coreHandlerProvider).analyzeDomain(host);
+    _cacheQuickRoutingDomainAnalysis(host, analysis);
+    return analysis;
   } catch (error, stackTrace) {
     commonPrint.log(
       'quick routing domain analysis unavailable: '
