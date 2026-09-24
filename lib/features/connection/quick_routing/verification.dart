@@ -230,51 +230,61 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
   required TrackerInfo trackerInfo,
   required QuickRoutingSelection selection,
 }) async {
+  late final QuickRoutingVerification verification;
+
   if (ref.read(coreStatusProvider) != CoreStatus.connected) {
-    return evaluateQuickRoutingVerification(
+    verification = evaluateQuickRoutingVerification(
       candidate: selection.candidate,
       target: selection.target,
       result: null,
       groupOverride: selection.groupOverride,
       attempts: 0,
     );
-  }
-
-  try {
-    final result = await ref
-        .read(coreHandlerProvider)
-        .matchRule(trackerInfo.metadata);
-    final verification = evaluateQuickRoutingVerification(
-      candidate: selection.candidate,
-      target: selection.target,
-      result: result,
-      groupOverride: selection.groupOverride,
-    );
-    if (!verification.exact) {
+  } else {
+    try {
+      final result = await ref
+          .read(coreHandlerProvider)
+          .matchRule(trackerInfo.metadata);
+      verification = evaluateQuickRoutingVerification(
+        candidate: selection.candidate,
+        target: selection.target,
+        result: result,
+        groupOverride: selection.groupOverride,
+      );
+      if (!verification.exact) {
+        commonPrint.log(
+          'quick routing post-apply verification: '
+          '${verification.status.name}, ${verification.issues.join(', ')}, '
+          'actual=${result.ruleText} -> ${result.target}, '
+          'chain=${result.policyText}',
+          logLevel:
+              verification.status == QuickRoutingVerificationStatus.mismatch
+                  ? LogLevel.error
+                  : LogLevel.warning,
+        );
+      }
+    } catch (error, stackTrace) {
       commonPrint.log(
-        'quick routing post-apply verification: '
-        '${verification.status.name}, ${verification.issues.join(', ')}, '
-        'actual=${result.ruleText} -> ${result.target}, '
-        'chain=${result.policyText}',
-        logLevel: verification.status == QuickRoutingVerificationStatus.mismatch
-            ? LogLevel.error
-            : LogLevel.warning,
+        'quick routing post-apply verification unavailable: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: coreFailureLogLevel(error),
+      );
+      verification = evaluateQuickRoutingVerification(
+        candidate: selection.candidate,
+        target: selection.target,
+        result: null,
+        groupOverride: selection.groupOverride,
       );
     }
-    return verification;
-  } catch (error, stackTrace) {
-    commonPrint.log(
-      'quick routing post-apply verification unavailable: '
-      '${compactError(error)}, $stackTrace',
-      logLevel: coreFailureLogLevel(error),
-    );
-    return evaluateQuickRoutingVerification(
-      candidate: selection.candidate,
-      target: selection.target,
-      result: null,
-      groupOverride: selection.groupOverride,
-    );
   }
+
+  _recordQuickRoutingVerification(
+    ref: ref,
+    trackerInfo: trackerInfo,
+    selection: selection,
+    verification: verification,
+  );
+  return verification;
 }
 
 String _quickRoutingVerificationSummary(
