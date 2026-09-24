@@ -51,6 +51,7 @@ List<QuickRoutingCandidate> augmentQuickRoutingCandidatesWithDomainAnalysis(
   final candidate = QuickRoutingCandidate(
     ruleAction: RuleAction.DOMAIN_SUFFIX,
     content: registrable,
+    scopeHint: 'eTLD+1',
   );
   final firstNonDomain = candidates.indexWhere(
     (value) =>
