@@ -267,18 +267,29 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
     selection: selection,
     profileId: profileId,
   );
-  final activeProfileId = ref.read(currentProfileIdProvider);
   late final QuickRoutingVerification verification;
 
-  if (historyProfileId != null && activeProfileId != historyProfileId) {
-    verification = unavailableQuickRoutingVerification('profile-not-active');
-  } else if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+  bool profileIsActive() {
+    return historyProfileId == null ||
+        ref.read(currentProfileIdProvider) == historyProfileId;
+  }
+
+  if (!profileIsActive()) {
+    return unavailableQuickRoutingVerification('profile-not-active');
+  }
+  if (ref.read(coreStatusProvider) != CoreStatus.connected) {
     verification = unavailableQuickRoutingVerification('core-unavailable');
   } else {
     try {
       final result = await ref
           .read(coreHandlerProvider)
           .matchRule(trackerInfo.metadata);
+      if (!profileIsActive()) {
+        return unavailableQuickRoutingVerification(
+          'profile-not-active',
+          attempts: 1,
+        );
+      }
       verification = evaluateQuickRoutingVerification(
         candidate: selection.candidate,
         target: selection.target,
@@ -307,7 +318,7 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
     }
   }
 
-  if (historyProfileId != null) {
+  if (historyProfileId != null && profileIsActive()) {
     ref.read(quickRoutingVerificationHistoryProvider.notifier).upsert(
           profileId: historyProfileId,
           trackerInfo: trackerInfo,
