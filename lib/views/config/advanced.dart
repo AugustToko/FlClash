@@ -5,6 +5,7 @@ import 'package:fl_clash/views/config/dns.dart';
 import 'package:fl_clash/views/config/network.dart';
 import 'package:fl_clash/views/config/on_demand.dart';
 import 'package:fl_clash/views/config/scripts.dart';
+import 'package:fl_clash/views/logbook.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:material_ui/material_ui.dart';
@@ -80,6 +81,13 @@ class AdvancedConfigView extends StatelessWidget {
         subtitle: Text(appLocalizations.overrideScript),
         leading: const Icon(Icons.rocket, fontWeight: FontWeight.w900),
         widget: const ScriptsView(),
+        blur: false,
+      ),
+      ListItem.open(
+        title: const Text('Logbook'),
+        subtitle: Text(appLocalizations.logsDesc),
+        leading: const Icon(Icons.manage_history),
+        widget: const LogbookView(),
         blur: false,
       ),
     ];
