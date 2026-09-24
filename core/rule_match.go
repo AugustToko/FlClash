@@ -603,21 +603,6 @@ func evaluateRuleMatch(
 				)
 				continue
 			}
-			if metadata.NetWork == C.UDP && !adapter.SupportUDP() {
-				result.RuleTrace = append(
-					result.RuleTrace,
-					newRuleMatchTraceStep(
-						scope,
-						index,
-						rule,
-						target,
-						policyChain,
-						"udp-unsupported",
-						metadata,
-					),
-				)
-				continue
-			}
 			if rematchProxy != nil {
 				step := newRuleMatchTraceStep(
 					scope,
@@ -687,6 +672,21 @@ func evaluateRuleMatch(
 				result.RuleTrace = append(result.RuleTrace, step)
 				rematched = true
 				break
+			}
+			if metadata.NetWork == C.UDP && !adapter.SupportUDP() {
+				result.RuleTrace = append(
+					result.RuleTrace,
+					newRuleMatchTraceStep(
+						scope,
+						index,
+						rule,
+						target,
+						policyChain,
+						"udp-unsupported",
+						metadata,
+					),
+				)
+				continue
 			}
 
 			result.RuleTrace = append(
