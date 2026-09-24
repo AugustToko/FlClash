@@ -102,7 +102,7 @@ void main() {
     );
   });
 
-  test('rejects stale or over-broad analysis results', () {
+  test('rejects stale, unknown, or already narrow analysis results', () {
     const unrelated = CoreDomainAnalysis(
       input: 'api.example.com',
       normalizedHost: 'api.example.com',
@@ -110,6 +110,14 @@ void main() {
       publicSuffix: 'net',
       registrableDomain: 'other.net',
       icannSuffix: true,
+    );
+    const unknownLocalSuffix = CoreDomainAnalysis(
+      input: 'api.service.internal',
+      normalizedHost: 'api.service.internal',
+      isIP: false,
+      publicSuffix: 'internal',
+      registrableDomain: 'service.internal',
+      icannSuffix: false,
     );
     const alreadyRegistrable = CoreDomainAnalysis(
       input: 'example.com',
@@ -122,6 +130,13 @@ void main() {
 
     expect(
       augmentQuickRoutingCandidatesWithDomainAnalysis(base, unrelated),
+      hasLength(base.length),
+    );
+    expect(
+      augmentQuickRoutingCandidatesWithDomainAnalysis(
+        base,
+        unknownLocalSuffix,
+      ),
       hasLength(base.length),
     );
     expect(
