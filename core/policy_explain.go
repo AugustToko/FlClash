@@ -69,6 +69,7 @@ type policyConfigDescriptor struct {
 }
 
 type policyRuntimeGroupState struct {
+	Now     string `json:"now"`
 	Fixed   string `json:"fixed"`
 	TestURL string `json:"testUrl"`
 }
@@ -325,9 +326,17 @@ func basePolicyExplainStep(
 	return step
 }
 
-func explainSelectorPolicy(step *PolicyExplainStep) {
+func explainSelectorPolicy(
+	step *PolicyExplainStep,
+	state policyRuntimeGroupState,
+) {
 	step.Reason = "manual-selection"
 	if step.SelectedIndex < 0 {
+		step.Complete = false
+		return
+	}
+	if state.Now != "" && state.Now != step.Selected {
+		step.Reason = "manual-selection-state-changed"
 		step.Complete = false
 	}
 }
@@ -501,7 +510,8 @@ func explainPolicyChain(
 		}
 
 		state := policyRuntimeGroupState{}
-		if proxy.Type() == C.Fallback ||
+		if proxy.Type() == C.Selector ||
+			proxy.Type() == C.Fallback ||
 			proxy.Type() == C.URLTest ||
 			proxy.Type() == C.LoadBalance {
 			state = policyRuntimeState(proxy)
@@ -515,17 +525,18 @@ func explainPolicyChain(
 		step := basePolicyExplainStep(proxy, selected, candidates)
 		switch proxy.Type() {
 		case C.Selector:
-			explainSelectorPolicy(&step)
+			explainSelectorPolicy(&step, state)
 		case C.Fallback:
 			explainFallbackPolicy(&step, state, candidates)
 		case C.URLTest:
-			if !descriptorExists && state.Fixed == "" {
+			descriptorValid := descriptorExists && descriptor.Type == "url-test"
+			if !descriptorValid && state.Fixed == "" {
 				step.Complete = false
 				result.addWarning("policy-config-unavailable")
 			}
 			explainURLTestPolicy(&step, state, descriptor, candidates)
 		case C.LoadBalance:
-			if !descriptorExists || !configAvailable {
+			if !descriptorExists || !configAvailable || descriptor.Type != "load-balance" {
 				step.Reason = "load-balance-config-unavailable"
 				step.Complete = false
 			} else {
@@ -548,7 +559,7 @@ func explainPolicyChain(
 		switch step.Reason {
 		case "selected-member-unavailable", "proxy-unavailable":
 			result.addWarning("policy-chain-member-unavailable")
-		case "consistent-hash-state-changed", "cached-selection-state-changed":
+		case "manual-selection-state-changed", "consistent-hash-state-changed", "cached-selection-state-changed":
 			result.addWarning("policy-selection-state-changed")
 		case "load-balance-config-unavailable":
 			result.addWarning("policy-config-unavailable")
