@@ -48,7 +48,7 @@ void main() {
     expect(stored.id, 10);
     expect(loaded, hasLength(1));
     expect(loaded.single.fingerprint, value.fingerprint);
-    expect(loaded.single.checkedAt, value.checkedAt);
+    expect(loaded.single.checkedAt.isAtSameMomentAs(value.checkedAt), isTrue);
     expect(loaded.single.payload, value.payload);
   });
 
@@ -74,8 +74,8 @@ void main() {
     final stored = await database.upsertQuickRoutingDiagnostic(replacement);
 
     expect(stored.id, first.id);
-    expect(stored.createdAt, first.createdAt);
-    expect(stored.checkedAt, replacement.checkedAt);
+    expect(stored.createdAt.isAtSameMomentAs(first.createdAt), isTrue);
+    expect(stored.checkedAt.isAtSameMomentAs(replacement.checkedAt), isTrue);
     expect(stored.status, 'verified');
     expect(await database.countQuickRoutingDiagnostics(1), 1);
   });
