@@ -577,6 +577,72 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("часов"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("Захват HTTP"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "Все профили",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "Текущий профиль",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение метаданных соединений HTTP, TLS и QUIC из работающего Core",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "Наблюдений HTTP пока нет",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый адрес",
+    ),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "Хост наблюдается, протокол неизвестен",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт HTTP",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт QUIC",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт TLS",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Схема сообщена Core",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "Только транспортные метаданные",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "Экспорт HAR-совместимых наблюдений",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Наблюдения HTTP экспортированы",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "Экспорт HAR содержит только наблюдения: HTTP-метод, статус ответа, заголовки, тела и подробные тайминги остаются неизвестными.",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения",
+    ),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "Только наблюдение на уровне соединений. Записи хранятся только на этом устройстве и исключаются из резервных копий. Методы, статусы, заголовки, тела и полные тайминги не захватываются.",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
+      "Путь процесса",
+    ),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "Неизвестный протокол",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "Захват выполняется",
+    ),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Остановлено"),
     "icon": MessageLookupByLibrary.simpleMessage("Значок"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("История значков"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль значков"),
@@ -753,6 +819,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
       "Geo-данные обновлены",
+    ),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "Захват HTTP остановлен",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP-перехват прерван",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "Захват HTTP начат",
     ),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("Информация"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(

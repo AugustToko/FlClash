@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -13,6 +14,8 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/http_capture.dart';
+import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
@@ -153,6 +156,55 @@ void main() {
     try {
       profileSwitchTempDir.deleteSync(recursive: true);
     } catch (_) {}
+  });
+
+  testWidgets('request events feed the opt-in HTTP capture pipeline', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [
+        currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    await container.read(httpCaptureProvider.notifier).start();
+    final tracker = TrackerInfo(
+      id: 'capture-request',
+      upload: 12,
+      download: 34,
+      start: DateTime.utc(2026, 9, 25, 10),
+      metadata: const Metadata(
+        uid: 10001,
+        network: 'tcp',
+        sourceIP: '10.0.0.2',
+        sourcePort: '52000',
+        destinationIP: '1.1.1.1',
+        destinationPort: '443',
+        host: 'api.example.com',
+        process: 'example.app',
+      ),
+      chains: const ['Proxy', 'HK-01'],
+      rule: 'Domain',
+      rulePayload: 'api.example.com',
+    );
+
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.request,
+        data: jsonDecode(jsonEncode(tracker)),
+      ),
+    );
+    await tester.pump();
+
+    expect(container.read(requestsProvider), hasLength(1));
+    final entries = container.read(httpCaptureProvider).entries;
+    expect(entries, hasLength(1));
+    expect(entries.single.connectionId, 'capture-request');
+    expect(entries.single.protocol, HttpCaptureProtocol.tls);
+    expect(entries.single.profileId, 7);
   });
 
   testWidgets('duplicate crash events disconnect the core only once', (

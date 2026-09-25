@@ -510,6 +510,33 @@ void main() {
           message: 'example.com',
         ),
       );
+      await liveDatabase.upsertHttpCaptureEntry(
+        HttpCaptureEntry(
+          id: 12,
+          connectionId: 'connection-1',
+          sessionId: 'backup-session',
+          profileId: 1,
+          startedAt: now,
+          observedAt: now,
+          protocol: HttpCaptureProtocol.tls,
+          evidence: 'known-tls-port',
+          network: 'tcp',
+          host: 'api.example.com',
+          destinationIP: '1.1.1.1',
+          destinationPort: 443,
+          sourceIP: '10.0.0.2',
+          sourcePort: 50000,
+          process: 'example',
+          processPath: '',
+          uid: 10001,
+          rule: 'Domain',
+          rulePayload: 'api.example.com',
+          chains: const ['Proxy'],
+          upload: 0,
+          download: 0,
+          remoteDestination: '',
+        ),
+      );
       await liveDatabase.close();
 
       final archivePath = await backup();
@@ -525,6 +552,7 @@ void main() {
 
       expect(await archivedDatabase.countQuickRoutingDiagnostics(1), 0);
       expect(await archivedDatabase.countLogbookEvents(profileId: 1), 0);
+      expect(await archivedDatabase.countHttpCaptureEntries(profileId: 1), 0);
     });
 
     test('the temporary database and config copies are cleaned up', () async {

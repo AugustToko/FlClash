@@ -4,6 +4,7 @@ export 'clash_config.dart';
 export 'common.dart';
 export 'config.dart';
 export 'core.dart';
+export 'http_capture.dart';
 export 'logbook.dart';
 export 'profile.dart';
 export 'state.dart';

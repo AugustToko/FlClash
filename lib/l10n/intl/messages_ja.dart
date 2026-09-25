@@ -453,6 +453,64 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("時間"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP キャプチャ"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "すべてのプロファイル",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイル",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "実行中の Core から HTTP、TLS、QUIC 接続メタデータを観測します",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "HTTP 観測データはありません",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("観測したエンドポイント"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "ホストを観測、プロトコルは不明",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な HTTP ポート",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な QUIC ポート",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な TLS ポート",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Core が報告したスキーム",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "トランスポートメタデータのみ",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "HAR 互換の観測データをエクスポート",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP 観測データをエクスポートしました",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR エクスポートは観測専用で、HTTP メソッド、応答ステータス、ヘッダー、本文、詳細タイミングは不明のままです。",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "接続レベルの観測のみです。記録はこの端末にのみ保存され、バックアップから除外されます。メソッド、ステータス、ヘッダー、本文、完全なタイミングは取得しません。",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("プロセスパス"),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "不明なプロトコル",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),
     "icon": MessageLookupByLibrary.simpleMessage("アイコン"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("アイコン履歴"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("アイコンスタイル"),
@@ -605,6 +663,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Geo データを更新中",
     ),
     "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo データを更新しました"),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャを停止しました",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャが中断されました",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャを開始しました",
+    ),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("情報"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
       "このデバイスにのみ保存されます",
