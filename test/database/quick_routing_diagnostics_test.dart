@@ -121,4 +121,38 @@ void main() {
     await database.clearQuickRoutingDiagnostics(1);
     expect(await database.countQuickRoutingDiagnostics(1), 0);
   });
+
+  test('deleting a profile removes its diagnostic history', () async {
+    await database.upsertQuickRoutingDiagnostic(
+      snapshot(
+        id: 1,
+        fingerprint: 'profile-owned',
+        checkedAt: DateTime.utc(2026, 9, 24),
+      ),
+    );
+    expect(await database.countQuickRoutingDiagnostics(1), 1);
+
+    await database.customStatement('DELETE FROM profiles WHERE id = ?', [1]);
+
+    expect(await database.countQuickRoutingDiagnostics(1), 0);
+  });
+
+  test('diagnostics reject records for missing profiles', () async {
+    final invalid = QuickRoutingDiagnosticSnapshot(
+      id: 50,
+      profileId: 404,
+      fingerprint: 'missing-profile',
+      createdAt: DateTime.utc(2026, 9, 24),
+      checkedAt: DateTime.utc(2026, 9, 24),
+      status: 'unavailable',
+      searchText: 'missing profile',
+      payload: '{}',
+    );
+
+    await expectLater(
+      database.upsertQuickRoutingDiagnostic(invalid),
+      throwsA(isA<Exception>()),
+    );
+    expect(await database.countQuickRoutingDiagnostics(404), 0);
+  });
 }
