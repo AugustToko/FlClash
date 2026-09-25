@@ -140,8 +140,8 @@ void main() {
     expect(loaded, hasLength(1));
     final restored = loaded.single;
     expect(restored.id, record.id);
-    expect(restored.createdAt, record.createdAt);
-    expect(restored.checkedAt, record.checkedAt);
+    expect(restored.createdAt.isAtSameMomentAs(record.createdAt), isTrue);
+    expect(restored.checkedAt.isAtSameMomentAs(record.checkedAt), isTrue);
     expect(restored.trackerInfo.metadata.host, 'api.example.com');
     expect(restored.selection.candidate.scopeHint, 'eTLD+1');
     expect(restored.selection.lifetime, QuickRoutingLifetime.oneHour);
@@ -208,7 +208,7 @@ void main() {
     );
 
     expect(updated.id, 10);
-    expect(updated.createdAt, base);
+    expect(updated.createdAt.isAtSameMomentAs(base), isTrue);
     expect(updated.verification.status, QuickRoutingVerificationStatus.mismatch);
     expect(await testDatabase.countQuickRoutingDiagnostics(7), 1);
   });
