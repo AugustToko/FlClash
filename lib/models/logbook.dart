@@ -152,3 +152,33 @@ class LogbookEvent {
     return LogbookEvent.fromJson(Map<String, Object?>.from(decoded));
   }
 }
+
+const logbookExportFormat = 'flclash-logbook';
+const logbookExportVersion = 1;
+
+Map<String, Object?> buildLogbookExportPayload({
+  required Iterable<LogbookEvent> events,
+  DateTime? exportedAt,
+}) {
+  final ordered = events.toList(growable: false)
+    ..sort((first, second) {
+      final updated = second.updatedAt.compareTo(first.updatedAt);
+      return updated != 0 ? updated : second.id.compareTo(first.id);
+    });
+  return {
+    'format': logbookExportFormat,
+    'version': logbookExportVersion,
+    'exportedAt': (exportedAt ?? DateTime.now()).toUtc().toIso8601String(),
+    'count': ordered.length,
+    'events': ordered.map((event) => event.toJson()).toList(growable: false),
+  };
+}
+
+String encodeLogbookExport({
+  required Iterable<LogbookEvent> events,
+  DateTime? exportedAt,
+}) {
+  return const JsonEncoder.withIndent(
+    '  ',
+  ).convert(buildLogbookExportPayload(events: events, exportedAt: exportedAt));
+}
