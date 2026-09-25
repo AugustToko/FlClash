@@ -460,7 +460,7 @@ class QuickRoutingDiagnosticsCoordinator {
     QuickRoutingVerificationHistory notifier,
     int id,
   ) async {
-    notifier.remove(id);
+    notifier.remove(id, persist: false);
     await _serializeWrite(() => persistence.remove(id));
   }
 
@@ -468,7 +468,7 @@ class QuickRoutingDiagnosticsCoordinator {
     QuickRoutingVerificationHistory notifier,
     int profileId,
   ) async {
-    notifier.clearProfile(profileId);
+    notifier.clearProfile(profileId, persist: false);
     await _serializeWrite(() => persistence.clearProfile(profileId));
     _loadedProfiles.add(profileId);
   }
