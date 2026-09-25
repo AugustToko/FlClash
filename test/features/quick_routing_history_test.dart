@@ -1,9 +1,42 @@
+import 'dart:async';
+
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/quick_routing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
+
+class _ControlledDiagnosticsPersistence
+    implements QuickRoutingDiagnosticsPersistence {
+  final loadCompleter =
+      Completer<List<QuickRoutingVerificationRecord>>();
+  int clearCount = 0;
+
+  @override
+  Future<List<QuickRoutingVerificationRecord>> loadProfile(
+    int profileId, {
+    int limit = QuickRoutingVerificationHistory.maxEntries,
+  }) {
+    return loadCompleter.future;
+  }
+
+  @override
+  Future<QuickRoutingVerificationRecord> upsert(
+    QuickRoutingVerificationRecord record, {
+    int maxEntries = QuickRoutingVerificationHistory.maxEntries,
+  }) async {
+    return record;
+  }
+
+  @override
+  Future<void> remove(int id) async {}
+
+  @override
+  Future<void> clearProfile(int profileId) async {
+    clearCount++;
+  }
+}
 
 void main() {
   const selection = QuickRoutingSelection(
@@ -151,5 +184,44 @@ void main() {
         .single;
     expect(restored.id, 10);
     expect(restored.createdAt, base);
+  });
+
+  test('clear remains authoritative over an in-flight hydration', () async {
+    final persistence = _ControlledDiagnosticsPersistence();
+    final container = ProviderContainer(
+      overrides: [
+        quickRoutingDiagnosticsPersistenceProvider.overrideWithValue(
+          persistence,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final notifier = container.read(
+      quickRoutingVerificationHistoryProvider.notifier,
+    );
+    final coordinator = container.read(
+      quickRoutingDiagnosticsCoordinatorProvider,
+    );
+    final persisted = record(
+      id: 10,
+      profileId: 1,
+      requestId: 'persisted',
+      checkedAt: DateTime.utc(2026, 9, 24),
+    );
+
+    final hydration = coordinator.hydrate(notifier, 1);
+    final clearing = coordinator.clearProfile(notifier, 1);
+    persistence.loadCompleter.complete([persisted]);
+
+    await hydration;
+    await clearing;
+
+    expect(
+      container
+          .read(quickRoutingVerificationHistoryProvider)
+          .where((entry) => entry.profileId == 1),
+      isEmpty,
+    );
+    expect(persistence.clearCount, 1);
   });
 }
