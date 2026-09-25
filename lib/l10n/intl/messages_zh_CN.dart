@@ -454,6 +454,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "logLevel": MessageLookupByLibrary.simpleMessage("日志等级"),
     "logbook": MessageLookupByLibrary.simpleMessage("事件日志"),
     "logbookAll": MessageLookupByLibrary.simpleMessage("全部"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage("备份已取消"),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage("备份已完成"),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage("备份失败"),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage("正在创建备份"),
     "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
       "网络连接发生变化",
     ),
@@ -475,6 +479,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
     "logbookEmpty": MessageLookupByLibrary.simpleMessage("暂未记录任何事件"),
     "logbookError": MessageLookupByLibrary.simpleMessage("错误"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo 数据已是最新"),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo 数据更新失败",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在更新 Geo 数据",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo 数据已更新"),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("信息"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage("仅保存在当前设备"),
     "logbookNetwork": MessageLookupByLibrary.simpleMessage("网络"),
@@ -485,6 +497,22 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage("配置应用失败"),
     "logbookProvider": MessageLookupByLibrary.simpleMessage("资源提供器"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "资源提供器数据导入失败",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "正在导入资源提供器数据",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "资源提供器数据已导入",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "资源提供器更新失败",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在更新资源提供器",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage("资源提供器已更新"),
     "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
       "快速分流为近似验证",
     ),
@@ -497,8 +525,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
       "快速分流已验证",
     ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage("恢复已完成"),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage("恢复失败"),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage("正在恢复备份"),
     "logbookRouting": MessageLookupByLibrary.simpleMessage("分流"),
     "logbookScript": MessageLookupByLibrary.simpleMessage("脚本"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "配置脚本执行失败",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在执行配置脚本",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage("配置脚本执行完成"),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("系统"),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),

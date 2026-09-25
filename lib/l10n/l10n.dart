@@ -5389,6 +5389,206 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Updating provider`
+  String get logbookProviderUpdateRunning {
+    return Intl.message(
+      'Updating provider',
+      name: 'logbookProviderUpdateRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider updated`
+  String get logbookProviderUpdated {
+    return Intl.message(
+      'Provider updated',
+      name: 'logbookProviderUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider update failed`
+  String get logbookProviderUpdateFailed {
+    return Intl.message(
+      'Provider update failed',
+      name: 'logbookProviderUpdateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Importing provider data`
+  String get logbookProviderImportRunning {
+    return Intl.message(
+      'Importing provider data',
+      name: 'logbookProviderImportRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider data imported`
+  String get logbookProviderImported {
+    return Intl.message(
+      'Provider data imported',
+      name: 'logbookProviderImported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider data import failed`
+  String get logbookProviderImportFailed {
+    return Intl.message(
+      'Provider data import failed',
+      name: 'logbookProviderImportFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating Geo data`
+  String get logbookGeoUpdateRunning {
+    return Intl.message(
+      'Updating Geo data',
+      name: 'logbookGeoUpdateRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo data updated`
+  String get logbookGeoUpdated {
+    return Intl.message(
+      'Geo data updated',
+      name: 'logbookGeoUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo data is already up to date`
+  String get logbookGeoSkipped {
+    return Intl.message(
+      'Geo data is already up to date',
+      name: 'logbookGeoSkipped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo data update failed`
+  String get logbookGeoUpdateFailed {
+    return Intl.message(
+      'Geo data update failed',
+      name: 'logbookGeoUpdateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Creating backup`
+  String get logbookBackupRunning {
+    return Intl.message(
+      'Creating backup',
+      name: 'logbookBackupRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup completed`
+  String get logbookBackupCompleted {
+    return Intl.message(
+      'Backup completed',
+      name: 'logbookBackupCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup cancelled`
+  String get logbookBackupCancelled {
+    return Intl.message(
+      'Backup cancelled',
+      name: 'logbookBackupCancelled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup failed`
+  String get logbookBackupFailed {
+    return Intl.message(
+      'Backup failed',
+      name: 'logbookBackupFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restoring backup`
+  String get logbookRestoreRunning {
+    return Intl.message(
+      'Restoring backup',
+      name: 'logbookRestoreRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore completed`
+  String get logbookRestoreCompleted {
+    return Intl.message(
+      'Restore completed',
+      name: 'logbookRestoreCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore failed`
+  String get logbookRestoreFailed {
+    return Intl.message(
+      'Restore failed',
+      name: 'logbookRestoreFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running configuration script`
+  String get logbookScriptEvaluateRunning {
+    return Intl.message(
+      'Running configuration script',
+      name: 'logbookScriptEvaluateRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configuration script completed`
+  String get logbookScriptEvaluated {
+    return Intl.message(
+      'Configuration script completed',
+      name: 'logbookScriptEvaluated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configuration script failed`
+  String get logbookScriptEvaluateFailed {
+    return Intl.message(
+      'Configuration script failed',
+      name: 'logbookScriptEvaluateFailed',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

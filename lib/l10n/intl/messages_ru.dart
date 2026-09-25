@@ -647,6 +647,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "logLevel": MessageLookupByLibrary.simpleMessage("Уровень логов"),
     "logbook": MessageLookupByLibrary.simpleMessage("Журнал событий"),
     "logbookAll": MessageLookupByLibrary.simpleMessage("Все"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "Резервное копирование отменено",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "Резервное копирование завершено",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка резервного копирования",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage(
+      "Создание резервной копии",
+    ),
     "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
       "Состояние подключения изменилось",
     ),
@@ -678,6 +690,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "События пока не записаны",
     ),
     "logbookError": MessageLookupByLibrary.simpleMessage("Ошибка"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage(
+      "Geo-данные уже актуальны",
+    ),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить Geo-данные",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Обновление Geo-данных",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
+      "Geo-данные обновлены",
+    ),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("Информация"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
       "Хранится только на этом устройстве",
@@ -694,6 +718,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Не удалось применить профиль",
     ),
     "logbookProvider": MessageLookupByLibrary.simpleMessage("Провайдер"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось импортировать данные провайдера",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "Импорт данных провайдера",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "Данные провайдера импортированы",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить провайдер",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Обновление провайдера",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "Провайдер обновлён",
+    ),
     "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
       "Проверка быстрого маршрута приблизительная",
     ),
@@ -706,8 +748,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
       "Быстрый маршрут проверен",
     ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "Восстановление завершено",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка восстановления",
+    ),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage(
+      "Восстановление резервной копии",
+    ),
     "logbookRouting": MessageLookupByLibrary.simpleMessage("Маршрутизация"),
     "logbookScript": MessageLookupByLibrary.simpleMessage("Скрипт"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка скрипта конфигурации",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "Выполнение скрипта конфигурации",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "Скрипт конфигурации выполнен",
+    ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("Успешно"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("Система"),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("Предупреждение"),

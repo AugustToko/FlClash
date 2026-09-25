@@ -524,6 +524,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "logLevel": MessageLookupByLibrary.simpleMessage("ログレベル"),
     "logbook": MessageLookupByLibrary.simpleMessage("イベントログ"),
     "logbookAll": MessageLookupByLibrary.simpleMessage("すべて"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "バックアップをキャンセルしました",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "バックアップが完了しました",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "バックアップに失敗しました",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage("バックアップを作成中"),
     "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
       "接続状態が変わりました",
     ),
@@ -551,6 +561,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
     "logbookEmpty": MessageLookupByLibrary.simpleMessage("記録されたイベントはありません"),
     "logbookError": MessageLookupByLibrary.simpleMessage("エラー"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo データは最新です"),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo データの更新に失敗しました",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Geo データを更新中",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo データを更新しました"),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("情報"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
       "このデバイスにのみ保存されます",
@@ -567,6 +585,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "プロファイルの適用に失敗しました",
     ),
     "logbookProvider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータのインポートに失敗しました",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータをインポート中",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータをインポートしました",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーの更新に失敗しました",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーを更新中",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーを更新しました",
+    ),
     "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
       "クイックルートは近似検証です",
     ),
@@ -579,8 +615,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
       "クイックルートを検証しました",
     ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "復元が完了しました",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage("復元に失敗しました"),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage("バックアップを復元中"),
     "logbookRouting": MessageLookupByLibrary.simpleMessage("ルーティング"),
     "logbookScript": MessageLookupByLibrary.simpleMessage("スクリプト"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトの実行に失敗しました",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトを実行中",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトが完了しました",
+    ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("システム"),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),

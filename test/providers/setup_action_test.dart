@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -12,6 +13,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:flutter/widgets.dart';
@@ -540,6 +542,12 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('setup_action_test');
       PathProviderPlatform.instance = _FakePathProvider(tempDir.path);
       await AppLocalizations.load(const Locale('en'));
+      globalState.packageInfo = PackageInfo(
+        appName: 'FlClash',
+        packageName: 'com.follow.clash',
+        version: '0.0.0',
+        buildNumber: '0',
+      );
       originalLastConfigMd5 = globalState.lastConfigMd5;
     });
 
@@ -566,6 +574,130 @@ void main() {
       overrideDns: false,
       dns: Dns(),
     );
+
+    test('script evaluation records a completed privacy-safe event', () async {
+      final originalEvaluator = scriptEvaluator;
+      addTearDown(() => scriptEvaluator = originalEvaluator);
+      const scriptBody = 'secret configuration script body';
+      String? receivedScript;
+      scriptEvaluator = ({required script, required config}) async {
+        receivedScript = script;
+        final value = Map<String, dynamic>.from(
+          jsonDecode(config) as Map<String, dynamic>,
+        );
+        value['scripted'] = true;
+        return jsonEncode(value);
+      };
+      final script = Script(
+        id: 901,
+        label: 'Routing automation',
+        lastUpdateTime: DateTime.utc(2026, 9, 25),
+      );
+      final scriptFile = File(await script.path);
+      await scriptFile.create(recursive: true);
+      await scriptFile.writeAsString(scriptBody);
+      addTearDown(scriptFile.safeDelete);
+
+      final core = _MockCoreHandlerInterface();
+      when(() => core.getConfig(any())).thenAnswer(
+        (_) async => <String, dynamic>{'mode': 'rule', 'rules': <Object>[]},
+      );
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+          logbookPersistenceEnabledProvider.overrideWithValue(false),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupState = SetupState(
+        profileId: 7,
+        profileLastUpdateDate: null,
+        overwriteType: OverwriteType.script,
+        rules: const [],
+        proxyGroups: const [],
+        addedRules: const [],
+        script: script,
+        overrideDns: false,
+        dns: const Dns(),
+      );
+
+      final result = await scoped
+          .read(setupActionProvider.notifier)
+          .getProfile(
+            setupState: setupState,
+            patchConfig: const PatchClashConfig(),
+          );
+
+      expect(receivedScript, scriptBody);
+      expect(result.yaml, contains('scripted: true'));
+      final event = scoped.read(logbookProvider).single;
+      expect(event.eventType, 'script.evaluate');
+      expect(event.severity, LogbookSeverity.success);
+      expect(event.details['status'], 'completed');
+      expect(event.details['scriptId'], script.id);
+      expect(event.searchText, isNot(contains(scriptBody)));
+    });
+
+    test('script evaluation failure omits script and raw error text', () async {
+      final originalEvaluator = scriptEvaluator;
+      addTearDown(() => scriptEvaluator = originalEvaluator);
+      const scriptBody = 'another private script body';
+      scriptEvaluator = ({required script, required config}) async {
+        throw StateError('private evaluator failure');
+      };
+      final script = Script(
+        id: 902,
+        label: 'Failing automation',
+        lastUpdateTime: DateTime.utc(2026, 9, 25),
+      );
+      final scriptFile = File(await script.path);
+      await scriptFile.create(recursive: true);
+      await scriptFile.writeAsString(scriptBody);
+      addTearDown(scriptFile.safeDelete);
+
+      final core = _MockCoreHandlerInterface();
+      when(() => core.getConfig(any())).thenAnswer(
+        (_) async => <String, dynamic>{'mode': 'rule', 'rules': <Object>[]},
+      );
+      final scoped = ProviderContainer(
+        overrides: [
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+          setupActionProvider.overrideWith(SetupAction.new),
+          logbookPersistenceEnabledProvider.overrideWithValue(false),
+        ],
+      );
+      addTearDown(scoped.dispose);
+      final setupState = SetupState(
+        profileId: 7,
+        profileLastUpdateDate: null,
+        overwriteType: OverwriteType.script,
+        rules: const [],
+        proxyGroups: const [],
+        addedRules: const [],
+        script: script,
+        overrideDns: false,
+        dns: const Dns(),
+      );
+
+      await expectLater(
+        scoped
+            .read(setupActionProvider.notifier)
+            .getProfile(
+              setupState: setupState,
+              patchConfig: const PatchClashConfig(),
+            ),
+        throwsA(isA<MessageException>()),
+      );
+
+      final event = scoped.read(logbookProvider).single;
+      expect(event.eventType, 'script.evaluate');
+      expect(event.severity, LogbookSeverity.error);
+      expect(event.details['status'], 'failed');
+      expect(event.details['failureKind'], 'MessageException');
+      expect(event.searchText, isNot(contains(scriptBody)));
+      expect(event.searchText, isNot(contains('private evaluator failure')));
+    });
 
     test(
       'a refresh failure still runs core.setupConfig and preloadInvoke',
@@ -612,12 +744,6 @@ void main() {
           ).readAsString();
           return '';
         });
-        globalState.packageInfo = PackageInfo(
-          appName: 'FlClash',
-          packageName: 'com.follow.clash',
-          version: '0.0.0',
-          buildNumber: '0',
-        );
         final scoped = ProviderContainer(
           overrides: [
             profilesProvider.overrideWith(() => TestProfiles([profile])),

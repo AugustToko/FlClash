@@ -367,6 +367,42 @@ class SetupAction extends _$SetupAction {
     }
   }
 
+  void _recordScriptEvaluation({
+    required int profileId,
+    required Script script,
+    required String correlationId,
+    required String status,
+    required DateTime startedAt,
+    String? failureKind,
+  }) {
+    final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
+    final severity = switch (status) {
+      'completed' => LogbookSeverity.success,
+      'failed' => LogbookSeverity.error,
+      _ => LogbookSeverity.info,
+    };
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            profileId: profileId,
+            category: LogbookCategory.script,
+            severity: severity,
+            eventType: 'script.evaluate',
+            title: 'script.evaluate',
+            message: '${script.label} · $durationMs ms',
+            correlationId: correlationId,
+            details: {
+              'status': status,
+              'scriptId': script.id,
+              'scriptLabel': script.label,
+              'durationMs': durationMs,
+              'failureKind': ?failureKind,
+            },
+          ),
+    );
+  }
+
   Future<({String yaml, String md5})> getProfile({
     required SetupState setupState,
     required PatchClashConfig patchConfig,
@@ -403,8 +439,38 @@ class SetupAction extends _$SetupAction {
       tun: patchConfig.tun.getRealTun(routeMode),
     );
     Map<String, dynamic> rawConfig = configMap;
-    if (scriptContent?.isNotEmpty == true) {
-      rawConfig = await handleEvaluate(scriptContent!, rawConfig);
+    final script = setupState.script;
+    if (scriptContent?.isNotEmpty == true && script != null) {
+      final startedAt = DateTime.now();
+      final correlationId =
+          'script-evaluate:${script.id}:${startedAt.microsecondsSinceEpoch}';
+      _recordScriptEvaluation(
+        profileId: profileId,
+        script: script,
+        correlationId: correlationId,
+        status: 'running',
+        startedAt: startedAt,
+      );
+      try {
+        rawConfig = await handleEvaluate(scriptContent!, rawConfig);
+        _recordScriptEvaluation(
+          profileId: profileId,
+          script: script,
+          correlationId: correlationId,
+          status: 'completed',
+          startedAt: startedAt,
+        );
+      } catch (error) {
+        _recordScriptEvaluation(
+          profileId: profileId,
+          script: script,
+          correlationId: correlationId,
+          status: 'failed',
+          startedAt: startedAt,
+          failureKind: error.runtimeType.toString(),
+        );
+        rethrow;
+      }
     }
     final runtimeRules = ref
         .read(quickRoutingRulesProvider.notifier)

@@ -635,6 +635,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "logLevel": MessageLookupByLibrary.simpleMessage("Log level"),
     "logbook": MessageLookupByLibrary.simpleMessage("Logbook"),
     "logbookAll": MessageLookupByLibrary.simpleMessage("All"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "Backup cancelled",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "Backup completed",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "Backup failed",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage(
+      "Creating backup",
+    ),
     "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
       "Connectivity changed",
     ),
@@ -666,6 +678,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "No events have been recorded yet",
     ),
     "logbookError": MessageLookupByLibrary.simpleMessage("Error"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage(
+      "Geo data is already up to date",
+    ),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo data update failed",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Updating Geo data",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
+      "Geo data updated",
+    ),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("Info"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
       "Stored locally on this device",
@@ -682,6 +706,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Profile apply failed",
     ),
     "logbookProvider": MessageLookupByLibrary.simpleMessage("Provider"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Provider data import failed",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "Importing provider data",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "Provider data imported",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Provider update failed",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Updating provider",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "Provider updated",
+    ),
     "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
       "Quick route verification is approximate",
     ),
@@ -694,8 +736,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
       "Quick route verified",
     ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "Restore completed",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage(
+      "Restore failed",
+    ),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage(
+      "Restoring backup",
+    ),
     "logbookRouting": MessageLookupByLibrary.simpleMessage("Routing"),
     "logbookScript": MessageLookupByLibrary.simpleMessage("Script"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "Configuration script failed",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "Running configuration script",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "Configuration script completed",
+    ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("Success"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("System"),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("Warning"),

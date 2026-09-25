@@ -62,6 +62,44 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
         LogbookSeverity.info => event.title,
       },
     },
+    'provider.external.update' => switch (event.details['status']) {
+      'running' => l.logbookProviderUpdateRunning,
+      'completed' => l.logbookProviderUpdated,
+      'failed' => l.logbookProviderUpdateFailed,
+      _ => event.title,
+    },
+    'provider.external.sideload' => switch (event.details['status']) {
+      'running' => l.logbookProviderImportRunning,
+      'completed' => l.logbookProviderImported,
+      'failed' => l.logbookProviderImportFailed,
+      _ => event.title,
+    },
+    'provider.geo.update' => switch (event.details['status']) {
+      'running' => l.logbookGeoUpdateRunning,
+      'completed' => l.logbookGeoUpdated,
+      'skipped' => l.logbookGeoSkipped,
+      'failed' => l.logbookGeoUpdateFailed,
+      _ => event.title,
+    },
+    'system.backup' => switch (event.details['status']) {
+      'running' => l.logbookBackupRunning,
+      'completed' => l.logbookBackupCompleted,
+      'cancelled' => l.logbookBackupCancelled,
+      'failed' => l.logbookBackupFailed,
+      _ => event.title,
+    },
+    'system.restore' => switch (event.details['status']) {
+      'running' => l.logbookRestoreRunning,
+      'completed' => l.logbookRestoreCompleted,
+      'failed' => l.logbookRestoreFailed,
+      _ => event.title,
+    },
+    'script.evaluate' => switch (event.details['status']) {
+      'running' => l.logbookScriptEvaluateRunning,
+      'completed' => l.logbookScriptEvaluated,
+      'failed' => l.logbookScriptEvaluateFailed,
+      _ => event.title,
+    },
     _ => event.title,
   };
 }
@@ -384,64 +422,87 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
           icon: const Icon(Icons.delete_sweep_outlined),
         ),
       ],
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildSummary(filtered)),
-            SliverToBoxAdapter(child: _buildFilters(profileId)),
-            if (filtered.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: NullStatus(
-                    illustration: NullStatusIllustration.logs,
-                    label: l.logbookEmpty,
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  12,
-                  4,
-                  12,
-                  20 + BottomInsetScope.of(context),
-                ),
-                sliver: SliverList.builder(
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final event = filtered[index];
-                    final previous = index == 0 ? null : filtered[index - 1];
-                    final showDay =
-                        previous == null ||
-                        _dayLabel(previous.updatedAt) !=
-                            _dayLabel(event.updatedAt);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showDay)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 14, 8, 6),
-                            child: Text(
-                              _dayLabel(event.updatedAt),
-                              style: context.textTheme.labelLarge?.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final contentWidth = constraints.maxWidth > 1040
+              ? 1040.0
+              : constraints.maxWidth;
+          return Center(
+            child: SizedBox(
+              width: contentWidth,
+              height: constraints.maxHeight,
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildSummary(filtered)),
+                    SliverToBoxAdapter(child: _buildFilters(profileId)),
+                    if (filtered.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: NullStatus(
+                            illustration: NullStatusIllustration.logs,
+                            label: l.logbookEmpty,
                           ),
-                        _LogbookTimelineItem(
-                          event: event,
-                          onTap: () => _showDetails(event),
-                          isLast: index == filtered.length - 1,
                         ),
-                      ],
-                    );
-                  },
+                      )
+                    else
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(
+                          12,
+                          4,
+                          12,
+                          20 + BottomInsetScope.of(context),
+                        ),
+                        sliver: SliverList.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final event = filtered[index];
+                            final previous = index == 0
+                                ? null
+                                : filtered[index - 1];
+                            final showDay =
+                                previous == null ||
+                                _dayLabel(previous.updatedAt) !=
+                                    _dayLabel(event.updatedAt);
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (showDay)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      14,
+                                      8,
+                                      6,
+                                    ),
+                                    child: Text(
+                                      _dayLabel(event.updatedAt),
+                                      style: context.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color: context
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ),
+                                _LogbookTimelineItem(
+                                  event: event,
+                                  onTap: () => _showDetails(event),
+                                  isLast: index == filtered.length - 1,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                  ],
                 ),
               ),
-          ],
-        ),
+            ),
+          );
+        },
       ),
     );
   }
