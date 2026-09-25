@@ -65,6 +65,13 @@ class Database extends _$Database {
           await _createQuickRoutingDiagnosticsSchema(this);
         }
       },
+      beforeOpen: (_) async {
+        // The diagnostics table is intentionally custom SQL instead of a
+        // generated Drift table. Reconcile its indexes and triggers on every
+        // open so development builds that already reached schema v4 also gain
+        // later idempotent integrity fixes.
+        await _createQuickRoutingDiagnosticsSchema(this);
+      },
     );
   }
 
