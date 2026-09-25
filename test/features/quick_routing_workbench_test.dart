@@ -187,7 +187,7 @@ void main() {
       QuickRoutingVerificationStatus.mismatch,
     );
 
-    expect(notifier.clearProfile(1), isTrue);
+    expect(notifier.clearProfile(1, persist: false), isTrue);
     final remaining = container.read(
       quickRoutingVerificationHistoryProvider,
     );
