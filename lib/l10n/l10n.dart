@@ -5589,6 +5589,226 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `DNS diagnostics`
+  String get dnsDiagnostics {
+    return Intl.message(
+      'DNS diagnostics',
+      name: 'dnsDiagnostics',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Query the running Core and inspect DNS records`
+  String get dnsDiagnosticsDesc {
+    return Intl.message(
+      'Query the running Core and inspect DNS records',
+      name: 'dnsDiagnosticsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain or IP address`
+  String get dnsQueryName {
+    return Intl.message(
+      'Domain or IP address',
+      name: 'dnsQueryName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Record type`
+  String get dnsRecordType {
+    return Intl.message(
+      'Record type',
+      name: 'dnsRecordType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resolver`
+  String get dnsResolver {
+    return Intl.message('Resolver', name: 'dnsResolver', desc: '', args: []);
+  }
+
+  /// `Active Core resolver`
+  String get dnsResolverDefault {
+    return Intl.message(
+      'Active Core resolver',
+      name: 'dnsResolverDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System DNS`
+  String get dnsResolverSystem {
+    return Intl.message(
+      'System DNS',
+      name: 'dnsResolverSystem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy server DNS`
+  String get dnsResolverProxy {
+    return Intl.message(
+      'Proxy server DNS',
+      name: 'dnsResolverProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Direct outbound DNS`
+  String get dnsResolverDirect {
+    return Intl.message(
+      'Direct outbound DNS',
+      name: 'dnsResolverDirect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Run query`
+  String get dnsRunQuery {
+    return Intl.message('Run query', name: 'dnsRunQuery', desc: '', args: []);
+  }
+
+  /// `DNS response`
+  String get dnsQueryResult {
+    return Intl.message(
+      'DNS response',
+      name: 'dnsQueryResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No records returned`
+  String get dnsNoRecords {
+    return Intl.message(
+      'No records returned',
+      name: 'dnsNoRecords',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Answers`
+  String get dnsAnswerSection {
+    return Intl.message(
+      'Answers',
+      name: 'dnsAnswerSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authority`
+  String get dnsAuthoritySection {
+    return Intl.message(
+      'Authority',
+      name: 'dnsAuthoritySection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Additional`
+  String get dnsAdditionalSection {
+    return Intl.message(
+      'Additional',
+      name: 'dnsAdditionalSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response flags`
+  String get dnsResponseFlags {
+    return Intl.message(
+      'Response flags',
+      name: 'dnsResponseFlags',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS query failed`
+  String get dnsQueryFailed {
+    return Intl.message(
+      'DNS query failed',
+      name: 'dnsQueryFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The active Core resolver was unavailable, so system DNS was used`
+  String get dnsWarningDefaultResolverUnavailable {
+    return Intl.message(
+      'The active Core resolver was unavailable, so system DNS was used',
+      name: 'dnsWarningDefaultResolverUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The response contains no answer records`
+  String get dnsWarningNoAnswer {
+    return Intl.message(
+      'The response contains no answer records',
+      name: 'dnsWarningNoAnswer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The response was truncated`
+  String get dnsWarningTruncated {
+    return Intl.message(
+      'The response was truncated',
+      name: 'dnsWarningTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Querying DNS`
+  String get logbookDnsQueryRunning {
+    return Intl.message(
+      'Querying DNS',
+      name: 'logbookDnsQueryRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS query completed`
+  String get logbookDnsQueryCompleted {
+    return Intl.message(
+      'DNS query completed',
+      name: 'logbookDnsQueryCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS query failed`
+  String get logbookDnsQueryFailed {
+    return Intl.message(
+      'DNS query failed',
+      name: 'logbookDnsQueryFailed',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

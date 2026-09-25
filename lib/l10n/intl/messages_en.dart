@@ -401,11 +401,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "New version found",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("Additional"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Answers"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("Authority"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage(
       "Update DNS-related settings",
     ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS diagnostics"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Query the running Core and inspect DNS records",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS hijacking"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("No records returned"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS query failed"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage(
+      "Domain or IP address",
+    ),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS response"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Record type"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Resolver"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Active Core resolver",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "Direct outbound DNS",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "Proxy server DNS",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("System DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Response flags"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Run query"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "The active Core resolver was unavailable, so system DNS was used",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "The response contains no answer records",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "The response was truncated",
+    ),
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
@@ -674,6 +711,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Persistent timeline of network and configuration events",
     ),
     "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS query completed",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "DNS query failed",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage(
+      "Querying DNS",
+    ),
     "logbookEmpty": MessageLookupByLibrary.simpleMessage(
       "No events have been recorded yet",
     ),

@@ -17,6 +17,7 @@ import 'package:path/path.dart' show dirname, join;
 
 import 'config/advanced.dart';
 import 'developer.dart';
+import 'dns_diagnostics.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -75,6 +76,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isAndroid) const _AccessItem(),
         const _ConfigItem(),
         const _AdvancedConfigItem(),
+        const _DnsDiagnosticsItem(),
         const _SettingItem(),
       ],
     );
@@ -247,6 +249,20 @@ class _AdvancedConfigItem extends StatelessWidget {
       title: Text(context.appLocalizations.advancedConfig),
       subtitle: Text(context.appLocalizations.advancedConfigDesc),
       widget: const AdvancedConfigView(),
+    );
+  }
+}
+
+class _DnsDiagnosticsItem extends StatelessWidget {
+  const _DnsDiagnosticsItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const Icon(Icons.dns_outlined),
+      title: Text(context.appLocalizations.dnsDiagnostics),
+      subtitle: Text(context.appLocalizations.dnsDiagnosticsDesc),
+      widget: const DnsDiagnosticsView(),
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 
 part 'domain_analysis.dart';
+part 'dns_diagnostic.dart';
 part 'rule_match.dart';
 
 @visibleForTesting

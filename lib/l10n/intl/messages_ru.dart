@@ -411,11 +411,54 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "Доступна новая версия",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage(
+      "Дополнительные записи",
+    ),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Ответы"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage(
+      "Авторитетные записи",
+    ),
     "dnsDesc": MessageLookupByLibrary.simpleMessage(
       "Настройки, связанные с DNS",
     ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("Диагностика DNS"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Запрос DNS через работающий Core и просмотр записей",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Перехват DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Режим DNS"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage(
+      "Записи не возвращены",
+    ),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("Домен или IP-адрес"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("Ответ DNS"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Тип записи"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Резолвер"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Активный резолвер Core",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "DNS прямого подключения",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "DNS прокси-сервера",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("Системный DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Флаги ответа"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Выполнить запрос"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Активный резолвер Core недоступен, использован системный DNS",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "В ответе нет записей",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "Ответ был усечён",
+    ),
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
@@ -686,6 +729,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Постоянная хронология сетевых событий и изменений конфигурации",
     ),
     "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS-запрос завершён",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage(
+      "Выполняется DNS-запрос",
+    ),
     "logbookEmpty": MessageLookupByLibrary.simpleMessage(
       "События пока не записаны",
     ),

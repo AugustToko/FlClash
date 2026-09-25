@@ -7,6 +7,7 @@ export 'connection/connections.dart';
 export 'connection/requests.dart';
 export 'dashboard/dashboard.dart';
 export 'developer.dart';
+export 'dns_diagnostics.dart';
 export 'logs.dart';
 export 'logbook.dart';
 export 'profiles/profiles.dart';
