@@ -50,7 +50,34 @@ class QuickRoutingVerificationHistory
   static const maxEntries = 100;
 
   @override
-  List<QuickRoutingVerificationRecord> build() => const [];
+  List<QuickRoutingVerificationRecord> build() {
+    ref.listen<int?>(currentProfileIdProvider, (_, profileId) {
+      if (profileId == null) {
+        return;
+      }
+      unawaited(
+        ref
+            .read(quickRoutingDiagnosticsCoordinatorProvider)
+            .hydrate(this, profileId),
+      );
+    }, fireImmediately: true);
+    return const [];
+  }
+
+  Future<void> _persistMutation(
+    Future<void> mutation,
+    String action,
+  ) async {
+    try {
+      await mutation;
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'quick routing diagnostic $action failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+    }
+  }
 
   List<QuickRoutingVerificationRecord> _bounded(
     Iterable<QuickRoutingVerificationRecord> entries,
@@ -173,24 +200,42 @@ class QuickRoutingVerificationHistory
     );
   }
 
-  bool remove(int id) {
+  bool remove(int id, {bool persist = true}) {
     final next = state.where((entry) => entry.id != id).toList(growable: false);
-    if (next.length == state.length) {
-      return false;
+    final changed = next.length != state.length;
+    if (changed) {
+      state = List.unmodifiable(next);
     }
-    state = List.unmodifiable(next);
-    return true;
+    if (persist) {
+      unawaited(
+        _persistMutation(
+          ref.read(quickRoutingDiagnosticsPersistenceProvider).remove(id),
+          'delete',
+        ),
+      );
+    }
+    return changed;
   }
 
-  bool clearProfile(int profileId) {
+  bool clearProfile(int profileId, {bool persist = true}) {
     final next = state
         .where((entry) => entry.profileId != profileId)
         .toList(growable: false);
-    if (next.length == state.length) {
-      return false;
+    final changed = next.length != state.length;
+    if (changed) {
+      state = List.unmodifiable(next);
     }
-    state = List.unmodifiable(next);
-    return true;
+    if (persist) {
+      unawaited(
+        _persistMutation(
+          ref
+              .read(quickRoutingDiagnosticsPersistenceProvider)
+              .clearProfile(profileId),
+          'clear',
+        ),
+      );
+    }
+    return changed;
   }
 }
 
