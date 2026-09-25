@@ -4,6 +4,11 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+const _diagnosticsInsertTrigger =
+    'trg_quick_routing_diagnostics_profile_insert';
+const _diagnosticsDeleteTrigger =
+    'trg_quick_routing_diagnostics_profile_delete';
+
 /// Rebuilds [raw] into the shape schema version 1 left behind: no
 /// `proxy_groups`, no `icon_records`, and a `rules` table that still stores the
 /// whole rule in one `value` column.
@@ -27,6 +32,8 @@ void _downgradeToV1(Database raw) {
 }
 
 void _dropV4Diagnostics(Database raw) {
+  raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsInsertTrigger');
+  raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsDeleteTrigger');
   raw.execute('DROP TABLE IF EXISTS quick_routing_diagnostics');
 }
 
@@ -50,6 +57,11 @@ Set<String> _columnsOf(Database raw, String table) => {
 
 bool _hasTable(Database raw, String name) => raw.select(
   "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+  [name],
+).isNotEmpty;
+
+bool _hasTrigger(Database raw, String name) => raw.select(
+  "SELECT name FROM sqlite_master WHERE type='trigger' AND name=?",
   [name],
 ).isNotEmpty;
 
@@ -129,6 +141,8 @@ void main() {
   test('the v4 upgrade creates persistent diagnostics storage', () async {
     _downgradeToV3(raw);
     expect(_hasTable(raw, 'quick_routing_diagnostics'), isFalse);
+    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isFalse);
+    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isFalse);
 
     await openAndMigrate();
 
@@ -146,6 +160,22 @@ void main() {
         'payload',
       ]),
     );
+    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
+    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
+    expect(_userVersion(raw), 4);
+  });
+
+  test('opening schema v4 repairs missing diagnostics triggers', () async {
+    raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsInsertTrigger');
+    raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsDeleteTrigger');
+    expect(_userVersion(raw), 4);
+    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isFalse);
+    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isFalse);
+
+    await openAndMigrate();
+
+    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
+    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
     expect(_userVersion(raw), 4);
   });
 
@@ -222,5 +252,7 @@ void main() {
     expect(_userVersion(raw), 4);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
     expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
+    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
+    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
   });
 }
