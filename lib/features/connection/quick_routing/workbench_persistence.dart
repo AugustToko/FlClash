@@ -401,7 +401,7 @@ class QuickRoutingDiagnosticsCoordinator {
 
   QuickRoutingDiagnosticsCoordinator(this.persistence);
 
-  Future<T> _serializeWrite<T>(Future<T> Function() action) {
+  Future<T> _serialize<T>(Future<T> Function() action) {
     final completer = Completer<T>();
     _writeTail = _writeTail.then((_) async {
       try {
@@ -426,8 +426,9 @@ class QuickRoutingDiagnosticsCoordinator {
     }
     final load = () async {
       try {
-        await _writeTail;
-        final records = await persistence.loadProfile(profileId);
+        final records = await _serialize(
+          () => persistence.loadProfile(profileId),
+        );
         notifier.mergePersisted(records);
         _loadedProfiles.add(profileId);
       } catch (error, stackTrace) {
@@ -448,7 +449,7 @@ class QuickRoutingDiagnosticsCoordinator {
     QuickRoutingVerificationHistory notifier,
     QuickRoutingVerificationRecord record,
   ) async {
-    final canonical = await _serializeWrite(
+    final canonical = await _serialize(
       () => persistence.upsert(record),
     );
     notifier.replaceRecord(canonical);
@@ -460,16 +461,20 @@ class QuickRoutingDiagnosticsCoordinator {
     QuickRoutingVerificationHistory notifier,
     int id,
   ) async {
+    await _serialize(() => persistence.remove(id));
+    // A hydration request may have been queued before this delete. Confirm the
+    // in-memory tombstone after the serialized database mutation completes.
     notifier.remove(id, persist: false);
-    await _serializeWrite(() => persistence.remove(id));
   }
 
   Future<void> clearProfile(
     QuickRoutingVerificationHistory notifier,
     int profileId,
   ) async {
+    await _serialize(() => persistence.clearProfile(profileId));
+    // Keep the final state empty even if an older hydration completed while
+    // this clear operation was queued.
     notifier.clearProfile(profileId, persist: false);
-    await _serializeWrite(() => persistence.clearProfile(profileId));
     _loadedProfiles.add(profileId);
   }
 }
