@@ -212,6 +212,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkUpdate": MessageLookupByLibrary.simpleMessage("更新を確認"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("すでに最新バージョンです"),
     "clearData": MessageLookupByLibrary.simpleMessage("データを消去"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("イベントログを消去"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "保存されたイベントログをすべて消去しますか？",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("検索をクリア"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("クリップボードへエクスポート"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("クリップボードからインポート"),
@@ -518,6 +522,68 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("ログ"),
     "logLevel": MessageLookupByLibrary.simpleMessage("ログレベル"),
+    "logbook": MessageLookupByLibrary.simpleMessage("イベントログ"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("すべて"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "接続状態が変わりました",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("コア"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "コアの診断クラッシュを要求しました",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "コアの再起動に失敗しました",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "コアを再起動しましたが、プロファイル適用に問題があります",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage("コアを再起動しました"),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "コアの起動に失敗しました",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "コア起動要求が置き換えられました",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("コアを起動しました"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "ネットワーク、構成、実行イベントの永続タイムライン",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage("記録されたイベントはありません"),
+    "logbookError": MessageLookupByLibrary.simpleMessage("エラー"),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("情報"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "このデバイスにのみ保存されます",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("ネットワーク"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("プロファイル"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "プロファイルを適用しました",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "プロファイル適用中に例外が発生しました",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "プロファイルの適用に失敗しました",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "クイックルートは近似検証です",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "クイックルートが一致しません",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "クイックルートを検証できません",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "クイックルートを検証しました",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("ルーティング"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("スクリプト"),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("システム"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("ログキャプチャ"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("無効にするとログの入り口が非表示になります"),
     "logs": MessageLookupByLibrary.simpleMessage("ログ"),

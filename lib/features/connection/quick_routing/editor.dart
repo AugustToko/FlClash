@@ -12,18 +12,23 @@ String _quickRoutingValidationIssueLabel(
       '${appLocalizations.ruleTarget}: ${appLocalizations.noData}',
     QuickRoutingValidationIssue.unsupportedAction =>
       appLocalizations.invalidPolicy(appLocalizations.rule),
-    QuickRoutingValidationIssue.invalidDomain =>
-      appLocalizations.invalidPolicy(appLocalizations.domain),
-    QuickRoutingValidationIssue.invalidCidr =>
-      appLocalizations.invalidPolicy(appLocalizations.ipcidr),
-    QuickRoutingValidationIssue.invalidPort =>
-      appLocalizations.invalidPolicy(appLocalizations.port),
-    QuickRoutingValidationIssue.invalidUid =>
-      appLocalizations.invalidPolicy('UID'),
+    QuickRoutingValidationIssue.invalidDomain => appLocalizations.invalidPolicy(
+      appLocalizations.domain,
+    ),
+    QuickRoutingValidationIssue.invalidCidr => appLocalizations.invalidPolicy(
+      appLocalizations.ipcidr,
+    ),
+    QuickRoutingValidationIssue.invalidPort => appLocalizations.invalidPolicy(
+      appLocalizations.port,
+    ),
+    QuickRoutingValidationIssue.invalidUid => appLocalizations.invalidPolicy(
+      'UID',
+    ),
     QuickRoutingValidationIssue.invalidNetwork =>
       appLocalizations.invalidPolicy(appLocalizations.network),
-    QuickRoutingValidationIssue.invalidAsn =>
-      appLocalizations.invalidPolicy('ASN'),
+    QuickRoutingValidationIssue.invalidAsn => appLocalizations.invalidPolicy(
+      'ASN',
+    ),
     QuickRoutingValidationIssue.invalidGroupOverride =>
       appLocalizations.invalidPolicy(appLocalizations.proxyGroup),
   };
@@ -179,6 +184,9 @@ class _QuickRoutingButtonState extends ConsumerState<QuickRoutingButton> {
           );
         }
       }
+      if (!mounted) {
+        return;
+      }
       dialogs.showNotifier(
         '${currentAppLocalizations.addRule}: ${result.rule.rawValue}\n'
         '${_quickRoutingVerificationSummary(context, verification)}',
@@ -325,8 +333,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
       return currentFixed;
     }
     final current = group.now?.trim() ?? '';
-    if (current.isNotEmpty &&
-        group.all.any((proxy) => proxy.name == current)) {
+    if (current.isNotEmpty && group.all.any((proxy) => proxy.name == current)) {
       return current;
     }
     return group.all.first.name;
@@ -429,10 +436,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                 label: Text(appLocalizations.proxies),
                 dropdownMenuEntries: [
                   for (final proxy in group.all)
-                    DropdownMenuEntry(
-                      value: proxy.name,
-                      label: proxy.name,
-                    ),
+                    DropdownMenuEntry(value: proxy.name, label: proxy.name),
                 ],
                 onSelected: (proxy) {
                   if (proxy != null) {
@@ -454,10 +458,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
     final appLocalizations = context.appLocalizations;
     final impact = buildQuickRoutingImpact(
       _candidate,
-      buildQuickRoutingImpactSource(
-        widget.trackerInfo,
-        widget.recentRequests,
-      ),
+      buildQuickRoutingImpactSource(widget.trackerInfo, widget.recentRequests),
     );
     final analysis = buildQuickRoutingRuleAnalysis(
       candidate: _candidate,
@@ -482,12 +483,13 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
     final historicalPolicyChain = normalizeQuickRoutingHistoricalPolicyChain(
       widget.trackerInfo.chains,
     );
-    final proposedPolicyChain = buildQuickRoutingPolicyChainPreview(
-      target: _target,
-      groups: widget.groups,
-      fixedStates: widget.fixedStates,
-      groupOverride: groupOverride,
-    );
+    final QuickRoutingPolicyChainPreview proposedPolicyChain =
+        buildQuickRoutingPolicyChainPreview(
+          target: _target,
+          groups: widget.groups,
+          fixedStates: widget.fixedStates,
+          groupOverride: groupOverride,
+        );
     final proposedPolicyNodes = proposedPolicyChain.displayNodes(
       appLocalizations.auto,
     );
@@ -513,10 +515,7 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                 label: Text(appLocalizations.ruleName),
                 dropdownMenuEntries: [
                   for (final candidate in widget.candidates)
-                    DropdownMenuEntry(
-                      value: candidate,
-                      label: candidate.label,
-                    ),
+                    DropdownMenuEntry(value: candidate, label: candidate.label),
                 ],
                 onSelected: (candidate) {
                   if (candidate != null) {
@@ -679,10 +678,10 @@ class _QuickRoutingDialogState extends State<_QuickRoutingDialog> {
                 const SizedBox(height: 12),
                 Text(
                   validation.issues
-                      .map((issue) => _quickRoutingValidationIssueLabel(
-                            context,
-                            issue,
-                          ))
+                      .map(
+                        (issue) =>
+                            _quickRoutingValidationIssueLabel(context, issue),
+                      )
                       .join('\n'),
                   style: context.textTheme.bodySmall?.copyWith(
                     color: context.colorScheme.error,

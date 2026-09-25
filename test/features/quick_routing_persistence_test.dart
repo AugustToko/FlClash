@@ -146,7 +146,10 @@ void main() {
     expect(restored.selection.candidate.scopeHint, 'eTLD+1');
     expect(restored.selection.lifetime, QuickRoutingLifetime.oneHour);
     expect(restored.selection.groupOverride?.desiredFixed, 'node-a');
-    expect(restored.verification.status, QuickRoutingVerificationStatus.verified);
+    expect(
+      restored.verification.status,
+      QuickRoutingVerificationStatus.verified,
+    );
     expect(restored.verification.result?.policyChain, ['Proxy', 'node-a']);
     expect(
       restored.verification.result?.policyExplanation?.steps.single.reason,
@@ -154,62 +157,68 @@ void main() {
     );
   });
 
-  test('updating one diagnostic preserves its original record identity', () async {
-    final base = DateTime.utc(2026, 9, 24);
-    QuickRoutingVerificationRecord record(
-      int id,
-      QuickRoutingVerificationStatus status,
-      DateTime checkedAt,
-    ) {
-      return QuickRoutingVerificationRecord(
-        id: id,
-        profileId: 7,
-        createdAt: base,
-        checkedAt: checkedAt,
-        trackerInfo: TrackerInfo(
-          id: 'same-request',
-          start: base,
-          metadata: const Metadata(host: 'api.example.com'),
-          chains: const [],
-          rule: 'MATCH',
-          rulePayload: '',
-        ),
-        selection: const QuickRoutingSelection(
-          candidate: QuickRoutingCandidate(
+  test(
+    'updating one diagnostic preserves its original record identity',
+    () async {
+      final base = DateTime.utc(2026, 9, 24);
+      QuickRoutingVerificationRecord record(
+        int id,
+        QuickRoutingVerificationStatus status,
+        DateTime checkedAt,
+      ) {
+        return QuickRoutingVerificationRecord(
+          id: id,
+          profileId: 7,
+          createdAt: base,
+          checkedAt: checkedAt,
+          trackerInfo: TrackerInfo(
+            id: 'same-request',
+            start: base,
+            metadata: const Metadata(host: 'api.example.com'),
+            chains: const [],
+            rule: 'MATCH',
+            rulePayload: '',
+          ),
+          selection: const QuickRoutingSelection(
+            candidate: QuickRoutingCandidate(
+              ruleAction: RuleAction.DOMAIN,
+              content: 'api.example.com',
+            ),
+            target: 'DIRECT',
+            lifetime: QuickRoutingLifetime.session,
+          ),
+          appliedRule: const Rule(
+            id: -1,
             ruleAction: RuleAction.DOMAIN,
             content: 'api.example.com',
+            ruleTarget: 'DIRECT',
           ),
-          target: 'DIRECT',
-          lifetime: QuickRoutingLifetime.session,
-        ),
-        appliedRule: const Rule(
-          id: -1,
-          ruleAction: RuleAction.DOMAIN,
-          content: 'api.example.com',
-          ruleTarget: 'DIRECT',
-        ),
-        verification: QuickRoutingVerification(
-          status: status,
-          result: null,
-          issues: const ['core-unavailable'],
+          verification: QuickRoutingVerification(
+            status: status,
+            result: null,
+            issues: const ['core-unavailable'],
+          ),
+        );
+      }
+
+      await persistence.upsert(
+        record(10, QuickRoutingVerificationStatus.unavailable, base),
+      );
+      final updated = await persistence.upsert(
+        record(
+          20,
+          QuickRoutingVerificationStatus.mismatch,
+          base.add(const Duration(minutes: 1)),
         ),
       );
-    }
 
-    await persistence.upsert(
-      record(10, QuickRoutingVerificationStatus.unavailable, base),
-    );
-    final updated = await persistence.upsert(
-      record(
-        20,
+      expect(updated.id, 10);
+      expect(updated.createdAt.isAtSameMomentAs(base), isTrue);
+      expect(
+        updated.verification.status,
         QuickRoutingVerificationStatus.mismatch,
-        base.add(const Duration(minutes: 1)),
-      ),
-    );
-
-    expect(updated.id, 10);
-    expect(updated.createdAt.isAtSameMomentAs(base), isTrue);
-    expect(updated.verification.status, QuickRoutingVerificationStatus.mismatch);
-    expect(await testDatabase.countQuickRoutingDiagnostics(7), 1);
-  });
+      );
+      expect(await testDatabase.countQuickRoutingDiagnostics(7), 1);
+    },
+  );
 }

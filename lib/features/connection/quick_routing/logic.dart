@@ -1,6 +1,6 @@
 part of '../quick_routing.dart';
 
-const quickRoutingRejectDropTarget = 'REJECT-DROP';
+const _quickRoutingRejectDropTarget = 'REJECT-DROP';
 
 const _quickRoutingSupportedActions = <RuleAction>{
   RuleAction.DOMAIN,
@@ -20,11 +20,7 @@ const _quickRoutingSupportedActions = <RuleAction>{
   RuleAction.SRC_PORT,
 };
 
-enum _QuickRoutingKnownRuleMatch {
-  match,
-  noMatch,
-  unknown,
-}
+enum _QuickRoutingKnownRuleMatch { match, noMatch, unknown }
 
 List<QuickRoutingCandidate> buildQuickRoutingCandidates(
   TrackerInfo trackerInfo,
@@ -66,11 +62,7 @@ List<QuickRoutingCandidate> buildQuickRoutingCandidates(
       (false, InternetAddressType.IPv6) => RuleAction.IP_CIDR6,
       _ => RuleAction.IP_CIDR,
     };
-    add(
-      action,
-      '${address.address}/$prefix',
-      noResolve: !source,
-    );
+    add(action, '${address.address}/$prefix', noResolve: !source);
   }
 
   final metadata = trackerInfo.metadata;
@@ -121,7 +113,7 @@ List<String> buildQuickRoutingTargets(Iterable<Group> groups) {
   for (final target in RuleTarget.baseTargetNames) {
     add(target);
   }
-  add(quickRoutingRejectDropTarget);
+  add(_quickRoutingRejectDropTarget);
   for (final group in groups) {
     add(group.name);
   }
@@ -267,7 +259,8 @@ QuickRoutingValidation validateQuickRoutingSelection({
       }
     }
     final desired = groupOverride.desiredFixed;
-    final validMember = desired.isEmpty ||
+    final validMember =
+        desired.isEmpty ||
         (group?.all.any((proxy) => proxy.name == desired) ?? false);
     if (group == null ||
         group.name != normalizedTarget ||
@@ -468,9 +461,7 @@ _QuickRoutingKnownRuleMatch _matchQuickRoutingRegex(
     return _QuickRoutingKnownRuleMatch.unknown;
   }
   try {
-    return _matchResult(
-      RegExp(pattern, caseSensitive: false).hasMatch(value),
-    );
+    return _matchResult(RegExp(pattern, caseSensitive: false).hasMatch(value));
   } on FormatException {
     return _QuickRoutingKnownRuleMatch.unknown;
   }
@@ -521,10 +512,10 @@ bool _matchesQuickRoutingCandidate(
       return host == suffix || host.endsWith('.$suffix');
     case RuleAction.IP_CIDR:
     case RuleAction.IP_CIDR6:
-      return _matchesQuickRoutingAddress(
-        content,
-        [metadata.destinationIP, metadata.host],
-      );
+      return _matchesQuickRoutingAddress(content, [
+        metadata.destinationIP,
+        metadata.host,
+      ]);
     case RuleAction.SRC_IP_CIDR:
       return _matchesQuickRoutingAddress(content, [metadata.sourceIP]);
     case RuleAction.GEOIP:
@@ -642,14 +633,10 @@ bool _addressInPrefix(
     return true;
   }
   final mask = (0xff << (8 - remainingBits)) & 0xff;
-  return (networkBytes[fullBytes] & mask) ==
-      (addressBytes[fullBytes] & mask);
+  return (networkBytes[fullBytes] & mask) == (addressBytes[fullBytes] & mask);
 }
 
-bool _containsQuickRoutingValue(
-  Iterable<String> values,
-  String expected,
-) {
+bool _containsQuickRoutingValue(Iterable<String> values, String expected) {
   final normalized = expected.toLowerCase();
   return values.any((value) => value.toLowerCase() == normalized);
 }

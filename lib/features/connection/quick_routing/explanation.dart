@@ -11,15 +11,12 @@ List<Rule> buildQuickRoutingKnownRules({
   final base = baseRules.toList(growable: false);
   final added = addedRules.toList(growable: false);
   final custom = customRules.toList(growable: false);
-  return List.unmodifiable(
-    switch (overwriteType) {
-      OverwriteType.standard => [...runtime, ...added, ...base],
-      OverwriteType.custom => custom.isEmpty
-          ? [...runtime, ...base]
-          : [...runtime, ...custom],
-      OverwriteType.script => [...runtime, ...base],
-    },
-  );
+  return List.unmodifiable(switch (overwriteType) {
+    OverwriteType.standard => [...runtime, ...added, ...base],
+    OverwriteType.custom =>
+      custom.isEmpty ? [...runtime, ...base] : [...runtime, ...custom],
+    OverwriteType.script => [...runtime, ...base],
+  });
 }
 
 Future<List<Rule>> _readEffectiveQuickRoutingRules({

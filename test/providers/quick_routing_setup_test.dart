@@ -48,20 +48,22 @@ void main() {
   });
 
   void addRuntimeRule() {
-    container.read(quickRoutingRulesProvider.notifier).put(
-      profileId: 1,
-      rule: const Rule(
-        id: 1,
-        ruleAction: RuleAction.DOMAIN,
-        content: 'example.com',
-        ruleTarget: 'DIRECT',
-      ),
-      lifetime: QuickRoutingLifetime.session,
-      sourceId: 'request',
-      sourceDesc: 'tcp://example.com:443',
-      previousRule: 'MATCH',
-      previousChains: const ['Proxy'],
-    );
+    container
+        .read(quickRoutingRulesProvider.notifier)
+        .put(
+          profileId: 1,
+          rule: const Rule(
+            id: 1,
+            ruleAction: RuleAction.DOMAIN,
+            content: 'example.com',
+            ruleTarget: 'DIRECT',
+          ),
+          lifetime: QuickRoutingLifetime.session,
+          sourceId: 'request',
+          sourceDesc: 'tcp://example.com:443',
+          previousRule: 'MATCH',
+          previousChains: const ['Proxy'],
+        );
   }
 
   test('a confirmed listener stop clears runtime quick rules', () async {

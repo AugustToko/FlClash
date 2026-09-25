@@ -15,6 +15,7 @@ part 'diagnostics.dart';
 part 'generated/database.g.dart';
 part 'groups.dart';
 part 'icons.dart';
+part 'logbook.dart';
 part 'links.dart';
 part 'profiles.dart';
 part 'rules.dart';
@@ -35,7 +36,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -50,6 +51,7 @@ class Database extends _$Database {
       onCreate: (m) async {
         await m.createAll();
         await _createQuickRoutingDiagnosticsSchema(this);
+        await _createLogbookSchema(this);
       },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
@@ -64,6 +66,9 @@ class Database extends _$Database {
         if (from < 4) {
           await _createQuickRoutingDiagnosticsSchema(this);
         }
+        if (from < 5) {
+          await _createLogbookSchema(this);
+        }
       },
       beforeOpen: (_) async {
         // The diagnostics table is intentionally custom SQL instead of a
@@ -71,6 +76,7 @@ class Database extends _$Database {
         // open so development builds that already reached schema v4 also gain
         // later idempotent integrity fixes.
         await _createQuickRoutingDiagnosticsSchema(this);
+        await _createLogbookSchema(this);
       },
     );
   }

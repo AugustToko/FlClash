@@ -5,6 +5,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/quick_routing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _TestSetupAction extends SetupAction {
@@ -44,21 +45,23 @@ void main() {
     QuickRoutingLifetime lifetime = QuickRoutingLifetime.network,
     DateTime? now,
   }) {
-    return container.read(quickRoutingRulesProvider.notifier).put(
-      profileId: 1,
-      rule: const Rule(
-        id: 1,
-        ruleAction: RuleAction.DOMAIN,
-        content: 'example.com',
-        ruleTarget: 'DIRECT',
-      ),
-      lifetime: lifetime,
-      sourceId: 'request',
-      sourceDesc: 'tcp://example.com:443',
-      previousRule: 'MATCH',
-      previousChains: const ['Proxy'],
-      now: now,
-    );
+    return container
+        .read(quickRoutingRulesProvider.notifier)
+        .put(
+          profileId: 1,
+          rule: const Rule(
+            id: 1,
+            ruleAction: RuleAction.DOMAIN,
+            content: 'example.com',
+            ruleTarget: 'DIRECT',
+          ),
+          lifetime: lifetime,
+          sourceId: 'request',
+          sourceDesc: 'tcp://example.com:443',
+          previousRule: 'MATCH',
+          previousChains: const ['Proxy'],
+          now: now,
+        );
   }
 
   Future<void> pumpManager(WidgetTester tester) async {

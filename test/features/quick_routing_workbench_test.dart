@@ -14,11 +14,7 @@ void main() {
     return TrackerInfo(
       id: id,
       start: DateTime.utc(2026, 9, 24),
-      metadata: Metadata(
-        network: 'tcp',
-        host: host,
-        destinationPort: '443',
-      ),
+      metadata: Metadata(network: 'tcp', host: host, destinationPort: '443'),
       chains: const ['DIRECT'],
       rule: 'MATCH',
       rulePayload: '',
@@ -34,9 +30,7 @@ void main() {
     lifetime: QuickRoutingLifetime.session,
   );
 
-  QuickRoutingVerification verification(
-    QuickRoutingVerificationStatus status,
-  ) {
+  QuickRoutingVerification verification(QuickRoutingVerificationStatus status) {
     return QuickRoutingVerification(
       status: status,
       result: status == QuickRoutingVerificationStatus.unavailable
@@ -77,25 +71,23 @@ void main() {
     );
     final base = DateTime.utc(2026, 9, 24);
 
-    for (var index = 0;
-        index < QuickRoutingVerificationHistory.maxEntries + 5;
-        index++) {
+    for (
+      var index = 0;
+      index < QuickRoutingVerificationHistory.maxEntries + 5;
+      index++
+    ) {
       notifier.upsert(
         id: index,
         profileId: 1,
         trackerInfo: trackerInfo(id: 'request-$index'),
         selection: selection,
         appliedRule: appliedRule(index),
-        verification: verification(
-          QuickRoutingVerificationStatus.verified,
-        ),
+        verification: verification(QuickRoutingVerificationStatus.verified),
         now: base.add(Duration(seconds: index)),
       );
     }
 
-    final entries = container.read(
-      quickRoutingVerificationHistoryProvider,
-    );
+    final entries = container.read(quickRoutingVerificationHistoryProvider);
     expect(entries, hasLength(QuickRoutingVerificationHistory.maxEntries));
     expect(entries.first.id, QuickRoutingVerificationHistory.maxEntries + 4);
     expect(entries.last.id, 5);
@@ -115,9 +107,7 @@ void main() {
       trackerInfo: trackerInfo(),
       selection: selection,
       appliedRule: appliedRule(10),
-      verification: verification(
-        QuickRoutingVerificationStatus.unavailable,
-      ),
+      verification: verification(QuickRoutingVerificationStatus.unavailable),
       now: createdAt,
     );
     final updated = notifier.upsert(
@@ -125,15 +115,11 @@ void main() {
       trackerInfo: trackerInfo(),
       selection: selection,
       appliedRule: appliedRule(99),
-      verification: verification(
-        QuickRoutingVerificationStatus.verified,
-      ),
+      verification: verification(QuickRoutingVerificationStatus.verified),
       now: createdAt.add(const Duration(minutes: 1)),
     );
 
-    final entries = container.read(
-      quickRoutingVerificationHistoryProvider,
-    );
+    final entries = container.read(quickRoutingVerificationHistoryProvider);
     expect(entries, hasLength(1));
     expect(updated.id, first.id);
     expect(updated.createdAt, createdAt);
@@ -156,9 +142,7 @@ void main() {
       trackerInfo: trackerInfo(id: 'one'),
       selection: selection,
       appliedRule: appliedRule(1),
-      verification: verification(
-        QuickRoutingVerificationStatus.unavailable,
-      ),
+      verification: verification(QuickRoutingVerificationStatus.unavailable),
     );
     notifier.upsert(
       id: 2,
@@ -166,9 +150,7 @@ void main() {
       trackerInfo: trackerInfo(id: 'two'),
       selection: selection,
       appliedRule: appliedRule(2),
-      verification: verification(
-        QuickRoutingVerificationStatus.verified,
-      ),
+      verification: verification(QuickRoutingVerificationStatus.verified),
     );
 
     expect(
@@ -188,9 +170,7 @@ void main() {
     );
 
     expect(notifier.clearProfile(1, persist: false), isTrue);
-    final remaining = container.read(
-      quickRoutingVerificationHistoryProvider,
-    );
+    final remaining = container.read(quickRoutingVerificationHistoryProvider);
     expect(remaining.map((entry) => entry.profileId), [2]);
   });
 
@@ -217,22 +197,15 @@ void main() {
           content: 'api.example.com',
           ruleTarget: 'DIRECT',
         ),
-        Rule(
-          id: 4,
-          ruleAction: RuleAction.MATCH,
-          ruleTarget: 'DIRECT',
-        ),
+        Rule(id: 4, ruleAction: RuleAction.MATCH, ruleTarget: 'DIRECT'),
       ],
     );
 
-    expect(
-      conflicts.map((entry) => entry.kind),
-      [
-        QuickRoutingConflictKind.opaque,
-        QuickRoutingConflictKind.competing,
-        QuickRoutingConflictKind.equivalent,
-      ],
-    );
+    expect(conflicts.map((entry) => entry.kind), [
+      QuickRoutingConflictKind.opaque,
+      QuickRoutingConflictKind.competing,
+      QuickRoutingConflictKind.equivalent,
+    ]);
     expect(conflicts.map((entry) => entry.index), [0, 1, 2]);
   });
 
@@ -247,11 +220,7 @@ void main() {
           content: 'example.com',
           ruleTarget: 'DIRECT',
         ),
-        Rule(
-          id: 2,
-          ruleAction: RuleAction.MATCH,
-          ruleTarget: 'DIRECT',
-        ),
+        Rule(id: 2, ruleAction: RuleAction.MATCH, ruleTarget: 'DIRECT'),
       ],
     );
 

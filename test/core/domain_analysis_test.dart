@@ -11,9 +11,9 @@ class _DomainAnalysisCoreHandler extends CoreHandlerInterface {
 
   @override
   Future<CoreLifecycleResult> start() async => const CoreLifecycleResult(
-        revision: 1,
-        outcome: CoreLifecycleOutcome.applied,
-      );
+    revision: 1,
+    outcome: CoreLifecycleOutcome.applied,
+  );
 
   @override
   Future<CoreLifecycleResult> restart() => start();
@@ -37,13 +37,14 @@ class _DomainAnalysisCoreHandler extends CoreHandlerInterface {
       throw StateError('unexpected method: $method');
     }
     return <String, dynamic>{
-      'input': 'api.example.co.uk',
-      'normalizedHost': 'api.example.co.uk',
-      'isIP': false,
-      'publicSuffix': 'co.uk',
-      'registrableDomain': 'example.co.uk',
-      'icannSuffix': true,
-    } as T;
+          'input': 'api.example.co.uk',
+          'normalizedHost': 'api.example.co.uk',
+          'isIP': false,
+          'publicSuffix': 'co.uk',
+          'registrableDomain': 'example.co.uk',
+          'icannSuffix': true,
+        }
+        as T;
   }
 }
 

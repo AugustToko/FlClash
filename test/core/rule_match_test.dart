@@ -20,9 +20,7 @@ void main() {
           'ruleType': 'Match',
           'payload': '',
           'target': 'REMATCH-TO-SECONDARY',
-          'policyChain': [
-            'REMATCH-TO-SECONDARY',
-          ],
+          'policyChain': ['REMATCH-TO-SECONDARY'],
           'outcome': 'rematch',
           'rematchName': 'stage-two',
           'subRule': 'secondary',
@@ -68,87 +66,90 @@ void main() {
     expect(result.policyExplanation, isNull);
   });
 
-  test('parses policy group selection reasons and attaches them to a match', () {
-    final explanation = CorePolicyExplanation.fromJson({
-      'target': 'Proxy',
-      'policyChain': ['Proxy', 'Balance', 'HK-01'],
-      'steps': [
-        {
-          'name': 'Proxy',
-          'type': 'Selector',
-          'selected': 'Balance',
-          'reason': 'manual-selection',
-          'strategy': '',
-          'key': '',
-          'keySource': '',
-          'testURL': '',
-          'fastest': '',
-          'candidateCount': 4,
-          'selectedIndex': 2,
-          'bucket': -1,
-          'retry': -1,
-          'tolerance': 0,
-          'selectedDelay': 65535,
-          'fastestDelay': 0,
-          'fixed': false,
-          'healthKnown': false,
-          'selectedAlive': true,
-          'complete': true,
-        },
-        {
-          'name': 'Balance',
-          'type': 'LoadBalance',
-          'selected': 'HK-01',
-          'reason': 'consistent-hash',
-          'strategy': 'consistent-hashing',
-          'key': 'example.com',
-          'keySource': 'etld+1',
-          'testURL': 'https://www.gstatic.com/generate_204',
-          'fastest': '',
-          'candidateCount': 3,
-          'selectedIndex': 1,
-          'bucket': 1,
-          'retry': 0,
-          'tolerance': 0,
-          'selectedDelay': 42,
-          'fastestDelay': 0,
-          'fixed': false,
-          'healthKnown': true,
-          'selectedAlive': true,
-          'complete': true,
-        },
-        'malformed',
-      ],
-      'complete': true,
-      'warnings': <String>[],
-    });
+  test(
+    'parses policy group selection reasons and attaches them to a match',
+    () {
+      final explanation = CorePolicyExplanation.fromJson({
+        'target': 'Proxy',
+        'policyChain': ['Proxy', 'Balance', 'HK-01'],
+        'steps': [
+          {
+            'name': 'Proxy',
+            'type': 'Selector',
+            'selected': 'Balance',
+            'reason': 'manual-selection',
+            'strategy': '',
+            'key': '',
+            'keySource': '',
+            'testURL': '',
+            'fastest': '',
+            'candidateCount': 4,
+            'selectedIndex': 2,
+            'bucket': -1,
+            'retry': -1,
+            'tolerance': 0,
+            'selectedDelay': 65535,
+            'fastestDelay': 0,
+            'fixed': false,
+            'healthKnown': false,
+            'selectedAlive': true,
+            'complete': true,
+          },
+          {
+            'name': 'Balance',
+            'type': 'LoadBalance',
+            'selected': 'HK-01',
+            'reason': 'consistent-hash',
+            'strategy': 'consistent-hashing',
+            'key': 'example.com',
+            'keySource': 'etld+1',
+            'testURL': 'https://www.gstatic.com/generate_204',
+            'fastest': '',
+            'candidateCount': 3,
+            'selectedIndex': 1,
+            'bucket': 1,
+            'retry': 0,
+            'tolerance': 0,
+            'selectedDelay': 42,
+            'fastestDelay': 0,
+            'fixed': false,
+            'healthKnown': true,
+            'selectedAlive': true,
+            'complete': true,
+          },
+          'malformed',
+        ],
+        'complete': true,
+        'warnings': <String>[],
+      });
 
-    expect(explanation.target, 'Proxy');
-    expect(explanation.policyChain, ['Proxy', 'Balance', 'HK-01']);
-    expect(explanation.steps, hasLength(2));
-    expect(explanation.steps.first.reason, 'manual-selection');
-    expect(explanation.steps.last.strategy, 'consistent-hashing');
-    expect(explanation.steps.last.key, 'example.com');
-    expect(explanation.steps.last.bucket, 1);
-    expect(explanation.steps.last.hasSelectedDelay, isTrue);
-    expect(explanation.steps.first.hasSelectedDelay, isFalse);
-    expect(explanation.complete, isTrue);
+      expect(explanation.target, 'Proxy');
+      expect(explanation.policyChain, ['Proxy', 'Balance', 'HK-01']);
+      expect(explanation.steps, hasLength(2));
+      expect(explanation.steps.first.reason, 'manual-selection');
+      expect(explanation.steps.last.strategy, 'consistent-hashing');
+      expect(explanation.steps.last.key, 'example.com');
+      expect(explanation.steps.last.bucket, 1);
+      expect(explanation.steps.last.hasSelectedDelay, isTrue);
+      expect(explanation.steps.first.hasSelectedDelay, isFalse);
+      expect(explanation.complete, isTrue);
 
-    final match = CoreRuleMatchResult.fromJson({
-      'mode': 'rule',
-      'matched': true,
-      'ruleScope': 'default',
-      'ruleIndex': 0,
-      'ruleType': 'Domain',
-      'payload': 'example.com',
-      'target': 'Proxy',
-      'policyChain': ['Proxy', 'Balance', 'HK-01'],
-      'complete': true,
-    }).copyWith(policyExplanation: explanation);
+      final match = CoreRuleMatchResult.fromJson({
+        'mode': 'rule',
+        'matched': true,
+        'ruleScope': 'default',
+        'ruleIndex': 0,
+        'ruleType': 'Domain',
+        'payload': 'example.com',
+        'target': 'Proxy',
+        'policyChain': ['Proxy', 'Balance', 'HK-01'],
+        'complete': true,
+      }).copyWith(policyExplanation: explanation);
 
-    expect(match.policyExplanation, same(explanation));
-    expect(match.finalPolicy, 'HK-01');
-  });
+      expect(match.policyExplanation, same(explanation));
+      expect(match.finalPolicy, 'HK-01');
+    },
+  );
 
   test('keeps hidden load-balance state explicit', () {
     final explanation = CorePolicyExplanation.fromJson({

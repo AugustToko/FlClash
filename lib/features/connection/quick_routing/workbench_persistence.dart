@@ -107,13 +107,8 @@ QuickRoutingSelection _quickRoutingSelectionFromJson(
 ) {
   final rawCandidate = json['candidate'];
   final candidate = rawCandidate is Map<Object?, Object?>
-      ? _quickRoutingCandidateFromJson(
-          Map<String, Object?>.from(rawCandidate),
-        )
-      : const QuickRoutingCandidate(
-          ruleAction: RuleAction.DOMAIN,
-          content: '',
-        );
+      ? _quickRoutingCandidateFromJson(Map<String, Object?>.from(rawCandidate))
+      : const QuickRoutingCandidate(ruleAction: RuleAction.DOMAIN, content: '');
   final lifetimeName = json['lifetime'] as String? ?? '';
   final lifetime = QuickRoutingLifetime.values.firstWhere(
     (value) => value.name == lifetimeName,
@@ -143,9 +138,7 @@ Map<String, Object?> _coreRuleMatchTraceStepToJson(
   };
 }
 
-Map<String, Object?> _corePolicyExplainStepToJson(
-  CorePolicyExplainStep step,
-) {
+Map<String, Object?> _corePolicyExplainStepToJson(CorePolicyExplainStep step) {
   return {
     'name': step.name,
     'type': step.type,
@@ -182,9 +175,7 @@ Map<String, Object?> _corePolicyExplanationToJson(
   };
 }
 
-Map<String, Object?> _coreRuleMatchResultToJson(
-  CoreRuleMatchResult result,
-) {
+Map<String, Object?> _coreRuleMatchResultToJson(CoreRuleMatchResult result) {
   return {
     'mode': result.mode,
     'matched': result.matched,
@@ -206,12 +197,8 @@ Map<String, Object?> _coreRuleMatchResultToJson(
   };
 }
 
-CoreRuleMatchResult _coreRuleMatchResultFromJson(
-  Map<String, Object?> json,
-) {
-  var result = CoreRuleMatchResult.fromJson(
-    Map<String, dynamic>.from(json),
-  );
+CoreRuleMatchResult _coreRuleMatchResultFromJson(Map<String, Object?> json) {
+  var result = CoreRuleMatchResult.fromJson(Map<String, dynamic>.from(json));
   final rawExplanation = json['policyExplanation'];
   if (rawExplanation is Map<Object?, Object?>) {
     result = result.copyWith(
@@ -251,9 +238,7 @@ QuickRoutingVerification _quickRoutingVerificationFromJson(
   return QuickRoutingVerification(
     status: status,
     result: rawResult is Map<Object?, Object?>
-        ? _coreRuleMatchResultFromJson(
-            Map<String, Object?>.from(rawResult),
-          )
+        ? _coreRuleMatchResultFromJson(Map<String, Object?>.from(rawResult))
         : null,
     issues: issues,
     attempts: (json['attempts'] as num?)?.toInt() ?? 0,
@@ -311,9 +296,7 @@ QuickRoutingVerificationRecord _quickRoutingRecordFromSnapshot(
     profileId: snapshot.profileId,
     createdAt: snapshot.createdAt,
     checkedAt: snapshot.checkedAt,
-    trackerInfo: TrackerInfo.fromJson(
-      Map<String, Object?>.from(rawTracker),
-    ),
+    trackerInfo: TrackerInfo.fromJson(Map<String, Object?>.from(rawTracker)),
     selection: _quickRoutingSelectionFromJson(
       Map<String, Object?>.from(rawSelection),
     ),
@@ -390,8 +373,8 @@ class DatabaseQuickRoutingDiagnosticsPersistence
 
 final quickRoutingDiagnosticsPersistenceProvider =
     Provider<QuickRoutingDiagnosticsPersistence>(
-  (_) => const DatabaseQuickRoutingDiagnosticsPersistence(),
-);
+      (_) => const DatabaseQuickRoutingDiagnosticsPersistence(),
+    );
 
 class QuickRoutingDiagnosticsCoordinator {
   final QuickRoutingDiagnosticsPersistence persistence;
@@ -438,7 +421,7 @@ class QuickRoutingDiagnosticsCoordinator {
           logLevel: LogLevel.warning,
         );
       } finally {
-        _profileLoads.remove(profileId);
+        unawaited(_profileLoads.remove(profileId));
       }
     }();
     _profileLoads[profileId] = load;
@@ -449,18 +432,13 @@ class QuickRoutingDiagnosticsCoordinator {
     QuickRoutingVerificationHistory notifier,
     QuickRoutingVerificationRecord record,
   ) async {
-    final canonical = await _serialize(
-      () => persistence.upsert(record),
-    );
+    final canonical = await _serialize(() => persistence.upsert(record));
     notifier.replaceRecord(canonical);
     _loadedProfiles.add(record.profileId);
     return canonical;
   }
 
-  Future<void> remove(
-    QuickRoutingVerificationHistory notifier,
-    int id,
-  ) async {
+  Future<void> remove(QuickRoutingVerificationHistory notifier, int id) async {
     await _serialize(() => persistence.remove(id));
     // A hydration request may have been queued before this delete. Confirm the
     // in-memory tombstone after the serialized database mutation completes.
@@ -481,24 +459,28 @@ class QuickRoutingDiagnosticsCoordinator {
 
 final quickRoutingDiagnosticsCoordinatorProvider =
     Provider<QuickRoutingDiagnosticsCoordinator>((ref) {
-  return QuickRoutingDiagnosticsCoordinator(
-    ref.watch(quickRoutingDiagnosticsPersistenceProvider),
-  );
-});
+      return QuickRoutingDiagnosticsCoordinator(
+        ref.watch(quickRoutingDiagnosticsPersistenceProvider),
+      );
+    });
 
 final quickRoutingDiagnosticsHydrationProvider =
     FutureProvider.family<void, int>((ref, profileId) {
-  return ref.watch(quickRoutingDiagnosticsCoordinatorProvider).hydrate(
-        ref.read(quickRoutingVerificationHistoryProvider.notifier),
-        profileId,
-      );
-});
+      return ref
+          .watch(quickRoutingDiagnosticsCoordinatorProvider)
+          .hydrate(
+            ref.read(quickRoutingVerificationHistoryProvider.notifier),
+            profileId,
+          );
+    });
 
 Future<void> _hydrateQuickRoutingVerificationHistory(
   WidgetRef ref,
   int profileId,
 ) {
-  return ref.read(quickRoutingDiagnosticsCoordinatorProvider).hydrate(
+  return ref
+      .read(quickRoutingDiagnosticsCoordinatorProvider)
+      .hydrate(
         ref.read(quickRoutingVerificationHistoryProvider.notifier),
         profileId,
       );
@@ -508,28 +490,10 @@ Future<QuickRoutingVerificationRecord> _persistQuickRoutingVerificationRecord(
   WidgetRef ref,
   QuickRoutingVerificationRecord record,
 ) {
-  return ref.read(quickRoutingDiagnosticsCoordinatorProvider).persist(
+  return ref
+      .read(quickRoutingDiagnosticsCoordinatorProvider)
+      .persist(
         ref.read(quickRoutingVerificationHistoryProvider.notifier),
         record,
-      );
-}
-
-Future<void> _removeQuickRoutingVerificationRecord(
-  WidgetRef ref,
-  int id,
-) {
-  return ref.read(quickRoutingDiagnosticsCoordinatorProvider).remove(
-        ref.read(quickRoutingVerificationHistoryProvider.notifier),
-        id,
-      );
-}
-
-Future<void> _clearQuickRoutingVerificationRecords(
-  WidgetRef ref,
-  int profileId,
-) {
-  return ref.read(quickRoutingDiagnosticsCoordinatorProvider).clearProfile(
-        ref.read(quickRoutingVerificationHistoryProvider.notifier),
-        profileId,
       );
 }

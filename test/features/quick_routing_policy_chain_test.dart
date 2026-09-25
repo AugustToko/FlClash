@@ -18,16 +18,8 @@ void main() {
 
   test('resolves nested selector and fixed automatic group chains', () {
     const groups = [
-      Group(
-        name: 'Proxy',
-        type: GroupType.Selector,
-        now: 'Automatic',
-      ),
-      Group(
-        name: 'Automatic',
-        type: GroupType.URLTest,
-        now: 'HK-01',
-      ),
+      Group(name: 'Proxy', type: GroupType.Selector, now: 'Automatic'),
+      Group(name: 'Automatic', type: GroupType.URLTest, now: 'HK-01'),
     ];
 
     final result = buildQuickRoutingPolicyChainPreview(
@@ -43,16 +35,8 @@ void main() {
 
   test('keeps automatic computed groups explicitly approximate', () {
     const groups = [
-      Group(
-        name: 'Proxy',
-        type: GroupType.Selector,
-        now: 'Automatic',
-      ),
-      Group(
-        name: 'Automatic',
-        type: GroupType.Fallback,
-        now: 'HK-01',
-      ),
+      Group(name: 'Proxy', type: GroupType.Selector, now: 'Automatic'),
+      Group(name: 'Automatic', type: GroupType.Fallback, now: 'HK-01'),
     ];
 
     final result = buildQuickRoutingPolicyChainPreview(
@@ -69,11 +53,7 @@ void main() {
 
   test('does not call an unavailable fixed-state snapshot automatic', () {
     const groups = [
-      Group(
-        name: 'Automatic',
-        type: GroupType.URLTest,
-        now: 'HK-01',
-      ),
+      Group(name: 'Automatic', type: GroupType.URLTest, now: 'HK-01'),
     ];
 
     final result = buildQuickRoutingPolicyChainPreview(
@@ -88,11 +68,7 @@ void main() {
 
   test('a temporary fixed override predicts the selected member', () {
     const groups = [
-      Group(
-        name: 'Automatic',
-        type: GroupType.URLTest,
-        now: 'HK-01',
-      ),
+      Group(name: 'Automatic', type: GroupType.URLTest, now: 'HK-01'),
     ];
     const override = QuickRoutingGroupOverride(
       groupName: 'Automatic',
@@ -126,11 +102,7 @@ void main() {
     expect(cycle.complete, isFalse);
 
     const loadBalanceGroups = [
-      Group(
-        name: 'Balance',
-        type: GroupType.LoadBalance,
-        now: 'HK-01',
-      ),
+      Group(name: 'Balance', type: GroupType.LoadBalance, now: 'HK-01'),
     ];
     final loadBalance = buildQuickRoutingPolicyChainPreview(
       target: 'Balance',

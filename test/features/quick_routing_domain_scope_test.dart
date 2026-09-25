@@ -34,30 +34,28 @@ void main() {
       analysis,
     );
 
-    expect(
-      result.map((candidate) => candidate.label),
-      [
-        'DOMAIN · api.service.example.co.uk',
-        'DOMAIN-SUFFIX · api.service.example.co.uk',
-        'DOMAIN-SUFFIX · example.co.uk · eTLD+1',
-        'PROCESS-NAME · example-app',
-      ],
-    );
+    expect(result.map((candidate) => candidate.label), [
+      'DOMAIN · api.service.example.co.uk',
+      'DOMAIN-SUFFIX · api.service.example.co.uk',
+      'DOMAIN-SUFFIX · example.co.uk · eTLD+1',
+      'PROCESS-NAME · example-app',
+    ]);
     expect(result[2].scopeHint, 'eTLD+1');
   });
 
-  test('supports private suffix boundaries without broadening to github.io', () {
-    const analysis = CoreDomainAnalysis(
-      input: 'bar.foo.github.io',
-      normalizedHost: 'bar.foo.github.io',
-      isIP: false,
-      publicSuffix: 'github.io',
-      registrableDomain: 'foo.github.io',
-      icannSuffix: false,
-    );
+  test(
+    'supports private suffix boundaries without broadening to github.io',
+    () {
+      const analysis = CoreDomainAnalysis(
+        input: 'bar.foo.github.io',
+        normalizedHost: 'bar.foo.github.io',
+        isIP: false,
+        publicSuffix: 'github.io',
+        registrableDomain: 'foo.github.io',
+        icannSuffix: false,
+      );
 
-    final result = augmentQuickRoutingCandidatesWithDomainAnalysis(
-      const [
+      final result = augmentQuickRoutingCandidatesWithDomainAnalysis(const [
         QuickRoutingCandidate(
           ruleAction: RuleAction.DOMAIN,
           content: 'bar.foo.github.io',
@@ -66,14 +64,16 @@ void main() {
           ruleAction: RuleAction.DOMAIN_SUFFIX,
           content: 'bar.foo.github.io',
         ),
-      ],
-      analysis,
-    );
+      ], analysis);
 
-    expect(result.last.content, 'foo.github.io');
-    expect(result.last.scopeHint, 'eTLD+1');
-    expect(result.any((candidate) => candidate.content == 'github.io'), isFalse);
-  });
+      expect(result.last.content, 'foo.github.io');
+      expect(result.last.scopeHint, 'eTLD+1');
+      expect(
+        result.any((candidate) => candidate.content == 'github.io'),
+        isFalse,
+      );
+    },
+  );
 
   test('does not duplicate an existing registrable-domain matcher', () {
     const analysis = CoreDomainAnalysis(
@@ -84,19 +84,16 @@ void main() {
       registrableDomain: 'example.com',
       icannSuffix: true,
     );
-    final result = augmentQuickRoutingCandidatesWithDomainAnalysis(
-      const [
-        QuickRoutingCandidate(
-          ruleAction: RuleAction.DOMAIN_SUFFIX,
-          content: 'api.example.com',
-        ),
-        QuickRoutingCandidate(
-          ruleAction: RuleAction.DOMAIN_SUFFIX,
-          content: 'example.com',
-        ),
-      ],
-      analysis,
-    );
+    final result = augmentQuickRoutingCandidatesWithDomainAnalysis(const [
+      QuickRoutingCandidate(
+        ruleAction: RuleAction.DOMAIN_SUFFIX,
+        content: 'api.example.com',
+      ),
+      QuickRoutingCandidate(
+        ruleAction: RuleAction.DOMAIN_SUFFIX,
+        content: 'example.com',
+      ),
+    ], analysis);
 
     expect(
       result.where((candidate) => candidate.content == 'example.com'),
@@ -135,10 +132,7 @@ void main() {
       hasLength(base.length),
     );
     expect(
-      augmentQuickRoutingCandidatesWithDomainAnalysis(
-        base,
-        unknownLocalSuffix,
-      ),
+      augmentQuickRoutingCandidatesWithDomainAnalysis(base, unknownLocalSuffix),
       hasLength(base.length),
     );
     expect(

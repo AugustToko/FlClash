@@ -12,10 +12,7 @@ class QuickRoutingPolicyChainPreview {
   }) : nodes = List.unmodifiable(nodes);
 
   List<String> displayNodes(String automaticLabel) {
-    return List.unmodifiable([
-      ...nodes,
-      if (automatic) automaticLabel,
-    ]);
+    return List.unmodifiable([...nodes, if (automatic) automaticLabel]);
   }
 }
 
@@ -44,28 +41,19 @@ QuickRoutingPolicyChainPreview buildQuickRoutingPolicyChainPreview({
 
   for (var depth = 0; current.isNotEmpty && depth < 32; depth++) {
     if (!visited.add(current)) {
-      return QuickRoutingPolicyChainPreview(
-        nodes: nodes,
-        complete: false,
-      );
+      return QuickRoutingPolicyChainPreview(nodes: nodes, complete: false);
     }
     nodes.add(current);
     final group = groupsByName[current];
     if (group == null) {
-      return QuickRoutingPolicyChainPreview(
-        nodes: nodes,
-        complete: true,
-      );
+      return QuickRoutingPolicyChainPreview(nodes: nodes, complete: true);
     }
-    if (group.type == GroupType.LoadBalance ||
-        group.type == GroupType.Relay) {
-      return QuickRoutingPolicyChainPreview(
-        nodes: nodes,
-        complete: false,
-      );
+    if (group.type == GroupType.LoadBalance || group.type == GroupType.Relay) {
+      return QuickRoutingPolicyChainPreview(nodes: nodes, complete: false);
     }
 
-    final override = groupOverride != null &&
+    final override =
+        groupOverride != null &&
             groupOverride.groupName == group.name &&
             groupOverride.changes
         ? groupOverride
@@ -85,10 +73,7 @@ QuickRoutingPolicyChainPreview buildQuickRoutingPolicyChainPreview({
 
     if (group.type.isComputedSelected) {
       if (!fixedStates.containsKey(group.name)) {
-        return QuickRoutingPolicyChainPreview(
-          nodes: nodes,
-          complete: false,
-        );
+        return QuickRoutingPolicyChainPreview(nodes: nodes, complete: false);
       }
       final fixed = fixedStates[group.name]?.trim() ?? '';
       if (fixed.isEmpty) {
@@ -104,17 +89,11 @@ QuickRoutingPolicyChainPreview buildQuickRoutingPolicyChainPreview({
 
     current = group.now?.trim() ?? '';
     if (current.isEmpty) {
-      return QuickRoutingPolicyChainPreview(
-        nodes: nodes,
-        complete: false,
-      );
+      return QuickRoutingPolicyChainPreview(nodes: nodes, complete: false);
     }
   }
 
-  return QuickRoutingPolicyChainPreview(
-    nodes: nodes,
-    complete: false,
-  );
+  return QuickRoutingPolicyChainPreview(nodes: nodes, complete: false);
 }
 
 Future<CoreRuleMatchResult?> _readCoreQuickRoutingMatch(
@@ -136,39 +115,28 @@ Future<CoreRuleMatchResult?> _readCoreQuickRoutingMatch(
   }
 }
 
-String _quickRoutingCoreWarningLabel(
-  BuildContext context,
-  String warning,
-) {
+String _quickRoutingCoreWarningLabel(BuildContext context, String warning) {
   final appLocalizations = context.appLocalizations;
   return switch (warning) {
-    'missing-inbound-port' =>
-      '${appLocalizations.unknown}: IN-PORT',
-    'missing-inbound-name' =>
-      '${appLocalizations.unknown}: IN-NAME',
-    'missing-inbound-user' =>
-      '${appLocalizations.unknown}: IN-USER',
-    'missing-inbound-type' =>
-      '${appLocalizations.unknown}: IN-TYPE',
+    'missing-inbound-port' => '${appLocalizations.unknown}: IN-PORT',
+    'missing-inbound-name' => '${appLocalizations.unknown}: IN-NAME',
+    'missing-inbound-user' => '${appLocalizations.unknown}: IN-USER',
+    'missing-inbound-type' => '${appLocalizations.unknown}: IN-TYPE',
     'missing-dscp' => '${appLocalizations.unknown}: DSCP',
     'sub-rule-context-unavailable' ||
     'special-rules-not-expanded' ||
-    'sub-rule-target-unavailable' =>
-      '${appLocalizations.unknown}: SUB-RULE',
+    'sub-rule-target-unavailable' => '${appLocalizations.unknown}: SUB-RULE',
     'compound-rule-context-partial' =>
       '${appLocalizations.unknown}: AND / OR / NOT',
-    'process-lookup-source-unavailable' ||
-    'process-lookup-failed' =>
+    'process-lookup-source-unavailable' || 'process-lookup-failed' =>
       '${appLocalizations.unknown}: ${appLocalizations.application}',
-    'dns-resolution-failed' =>
-      '${appLocalizations.unknown}: DNS',
+    'dns-resolution-failed' => '${appLocalizations.unknown}: DNS',
     'matched-target-unavailable' =>
       '${appLocalizations.unknown}: ${appLocalizations.ruleTarget}',
     'rematch-target-not-expanded' ||
     'rematch-cycle' ||
     'rematch-chain-truncated' ||
-    'rematch-metadata-update-failed' =>
-      '${appLocalizations.unknown}: REMATCH',
+    'rematch-metadata-update-failed' => '${appLocalizations.unknown}: REMATCH',
     'policy-chain-cycle' ||
     'policy-chain-truncated' ||
     'policy-chain-unresolved' ||
@@ -185,16 +153,12 @@ String _quickRoutingCoreWarningLabel(
       '${appLocalizations.unknown}: ${appLocalizations.status} changed',
     'policy-strategy-state-hidden' =>
       '${appLocalizations.unknown}: runtime strategy state',
-    'legacy-relay-unavailable' =>
-      '${appLocalizations.unknown}: legacy Relay',
+    'legacy-relay-unavailable' => '${appLocalizations.unknown}: legacy Relay',
     _ => warning,
   };
 }
 
-String _quickRoutingCoreRuleScopeLabel(
-  BuildContext context,
-  String scope,
-) {
+String _quickRoutingCoreRuleScopeLabel(BuildContext context, String scope) {
   if (scope == 'default') {
     return context.appLocalizations.defaultText;
   }
@@ -237,12 +201,9 @@ String _quickRoutingCoreTraceText(
       '${step.target}$outcomeSuffix';
 }
 
-String _quickRoutingCoreRematchTransition(
-  CoreRuleMatchTraceStep step,
-) {
+String _quickRoutingCoreRematchTransition(CoreRuleMatchTraceStep step) {
   final values = <String>[
-    if (step.rematchName.isNotEmpty)
-      'REMATCH-NAME=${step.rematchName}',
+    if (step.rematchName.isNotEmpty) 'REMATCH-NAME=${step.rematchName}',
     if (step.subRule.isNotEmpty) 'SUB-RULE=${step.subRule}',
   ];
   return values.join(' · ');
@@ -253,7 +214,8 @@ List<Widget> _buildCoreQuickRoutingTrace(
   CoreRuleMatchResult result,
 ) {
   final appLocalizations = context.appLocalizations;
-  final shouldShow = result.ruleTrace.length > 1 ||
+  final shouldShow =
+      result.ruleTrace.length > 1 ||
       result.ruleTrace.any((step) => step.outcome != 'final');
   if (!shouldShow) {
     return const [];
@@ -261,10 +223,7 @@ List<Widget> _buildCoreQuickRoutingTrace(
 
   return [
     const SizedBox(height: 6),
-    Text(
-      appLocalizations.rules,
-      style: context.textTheme.bodySmall,
-    ),
+    Text(appLocalizations.rules, style: context.textTheme.bodySmall),
     for (final step in result.ruleTrace) ...[
       Text(
         _quickRoutingCoreTraceText(context, step),
@@ -308,8 +267,7 @@ String _quickRoutingPolicyReasonLabel(
     'tolerance-hold' => 'tolerance hold',
     'cached-selection-state-changed' => 'cached selection · state changed',
     'consistent-hash' => 'consistent-hashing',
-    'consistent-hash-state-changed' =>
-      'consistent-hashing · state changed',
+    'consistent-hash-state-changed' => 'consistent-hashing · state changed',
     'round-robin-current-cursor' => 'round-robin · current cursor',
     'sticky-session-cache' => 'sticky-sessions · cache',
     'load-balance-config-unavailable' => 'load-balance · config unavailable',
@@ -322,9 +280,7 @@ String _quickRoutingPolicyReasonLabel(
   };
 }
 
-List<String> _quickRoutingPolicyStepDetails(
-  CorePolicyExplainStep step,
-) {
+List<String> _quickRoutingPolicyStepDetails(CorePolicyExplainStep step) {
   return [
     if (step.strategy.isNotEmpty) step.strategy,
     if (step.selectedIndex >= 0 && step.candidateCount > 0)
@@ -357,10 +313,7 @@ List<Widget> _buildCorePolicyExplanation(
   final appLocalizations = context.appLocalizations;
   return [
     const SizedBox(height: 6),
-    Text(
-      appLocalizations.proxyGroup,
-      style: context.textTheme.bodySmall,
-    ),
+    Text(appLocalizations.proxyGroup, style: context.textTheme.bodySmall),
     for (final step in groupSteps) ...[
       Text(
         '${step.complete ? '✓' : '≈'} ${step.name} [${step.type}] '
@@ -386,8 +339,7 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
 ) {
   final appLocalizations = context.appLocalizations;
   final policyExplanation = result.policyExplanation;
-  final isComplete =
-      result.complete && (policyExplanation?.complete ?? true);
+  final isComplete = result.complete && (policyExplanation?.complete ?? true);
   final marker = isComplete ? '✓' : '≈';
   final ruleIndex = result.ruleIndex >= 0 ? '#${result.ruleIndex + 1} ' : '';
   final scope = result.ruleScope.isEmpty
@@ -396,13 +348,11 @@ List<Widget> _buildCoreQuickRoutingMatchPreview(
   final summary = result.matched
       ? '$scope$ruleIndex${result.ruleText} → ${result.target}'
       : '${result.mode.toUpperCase()} → ${result.target}';
-  final warningLabels = <String>{
-    ...result.warnings,
-    ...?policyExplanation?.warnings,
-  }
-      .map((warning) => _quickRoutingCoreWarningLabel(context, warning))
-      .toSet()
-      .toList(growable: false);
+  final warningLabels =
+      <String>{...result.warnings, ...?policyExplanation?.warnings}
+          .map((warning) => _quickRoutingCoreWarningLabel(context, warning))
+          .toSet()
+          .toList(growable: false);
   return [
     Text('$marker ${appLocalizations.core}: $summary'),
     if (result.policyChain.isNotEmpty)

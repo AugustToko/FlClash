@@ -64,15 +64,16 @@ void main() {
   }) {
     return QuickRoutingVerification(
       status: status,
-      result: result ??
+      result:
+          result ??
           (status == QuickRoutingVerificationStatus.unavailable
               ? null
               : coreResult()),
       issues: status == QuickRoutingVerificationStatus.unavailable
           ? const ['core-unavailable']
           : status == QuickRoutingVerificationStatus.mismatch
-              ? const ['target-mismatch']
-              : const [],
+          ? const ['target-mismatch']
+          : const [],
     );
   }
 
@@ -89,11 +90,7 @@ void main() {
       profileId: 1,
       createdAt: checkedAt,
       checkedAt: checkedAt,
-      trackerInfo: trackerInfo(
-        id: 'request-$id',
-        host: host,
-        process: process,
-      ),
+      trackerInfo: trackerInfo(id: 'request-$id', host: host, process: process),
       selection: selection,
       appliedRule: Rule(
         id: id,
@@ -126,14 +123,11 @@ void main() {
       filter: QuickRoutingVerificationFilter.attention,
     );
 
-    expect(
-      filtered.map((entry) => entry.verification.status),
-      [
-        QuickRoutingVerificationStatus.approximate,
-        QuickRoutingVerificationStatus.mismatch,
-        QuickRoutingVerificationStatus.unavailable,
-      ],
-    );
+    expect(filtered.map((entry) => entry.verification.status), [
+      QuickRoutingVerificationStatus.approximate,
+      QuickRoutingVerificationStatus.mismatch,
+      QuickRoutingVerificationStatus.unavailable,
+    ]);
   });
 
   test('status filter preserves source order', () {
@@ -191,9 +185,7 @@ void main() {
   });
 
   test('profile-safe unavailable result keeps a distinct issue', () {
-    final result = unavailableQuickRoutingVerification(
-      'profile-not-active',
-    );
+    final result = unavailableQuickRoutingVerification('profile-not-active');
 
     expect(result.status, QuickRoutingVerificationStatus.unavailable);
     expect(result.issues, ['profile-not-active']);

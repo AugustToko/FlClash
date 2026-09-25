@@ -5114,6 +5114,281 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Logbook`
+  String get logbook {
+    return Intl.message('Logbook', name: 'logbook', desc: '', args: []);
+  }
+
+  /// `Persistent timeline of network and configuration events`
+  String get logbookDesc {
+    return Intl.message(
+      'Persistent timeline of network and configuration events',
+      name: 'logbookDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No events have been recorded yet`
+  String get logbookEmpty {
+    return Intl.message(
+      'No events have been recorded yet',
+      name: 'logbookEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear Logbook`
+  String get clearLogbook {
+    return Intl.message(
+      'Clear Logbook',
+      name: 'clearLogbook',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear all stored Logbook events?`
+  String get clearLogbookTip {
+    return Intl.message(
+      'Clear all stored Logbook events?',
+      name: 'clearLogbookTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All`
+  String get logbookAll {
+    return Intl.message('All', name: 'logbookAll', desc: '', args: []);
+  }
+
+  /// `Core`
+  String get logbookCore {
+    return Intl.message('Core', name: 'logbookCore', desc: '', args: []);
+  }
+
+  /// `Profile`
+  String get logbookProfile {
+    return Intl.message('Profile', name: 'logbookProfile', desc: '', args: []);
+  }
+
+  /// `Routing`
+  String get logbookRouting {
+    return Intl.message('Routing', name: 'logbookRouting', desc: '', args: []);
+  }
+
+  /// `Network`
+  String get logbookNetwork {
+    return Intl.message('Network', name: 'logbookNetwork', desc: '', args: []);
+  }
+
+  /// `Provider`
+  String get logbookProvider {
+    return Intl.message(
+      'Provider',
+      name: 'logbookProvider',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS`
+  String get logbookDns {
+    return Intl.message('DNS', name: 'logbookDns', desc: '', args: []);
+  }
+
+  /// `Script`
+  String get logbookScript {
+    return Intl.message('Script', name: 'logbookScript', desc: '', args: []);
+  }
+
+  /// `System`
+  String get logbookSystem {
+    return Intl.message('System', name: 'logbookSystem', desc: '', args: []);
+  }
+
+  /// `Info`
+  String get logbookInfo {
+    return Intl.message('Info', name: 'logbookInfo', desc: '', args: []);
+  }
+
+  /// `Success`
+  String get logbookSuccess {
+    return Intl.message('Success', name: 'logbookSuccess', desc: '', args: []);
+  }
+
+  /// `Warning`
+  String get logbookWarning {
+    return Intl.message('Warning', name: 'logbookWarning', desc: '', args: []);
+  }
+
+  /// `Error`
+  String get logbookError {
+    return Intl.message('Error', name: 'logbookError', desc: '', args: []);
+  }
+
+  /// `Stored locally on this device`
+  String get logbookLocalNotice {
+    return Intl.message(
+      'Stored locally on this device',
+      name: 'logbookLocalNotice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core started`
+  String get logbookCoreStarted {
+    return Intl.message(
+      'Core started',
+      name: 'logbookCoreStarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core start superseded`
+  String get logbookCoreStartSuperseded {
+    return Intl.message(
+      'Core start superseded',
+      name: 'logbookCoreStartSuperseded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core failed to start`
+  String get logbookCoreStartFailed {
+    return Intl.message(
+      'Core failed to start',
+      name: 'logbookCoreStartFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core restarted`
+  String get logbookCoreRestarted {
+    return Intl.message(
+      'Core restarted',
+      name: 'logbookCoreRestarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core restarted with profile errors`
+  String get logbookCoreRestartWarning {
+    return Intl.message(
+      'Core restarted with profile errors',
+      name: 'logbookCoreRestartWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core restart failed`
+  String get logbookCoreRestartFailed {
+    return Intl.message(
+      'Core restart failed',
+      name: 'logbookCoreRestartFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core crash requested`
+  String get logbookCoreCrashRequested {
+    return Intl.message(
+      'Core crash requested',
+      name: 'logbookCoreCrashRequested',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile applied`
+  String get logbookProfileApplied {
+    return Intl.message(
+      'Profile applied',
+      name: 'logbookProfileApplied',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile apply failed`
+  String get logbookProfileApplyFailed {
+    return Intl.message(
+      'Profile apply failed',
+      name: 'logbookProfileApplyFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile apply raised an exception`
+  String get logbookProfileApplyException {
+    return Intl.message(
+      'Profile apply raised an exception',
+      name: 'logbookProfileApplyException',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connectivity changed`
+  String get logbookConnectivityChanged {
+    return Intl.message(
+      'Connectivity changed',
+      name: 'logbookConnectivityChanged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route verified`
+  String get logbookQuickRouteVerified {
+    return Intl.message(
+      'Quick route verified',
+      name: 'logbookQuickRouteVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route verification is approximate`
+  String get logbookQuickRouteApproximate {
+    return Intl.message(
+      'Quick route verification is approximate',
+      name: 'logbookQuickRouteApproximate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route mismatch`
+  String get logbookQuickRouteMismatch {
+    return Intl.message(
+      'Quick route mismatch',
+      name: 'logbookQuickRouteMismatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route verification unavailable`
+  String get logbookQuickRouteUnavailable {
+    return Intl.message(
+      'Quick route verification unavailable',
+      name: 'logbookQuickRouteUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

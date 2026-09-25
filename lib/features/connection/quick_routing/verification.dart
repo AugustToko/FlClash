@@ -81,10 +81,7 @@ String? _quickRoutingExpectedCoreRuleType(RuleAction action) {
   return (address, prefix);
 }
 
-bool _quickRoutingVerificationCidrsMatch(
-  String expected,
-  String actual,
-) {
+bool _quickRoutingVerificationCidrsMatch(String expected, String actual) {
   final expectedCidr = _parseQuickRoutingVerificationCidr(expected);
   final actualCidr = _parseQuickRoutingVerificationCidr(actual);
   if (expectedCidr == null || actualCidr == null) {
@@ -115,16 +112,17 @@ String _normalizeQuickRoutingVerificationPayload(
 ) {
   final content = value.trim();
   return switch (action) {
-    RuleAction.DOMAIN || RuleAction.DOMAIN_SUFFIX =>
-      _normalizeQuickRoutingHost(content).toLowerCase(),
+    RuleAction.DOMAIN || RuleAction.DOMAIN_SUFFIX => _normalizeQuickRoutingHost(
+      content,
+    ).toLowerCase(),
     RuleAction.GEOIP ||
     RuleAction.SRC_GEOIP ||
-    RuleAction.NETWORK =>
-      content.toUpperCase(),
-    RuleAction.IP_ASN || RuleAction.SRC_IP_ASN =>
-      _normalizeQuickRoutingAsn(content),
-    RuleAction.DST_PORT || RuleAction.SRC_PORT || RuleAction.UID =>
-      int.tryParse(content)?.toString() ?? content,
+    RuleAction.NETWORK => content.toUpperCase(),
+    RuleAction.IP_ASN ||
+    RuleAction.SRC_IP_ASN => _normalizeQuickRoutingAsn(content),
+    RuleAction.DST_PORT ||
+    RuleAction.SRC_PORT ||
+    RuleAction.UID => int.tryParse(content)?.toString() ?? content,
     _ => content,
   };
 }
@@ -142,10 +140,7 @@ bool _quickRoutingVerificationPayloadMatches(
         candidate.ruleAction,
         candidate.content,
       ) ==
-      _normalizeQuickRoutingVerificationPayload(
-        candidate.ruleAction,
-        actual,
-      );
+      _normalizeQuickRoutingVerificationPayload(candidate.ruleAction, actual);
 }
 
 bool _quickRoutingFixedMemberMatches(
@@ -307,8 +302,8 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
           'chain=${result.policyText}',
           logLevel:
               verification.status == QuickRoutingVerificationStatus.mismatch
-                  ? LogLevel.error
-                  : LogLevel.warning,
+              ? LogLevel.error
+              : LogLevel.warning,
         );
       }
     } catch (error, stackTrace) {
@@ -343,6 +338,46 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
         logLevel: LogLevel.warning,
       );
     }
+    final result = verification.result;
+    final severity = switch (verification.status) {
+      QuickRoutingVerificationStatus.verified => LogbookSeverity.success,
+      QuickRoutingVerificationStatus.approximate => LogbookSeverity.warning,
+      QuickRoutingVerificationStatus.mismatch => LogbookSeverity.error,
+      QuickRoutingVerificationStatus.unavailable => LogbookSeverity.warning,
+    };
+    final title = switch (verification.status) {
+      QuickRoutingVerificationStatus.verified => 'routing.quick-route.verified',
+      QuickRoutingVerificationStatus.approximate =>
+        'routing.quick-route.approximate',
+      QuickRoutingVerificationStatus.mismatch => 'routing.quick-route.mismatch',
+      QuickRoutingVerificationStatus.unavailable =>
+        'routing.quick-route.unavailable',
+    };
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            profileId: historyProfileId,
+            category: LogbookCategory.routing,
+            severity: severity,
+            eventType: 'routing.quick-route.verification',
+            title: title,
+            message: result == null
+                ? verification.issues.join(', ')
+                : '${record.appliedRule.rawValue} → ${result.policyText}',
+            correlationId: quickRoutingVerificationRecordIdentity(record),
+            details: {
+              'requestedRule': record.appliedRule.rawValue,
+              'requestedTarget': selection.target,
+              'status': verification.status.name,
+              'issues': verification.issues,
+              'actualRule': result?.ruleText ?? '',
+              'actualTarget': result?.target ?? '',
+              'policyChain': result?.policyChain ?? const <String>[],
+              'complete': result?.complete ?? false,
+            },
+          ),
+    );
   }
   return verification;
 }

@@ -28,8 +28,7 @@ bool quickRoutingVerificationFilterMatches(
   };
 }
 
-Map<QuickRoutingVerificationStatus, int>
-    countQuickRoutingVerificationStatuses(
+Map<QuickRoutingVerificationStatus, int> countQuickRoutingVerificationStatuses(
   Iterable<QuickRoutingVerificationRecord> records,
 ) {
   final counts = <QuickRoutingVerificationStatus, int>{
@@ -79,8 +78,7 @@ String quickRoutingVerificationSearchText(
 
 List<QuickRoutingVerificationRecord> filterQuickRoutingVerificationRecords(
   Iterable<QuickRoutingVerificationRecord> records, {
-  QuickRoutingVerificationFilter filter =
-      QuickRoutingVerificationFilter.all,
+  QuickRoutingVerificationFilter filter = QuickRoutingVerificationFilter.all,
   String query = '',
 }) {
   final terms = query
@@ -152,11 +150,11 @@ class QuickRoutingDiagnosticsButton extends ConsumerWidget {
         (entries) => profileId == null
             ? 0
             : entries
-                .where(
-                  (entry) =>
-                      entry.profileId == profileId && !entry.isExpired(),
-                )
-                .length,
+                  .where(
+                    (entry) =>
+                        entry.profileId == profileId && !entry.isExpired(),
+                  )
+                  .length,
       ),
     );
     final attentionCount = ref.watch(
@@ -164,19 +162,20 @@ class QuickRoutingDiagnosticsButton extends ConsumerWidget {
         (entries) => profileId == null
             ? 0
             : entries
-                .where(
-                  (entry) =>
-                      entry.profileId == profileId &&
-                      entry.verification.status !=
-                          QuickRoutingVerificationStatus.verified,
-                )
-                .length,
+                  .where(
+                    (entry) =>
+                        entry.profileId == profileId &&
+                        entry.verification.status !=
+                            QuickRoutingVerificationStatus.verified,
+                  )
+                  .length,
       ),
     );
     final badgeCount = activeRuleCount + attentionCount;
 
     return IconButton(
-      tooltip: '${context.appLocalizations.rules} · '
+      tooltip:
+          '${context.appLocalizations.rules} · '
           '${context.appLocalizations.core}',
       onPressed: () {
         if (profileId == null) {
@@ -189,9 +188,7 @@ class QuickRoutingDiagnosticsButton extends ConsumerWidget {
         unawaited(
           Navigator.of(context).push<void>(
             MaterialPageRoute(
-              builder: (_) => QuickRoutingDiagnosticsPage(
-                profileId: profileId,
-              ),
+              builder: (_) => QuickRoutingDiagnosticsPage(profileId: profileId),
             ),
           ),
         );
@@ -209,10 +206,7 @@ class QuickRoutingDiagnosticsButton extends ConsumerWidget {
 class QuickRoutingDiagnosticsPage extends ConsumerWidget {
   final int profileId;
 
-  const QuickRoutingDiagnosticsPage({
-    super.key,
-    required this.profileId,
-  });
+  const QuickRoutingDiagnosticsPage({super.key, required this.profileId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -228,9 +222,7 @@ class QuickRoutingDiagnosticsPage extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            '${appLocalizations.rules} · ${appLocalizations.core}',
-          ),
+          title: Text('${appLocalizations.rules} · ${appLocalizations.core}'),
           actions: [
             IconButton(
               tooltip: appLocalizations.delete,
@@ -284,8 +276,7 @@ class _QuickRoutingFilteredHistoryPanelState
     extends ConsumerState<_QuickRoutingFilteredHistoryPanel> {
   final _queryController = TextEditingController();
   final _busyIds = <int>{};
-  QuickRoutingVerificationFilter _filter =
-      QuickRoutingVerificationFilter.all;
+  QuickRoutingVerificationFilter _filter = QuickRoutingVerificationFilter.all;
   String _query = '';
   bool _batchBusy = false;
   int _batchDone = 0;
@@ -302,9 +293,7 @@ class _QuickRoutingFilteredHistoryPanelState
       return true;
     }
     dialogs.showNotifier(
-      currentAppLocalizations.invalidPolicy(
-        currentAppLocalizations.profile,
-      ),
+      currentAppLocalizations.invalidPolicy(currentAppLocalizations.profile),
       level: MessageLevel.warning,
     );
     return false;
@@ -376,26 +365,22 @@ class _QuickRoutingFilteredHistoryPanelState
       }
       final verified = results
           .where(
-            (item) =>
-                item.status == QuickRoutingVerificationStatus.verified,
+            (item) => item.status == QuickRoutingVerificationStatus.verified,
           )
           .length;
       final approximate = results
           .where(
-            (item) =>
-                item.status == QuickRoutingVerificationStatus.approximate,
+            (item) => item.status == QuickRoutingVerificationStatus.approximate,
           )
           .length;
       final mismatch = results
           .where(
-            (item) =>
-                item.status == QuickRoutingVerificationStatus.mismatch,
+            (item) => item.status == QuickRoutingVerificationStatus.mismatch,
           )
           .length;
       final unavailable = results
           .where(
-            (item) =>
-                item.status == QuickRoutingVerificationStatus.unavailable,
+            (item) => item.status == QuickRoutingVerificationStatus.unavailable,
           )
           .length;
       dialogs.showNotifier(
@@ -404,8 +389,8 @@ class _QuickRoutingFilteredHistoryPanelState
         level: mismatch > 0
             ? MessageLevel.error
             : approximate > 0 || unavailable > 0
-                ? MessageLevel.warning
-                : MessageLevel.success,
+            ? MessageLevel.warning
+            : MessageLevel.success,
       );
     } finally {
       if (mounted) {
@@ -563,18 +548,19 @@ class _QuickRoutingFilteredHistoryPanelState
                     final record = records[index];
                     final result = record.verification.result;
                     final busy = _busyIds.contains(record.id);
-                    final destination = [
-                      record.trackerInfo.metadata.host,
-                      record.trackerInfo.metadata.destinationIP,
-                    ].firstWhere(
-                      (value) => value.trim().isNotEmpty,
-                      orElse: () => record.trackerInfo.desc,
-                    );
+                    final destination =
+                        [
+                          record.trackerInfo.metadata.host,
+                          record.trackerInfo.metadata.destinationIP,
+                        ].firstWhere(
+                          (value) => value.trim().isNotEmpty,
+                          orElse: () => record.trackerInfo.desc,
+                        );
                     final actual = result == null
                         ? '${appLocalizations.core}: '
-                            '${appLocalizations.unknown}'
+                              '${appLocalizations.unknown}'
                         : '${result.ruleText.isEmpty ? result.mode.toUpperCase() : result.ruleText}'
-                            ' → ${result.target}';
+                              ' → ${result.target}';
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),

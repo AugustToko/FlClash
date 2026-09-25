@@ -1,10 +1,6 @@
 part of '../quick_routing.dart';
 
-enum QuickRoutingGroupOverrideMode {
-  unchanged,
-  automatic,
-  fixed,
-}
+enum QuickRoutingGroupOverrideMode { unchanged, automatic, fixed }
 
 enum QuickRoutingValidationIssue {
   emptyContent,
@@ -34,10 +30,10 @@ class QuickRoutingCandidate {
   });
 
   String get label => [
-        ruleAction.value,
-        content,
-        if (scopeHint.isNotEmpty) scopeHint,
-      ].join(' · ');
+    ruleAction.value,
+    content,
+    if (scopeHint.isNotEmpty) scopeHint,
+  ].join(' · ');
 
   Rule buildRule({required String target, required int id, String? order}) {
     return Rule(

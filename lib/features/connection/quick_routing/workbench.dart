@@ -64,10 +64,7 @@ class QuickRoutingVerificationHistory
     return const [];
   }
 
-  Future<void> _persistMutation(
-    Future<void> mutation,
-    String action,
-  ) async {
+  Future<void> _persistMutation(Future<void> mutation, String action) async {
     try {
       await mutation;
     } catch (error, stackTrace) {
@@ -140,21 +137,20 @@ class QuickRoutingVerificationHistory
     QuickRoutingVerificationRecord record,
   ) {
     final identity = quickRoutingVerificationRecordIdentity(record);
-    final next = state
-        .where(
-          (entry) =>
-              entry.id != record.id &&
-              quickRoutingVerificationRecordIdentity(entry) != identity,
-        )
-        .toList(growable: true)
-      ..add(record);
+    final next =
+        state
+            .where(
+              (entry) =>
+                  entry.id != record.id &&
+                  quickRoutingVerificationRecordIdentity(entry) != identity,
+            )
+            .toList(growable: true)
+          ..add(record);
     state = _bounded(next);
     return record;
   }
 
-  void mergePersisted(
-    Iterable<QuickRoutingVerificationRecord> persisted,
-  ) {
+  void mergePersisted(Iterable<QuickRoutingVerificationRecord> persisted) {
     final records = <String, QuickRoutingVerificationRecord>{};
     for (final record in persisted) {
       records[quickRoutingVerificationRecordIdentity(record)] = record;
@@ -209,9 +205,7 @@ class QuickRoutingVerificationHistory
     if (persist) {
       unawaited(
         _persistMutation(
-          ref
-              .read(quickRoutingDiagnosticsCoordinatorProvider)
-              .remove(this, id),
+          ref.read(quickRoutingDiagnosticsCoordinatorProvider).remove(this, id),
           'delete',
         ),
       );
@@ -241,17 +235,13 @@ class QuickRoutingVerificationHistory
   }
 }
 
-final quickRoutingVerificationHistoryProvider = NotifierProvider<
-    QuickRoutingVerificationHistory,
-    List<QuickRoutingVerificationRecord>>(
-  QuickRoutingVerificationHistory.new,
-);
+final quickRoutingVerificationHistoryProvider =
+    NotifierProvider<
+      QuickRoutingVerificationHistory,
+      List<QuickRoutingVerificationRecord>
+    >(QuickRoutingVerificationHistory.new);
 
-enum QuickRoutingConflictKind {
-  equivalent,
-  competing,
-  opaque,
-}
+enum QuickRoutingConflictKind { equivalent, competing, opaque }
 
 @immutable
 class QuickRoutingConflictEntry {
@@ -332,16 +322,12 @@ List<QuickRoutingConflictEntry> buildQuickRoutingConflictEntries({
 class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
   final int profileId;
 
-  const _QuickRoutingRuntimeRulesPanel({
-    required this.profileId,
-  });
+  const _QuickRoutingRuntimeRulesPanel({required this.profileId});
 
   void _openManager(BuildContext context, WidgetRef ref) {
     if (ref.read(currentProfileIdProvider) != profileId) {
       dialogs.showNotifier(
-        currentAppLocalizations.invalidPolicy(
-          currentAppLocalizations.profile,
-        ),
+        currentAppLocalizations.invalidPolicy(currentAppLocalizations.profile),
         level: MessageLevel.warning,
       );
       return;
@@ -359,8 +345,7 @@ class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
       quickRoutingRulesProvider.select(
         (entries) => entries
             .where(
-              (entry) =>
-                  entry.profileId == profileId && !entry.isExpired(),
+              (entry) => entry.profileId == profileId && !entry.isExpired(),
             )
             .toList(growable: false),
       ),
@@ -405,9 +390,7 @@ class _QuickRoutingRuntimeRulesPanel extends ConsumerWidget {
             Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                onTap: profileActive
-                    ? () => _openManager(context, ref)
-                    : null,
+                onTap: profileActive ? () => _openManager(context, ref) : null,
                 leading: CircleAvatar(child: Text('${index + 1}')),
                 title: Text(
                   entries[index].rule.rawValue,

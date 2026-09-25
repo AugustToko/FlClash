@@ -170,21 +170,24 @@ void main() {
     expect(verification.messageLevel, MessageLevel.warning);
   });
 
-  test('reports unavailable Core verification without invalidating the rule', () {
-    final verification = evaluateQuickRoutingVerification(
-      candidate: const QuickRoutingCandidate(
-        ruleAction: RuleAction.DOMAIN,
-        content: 'api.example.com',
-      ),
-      target: 'DIRECT',
-      result: null,
-      attempts: 0,
-    );
+  test(
+    'reports unavailable Core verification without invalidating the rule',
+    () {
+      final verification = evaluateQuickRoutingVerification(
+        candidate: const QuickRoutingCandidate(
+          ruleAction: RuleAction.DOMAIN,
+          content: 'api.example.com',
+        ),
+        target: 'DIRECT',
+        result: null,
+        attempts: 0,
+      );
 
-    expect(verification.status, QuickRoutingVerificationStatus.unavailable);
-    expect(verification.attempts, 0);
-    expect(verification.issues, ['core-unavailable']);
-    expect(verification.marker, '?');
-    expect(verification.messageLevel, MessageLevel.warning);
-  });
+      expect(verification.status, QuickRoutingVerificationStatus.unavailable);
+      expect(verification.attempts, 0);
+      expect(verification.issues, ['core-unavailable']);
+      expect(verification.marker, '?');
+      expect(verification.messageLevel, MessageLevel.warning);
+    },
+  );
 }

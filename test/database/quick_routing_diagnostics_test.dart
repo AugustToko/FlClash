@@ -52,33 +52,36 @@ void main() {
     expect(loaded.single.payload, value.payload);
   });
 
-  test('upsert preserves identity and creation time for one fingerprint', () async {
-    final createdAt = DateTime.utc(2026, 9, 24);
-    final first = snapshot(
-      id: 10,
-      fingerprint: 'request-1',
-      checkedAt: createdAt,
-    );
-    await database.upsertQuickRoutingDiagnostic(first);
+  test(
+    'upsert preserves identity and creation time for one fingerprint',
+    () async {
+      final createdAt = DateTime.utc(2026, 9, 24);
+      final first = snapshot(
+        id: 10,
+        fingerprint: 'request-1',
+        checkedAt: createdAt,
+      );
+      await database.upsertQuickRoutingDiagnostic(first);
 
-    final replacement = QuickRoutingDiagnosticSnapshot(
-      id: 99,
-      profileId: 1,
-      fingerprint: first.fingerprint,
-      createdAt: createdAt.add(const Duration(hours: 2)),
-      checkedAt: createdAt.add(const Duration(hours: 3)),
-      status: 'verified',
-      searchText: 'updated',
-      payload: '{"updated":true}',
-    );
-    final stored = await database.upsertQuickRoutingDiagnostic(replacement);
+      final replacement = QuickRoutingDiagnosticSnapshot(
+        id: 99,
+        profileId: 1,
+        fingerprint: first.fingerprint,
+        createdAt: createdAt.add(const Duration(hours: 2)),
+        checkedAt: createdAt.add(const Duration(hours: 3)),
+        status: 'verified',
+        searchText: 'updated',
+        payload: '{"updated":true}',
+      );
+      final stored = await database.upsertQuickRoutingDiagnostic(replacement);
 
-    expect(stored.id, first.id);
-    expect(stored.createdAt.isAtSameMomentAs(first.createdAt), isTrue);
-    expect(stored.checkedAt.isAtSameMomentAs(replacement.checkedAt), isTrue);
-    expect(stored.status, 'verified');
-    expect(await database.countQuickRoutingDiagnostics(1), 1);
-  });
+      expect(stored.id, first.id);
+      expect(stored.createdAt.isAtSameMomentAs(first.createdAt), isTrue);
+      expect(stored.checkedAt.isAtSameMomentAs(replacement.checkedAt), isTrue);
+      expect(stored.status, 'verified');
+      expect(await database.countQuickRoutingDiagnostics(1), 1);
+    },
+  );
 
   test('retention keeps the newest entries for each profile', () async {
     final base = DateTime.utc(2026, 9, 24);
@@ -113,8 +116,9 @@ void main() {
 
     await database.deleteQuickRoutingDiagnostic(1);
     expect(
-      (await database.loadQuickRoutingDiagnostics(profileId: 1))
-          .map((entry) => entry.id),
+      (await database.loadQuickRoutingDiagnostics(
+        profileId: 1,
+      )).map((entry) => entry.id),
       [2],
     );
 

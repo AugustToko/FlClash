@@ -9,8 +9,7 @@ import 'package:riverpod/riverpod.dart';
 
 class _ControlledDiagnosticsPersistence
     implements QuickRoutingDiagnosticsPersistence {
-  final loadCompleter =
-      Completer<List<QuickRoutingVerificationRecord>>();
+  final loadCompleter = Completer<List<QuickRoutingVerificationRecord>>();
   int clearCount = 0;
 
   @override
@@ -92,9 +91,11 @@ void main() {
     );
     final base = DateTime.utc(2026, 9, 24);
 
-    for (var index = 0;
-        index < QuickRoutingVerificationHistory.maxEntries + 5;
-        index++) {
+    for (
+      var index = 0;
+      index < QuickRoutingVerificationHistory.maxEntries + 5;
+      index++
+    ) {
       notifier.upsertRecord(
         record(
           id: index,
@@ -143,12 +144,7 @@ void main() {
 
     notifier.mergePersisted([
       persisted,
-      record(
-        id: 30,
-        profileId: 1,
-        requestId: 'other',
-        checkedAt: base,
-      ),
+      record(id: 30, profileId: 1, requestId: 'other', checkedAt: base),
     ]);
 
     final entries = container.read(quickRoutingVerificationHistoryProvider);
@@ -173,10 +169,7 @@ void main() {
       checkedAt: base.add(const Duration(minutes: 1)),
     );
     notifier.upsertRecord(optimistic);
-    final canonical = optimistic.copyWith(
-      id: 10,
-      createdAt: base,
-    );
+    final canonical = optimistic.copyWith(id: 10, createdAt: base);
 
     expect(notifier.replaceRecord(canonical), isTrue);
     final restored = container

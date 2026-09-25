@@ -85,24 +85,18 @@ void main() {
     );
 
     expect(
-      container
-          .read(quickRoutingRulesProvider)
-          .map((entry) => entry.rule.id),
+      container.read(quickRoutingRulesProvider).map((entry) => entry.rule.id),
       [11, 20, 10],
     );
     expect(notifier.move(1, 10, -1), isTrue);
     expect(
-      container
-          .read(quickRoutingRulesProvider)
-          .map((entry) => entry.rule.id),
+      container.read(quickRoutingRulesProvider).map((entry) => entry.rule.id),
       [10, 20, 11],
     );
     expect(notifier.move(1, 10, -1), isFalse);
     expect(notifier.move(1, 10, 1), isTrue);
     expect(
-      container
-          .read(quickRoutingRulesProvider)
-          .map((entry) => entry.rule.id),
+      container.read(quickRoutingRulesProvider).map((entry) => entry.rule.id),
       [11, 20, 10],
     );
   });
@@ -272,10 +266,7 @@ void main() {
       expect(second.groupOverride?.previousFixed, '');
       expect(second.groupOverride?.expectedFixed, 'HK-01');
       expect(second.groupOverride?.desiredFixed, 'JP-01');
-      expect(
-        next.where((entry) => entry.groupOverride != null),
-        hasLength(1),
-      );
+      expect(next.where((entry) => entry.groupOverride != null), hasLength(1));
       expect(
         buildQuickRoutingGroupOverrideTransitions(
           previous: previous,
@@ -367,10 +358,7 @@ void main() {
       );
       final next = container.read(quickRoutingRulesProvider);
 
-      expect(
-        next.where((entry) => entry.groupOverride != null),
-        hasLength(2),
-      );
+      expect(next.where((entry) => entry.groupOverride != null), hasLength(2));
       expect(
         buildQuickRoutingGroupOverrideTransitions(
           previous: previous,

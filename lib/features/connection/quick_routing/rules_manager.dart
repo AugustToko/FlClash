@@ -1,55 +1,6 @@
 part of '../quick_routing.dart';
 
-enum _QuickRoutingRuleManagerAction {
-  moveUp,
-  moveDown,
-  makePermanent,
-  delete,
-}
-
-class QuickRoutingRuleManagerButton extends ConsumerWidget {
-  const QuickRoutingRuleManagerButton({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profileId = ref.watch(currentProfileIdProvider);
-    final count = ref.watch(
-      quickRoutingRulesProvider.select(
-        (entries) => profileId == null
-            ? 0
-            : entries
-                  .where(
-                    (entry) =>
-                        entry.profileId == profileId && !entry.isExpired(),
-                  )
-                  .length,
-      ),
-    );
-    return IconButton(
-      tooltip: '${context.appLocalizations.rules} ($count)',
-      onPressed: () {
-        if (profileId == null) {
-          dialogs.showNotifier(
-            currentAppLocalizations.nullProfileDesc,
-            level: MessageLevel.warning,
-          );
-          return;
-        }
-        unawaited(
-          dialogs.showCommonDialog<void>(
-            child: _QuickRoutingRuleManagerDialog(profileId: profileId),
-          ),
-        );
-      },
-      icon: count == 0
-          ? const Icon(Icons.rule_folder_outlined)
-          : Badge.count(
-              count: count,
-              child: const Icon(Icons.rule_folder_outlined),
-            ),
-    );
-  }
-}
+enum _QuickRoutingRuleManagerAction { moveUp, moveDown, makePermanent, delete }
 
 class _QuickRoutingRuleManagerDialog extends ConsumerStatefulWidget {
   final int profileId;
@@ -101,11 +52,8 @@ class _QuickRoutingRuleManagerDialogState
     return _runForRule(entry, () async {
       await _applyRuntimeQuickRoutingMutation(
         ref: ref,
-        mutation: (notifier) => notifier.move(
-          entry.profileId,
-          entry.rule.id,
-          offset,
-        ),
+        mutation: (notifier) =>
+            notifier.move(entry.profileId, entry.rule.id, offset),
       );
     });
   }
@@ -114,10 +62,7 @@ class _QuickRoutingRuleManagerDialogState
     return _runForRule(entry, () async {
       await _applyRuntimeQuickRoutingMutation(
         ref: ref,
-        mutation: (notifier) => notifier.remove(
-          entry.profileId,
-          entry.rule.id,
-        ),
+        mutation: (notifier) => notifier.remove(entry.profileId, entry.rule.id),
       );
     });
   }
@@ -264,9 +209,7 @@ class _QuickRoutingRuleManagerDialogState
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: CircleAvatar(
-          child: Text('${index + 1}'),
-        ),
+        leading: CircleAvatar(child: Text('${index + 1}')),
         title: Text(
           entry.rule.rawValue,
           maxLines: 2,

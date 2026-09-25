@@ -266,6 +266,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "The app is already up to date",
     ),
     "clearData": MessageLookupByLibrary.simpleMessage("Clear data"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("Clear Logbook"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "Clear all stored Logbook events?",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Export to clipboard",
@@ -629,6 +633,72 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("Log"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Log level"),
+    "logbook": MessageLookupByLibrary.simpleMessage("Logbook"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("All"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "Connectivity changed",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("Core"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "Core crash requested",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "Core restart failed",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "Core restarted with profile errors",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage(
+      "Core restarted",
+    ),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "Core failed to start",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "Core start superseded",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("Core started"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "Persistent timeline of network and configuration events",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage(
+      "No events have been recorded yet",
+    ),
+    "logbookError": MessageLookupByLibrary.simpleMessage("Error"),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("Info"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "Stored locally on this device",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("Network"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "Profile applied",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "Profile apply raised an exception",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Profile apply failed",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("Provider"),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "Quick route verification is approximate",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "Quick route mismatch",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Quick route verification unavailable",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "Quick route verified",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("Routing"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("Script"),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("Success"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("System"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("Warning"),
     "logcat": MessageLookupByLibrary.simpleMessage("Logcat"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
       "Disabling hides the log entry point",

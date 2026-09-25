@@ -37,8 +37,13 @@ void _dropV4Diagnostics(Database raw) {
   raw.execute('DROP TABLE IF EXISTS quick_routing_diagnostics');
 }
 
+void _dropV5Logbook(Database raw) {
+  raw.execute('DROP TABLE IF EXISTS logbook_events');
+}
+
 /// Schema version 2 had no `match_target` on `profiles` and no diagnostics.
 void _downgradeToV2(Database raw) {
+  _dropV5Logbook(raw);
   _dropV4Diagnostics(raw);
   raw.execute('ALTER TABLE profiles DROP COLUMN match_target');
   raw.execute('PRAGMA user_version = 2');
@@ -46,8 +51,14 @@ void _downgradeToV2(Database raw) {
 
 /// Schema version 3 already had `match_target`, but no diagnostics table.
 void _downgradeToV3(Database raw) {
+  _dropV5Logbook(raw);
   _dropV4Diagnostics(raw);
   raw.execute('PRAGMA user_version = 3');
+}
+
+void _downgradeToV4(Database raw) {
+  _dropV5Logbook(raw);
+  raw.execute('PRAGMA user_version = 4');
 }
 
 Set<String> _columnsOf(Database raw, String table) => {
@@ -99,7 +110,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 4);
+    expect(_userVersion(raw), 5);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -109,12 +120,13 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 4);
+    expect(_userVersion(raw), 5);
   });
 
   test(
     'a v2 user_version with match_target already present still opens',
     () async {
+      _dropV5Logbook(raw);
       _dropV4Diagnostics(raw);
       raw.execute('PRAGMA user_version = 2');
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
@@ -123,7 +135,7 @@ void main() {
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
       expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
-      expect(_userVersion(raw), 4);
+      expect(_userVersion(raw), 5);
     },
   );
 
@@ -162,22 +174,54 @@ void main() {
     );
     expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
     expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
-    expect(_userVersion(raw), 4);
+    expect(_userVersion(raw), 5);
   });
 
-  test('opening schema v4 repairs missing diagnostics triggers', () async {
-    raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsInsertTrigger');
-    raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsDeleteTrigger');
+  test('the v5 upgrade creates persistent Logbook storage', () async {
+    _downgradeToV4(raw);
+    expect(_hasTable(raw, 'logbook_events'), isFalse);
     expect(_userVersion(raw), 4);
-    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isFalse);
-    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isFalse);
 
     await openAndMigrate();
 
-    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
-    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
-    expect(_userVersion(raw), 4);
+    expect(_hasTable(raw, 'logbook_events'), isTrue);
+    expect(
+      _columnsOf(raw, 'logbook_events'),
+      containsAll(<String>[
+        'id',
+        'scope_key',
+        'profile_id',
+        'created_at',
+        'updated_at',
+        'category',
+        'severity',
+        'event_type',
+        'title',
+        'message',
+        'correlation_id',
+        'search_text',
+        'payload',
+      ]),
+    );
+    expect(_userVersion(raw), 5);
   });
+
+  test(
+    'opening the current schema repairs missing diagnostics triggers',
+    () async {
+      raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsInsertTrigger');
+      raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsDeleteTrigger');
+      expect(_userVersion(raw), 5);
+      expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isFalse);
+      expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isFalse);
+
+      await openAndMigrate();
+
+      expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
+      expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
+      expect(_userVersion(raw), 5);
+    },
+  );
 
   test('the upgrade splits the rules value column into parsed ones', () async {
     _downgradeToV1(raw);
@@ -239,20 +283,24 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 4);
+    expect(_userVersion(raw), 5);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
-  test('opening a database already at the current version changes nothing', () async {
-    final before = _columnsOf(raw, 'rules');
+  test(
+    'opening a database already at the current version changes nothing',
+    () async {
+      final before = _columnsOf(raw, 'rules');
 
-    await openAndMigrate();
+      await openAndMigrate();
 
-    expect(_columnsOf(raw, 'rules'), before);
-    expect(_userVersion(raw), 4);
-    expect(_hasTable(raw, 'proxy_groups'), isTrue);
-    expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
-    expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
-    expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
-  });
+      expect(_columnsOf(raw, 'rules'), before);
+      expect(_userVersion(raw), 5);
+      expect(_hasTable(raw, 'proxy_groups'), isTrue);
+      expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
+      expect(_hasTable(raw, 'logbook_events'), isTrue);
+      expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
+      expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
+    },
+  );
 }

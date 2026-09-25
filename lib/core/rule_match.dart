@@ -149,9 +149,7 @@ class CorePolicyExplanation {
       for (final value in rawSteps) {
         if (value is Map<Object?, Object?>) {
           steps.add(
-            CorePolicyExplainStep.fromJson(
-              Map<String, dynamic>.from(value),
-            ),
+            CorePolicyExplainStep.fromJson(Map<String, dynamic>.from(value)),
           );
         }
       }
@@ -206,9 +204,7 @@ class CoreRuleMatchResult {
       for (final value in traceJson) {
         if (value is Map<Object?, Object?>) {
           trace.add(
-            CoreRuleMatchTraceStep.fromJson(
-              Map<String, dynamic>.from(value),
-            ),
+            CoreRuleMatchTraceStep.fromJson(Map<String, dynamic>.from(value)),
           );
         }
       }
@@ -231,9 +227,7 @@ class CoreRuleMatchResult {
     );
   }
 
-  CoreRuleMatchResult copyWith({
-    CorePolicyExplanation? policyExplanation,
-  }) {
+  CoreRuleMatchResult copyWith({CorePolicyExplanation? policyExplanation}) {
     return CoreRuleMatchResult(
       mode: mode,
       matched: matched,
@@ -292,16 +286,16 @@ extension CoreControllerRuleMatchExt on CoreController {
       return result;
     }
     try {
-      final explanationData =
-          await _interface.invokeMethod<Map<String, dynamic>>(
-        method: CoreMethod.explainPolicy,
-        arguments: {
-          'target': result.target,
-          'policyChain': result.policyChain,
-          'metadata': metadata.toJson(),
-        },
-        timeout: const Duration(seconds: 5),
-      );
+      final explanationData = await _interface
+          .invokeMethod<Map<String, dynamic>>(
+            method: CoreMethod.explainPolicy,
+            arguments: {
+              'target': result.target,
+              'policyChain': result.policyChain,
+              'metadata': metadata.toJson(),
+            },
+            timeout: const Duration(seconds: 5),
+          );
       if (explanationData == null) {
         return result;
       }
@@ -312,7 +306,8 @@ extension CoreControllerRuleMatchExt on CoreController {
       commonPrint.log(
         'Core policy explanation unavailable: '
         '${compactError(error)}, $stackTrace',
-        logLevel: error is CoreMethodException && error.code == 'not_implemented'
+        logLevel:
+            error is CoreMethodException && error.code == 'not_implemented'
             ? LogLevel.debug
             : coreFailureLogLevel(error),
       );

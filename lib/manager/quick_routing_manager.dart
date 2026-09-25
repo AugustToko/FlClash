@@ -26,10 +26,7 @@ class _PendingQuickRoutingGroupTransition {
     return _PendingQuickRoutingGroupTransition(
       profileId: transition.profileId,
       groupName: transition.groupName,
-      acceptedFixed: {
-        transition.expectedFixed,
-        transition.targetFixed,
-      },
+      acceptedFixed: {transition.expectedFixed, transition.targetFixed},
       targetFixed: transition.targetFixed,
     );
   }
@@ -71,10 +68,7 @@ class _PendingQuickRoutingGroupTransition {
     return _PendingQuickRoutingGroupTransition(
       profileId: profileId,
       groupName: groupName,
-      acceptedFixed: {
-        ...acceptedFixed,
-        ...next.acceptedFixed,
-      },
+      acceptedFixed: {...acceptedFixed, ...next.acceptedFixed},
       targetFixed: next.targetFixed,
     );
   }
@@ -116,25 +110,24 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
     if (ref.read(groupsProvider).isNotEmpty) {
       _groupsProfileId = ref.read(currentProfileIdProvider);
     }
-    ref.listenManual<List<QuickRoutingRuleEntry>>(
-      quickRoutingRulesProvider,
-      (previous, next) {
-        _queueGroupTransitions(
-          buildQuickRoutingGroupOverrideTransitions(
-            previous: previous ?? const <QuickRoutingRuleEntry>[],
-            next: next,
-          ),
-        );
-        if (!_isRunning &&
-            previous != null &&
-            !identical(previous, next) &&
-            ref.read(coreStatusProvider) != CoreStatus.disconnected) {
-          _needsReconcileOnResume = true;
-        }
-        _scheduleExpiry();
-      },
-      fireImmediately: true,
-    );
+    ref.listenManual<List<QuickRoutingRuleEntry>>(quickRoutingRulesProvider, (
+      previous,
+      next,
+    ) {
+      _queueGroupTransitions(
+        buildQuickRoutingGroupOverrideTransitions(
+          previous: previous ?? const <QuickRoutingRuleEntry>[],
+          next: next,
+        ),
+      );
+      if (!_isRunning &&
+          previous != null &&
+          !identical(previous, next) &&
+          ref.read(coreStatusProvider) != CoreStatus.disconnected) {
+        _needsReconcileOnResume = true;
+      }
+      _scheduleExpiry();
+    }, fireImmediately: true);
     ref.listenManual<bool>(
       runTimeProvider.select((value) => value != null),
       (_, running) => _handleRunningChanged(running),
@@ -253,9 +246,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
       _scheduleExpiry();
       return;
     }
-    final changed = ref
-        .read(quickRoutingRulesProvider.notifier)
-        .purgeExpired();
+    final changed = ref.read(quickRoutingRulesProvider.notifier).purgeExpired();
     if (!changed) {
       _scheduleExpiry();
       return;
@@ -353,10 +344,7 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
         continue;
       }
       _queuePendingGroupTransition(
-        _PendingQuickRoutingGroupTransition.activation(
-          profileId,
-          override,
-        ),
+        _PendingQuickRoutingGroupTransition.activation(profileId, override),
       );
     }
     _requestGroupOverrideReconcile();
@@ -461,7 +449,9 @@ class _QuickRoutingManagerState extends ConsumerState<QuickRoutingManager>
               );
               continue;
             }
-            final message = await ref.read(coreHandlerProvider).changeProxy(
+            final message = await ref
+                .read(coreHandlerProvider)
+                .changeProxy(
                   ChangeProxyParams(
                     groupName: transition.groupName,
                     proxyName: transition.targetFixed,

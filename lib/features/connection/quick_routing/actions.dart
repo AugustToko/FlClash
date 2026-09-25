@@ -137,19 +137,11 @@ Future<void> _rollbackPermanentQuickRoutingRule({
 }) async {
   try {
     if (previous != null) {
-      await _writePermanentQuickRoutingRule(
-        profileId,
-        overwriteType,
-        previous,
-      );
+      await _writePermanentQuickRoutingRule(profileId, overwriteType, previous);
     } else {
       await database.rulesDao.delRules([rule.id]);
     }
-    _invalidatePermanentQuickRoutingState(
-      ref,
-      profileId,
-      overwriteType,
-    );
+    _invalidatePermanentQuickRoutingState(ref, profileId, overwriteType);
     await ref
         .read(setupActionProvider.notifier)
         .applyProfile(force: true, silence: true);
@@ -178,11 +170,7 @@ Future<bool> _undoPermanentQuickRoutingRule({
   var restored = false;
   try {
     if (previous != null) {
-      await _writePermanentQuickRoutingRule(
-        profileId,
-        overwriteType,
-        previous,
-      );
+      await _writePermanentQuickRoutingRule(profileId, overwriteType, previous);
     } else {
       await database.rulesDao.delRules([appliedRule.id]);
     }
@@ -203,11 +191,7 @@ Future<bool> _undoPermanentQuickRoutingRule({
           overwriteType,
           appliedRule,
         );
-        _invalidatePermanentQuickRoutingState(
-          ref,
-          profileId,
-          overwriteType,
-        );
+        _invalidatePermanentQuickRoutingState(ref, profileId, overwriteType);
         await ref
             .read(setupActionProvider.notifier)
             .applyProfile(force: true, silence: true);
@@ -239,11 +223,7 @@ Future<_QuickRoutingApplyResult> _saveAndApplyPermanentQuickRoutingRule({
     order: previous?.order,
   );
   if (previous == null) {
-    rule = rule.autoOrder(
-      rule,
-      null,
-      rules.isEmpty ? null : rules.first.order,
-    );
+    rule = rule.autoOrder(rule, null, rules.isEmpty ? null : rules.first.order);
   }
 
   var persisted = false;
@@ -386,11 +366,10 @@ Future<void> _setQuickRoutingGroupFixedState({
   required String groupName,
   required String fixedProxy,
 }) async {
-  final message = await ref.read(coreHandlerProvider).changeProxy(
-        ChangeProxyParams(
-          groupName: groupName,
-          proxyName: fixedProxy,
-        ),
+  final message = await ref
+      .read(coreHandlerProvider)
+      .changeProxy(
+        ChangeProxyParams(groupName: groupName, proxyName: fixedProxy),
       );
   if (message.isNotEmpty) {
     throw MessageException(message);
@@ -536,9 +515,8 @@ Future<_QuickRoutingApplyResult> _applyQuickRoutingGroupOverride({
   );
 }
 
-typedef _RuntimeQuickRoutingMutation = bool Function(
-  QuickRoutingRules notifier,
-);
+typedef _RuntimeQuickRoutingMutation =
+    bool Function(QuickRoutingRules notifier);
 
 Future<bool> _applyRuntimeQuickRoutingMutation({
   required WidgetRef ref,

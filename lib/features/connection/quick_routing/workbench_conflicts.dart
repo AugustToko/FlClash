@@ -1,10 +1,6 @@
 part of '../quick_routing.dart';
 
-enum QuickRoutingConflictSource {
-  runtime,
-  permanent,
-  readOnly,
-}
+enum QuickRoutingConflictSource { runtime, permanent, readOnly }
 
 bool quickRoutingConflictRuleIdentityMatches(Rule first, Rule second) {
   return first.id == second.id &&
@@ -83,9 +79,7 @@ class _QuickRoutingConflictDetailsPageState
 
   void _showInactiveProfile() {
     dialogs.showNotifier(
-      currentAppLocalizations.invalidPolicy(
-        currentAppLocalizations.profile,
-      ),
+      currentAppLocalizations.invalidPolicy(currentAppLocalizations.profile),
       level: MessageLevel.warning,
     );
   }
@@ -97,9 +91,7 @@ class _QuickRoutingConflictDetailsPageState
       });
     }
     try {
-      final overwriteType = ref.read(
-        overwriteTypeProvider(widget.profileId),
-      );
+      final overwriteType = ref.read(overwriteTypeProvider(widget.profileId));
       final runtimeRules = ref
           .read(quickRoutingRulesProvider.notifier)
           .activeRulesFor(widget.profileId);
@@ -132,16 +124,6 @@ class _QuickRoutingConflictDetailsPageState
         });
       }
     }
-  }
-
-  QuickRoutingVerificationRecord? _readRecord() {
-    for (final entry in ref.read(quickRoutingVerificationHistoryProvider)) {
-      if (entry.id == widget.recordId &&
-          entry.profileId == widget.profileId) {
-        return entry;
-      }
-    }
-    return null;
   }
 
   Future<void> _recheck(
@@ -184,9 +166,7 @@ class _QuickRoutingConflictDetailsPageState
   void _openRuntimeManager() {
     unawaited(
       dialogs.showCommonDialog<void>(
-        child: _QuickRoutingRuleManagerDialog(
-          profileId: widget.profileId,
-        ),
+        child: _QuickRoutingRuleManagerDialog(profileId: widget.profileId),
       ),
     );
   }
@@ -213,9 +193,7 @@ class _QuickRoutingConflictDetailsPageState
       overwriteType: _overwriteType,
     )) {
       dialogs.showNotifier(
-        currentAppLocalizations.invalidPolicy(
-          currentAppLocalizations.rule,
-        ),
+        currentAppLocalizations.invalidPolicy(currentAppLocalizations.rule),
         level: MessageLevel.warning,
       );
       return;
@@ -349,10 +327,7 @@ class _QuickRoutingConflictDetailsPageState
     };
   }
 
-  String _sourceLabel(
-    BuildContext context,
-    QuickRoutingConflictSource source,
-  ) {
+  String _sourceLabel(BuildContext context, QuickRoutingConflictSource source) {
     final appLocalizations = context.appLocalizations;
     return switch (source) {
       QuickRoutingConflictSource.runtime => appLocalizations.expireTime,
@@ -426,17 +401,15 @@ class _QuickRoutingConflictDetailsPageState
   @override
   Widget build(BuildContext context) {
     final record = ref.watch(
-      quickRoutingVerificationHistoryProvider.select(
-        (entries) {
-          for (final entry in entries) {
-            if (entry.id == widget.recordId &&
-                entry.profileId == widget.profileId) {
-              return entry;
-            }
+      quickRoutingVerificationHistoryProvider.select((entries) {
+        for (final entry in entries) {
+          if (entry.id == widget.recordId &&
+              entry.profileId == widget.profileId) {
+            return entry;
           }
-          return null;
-        },
-      ),
+        }
+        return null;
+      }),
     );
     final appLocalizations = context.appLocalizations;
 
@@ -455,7 +428,8 @@ class _QuickRoutingConflictDetailsPageState
       knownRules: _knownRules,
     );
     final result = record.verification.result;
-    final profileActive = ref.watch(currentProfileIdProvider) == widget.profileId;
+    final profileActive =
+        ref.watch(currentProfileIdProvider) == widget.profileId;
 
     return Scaffold(
       appBar: AppBar(
@@ -511,9 +485,7 @@ class _QuickRoutingConflictDetailsPageState
                   '${appLocalizations.expireTime}: '
                   '${_quickRoutingLifetimeLabel(context, record.selection.lifetime)}',
                 ),
-                Text(
-                  '${appLocalizations.time}: ${record.checkedAt.showFull}',
-                ),
+                Text('${appLocalizations.time}: ${record.checkedAt.showFull}'),
                 Text(
                   '${appLocalizations.status}: '
                   '${record.verification.marker} '
@@ -525,10 +497,7 @@ class _QuickRoutingConflictDetailsPageState
               _section(
                 context: context,
                 title: appLocalizations.core,
-                children: _buildCoreQuickRoutingMatchPreview(
-                  context,
-                  result,
-                ),
+                children: _buildCoreQuickRoutingMatchPreview(context, result),
               ),
             if (record.verification.issues.isNotEmpty)
               _section(
@@ -541,7 +510,8 @@ class _QuickRoutingConflictDetailsPageState
               ),
             _section(
               context: context,
-              title: '${appLocalizations.rules} · '
+              title:
+                  '${appLocalizations.rules} · '
                   '${appLocalizations.search}',
               children: [
                 if (_loadingRules)
@@ -576,11 +546,7 @@ class _QuickRoutingConflictDetailsPageState
                             '${_conflictKindLabel(context, conflict.kind)} · '
                             '${_sourceLabel(context, source)}',
                           ),
-                          trailing: _conflictAction(
-                            context,
-                            conflict,
-                            record,
-                          ),
+                          trailing: _conflictAction(context, conflict, record),
                         );
                       },
                     ),

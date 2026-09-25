@@ -271,12 +271,66 @@ class SetupAction extends _$SetupAction {
     bool force = false,
     Future<void> Function()? preloadInvoke,
   }) async {
-    final result = await _runSetup(
-      force: force,
-      silence: silence,
-      preloadInvoke: preloadInvoke,
-    );
-    return result != _SetupTaskResult.failed;
+    final startedAt = DateTime.now();
+    final profileId = ref.read(currentProfileIdProvider);
+    try {
+      final result = await _runSetup(
+        force: force,
+        silence: silence,
+        preloadInvoke: preloadInvoke,
+      );
+      final applied = result != _SetupTaskResult.failed;
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              profileId: profileId,
+              category: LogbookCategory.profile,
+              severity: applied
+                  ? LogbookSeverity.success
+                  : LogbookSeverity.error,
+              eventType: applied
+                  ? 'profile.apply.completed'
+                  : 'profile.apply.failed',
+              title: applied
+                  ? 'profile.apply.completed'
+                  : 'profile.apply.failed',
+              message:
+                  'Profile ${profileId ?? '-'} · ${result.name} · '
+                  '${DateTime.now().difference(startedAt).inMilliseconds} ms',
+              details: {
+                'durationMs': DateTime.now()
+                    .difference(startedAt)
+                    .inMilliseconds,
+                'force': force,
+                'silent': silence,
+                'setupResult': result.name,
+              },
+            ),
+      );
+      return applied;
+    } catch (error) {
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              profileId: profileId,
+              category: LogbookCategory.profile,
+              severity: LogbookSeverity.error,
+              eventType: 'profile.apply.exception',
+              title: 'profile.apply.exception',
+              message: compactError(error),
+              details: {
+                'durationMs': DateTime.now()
+                    .difference(startedAt)
+                    .inMilliseconds,
+                'force': force,
+                'silent': silence,
+              },
+            ),
+      );
+      rethrow;
+    }
   }
 
   Future<_SetupTaskResult> _runSetup({

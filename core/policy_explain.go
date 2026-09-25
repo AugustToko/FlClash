@@ -69,9 +69,10 @@ type policyConfigDescriptor struct {
 }
 
 type policyRuntimeGroupState struct {
-	Now     string `json:"now"`
-	Fixed   string `json:"fixed"`
-	TestURL string `json:"testUrl"`
+	Now       string `json:"now"`
+	Fixed     string `json:"fixed"`
+	TestURL   string `json:"testUrl"`
+	Available bool   `json:"-"`
 }
 
 type policyProxyGroup interface {
@@ -160,16 +161,54 @@ func snapshotPolicyExplainProxies() map[string]C.Proxy {
 	return result
 }
 
-func policyRuntimeState(proxy C.Proxy) policyRuntimeGroupState {
-	state := policyRuntimeGroupState{}
+func policyGroupNow(adapter C.ProxyAdapter) (now string) {
+	group, ok := adapter.(interface{ Now() string })
+	if !ok {
+		return ""
+	}
+	defer func() {
+		if recover() != nil {
+			now = ""
+		}
+	}()
+	return group.Now()
+}
+
+func policyRuntimeState(proxy C.Proxy) (state policyRuntimeGroupState) {
 	if proxy == nil {
 		return state
 	}
-	data, err := proxy.Adapter().MarshalJSON()
-	if err == nil {
-		_ = json.Unmarshal(data, &state)
+	adapter := proxy.Adapter()
+	state.Now = policyGroupNow(adapter)
+
+	// Selector only needs its current member, and load-balance state comes from
+	// its descriptor plus the authoritative matched chain. Avoid MarshalJSON for
+	// these groups: dashboard serialization also touches decorative fields such
+	// as emptyFallback and is not a safe diagnostics API for partially loaded or
+	// test-created groups.
+	if proxy.Type() == C.Selector || proxy.Type() == C.LoadBalance {
+		state.Available = true
+		return state
 	}
-	return state
+
+	defer func() {
+		if recover() != nil {
+			state.Available = false
+		}
+	}()
+	data, err := adapter.MarshalJSON()
+	if err != nil {
+		return state
+	}
+	decoded := policyRuntimeGroupState{}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return state
+	}
+	if decoded.Now == "" {
+		decoded.Now = state.Now
+	}
+	decoded.Available = true
+	return decoded
 }
 
 func policyCandidateStates(
@@ -527,8 +566,16 @@ func explainPolicyChain(
 		case C.Selector:
 			explainSelectorPolicy(&step, state)
 		case C.Fallback:
+			if !state.Available {
+				step.Complete = false
+				result.addWarning("policy-runtime-state-unavailable")
+			}
 			explainFallbackPolicy(&step, state, candidates)
 		case C.URLTest:
+			if !state.Available {
+				step.Complete = false
+				result.addWarning("policy-runtime-state-unavailable")
+			}
 			descriptorValid := descriptorExists && descriptor.Type == "url-test"
 			if !descriptorValid && state.Fixed == "" {
 				step.Complete = false

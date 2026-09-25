@@ -12,6 +12,7 @@ extension PageLabelL10n on PageLabel {
       PageLabel.profiles => appLocalizations.profiles,
       PageLabel.tools => appLocalizations.tools,
       PageLabel.logs => appLocalizations.logs,
+      PageLabel.logbook => appLocalizations.logbook,
       PageLabel.requests => appLocalizations.requests,
       PageLabel.resources => appLocalizations.resources,
       PageLabel.connections => appLocalizations.connections,
@@ -22,6 +23,7 @@ extension PageLabelL10n on PageLabel {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
       PageLabel.logs => appLocalizations.logsDesc,
+      PageLabel.logbook => appLocalizations.logbookDesc,
       PageLabel.requests => appLocalizations.requestsDesc,
       PageLabel.resources => appLocalizations.resourcesDesc,
       PageLabel.connections => appLocalizations.connectionsDesc,

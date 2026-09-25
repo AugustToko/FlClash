@@ -481,6 +481,52 @@ void main() {
       expect(names, isNot(contains('9.yaml')));
     });
 
+    test('local diagnostic history is excluded from backup archives', () async {
+      await seedDatabase();
+      final liveDatabase = db.Database(NativeDatabase(File(databasePath)));
+      final now = DateTime.utc(2026, 9, 25);
+      await liveDatabase.upsertQuickRoutingDiagnostic(
+        db.QuickRoutingDiagnosticSnapshot(
+          id: 10,
+          profileId: 1,
+          fingerprint: 'request-1',
+          createdAt: now,
+          checkedAt: now,
+          status: 'verified',
+          searchText: 'example.com',
+          payload: '{}',
+        ),
+      );
+      await liveDatabase.upsertLogbookEvent(
+        LogbookEvent(
+          id: 11,
+          profileId: 1,
+          createdAt: now,
+          updatedAt: now,
+          category: LogbookCategory.routing,
+          severity: LogbookSeverity.success,
+          eventType: 'routing.test',
+          title: 'Verified',
+          message: 'example.com',
+        ),
+      );
+      await liveDatabase.close();
+
+      final archivePath = await backup();
+      await readBackupArchive(
+        backupFilePath: archivePath,
+        restoreDirPath: restore.path,
+        homeDirPath: makeDir('restore_target').path,
+      );
+      final archivedDatabase = db.Database(
+        NativeDatabase(File(join(restore.path, backupDatabaseName))),
+      );
+      addTearDown(archivedDatabase.close);
+
+      expect(await archivedDatabase.countQuickRoutingDiagnostics(1), 0);
+      expect(await archivedDatabase.countLogbookEvents(profileId: 1), 0);
+    });
+
     test('the temporary database and config copies are cleaned up', () async {
       await seedDatabase();
       final before = Directory(join(root.path, 'tmp'));

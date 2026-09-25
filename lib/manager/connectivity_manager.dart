@@ -74,9 +74,7 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
     );
   }
 
-  bool _containsActiveNetworkQuickRules(
-    List<QuickRoutingRuleEntry> entries,
-  ) {
+  bool _containsActiveNetworkQuickRules(List<QuickRoutingRuleEntry> entries) {
     final now = DateTime.now();
     return entries.any(
       (entry) =>

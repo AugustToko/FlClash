@@ -95,8 +95,7 @@ Future<void> _createQuickRoutingDiagnosticsSchema(Database database) async {
 }
 
 extension QuickRoutingDiagnosticsDatabaseExt on Database {
-  Future<List<QuickRoutingDiagnosticSnapshot>>
-      loadQuickRoutingDiagnostics({
+  Future<List<QuickRoutingDiagnosticSnapshot>> loadQuickRoutingDiagnostics({
     required int profileId,
     int limit = 100,
   }) async {
@@ -121,9 +120,7 @@ extension QuickRoutingDiagnosticsDatabaseExt on Database {
       ''',
       variables: [Variable.withInt(profileId), Variable.withInt(limit)],
     ).get();
-    return List.unmodifiable(
-      rows.map(QuickRoutingDiagnosticSnapshot.fromRow),
-    );
+    return List.unmodifiable(rows.map(QuickRoutingDiagnosticSnapshot.fromRow));
   }
 
   Future<QuickRoutingDiagnosticSnapshot> upsertQuickRoutingDiagnostic(

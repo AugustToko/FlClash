@@ -44,6 +44,7 @@ void main() {
     'requests': const RequestsView(),
     'resources': const ResourcesView(),
     'logs': const LogsView(),
+    'logbook': const LogbookView(),
     'tools': const ToolsView(),
     'basic config': const ConfigView(),
     'dns config': const Scaffold(body: DnsListView()),

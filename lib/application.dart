@@ -8,6 +8,7 @@ import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -67,6 +68,7 @@ class ApplicationState extends ConsumerState<Application> {
   bool _preHasVpn = false;
   bool _networkCleanupRunning = false;
   String? _networkSignature;
+  String? _lastLoggedNetworkSignature;
   List<ConnectivityResult>? _pendingNetworkResults;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
@@ -138,15 +140,16 @@ class ApplicationState extends ConsumerState<Application> {
   }
 
   String _getNetworkSignature(List<ConnectivityResult> results) {
-    final values = results
-        .where(
-          (result) =>
-              result != ConnectivityResult.vpn &&
-              result != ConnectivityResult.none,
-        )
-        .map((result) => result.name)
-        .toList()
-      ..sort();
+    final values =
+        results
+            .where(
+              (result) =>
+                  result != ConnectivityResult.vpn &&
+                  result != ConnectivityResult.none,
+            )
+            .map((result) => result.name)
+            .toList()
+          ..sort();
     return values.join(',');
   }
 
@@ -253,10 +256,35 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  Future<void> _handleConnectivityChanged(
-    List<ConnectivityResult> results,
-  ) {
+  Future<void> _handleConnectivityChanged(List<ConnectivityResult> results) {
     commonPrint.log('connectivityChanged ${results.toString()}');
+    final signature = _getNetworkSignature(results);
+    if (_lastLoggedNetworkSignature != signature) {
+      final previous = _lastLoggedNetworkSignature;
+      _lastLoggedNetworkSignature = signature;
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              profileId: ref.read(currentProfileIdProvider),
+              category: LogbookCategory.network,
+              severity: results.contains(ConnectivityResult.none)
+                  ? LogbookSeverity.warning
+                  : LogbookSeverity.info,
+              eventType: 'network.connectivity.changed',
+              title: 'network.connectivity.changed',
+              message: signature.isEmpty
+                  ? ConnectivityResult.none.name
+                  : signature,
+              details: {
+                'previous': previous ?? '',
+                'current': signature,
+                'transports': results.map((value) => value.name).toList(),
+                'vpn': results.contains(ConnectivityResult.vpn),
+              },
+            ),
+      );
+    }
     unawaited(systemDnsCoordinator?.resync() ?? Future.value());
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
     unawaited(_clearNetworkRoutingRulesIfNeeded(results));

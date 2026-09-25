@@ -33,20 +33,22 @@ void main() {
   }
 
   void addNetworkQuickRule() {
-    container.read(quickRoutingRulesProvider.notifier).put(
-      profileId: 1,
-      rule: const Rule(
-        id: 1,
-        ruleAction: RuleAction.DOMAIN,
-        content: 'example.com',
-        ruleTarget: 'DIRECT',
-      ),
-      lifetime: QuickRoutingLifetime.network,
-      sourceId: 'request',
-      sourceDesc: 'tcp://example.com:443',
-      previousRule: 'MATCH',
-      previousChains: const ['Proxy'],
-    );
+    container
+        .read(quickRoutingRulesProvider.notifier)
+        .put(
+          profileId: 1,
+          rule: const Rule(
+            id: 1,
+            ruleAction: RuleAction.DOMAIN,
+            content: 'example.com',
+            ruleTarget: 'DIRECT',
+          ),
+          lifetime: QuickRoutingLifetime.network,
+          sourceId: 'request',
+          sourceDesc: 'tcp://example.com:443',
+          previousRule: 'MATCH',
+          previousChains: const ['Proxy'],
+        );
   }
 
   Future<void> pumpManager(

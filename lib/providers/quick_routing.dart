@@ -2,13 +2,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum QuickRoutingLifetime {
-  session,
-  tenMinutes,
-  oneHour,
-  network,
-  permanent,
-}
+enum QuickRoutingLifetime { session, tenMinutes, oneHour, network, permanent }
 
 extension QuickRoutingLifetimeExt on QuickRoutingLifetime {
   Duration? get duration {
@@ -66,12 +60,8 @@ class QuickRoutingGroupOverride {
   }
 
   @override
-  int get hashCode => Object.hash(
-    groupName,
-    previousFixed,
-    expectedFixed,
-    desiredFixed,
-  );
+  int get hashCode =>
+      Object.hash(groupName, previousFixed, expectedFixed, desiredFixed);
 }
 
 class QuickRoutingGroupOverrideTransition {
@@ -98,12 +88,8 @@ class QuickRoutingGroupOverrideTransition {
   }
 
   @override
-  int get hashCode => Object.hash(
-    profileId,
-    groupName,
-    expectedFixed,
-    targetFixed,
-  );
+  int get hashCode =>
+      Object.hash(profileId, groupName, expectedFixed, targetFixed);
 }
 
 class QuickRoutingRuleEntry {
@@ -207,15 +193,9 @@ bool quickRoutingRulesHaveSameMatcher(Rule first, Rule second) {
     return (rules: rules, addedRules: addedRules);
   }
   if (overwriteType == OverwriteType.custom && rules.isNotEmpty) {
-    return (
-      rules: [...runtimeRules, ...rules],
-      addedRules: addedRules,
-    );
+    return (rules: [...runtimeRules, ...rules], addedRules: addedRules);
   }
-  return (
-    rules: rules,
-    addedRules: [...runtimeRules, ...addedRules],
-  );
+  return (rules: rules, addedRules: [...runtimeRules, ...addedRules]);
 }
 
 Map<(int, String), QuickRoutingGroupOverride> _quickRoutingGroupOverrides(
@@ -231,17 +211,14 @@ Map<(int, String), QuickRoutingGroupOverride> _quickRoutingGroupOverrides(
     }
     final override = entry.groupOverride;
     if (override != null) {
-      values.putIfAbsent(
-        (entry.profileId, override.groupName),
-        () => override,
-      );
+      values.putIfAbsent((entry.profileId, override.groupName), () => override);
     }
   }
   return values;
 }
 
 List<QuickRoutingGroupOverrideTransition>
-    buildQuickRoutingGroupOverrideTransitions({
+buildQuickRoutingGroupOverrideTransitions({
   required Iterable<QuickRoutingRuleEntry> previous,
   required Iterable<QuickRoutingRuleEntry> next,
   DateTime? now,
@@ -284,15 +261,11 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
   @override
   List<QuickRoutingRuleEntry> build() => const [];
 
-  List<QuickRoutingRuleEntry> activeEntriesFor(
-    int profileId, {
-    DateTime? now,
-  }) {
+  List<QuickRoutingRuleEntry> activeEntriesFor(int profileId, {DateTime? now}) {
     final current = now ?? DateTime.now();
     return state
         .where(
-          (entry) =>
-              entry.profileId == profileId && !entry.isExpired(current),
+          (entry) => entry.profileId == profileId && !entry.isExpired(current),
         )
         .toList(growable: false);
   }
@@ -432,8 +405,7 @@ class QuickRoutingRules extends Notifier<List<QuickRoutingRuleEntry>> {
   bool remove(int profileId, int ruleId) {
     final next = state
         .where(
-          (entry) =>
-              entry.profileId != profileId || entry.rule.id != ruleId,
+          (entry) => entry.profileId != profileId || entry.rule.id != ruleId,
         )
         .toList(growable: false);
     if (next.length == state.length) {

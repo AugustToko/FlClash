@@ -1,6 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/features.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/quick_routing.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -112,30 +113,30 @@ void main() {
   });
 
   group('quick routing targets', () {
-    test('keeps built-ins, groups and individual proxies without duplicates', () {
-      final targets = buildQuickRoutingTargets(const [
-        Group(
-          type: GroupType.Selector,
-          all: [
-            Proxy(name: 'HK-01', type: 'ss'),
-            Proxy(name: 'DIRECT', type: 'direct'),
-          ],
-          name: 'Proxy',
-        ),
-        Group(
-          type: GroupType.URLTest,
-          all: [
-            Proxy(name: 'HK-01', type: 'ss'),
-            Proxy(name: 'JP-01', type: 'vmess'),
-          ],
-          name: 'Auto',
-        ),
-        Group(type: GroupType.Selector, all: [], name: 'DIRECT'),
-      ]);
+    test(
+      'keeps built-ins, groups and individual proxies without duplicates',
+      () {
+        final targets = buildQuickRoutingTargets(const [
+          Group(
+            type: GroupType.Selector,
+            all: [
+              Proxy(name: 'HK-01', type: 'ss'),
+              Proxy(name: 'DIRECT', type: 'direct'),
+            ],
+            name: 'Proxy',
+          ),
+          Group(
+            type: GroupType.URLTest,
+            all: [
+              Proxy(name: 'HK-01', type: 'ss'),
+              Proxy(name: 'JP-01', type: 'vmess'),
+            ],
+            name: 'Auto',
+          ),
+          Group(type: GroupType.Selector, all: [], name: 'DIRECT'),
+        ]);
 
-      expect(
-        targets,
-        [
+        expect(targets, [
           'DIRECT',
           'REJECT',
           'REJECT-DROP',
@@ -143,9 +144,9 @@ void main() {
           'Auto',
           'HK-01',
           'JP-01',
-        ],
-      );
-    });
+        ]);
+      },
+    );
 
     test('prefers a policy group over a leaf node in the chain', () {
       final info = trackerInfo(chains: const ['HK-01', 'Proxy']);
@@ -230,10 +231,7 @@ void main() {
         trackerInfo(id: 'history', host: 'history.example.com'),
       ]);
 
-      expect(source.map((trackerInfo) => trackerInfo.id), [
-        'live',
-        'history',
-      ]);
+      expect(source.map((trackerInfo) => trackerInfo.id), ['live', 'history']);
     });
 
     test('does not duplicate a connection already in request history', () {

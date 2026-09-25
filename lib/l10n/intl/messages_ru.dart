@@ -274,6 +274,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "У вас уже последняя версия",
     ),
     "clearData": MessageLookupByLibrary.simpleMessage("Очистить данные"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("Очистить журнал"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "Удалить все сохранённые события журнала?",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Очистить поиск"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Экспорт в буфер обмена",
@@ -641,6 +645,72 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("Лог"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Уровень логов"),
+    "logbook": MessageLookupByLibrary.simpleMessage("Журнал событий"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("Все"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "Состояние подключения изменилось",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("Ядро"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "Запрошен диагностический сбой ядра",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось перезапустить ядро",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "Ядро перезапущено с ошибками профиля",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage(
+      "Ядро перезапущено",
+    ),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось запустить ядро",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "Запрос запуска ядра заменён",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("Ядро запущено"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "Постоянная хронология сетевых событий и изменений конфигурации",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage(
+      "События пока не записаны",
+    ),
+    "logbookError": MessageLookupByLibrary.simpleMessage("Ошибка"),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("Информация"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "Хранится только на этом устройстве",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("Сеть"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("Профиль"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "Профиль применён",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "Исключение при применении профиля",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось применить профиль",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("Провайдер"),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "Проверка быстрого маршрута приблизительная",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "Быстрый маршрут не совпадает",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Проверка быстрого маршрута недоступна",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "Быстрый маршрут проверен",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("Маршрутизация"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("Скрипт"),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("Успешно"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("Система"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("Предупреждение"),
     "logcat": MessageLookupByLibrary.simpleMessage("Захват логов"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
       "При отключении раздел логов будет скрыт",
