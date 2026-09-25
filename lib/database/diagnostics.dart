@@ -5,6 +5,10 @@ const _quickRoutingDiagnosticsProfileIndex =
     'idx_quick_routing_diagnostics_profile_checked';
 const _quickRoutingDiagnosticsStatusIndex =
     'idx_quick_routing_diagnostics_profile_status';
+const _quickRoutingDiagnosticsProfileInsertTrigger =
+    'trg_quick_routing_diagnostics_profile_insert';
+const _quickRoutingDiagnosticsProfileDeleteTrigger =
+    'trg_quick_routing_diagnostics_profile_delete';
 
 class QuickRoutingDiagnosticSnapshot {
   final int id;
@@ -67,6 +71,26 @@ Future<void> _createQuickRoutingDiagnosticsSchema(Database database) async {
   await database.customStatement('''
     CREATE INDEX IF NOT EXISTS $_quickRoutingDiagnosticsStatusIndex
     ON $_quickRoutingDiagnosticsTable(profile_id, status, checked_at DESC)
+  ''');
+  // SQLite foreign-key enforcement is connection scoped. The triggers keep
+  // this custom table consistent even if a legacy connection has it disabled.
+  await database.customStatement('''
+    CREATE TRIGGER IF NOT EXISTS $_quickRoutingDiagnosticsProfileInsertTrigger
+    BEFORE INSERT ON $_quickRoutingDiagnosticsTable
+    WHEN NOT EXISTS (
+      SELECT 1 FROM profiles WHERE id = NEW.profile_id
+    )
+    BEGIN
+      SELECT RAISE(ABORT, 'quick routing diagnostic profile does not exist');
+    END
+  ''');
+  await database.customStatement('''
+    CREATE TRIGGER IF NOT EXISTS $_quickRoutingDiagnosticsProfileDeleteTrigger
+    AFTER DELETE ON profiles
+    BEGIN
+      DELETE FROM $_quickRoutingDiagnosticsTable
+      WHERE profile_id = OLD.id;
+    END
   ''');
 }
 
