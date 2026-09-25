@@ -1,9 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/features/connection/quick_routing.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/backup_and_restore.dart';
+import 'package:fl_clash/views/config/scripts.dart';
+import 'package:fl_clash/views/profiles/profiles.dart';
+import 'package:fl_clash/views/proxies/providers.dart';
+import 'package:fl_clash/views/resources.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -158,6 +168,103 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
     return ref.read(logbookProvider.notifier).reload();
   }
 
+  String _exportFileName(DateTime value) {
+    final local = value.toLocal();
+    String two(int number) => number.toString().padLeft(2, '0');
+    return 'flclash-logbook-'
+        '${local.year}${two(local.month)}${two(local.day)}-'
+        '${two(local.hour)}${two(local.minute)}${two(local.second)}.json';
+  }
+
+  Future<void> _export(List<LogbookEvent> events) async {
+    final l = context.appLocalizations;
+    final result = await globalState.safeRun<bool>(() async {
+      final exportedAt = DateTime.now();
+      final content = encodeLogbookExport(
+        events: events,
+        exportedAt: exportedAt,
+      );
+      final value = await picker.saveFile(
+        _exportFileName(exportedAt),
+        Uint8List.fromList(utf8.encode(content)),
+      );
+      return value != null;
+    }, title: l.exportLogs);
+    if (result == true && mounted) {
+      context.showNotifier(l.exportSuccess, level: MessageLevel.success);
+    }
+  }
+
+  Future<void> _copyEvent(LogbookEvent event) async {
+    await Clipboard.setData(
+      ClipboardData(text: encodeLogbookExport(events: [event])),
+    );
+    if (mounted) {
+      context.showNotifier(
+        context.appLocalizations.copySuccess,
+        level: MessageLevel.success,
+      );
+    }
+  }
+
+  Widget? _sourceView(LogbookEvent event) {
+    if (event.eventType == 'routing.quick-route.verification' &&
+        event.profileId != null) {
+      return QuickRoutingDiagnosticsPage(profileId: event.profileId!);
+    }
+    if (event.eventType.startsWith('profile.')) {
+      return const ProfilesView();
+    }
+    if (event.eventType.startsWith('provider.external.')) {
+      return const ProvidersView();
+    }
+    if (event.eventType == 'provider.geo.update') {
+      return const ResourcesView();
+    }
+    if (event.eventType.startsWith('script.')) {
+      return const ScriptsView();
+    }
+    if (event.eventType == 'system.backup' ||
+        event.eventType == 'system.restore') {
+      return const BackupAndRestore();
+    }
+    return null;
+  }
+
+  Future<void> _openSource(
+    LogbookEvent event,
+    BuildContext sheetContext,
+  ) async {
+    final source = _sourceView(event);
+    if (source == null) {
+      return;
+    }
+    Navigator.of(sheetContext).pop();
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) {
+      return;
+    }
+    await BaseNavigator.push<void>(context, source);
+  }
+
+  Future<void> _removeEvent(
+    LogbookEvent event,
+    BuildContext sheetContext,
+  ) async {
+    final l = context.appLocalizations;
+    final confirmed = await dialogs.showMessage(
+      title: l.delete,
+      message: TextSpan(text: l.deleteTip(l.logbook)),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    await ref.read(logbookProvider.notifier).remove(event.id);
+    if (sheetContext.mounted) {
+      Navigator.of(sheetContext).pop();
+    }
+  }
+
   Future<void> _clear() async {
     final l = context.appLocalizations;
     final confirmed = await dialogs.showMessage(
@@ -212,8 +319,27 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
         props: const SheetProps(isScrollControlled: true),
         builder: (context) {
           final l = context.appLocalizations;
+          final source = _sourceView(event);
           return AdaptiveSheetScaffold(
             title: l.details(l.logbook),
+            actions: [
+              if (source != null)
+                IconButtonData(
+                  icon: Icons.open_in_new,
+                  tooltip: '${l.view} · ${l.source}',
+                  onPressed: () => unawaited(_openSource(event, context)),
+                ),
+              IconButtonData(
+                icon: Icons.copy_outlined,
+                tooltip: l.copy,
+                onPressed: () => unawaited(_copyEvent(event)),
+              ),
+              IconButtonData(
+                icon: Icons.delete_outline,
+                tooltip: l.delete,
+                onPressed: () => unawaited(_removeEvent(event, context)),
+              ),
+            ],
             body: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
@@ -411,6 +537,13 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
         onSearch: (query) => setState(() => _query = query),
       ),
       actions: [
+        IconButton(
+          tooltip: l.exportLogs,
+          onPressed: filtered.isEmpty
+              ? null
+              : () => unawaited(_export(filtered)),
+          icon: const Icon(Icons.file_download_outlined),
+        ),
         IconButton(
           tooltip: l.update,
           onPressed: () => unawaited(_refresh()),

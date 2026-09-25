@@ -1,10 +1,11 @@
-import 'dart:ui';
-
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/logbook.dart';
+import 'package:fl_clash/views/proxies/providers.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -167,7 +168,9 @@ Future<void> _pumpPreview(WidgetTester tester, Size size) async {
   final container = ProviderContainer(
     overrides: [
       logbookProvider.overrideWith(_PreviewLogbook.new),
+      logbookPersistenceEnabledProvider.overrideWithValue(false),
       currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+      viewSizeProvider.overrideWithBuild((_, _) => size),
     ],
   );
   addTearDown(container.dispose);
@@ -189,6 +192,51 @@ void main() {
     await expectLater(
       find.byType(LogbookView),
       matchesGoldenFile('../goldens/logbook_mobile_preview.png'),
+    );
+  });
+
+  testWidgets('Logbook details expose contextual actions', (tester) async {
+    await _pumpPreview(tester, const Size(430, 932));
+
+    expect(find.byIcon(Icons.file_download_outlined), findsOneWidget);
+    await tester.tap(find.text('OpenAI-Domains · 842 ms'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.open_in_new), findsOneWidget);
+    expect(find.byIcon(Icons.copy_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.open_in_new));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProvidersView), findsOneWidget);
+  });
+
+  testWidgets('Logbook delete action removes only the selected event', (
+    tester,
+  ) async {
+    await _pumpPreview(tester, const Size(430, 932));
+
+    await tester.tap(find.text('OpenAI-Domains · 842 ms'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('OpenAI-Domains · 842 ms'), findsNothing);
+    expect(find.text('Routing automation · 34 ms'), findsOneWidget);
+  });
+
+  testWidgets('Logbook detail preview', (tester) async {
+    await _pumpPreview(tester, const Size(430, 932));
+
+    await tester.tap(find.text('OpenAI-Domains · 842 ms'));
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(Overlay).first,
+      matchesGoldenFile('../goldens/logbook_detail_preview.png'),
     );
   });
 
