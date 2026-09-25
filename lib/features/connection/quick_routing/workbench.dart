@@ -23,17 +23,23 @@ class QuickRoutingVerificationRecord {
   });
 
   QuickRoutingVerificationRecord copyWith({
+    int? id,
+    int? profileId,
+    DateTime? createdAt,
     DateTime? checkedAt,
+    TrackerInfo? trackerInfo,
+    QuickRoutingSelection? selection,
+    Rule? appliedRule,
     QuickRoutingVerification? verification,
   }) {
     return QuickRoutingVerificationRecord(
-      id: id,
-      profileId: profileId,
-      createdAt: createdAt,
+      id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
+      createdAt: createdAt ?? this.createdAt,
       checkedAt: checkedAt ?? this.checkedAt,
-      trackerInfo: trackerInfo,
-      selection: selection,
-      appliedRule: appliedRule,
+      trackerInfo: trackerInfo ?? this.trackerInfo,
+      selection: selection ?? this.selection,
+      appliedRule: appliedRule ?? this.appliedRule,
       verification: verification ?? this.verification,
     );
   }
@@ -46,6 +52,27 @@ class QuickRoutingVerificationHistory
   @override
   List<QuickRoutingVerificationRecord> build() => const [];
 
+  List<QuickRoutingVerificationRecord> _bounded(
+    Iterable<QuickRoutingVerificationRecord> entries,
+  ) {
+    final sorted = entries.toList(growable: false)
+      ..sort((first, second) {
+        final checked = second.checkedAt.compareTo(first.checkedAt);
+        return checked != 0 ? checked : second.id.compareTo(first.id);
+      });
+    final counts = <int, int>{};
+    final result = <QuickRoutingVerificationRecord>[];
+    for (final entry in sorted) {
+      final count = counts[entry.profileId] ?? 0;
+      if (count >= maxEntries) {
+        continue;
+      }
+      counts[entry.profileId] = count + 1;
+      result.add(entry);
+    }
+    return List.unmodifiable(result);
+  }
+
   QuickRoutingVerificationRecord upsert({
     required int profileId,
     required TrackerInfo trackerInfo,
@@ -56,49 +83,77 @@ class QuickRoutingVerificationHistory
     int? id,
   }) {
     final checkedAt = now ?? DateTime.now();
-    final existingIndex = state.indexWhere(
-      (entry) =>
-          entry.profileId == profileId &&
-          entry.trackerInfo.id == trackerInfo.id &&
-          quickRoutingRulesHaveSameMatcher(
-            entry.appliedRule,
-            appliedRule,
-          ) &&
-          entry.selection.target == selection.target,
-    );
-    if (existingIndex != -1) {
-      final current = state[existingIndex];
-      final updated = QuickRoutingVerificationRecord(
-        id: current.id,
-        profileId: profileId,
-        createdAt: current.createdAt,
-        checkedAt: checkedAt,
-        trackerInfo: trackerInfo,
-        selection: selection,
-        appliedRule: appliedRule,
-        verification: verification,
-      );
-      final next = List<QuickRoutingVerificationRecord>.from(state)
-        ..removeAt(existingIndex)
-        ..insert(0, updated);
-      state = List.unmodifiable(next);
-      return updated;
-    }
-
-    final entry = QuickRoutingVerificationRecord(
-      id: id ?? snowflake.id,
+    final identity = quickRoutingVerificationRecordIdentityFor(
       profileId: profileId,
-      createdAt: checkedAt,
+      trackerInfo: trackerInfo,
+      appliedRule: appliedRule,
+      target: selection.target,
+    );
+    QuickRoutingVerificationRecord? current;
+    for (final entry in state) {
+      if (quickRoutingVerificationRecordIdentity(entry) == identity) {
+        current = entry;
+        break;
+      }
+    }
+    final entry = QuickRoutingVerificationRecord(
+      id: current?.id ?? id ?? snowflake.id,
+      profileId: profileId,
+      createdAt: current?.createdAt ?? checkedAt,
       checkedAt: checkedAt,
       trackerInfo: trackerInfo,
       selection: selection,
       appliedRule: appliedRule,
       verification: verification,
     );
-    state = List.unmodifiable(
-      <QuickRoutingVerificationRecord>[entry, ...state].take(maxEntries),
+    return upsertRecord(entry);
+  }
+
+  QuickRoutingVerificationRecord upsertRecord(
+    QuickRoutingVerificationRecord record,
+  ) {
+    final identity = quickRoutingVerificationRecordIdentity(record);
+    final next = state
+        .where(
+          (entry) =>
+              entry.id != record.id &&
+              quickRoutingVerificationRecordIdentity(entry) != identity,
+        )
+        .toList(growable: true)
+      ..add(record);
+    state = _bounded(next);
+    return record;
+  }
+
+  void mergePersisted(
+    Iterable<QuickRoutingVerificationRecord> persisted,
+  ) {
+    final records = <String, QuickRoutingVerificationRecord>{};
+    for (final record in persisted) {
+      records[quickRoutingVerificationRecordIdentity(record)] = record;
+    }
+    // In-memory results may have been produced while the database was loading;
+    // they are newer and must win over the persisted snapshot.
+    for (final record in state) {
+      records[quickRoutingVerificationRecordIdentity(record)] = record;
+    }
+    state = _bounded(records.values);
+  }
+
+  bool replaceRecord(QuickRoutingVerificationRecord record) {
+    final identity = quickRoutingVerificationRecordIdentity(record);
+    final index = state.indexWhere(
+      (entry) =>
+          entry.id == record.id ||
+          quickRoutingVerificationRecordIdentity(entry) == identity,
     );
-    return entry;
+    if (index == -1) {
+      return false;
+    }
+    final next = List<QuickRoutingVerificationRecord>.from(state);
+    next[index] = record;
+    state = _bounded(next);
+    return true;
   }
 
   bool updateVerification(
@@ -110,13 +165,12 @@ class QuickRoutingVerificationHistory
     if (index == -1) {
       return false;
     }
-    final next = List<QuickRoutingVerificationRecord>.from(state);
-    next[index] = next[index].copyWith(
-      checkedAt: now ?? DateTime.now(),
-      verification: verification,
+    return replaceRecord(
+      state[index].copyWith(
+        checkedAt: now ?? DateTime.now(),
+        verification: verification,
+      ),
     );
-    state = List.unmodifiable(next);
-    return true;
   }
 
   bool remove(int id) {
