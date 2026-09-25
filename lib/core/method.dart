@@ -18,6 +18,7 @@ enum CoreMethod {
   resetTraffic,
   asyncTestDelay,
   getConnections,
+  queryDns,
   analyzeDomain,
   matchRule,
   explainPolicy,

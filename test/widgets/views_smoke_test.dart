@@ -48,6 +48,7 @@ void main() {
     'tools': const ToolsView(),
     'basic config': const ConfigView(),
     'dns config': const Scaffold(body: DnsListView()),
+    'dns diagnostics': const DnsDiagnosticsView(),
     'network config': const Scaffold(body: NetworkListView()),
     'advanced config': const AdvancedConfigView(),
     'on demand config': const OnDemandView(),
@@ -108,6 +109,7 @@ void main() {
     'Backup and restore': BackupAndRestore,
     'Basic configuration': ConfigView,
     'Advanced configuration': AdvancedConfigView,
+    'DNS diagnostics': DnsDiagnosticsView,
     'Application': ApplicationSettingView,
   };
 

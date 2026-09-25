@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/connection/quick_routing.dart';
 import 'package:fl_clash/models/models.dart';
@@ -9,6 +10,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/scripts.dart';
+import 'package:fl_clash/views/dns_diagnostics.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/views/resources.dart';
@@ -108,6 +110,12 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
       'running' => l.logbookScriptEvaluateRunning,
       'completed' => l.logbookScriptEvaluated,
       'failed' => l.logbookScriptEvaluateFailed,
+      _ => event.title,
+    },
+    'dns.query' => switch (event.details['status']) {
+      'running' => l.logbookDnsQueryRunning,
+      'completed' => l.logbookDnsQueryCompleted,
+      'failed' => l.logbookDnsQueryFailed,
       _ => event.title,
     },
     _ => event.title,
@@ -223,6 +231,20 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
     }
     if (event.eventType.startsWith('script.')) {
       return const ScriptsView();
+    }
+    if (event.eventType == 'dns.query') {
+      final name = event.details['name'];
+      final queryType = event.details['queryType'];
+      final resolver = event.details['requestedResolver'];
+      return DnsDiagnosticsView(
+        initialName: name is String ? name : '',
+        initialQueryType: DnsDiagnosticQueryType.fromWireName(
+          queryType is String ? queryType : '',
+        ),
+        initialResolver: DnsDiagnosticResolver.fromWireName(
+          resolver is String ? resolver : '',
+        ),
+      );
     }
     if (event.eventType == 'system.backup' ||
         event.eventType == 'system.restore') {

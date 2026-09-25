@@ -327,9 +327,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "新しいバージョンが見つかりました",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("追加"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("回答"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("権威"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("DNS関連の設定を更新します"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS 診断"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "実行中の Core で DNS を照会し、レコードを確認します",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNSハイジャック"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNSモード"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("レコードが返されませんでした"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 照会に失敗しました"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("ドメインまたは IP アドレス"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS 応答"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("レコードタイプ"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("リゾルバー"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "現在の Core リゾルバー",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage("直接接続 DNS"),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage("プロキシサーバー DNS"),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("システム DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("応答フラグ"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("照会を実行"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "現在の Core リゾルバーが利用できないため、システム DNS を使用しました",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "応答に回答レコードがありません",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage("応答が切り詰められました"),
     "domain": MessageLookupByLibrary.simpleMessage("ドメイン"),
     "download": MessageLookupByLibrary.simpleMessage("ダウンロード"),
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
@@ -559,6 +588,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "ネットワーク、構成、実行イベントの永続タイムライン",
     ),
     "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS 照会が完了しました",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "DNS 照会に失敗しました",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage("DNS を照会中"),
     "logbookEmpty": MessageLookupByLibrary.simpleMessage("記録されたイベントはありません"),
     "logbookError": MessageLookupByLibrary.simpleMessage("エラー"),
     "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo データは最新です"),
