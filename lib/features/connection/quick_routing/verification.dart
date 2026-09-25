@@ -267,6 +267,9 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
     selection: selection,
     profileId: profileId,
   );
+  if (historyProfileId != null) {
+    await _hydrateQuickRoutingVerificationHistory(ref, historyProfileId);
+  }
   late final QuickRoutingVerification verification;
 
   bool profileIsActive() {
@@ -319,7 +322,9 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
   }
 
   if (historyProfileId != null && profileIsActive()) {
-    ref.read(quickRoutingVerificationHistoryProvider.notifier).upsert(
+    final record = ref
+        .read(quickRoutingVerificationHistoryProvider.notifier)
+        .upsert(
           profileId: historyProfileId,
           trackerInfo: trackerInfo,
           selection: selection,
@@ -329,6 +334,15 @@ Future<QuickRoutingVerification> _verifyAppliedQuickRoutingRule({
           ),
           verification: verification,
         );
+    try {
+      await _persistQuickRoutingVerificationRecord(ref, record);
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'quick routing diagnostic persistence failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
   return verification;
 }
