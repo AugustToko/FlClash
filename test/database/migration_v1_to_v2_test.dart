@@ -26,10 +26,21 @@ void _downgradeToV1(Database raw) {
   raw.execute('PRAGMA user_version = 1');
 }
 
-/// Schema version 2 had no `match_target` on `profiles`.
+void _dropV4Diagnostics(Database raw) {
+  raw.execute('DROP TABLE IF EXISTS quick_routing_diagnostics');
+}
+
+/// Schema version 2 had no `match_target` on `profiles` and no diagnostics.
 void _downgradeToV2(Database raw) {
+  _dropV4Diagnostics(raw);
   raw.execute('ALTER TABLE profiles DROP COLUMN match_target');
   raw.execute('PRAGMA user_version = 2');
+}
+
+/// Schema version 3 already had `match_target`, but no diagnostics table.
+void _downgradeToV3(Database raw) {
+  _dropV4Diagnostics(raw);
+  raw.execute('PRAGMA user_version = 3');
 }
 
 Set<String> _columnsOf(Database raw, String table) => {
@@ -76,7 +87,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 4);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -86,19 +97,21 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 4);
   });
 
   test(
     'a v2 user_version with match_target already present still opens',
     () async {
+      _dropV4Diagnostics(raw);
       raw.execute('PRAGMA user_version = 2');
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
 
       await openAndMigrate();
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-      expect(_userVersion(raw), 3);
+      expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
+      expect(_userVersion(raw), 4);
     },
   );
 
@@ -111,6 +124,29 @@ void main() {
 
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
     expect(_hasTable(raw, 'icon_records'), isTrue);
+  });
+
+  test('the v4 upgrade creates persistent diagnostics storage', () async {
+    _downgradeToV3(raw);
+    expect(_hasTable(raw, 'quick_routing_diagnostics'), isFalse);
+
+    await openAndMigrate();
+
+    expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
+    expect(
+      _columnsOf(raw, 'quick_routing_diagnostics'),
+      containsAll(<String>[
+        'id',
+        'profile_id',
+        'fingerprint',
+        'created_at',
+        'checked_at',
+        'status',
+        'search_text',
+        'payload',
+      ]),
+    );
+    expect(_userVersion(raw), 4);
   });
 
   test('the upgrade splits the rules value column into parsed ones', () async {
@@ -168,22 +204,23 @@ void main() {
     );
   });
 
-  test('an empty v1 rules table still reaches v2', () async {
+  test('an empty v1 rules table still reaches the current schema', () async {
     _downgradeToV1(raw);
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 4);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
-  test('opening a database already at v2 changes nothing', () async {
+  test('opening a database already at the current version changes nothing', () async {
     final before = _columnsOf(raw, 'rules');
 
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'rules'), before);
-    expect(_userVersion(raw), 3);
+    expect(_userVersion(raw), 4);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
+    expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
   });
 }
