@@ -209,7 +209,9 @@ class QuickRoutingVerificationHistory
     if (persist) {
       unawaited(
         _persistMutation(
-          ref.read(quickRoutingDiagnosticsPersistenceProvider).remove(id),
+          ref
+              .read(quickRoutingDiagnosticsCoordinatorProvider)
+              .remove(this, id),
           'delete',
         ),
       );
@@ -229,8 +231,8 @@ class QuickRoutingVerificationHistory
       unawaited(
         _persistMutation(
           ref
-              .read(quickRoutingDiagnosticsPersistenceProvider)
-              .clearProfile(profileId),
+              .read(quickRoutingDiagnosticsCoordinatorProvider)
+              .clearProfile(this, profileId),
           'clear',
         ),
       );
