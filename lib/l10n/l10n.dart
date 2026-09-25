@@ -5809,6 +5809,276 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `HTTP Capture`
+  String get httpCapture {
+    return Intl.message(
+      'HTTP Capture',
+      name: 'httpCapture',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observe HTTP, TLS, and QUIC connection metadata from the running Core`
+  String get httpCaptureDesc {
+    return Intl.message(
+      'Observe HTTP, TLS, and QUIC connection metadata from the running Core',
+      name: 'httpCaptureDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection-level observation only. Records stay on this device and are excluded from backups. Methods, status codes, headers, bodies, and full timings are not captured.`
+  String get httpCaptureObservationOnly {
+    return Intl.message(
+      'Connection-level observation only. Records stay on this device and are excluded from backups. Methods, status codes, headers, bodies, and full timings are not captured.',
+      name: 'httpCaptureObservationOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capturing`
+  String get httpCaptureRunning {
+    return Intl.message(
+      'Capturing',
+      name: 'httpCaptureRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopped`
+  String get httpCaptureStopped {
+    return Intl.message(
+      'Stopped',
+      name: 'httpCaptureStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export HAR-compatible observations`
+  String get httpCaptureExportHar {
+    return Intl.message(
+      'Export HAR-compatible observations',
+      name: 'httpCaptureExportHar',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP observations exported`
+  String get httpCaptureExportSuccess {
+    return Intl.message(
+      'HTTP observations exported',
+      name: 'httpCaptureExportSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No HTTP observations yet`
+  String get httpCaptureEmpty {
+    return Intl.message(
+      'No HTTP observations yet',
+      name: 'httpCaptureEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All profiles`
+  String get httpCaptureAllProfiles {
+    return Intl.message(
+      'All profiles',
+      name: 'httpCaptureAllProfiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current profile`
+  String get httpCaptureCurrentProfile {
+    return Intl.message(
+      'Current profile',
+      name: 'httpCaptureCurrentProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP`
+  String get httpCaptureProtocolHttp {
+    return Intl.message(
+      'HTTP',
+      name: 'httpCaptureProtocolHttp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS / HTTPS`
+  String get httpCaptureProtocolTls {
+    return Intl.message(
+      'TLS / HTTPS',
+      name: 'httpCaptureProtocolTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QUIC / HTTP/3`
+  String get httpCaptureProtocolQuic {
+    return Intl.message(
+      'QUIC / HTTP/3',
+      name: 'httpCaptureProtocolQuic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown protocol`
+  String get httpCaptureProtocolUnknown {
+    return Intl.message(
+      'Unknown protocol',
+      name: 'httpCaptureProtocolUnknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Scheme reported by Core`
+  String get httpCaptureEvidenceRemoteScheme {
+    return Intl.message(
+      'Scheme reported by Core',
+      name: 'httpCaptureEvidenceRemoteScheme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Common HTTP port`
+  String get httpCaptureEvidenceKnownHttpPort {
+    return Intl.message(
+      'Common HTTP port',
+      name: 'httpCaptureEvidenceKnownHttpPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Common TLS port`
+  String get httpCaptureEvidenceKnownTlsPort {
+    return Intl.message(
+      'Common TLS port',
+      name: 'httpCaptureEvidenceKnownTlsPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Common QUIC port`
+  String get httpCaptureEvidenceKnownQuicPort {
+    return Intl.message(
+      'Common QUIC port',
+      name: 'httpCaptureEvidenceKnownQuicPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host observed; protocol unknown`
+  String get httpCaptureEvidenceHostObserved {
+    return Intl.message(
+      'Host observed; protocol unknown',
+      name: 'httpCaptureEvidenceHostObserved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transport metadata only`
+  String get httpCaptureEvidenceTransportOnly {
+    return Intl.message(
+      'Transport metadata only',
+      name: 'httpCaptureEvidenceTransportOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed endpoint`
+  String get httpCaptureEndpoint {
+    return Intl.message(
+      'Observed endpoint',
+      name: 'httpCaptureEndpoint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observation delay`
+  String get httpCaptureObservationDelay {
+    return Intl.message(
+      'Observation delay',
+      name: 'httpCaptureObservationDelay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The HAR export is observation-only and intentionally leaves HTTP method, response status, headers, bodies, and detailed timings unknown.`
+  String get httpCaptureHarWarning {
+    return Intl.message(
+      'The HAR export is observation-only and intentionally leaves HTTP method, response status, headers, bodies, and detailed timings unknown.',
+      name: 'httpCaptureHarWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture started`
+  String get logbookHttpCaptureRunning {
+    return Intl.message(
+      'HTTP capture started',
+      name: 'logbookHttpCaptureRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture stopped`
+  String get logbookHttpCaptureCompleted {
+    return Intl.message(
+      'HTTP capture stopped',
+      name: 'logbookHttpCaptureCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture interrupted`
+  String get logbookHttpCaptureInterrupted {
+    return Intl.message(
+      'HTTP capture interrupted',
+      name: 'logbookHttpCaptureInterrupted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Process path`
+  String get httpCaptureProcessPath {
+    return Intl.message(
+      'Process path',
+      name: 'httpCaptureProcessPath',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

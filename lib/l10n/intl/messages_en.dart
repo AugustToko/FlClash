@@ -557,6 +557,70 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("hours"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP Capture"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "All profiles",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "Current profile",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Observe HTTP, TLS, and QUIC connection metadata from the running Core",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "No HTTP observations yet",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Observed endpoint",
+    ),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "Host observed; protocol unknown",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "Common HTTP port",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "Common QUIC port",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "Common TLS port",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Scheme reported by Core",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "Transport metadata only",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "Export HAR-compatible observations",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP observations exported",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "The HAR export is observation-only and intentionally leaves HTTP method, response status, headers, bodies, and detailed timings unknown.",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
+      "Observation delay",
+    ),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "Connection-level observation only. Records stay on this device and are excluded from backups. Methods, status codes, headers, bodies, and full timings are not captured.",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
+      "Process path",
+    ),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "Unknown protocol",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon style"),
@@ -735,6 +799,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
       "Geo data updated",
+    ),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture stopped",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture interrupted",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture started",
     ),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("Info"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(

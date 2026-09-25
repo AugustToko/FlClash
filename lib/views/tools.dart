@@ -18,6 +18,7 @@ import 'package:path/path.dart' show dirname, join;
 import 'config/advanced.dart';
 import 'developer.dart';
 import 'dns_diagnostics.dart';
+import 'http_capture.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -77,6 +78,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _ConfigItem(),
         const _AdvancedConfigItem(),
         const _DnsDiagnosticsItem(),
+        const _HttpCaptureItem(),
         const _SettingItem(),
       ],
     );
@@ -263,6 +265,20 @@ class _DnsDiagnosticsItem extends StatelessWidget {
       title: Text(context.appLocalizations.dnsDiagnostics),
       subtitle: Text(context.appLocalizations.dnsDiagnosticsDesc),
       widget: const DnsDiagnosticsView(),
+    );
+  }
+}
+
+class _HttpCaptureItem extends StatelessWidget {
+  const _HttpCaptureItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const Icon(Icons.http_outlined),
+      title: Text(context.appLocalizations.httpCapture),
+      subtitle: Text(context.appLocalizations.httpCaptureDesc),
+      widget: const HttpCaptureView(),
     );
   }
 }

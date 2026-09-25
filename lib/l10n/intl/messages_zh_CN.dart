@@ -395,6 +395,56 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("小时"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP 捕获"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage("全部配置"),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "观察运行中 Core 的 HTTP、TLS 与 QUIC 连接元数据",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage("暂无 HTTP 观察记录"),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("观察到的端点"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "已观察到主机，协议未知",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "常见 HTTP 端口",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "常见 QUIC 端口",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "常见 TLS 端口",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Core 报告的协议方案",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "仅有传输层元数据",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "导出 HAR 兼容观察记录",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP 观察记录已导出",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR 导出仅包含观察记录，并明确将 HTTP 方法、响应状态、请求头、响应头、正文和详细时序保留为未知。",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "仅进行连接级观察；记录只保存在本机并从备份中排除。不会捕获方法、状态码、请求头、响应头、正文或完整时序。",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("进程路径"),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage("未知协议"),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("正在捕获"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("已停止"),
     "icon": MessageLookupByLibrary.simpleMessage("图片"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("图标记录"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("图标样式"),
@@ -515,6 +565,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "正在更新 Geo 数据",
     ),
     "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo 数据已更新"),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已停止",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已中断",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已开始",
+    ),
     "logbookInfo": MessageLookupByLibrary.simpleMessage("信息"),
     "logbookLocalNotice": MessageLookupByLibrary.simpleMessage("仅保存在当前设备"),
     "logbookNetwork": MessageLookupByLibrary.simpleMessage("网络"),

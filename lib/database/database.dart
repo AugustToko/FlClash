@@ -14,6 +14,7 @@ part 'converter.dart';
 part 'diagnostics.dart';
 part 'generated/database.g.dart';
 part 'groups.dart';
+part 'http_capture.dart';
 part 'icons.dart';
 part 'logbook.dart';
 part 'links.dart';
@@ -36,7 +37,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -52,6 +53,7 @@ class Database extends _$Database {
         await m.createAll();
         await _createQuickRoutingDiagnosticsSchema(this);
         await _createLogbookSchema(this);
+        await _createHttpCaptureSchema(this);
       },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
@@ -69,14 +71,18 @@ class Database extends _$Database {
         if (from < 5) {
           await _createLogbookSchema(this);
         }
+        if (from < 6) {
+          await _createHttpCaptureSchema(this);
+        }
       },
       beforeOpen: (_) async {
-        // The diagnostics table is intentionally custom SQL instead of a
-        // generated Drift table. Reconcile its indexes and triggers on every
-        // open so development builds that already reached schema v4 also gain
-        // later idempotent integrity fixes.
+        // These operational-history tables intentionally use custom SQL
+        // instead of generated Drift tables. Reconcile their indexes and
+        // triggers on every open so development builds that already reached a
+        // schema version also gain later idempotent integrity fixes.
         await _createQuickRoutingDiagnosticsSchema(this);
         await _createLogbookSchema(this);
+        await _createHttpCaptureSchema(this);
       },
     );
   }

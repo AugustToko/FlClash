@@ -599,6 +599,7 @@ Future<void> stripLocalOnlyDatabaseState(String databasePath) async {
       'DELETE FROM quick_routing_diagnostics',
     );
     await backupDatabase.clearLogbook();
+    await backupDatabase.clearHttpCaptureEntries();
   } finally {
     await backupDatabase.close();
   }

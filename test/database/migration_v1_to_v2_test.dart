@@ -9,6 +9,9 @@ const _diagnosticsInsertTrigger =
 const _diagnosticsDeleteTrigger =
     'trg_quick_routing_diagnostics_profile_delete';
 
+const _httpCaptureInsertTrigger = 'trg_http_capture_profile_insert';
+const _httpCaptureDeleteTrigger = 'trg_http_capture_profile_delete';
+
 /// Rebuilds [raw] into the shape schema version 1 left behind: no
 /// `proxy_groups`, no `icon_records`, and a `rules` table that still stores the
 /// whole rule in one `value` column.
@@ -41,8 +44,15 @@ void _dropV5Logbook(Database raw) {
   raw.execute('DROP TABLE IF EXISTS logbook_events');
 }
 
+void _dropV6HttpCapture(Database raw) {
+  raw.execute('DROP TRIGGER IF EXISTS $_httpCaptureInsertTrigger');
+  raw.execute('DROP TRIGGER IF EXISTS $_httpCaptureDeleteTrigger');
+  raw.execute('DROP TABLE IF EXISTS http_capture_entries');
+}
+
 /// Schema version 2 had no `match_target` on `profiles` and no diagnostics.
 void _downgradeToV2(Database raw) {
+  _dropV6HttpCapture(raw);
   _dropV5Logbook(raw);
   _dropV4Diagnostics(raw);
   raw.execute('ALTER TABLE profiles DROP COLUMN match_target');
@@ -51,14 +61,21 @@ void _downgradeToV2(Database raw) {
 
 /// Schema version 3 already had `match_target`, but no diagnostics table.
 void _downgradeToV3(Database raw) {
+  _dropV6HttpCapture(raw);
   _dropV5Logbook(raw);
   _dropV4Diagnostics(raw);
   raw.execute('PRAGMA user_version = 3');
 }
 
 void _downgradeToV4(Database raw) {
+  _dropV6HttpCapture(raw);
   _dropV5Logbook(raw);
   raw.execute('PRAGMA user_version = 4');
+}
+
+void _downgradeToV5(Database raw) {
+  _dropV6HttpCapture(raw);
+  raw.execute('PRAGMA user_version = 5');
 }
 
 Set<String> _columnsOf(Database raw, String table) => {
@@ -110,7 +127,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 5);
+    expect(_userVersion(raw), 6);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -120,7 +137,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 5);
+    expect(_userVersion(raw), 6);
   });
 
   test(
@@ -135,7 +152,7 @@ void main() {
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
       expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
-      expect(_userVersion(raw), 5);
+      expect(_userVersion(raw), 6);
     },
   );
 
@@ -174,7 +191,7 @@ void main() {
     );
     expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
     expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
-    expect(_userVersion(raw), 5);
+    expect(_userVersion(raw), 6);
   });
 
   test('the v5 upgrade creates persistent Logbook storage', () async {
@@ -203,7 +220,37 @@ void main() {
         'payload',
       ]),
     );
+    expect(_userVersion(raw), 6);
+  });
+
+  test('the v6 upgrade creates persistent HTTP capture storage', () async {
+    _downgradeToV5(raw);
+    expect(_hasTable(raw, 'http_capture_entries'), isFalse);
+    expect(_hasTrigger(raw, _httpCaptureInsertTrigger), isFalse);
+    expect(_hasTrigger(raw, _httpCaptureDeleteTrigger), isFalse);
     expect(_userVersion(raw), 5);
+
+    await openAndMigrate();
+
+    expect(_hasTable(raw, 'http_capture_entries'), isTrue);
+    expect(
+      _columnsOf(raw, 'http_capture_entries'),
+      containsAll(<String>[
+        'id',
+        'connection_id',
+        'session_id',
+        'scope_key',
+        'profile_id',
+        'started_at',
+        'observed_at',
+        'protocol',
+        'search_text',
+        'payload',
+      ]),
+    );
+    expect(_hasTrigger(raw, _httpCaptureInsertTrigger), isTrue);
+    expect(_hasTrigger(raw, _httpCaptureDeleteTrigger), isTrue);
+    expect(_userVersion(raw), 6);
   });
 
   test(
@@ -211,15 +258,21 @@ void main() {
     () async {
       raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsInsertTrigger');
       raw.execute('DROP TRIGGER IF EXISTS $_diagnosticsDeleteTrigger');
-      expect(_userVersion(raw), 5);
+      raw.execute('DROP TRIGGER IF EXISTS $_httpCaptureInsertTrigger');
+      raw.execute('DROP TRIGGER IF EXISTS $_httpCaptureDeleteTrigger');
+      expect(_userVersion(raw), 6);
       expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isFalse);
       expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isFalse);
+      expect(_hasTrigger(raw, _httpCaptureInsertTrigger), isFalse);
+      expect(_hasTrigger(raw, _httpCaptureDeleteTrigger), isFalse);
 
       await openAndMigrate();
 
       expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
       expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
-      expect(_userVersion(raw), 5);
+      expect(_hasTrigger(raw, _httpCaptureInsertTrigger), isTrue);
+      expect(_hasTrigger(raw, _httpCaptureDeleteTrigger), isTrue);
+      expect(_userVersion(raw), 6);
     },
   );
 
@@ -283,7 +336,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 5);
+    expect(_userVersion(raw), 6);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
@@ -295,12 +348,15 @@ void main() {
       await openAndMigrate();
 
       expect(_columnsOf(raw, 'rules'), before);
-      expect(_userVersion(raw), 5);
+      expect(_userVersion(raw), 6);
       expect(_hasTable(raw, 'proxy_groups'), isTrue);
       expect(_hasTable(raw, 'quick_routing_diagnostics'), isTrue);
       expect(_hasTable(raw, 'logbook_events'), isTrue);
+      expect(_hasTable(raw, 'http_capture_entries'), isTrue);
       expect(_hasTrigger(raw, _diagnosticsInsertTrigger), isTrue);
       expect(_hasTrigger(raw, _diagnosticsDeleteTrigger), isTrue);
+      expect(_hasTrigger(raw, _httpCaptureInsertTrigger), isTrue);
+      expect(_hasTrigger(raw, _httpCaptureDeleteTrigger), isTrue);
     },
   );
 }

@@ -10,6 +10,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/scripts.dart';
+import 'package:fl_clash/views/http_capture.dart';
 import 'package:fl_clash/views/dns_diagnostics.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
@@ -112,6 +113,12 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
       'failed' => l.logbookScriptEvaluateFailed,
       _ => event.title,
     },
+    'http.capture.session' => switch (event.details['status']) {
+      'running' => l.logbookHttpCaptureRunning,
+      'completed' => l.logbookHttpCaptureCompleted,
+      'interrupted' => l.logbookHttpCaptureInterrupted,
+      _ => event.title,
+    },
     'dns.query' => switch (event.details['status']) {
       'running' => l.logbookDnsQueryRunning,
       'completed' => l.logbookDnsQueryCompleted,
@@ -119,6 +126,20 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
       _ => event.title,
     },
     _ => event.title,
+  };
+}
+
+String _logbookEventMessage(BuildContext context, LogbookEvent event) {
+  if (event.eventType != 'http.capture.session') {
+    return event.message;
+  }
+  final l = context.appLocalizations;
+  return switch (event.details['status']) {
+    'running' => l.httpCaptureObservationOnly,
+    'completed' =>
+      '${l.entriesCount((event.details['count'] as num?) ?? 0)} · ${event.details['durationMs'] ?? 0} ms',
+    'interrupted' => l.logbookHttpCaptureInterrupted,
+    _ => event.message,
   };
 }
 
@@ -249,6 +270,9 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
     if (event.eventType == 'system.backup' ||
         event.eventType == 'system.restore') {
       return const BackupAndRestore();
+    }
+    if (event.eventType == 'http.capture.session') {
+      return const HttpCaptureView();
     }
     return null;
   }
@@ -765,10 +789,10 @@ class _LogbookTimelineItem extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (event.message.isNotEmpty) ...[
+                      if (_logbookEventMessage(context, event).isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Text(
-                          event.message,
+                          _logbookEventMessage(context, event),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: context.textTheme.bodyMedium,
