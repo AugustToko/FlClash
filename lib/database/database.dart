@@ -11,6 +11,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 part 'converter.dart';
+part 'diagnostics.dart';
 part 'generated/database.g.dart';
 part 'groups.dart';
 part 'icons.dart';
@@ -34,7 +35,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -46,6 +47,10 @@ class Database extends _$Database {
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
+      onCreate: (m) async {
+        await m.createAll();
+        await _createQuickRoutingDiagnosticsSchema(this);
+      },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
           await m.createTable(proxyGroups);
@@ -55,6 +60,9 @@ class Database extends _$Database {
         }
         if (from < 3) {
           await _addColumnIfMissing(m, profiles, profiles.matchTarget);
+        }
+        if (from < 4) {
+          await _createQuickRoutingDiagnosticsSchema(this);
         }
       },
     );
