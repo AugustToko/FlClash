@@ -299,6 +299,48 @@ void main() {
 
       expect(notifications, 1);
       expect(container.read(requestsProvider).length, 1);
+
+      container
+          .read(requestsProvider.notifier)
+          .addRequest(
+            TrackerInfo(
+              id: '1',
+              start: DateTime.utc(2026),
+              metadata: const Metadata(network: 'tcp', host: 'example.com'),
+              chains: const ['Proxy'],
+              rule: 'DOMAIN',
+              rulePayload: 'example.com',
+              observation: const ProtocolObservation(
+                sessionId: 'capture-session',
+                kind: 'http1',
+                http: HttpProtocolObservation(
+                  method: 'GET',
+                  target: '/',
+                  version: 'HTTP/1.1',
+                  headersComplete: true,
+                ),
+                httpResponse: HttpResponseProtocolObservation(
+                  version: 'HTTP/1.1',
+                  statusCode: 204,
+                  headersComplete: true,
+                  observedBytes: 27,
+                ),
+              ),
+            ),
+          );
+
+      expect(notifications, 2);
+      expect(container.read(requestsProvider).length, 1);
+      expect(
+        container
+            .read(requestsProvider)
+            .list
+            .single
+            .observation
+            ?.httpResponse
+            ?.statusCode,
+        204,
+      );
     });
 
     test('Traffics.addTraffic reaches listeners and clear resets', () {
@@ -488,7 +530,8 @@ void main() {
     test(
       'ignores a canceled stale check after a newer check succeeds',
       () async {
-        request.dio.httpClientAdapter = _DelayedCancelIpAdapter();
+        final adapter = _DelayedCancelIpAdapter();
+        request.dio.httpClientAdapter = adapter;
         final container = ProviderContainer(
           overrides: [
             initProvider.overrideWithBuild((_, _) => true),
@@ -502,14 +545,16 @@ void main() {
         await Future.delayed(commonDuration + const Duration(milliseconds: 50));
 
         notifier.startCheck();
-        await Future.delayed(
-          commonDuration + const Duration(milliseconds: 120),
+        await _waitForNetworkDetection(
+          container,
+          (state) => state.ipInfo?.ip == '2.2.2.2' && !state.isLoading,
         );
 
         expect(container.read(networkDetectionProvider).ipInfo?.ip, '2.2.2.2');
         expect(container.read(networkDetectionProvider).isLoading, false);
 
-        await Future.delayed(const Duration(milliseconds: 620));
+        await adapter.staleBatchSettled.timeout(const Duration(seconds: 10));
+        await Future<void>.delayed(Duration.zero);
 
         expect(container.read(networkDetectionProvider).ipInfo?.ip, '2.2.2.2');
         expect(container.read(networkDetectionProvider).isLoading, false);
@@ -518,10 +563,29 @@ void main() {
   });
 }
 
+Future<void> _waitForNetworkDetection(
+  ProviderContainer container,
+  bool Function(NetworkDetectionState state) predicate,
+) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!predicate(container.read(networkDetectionProvider))) {
+    if (DateTime.now().isAfter(deadline)) {
+      throw TimeoutException(
+        'Network detection did not reach the expected state',
+      );
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  }
+}
+
 class _DelayedCancelIpAdapter implements HttpClientAdapter {
   static const _sourceCount = 7;
 
   int _requestCount = 0;
+  int _settledStaleRequests = 0;
+  final _staleBatchSettled = Completer<void>();
+
+  Future<void> get staleBatchSettled => _staleBatchSettled.future;
 
   @override
   Future<ResponseBody> fetch(
@@ -543,6 +607,11 @@ class _DelayedCancelIpAdapter implements HttpClientAdapter {
               error: 'cancelled',
             ),
           );
+          _settledStaleRequests++;
+          if (_settledStaleRequests == _sourceCount &&
+              !_staleBatchSettled.isCompleted) {
+            _staleBatchSettled.complete();
+          }
         });
       });
       return completer.future;

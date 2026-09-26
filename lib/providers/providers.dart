@@ -3,4 +3,7 @@ export 'app.dart';
 export 'config.dart';
 export 'core.dart';
 export 'database.dart';
+export 'http_capture.dart';
+export 'logbook.dart';
+export 'quick_routing.dart';
 export 'state.dart';

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
@@ -587,6 +588,24 @@ Future<String> _backupTask<T>(
 }
 
 @visibleForTesting
+Future<void> stripLocalOnlyDatabaseState(String databasePath) async {
+  final file = File(databasePath);
+  if (!await file.exists()) {
+    return;
+  }
+  final backupDatabase = Database(NativeDatabase(file));
+  try {
+    await backupDatabase.customStatement(
+      'DELETE FROM quick_routing_diagnostics',
+    );
+    await backupDatabase.clearLogbook();
+    await backupDatabase.clearHttpCaptureEntries();
+  } finally {
+    await backupDatabase.close();
+  }
+}
+
+@visibleForTesting
 Future<String> writeBackupArchive({
   required Map<String, dynamic> configMap,
   required Iterable<String> fileNames,
@@ -605,6 +624,7 @@ Future<String> writeBackupArchive({
   final dbFile = File(databasePath);
   if (await dbFile.exists()) {
     await dbFile.copy(tempDBFile.path);
+    await stripLocalOnlyDatabaseState(tempDBFile.path);
   }
   final encoder = ZipFileEncoder();
   encoder.create(zipFilePath);

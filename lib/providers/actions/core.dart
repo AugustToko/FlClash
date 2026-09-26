@@ -10,6 +10,28 @@ class CoreAction extends _$CoreAction {
   @override
   void build() {}
 
+  void _recordLifecycle({
+    required LogbookSeverity severity,
+    required String eventType,
+    required String title,
+    String message = '',
+    Map<String, Object?> details = const {},
+  }) {
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            profileId: ref.read(currentProfileIdProvider),
+            category: LogbookCategory.core,
+            severity: severity,
+            eventType: eventType,
+            title: title,
+            message: message,
+            details: details,
+          ),
+    );
+  }
+
   Future<void> initCore() async {
     final isInit = await _core.isInit;
 
@@ -23,12 +45,34 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<void> startCore() async {
+    final startedAt = DateTime.now();
     ref.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
     try {
       final result = await startLifecycle();
-      await _applyLifecycleResult(result);
+      final applied = await _applyLifecycleResult(result);
+      _recordLifecycle(
+        severity: applied ? LogbookSeverity.success : LogbookSeverity.warning,
+        eventType: applied ? 'core.start.completed' : 'core.start.superseded',
+        title: applied ? 'core.start.completed' : 'core.start.superseded',
+        message:
+            '${result.outcome.name} · '
+            '${DateTime.now().difference(startedAt).inMilliseconds} ms',
+        details: {
+          'durationMs': DateTime.now().difference(startedAt).inMilliseconds,
+          'outcome': result.outcome.name,
+        },
+      );
     } catch (error) {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+      _recordLifecycle(
+        severity: LogbookSeverity.error,
+        eventType: 'core.start.failed',
+        title: 'core.start.failed',
+        message: compactError(error),
+        details: {
+          'durationMs': DateTime.now().difference(startedAt).inMilliseconds,
+        },
+      );
       dialogs.showNotifier(error.toString(), level: MessageLevel.error);
     }
   }
@@ -76,6 +120,12 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<void> crash() async {
+    _recordLifecycle(
+      severity: LogbookSeverity.warning,
+      eventType: 'core.crash.requested',
+      title: 'core.crash.requested',
+      message: 'developer-tools',
+    );
     await _core.crash();
   }
 
@@ -92,6 +142,7 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<bool> _runRestartWorker() async {
+    final startedAt = DateTime.now();
     try {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
       final result = await restartLifecycle();
@@ -114,9 +165,34 @@ class CoreAction extends _$CoreAction {
         }
         appliedRevision = revision;
       }
+      _recordLifecycle(
+        severity: applied ? LogbookSeverity.success : LogbookSeverity.warning,
+        eventType: applied
+            ? 'core.restart.completed'
+            : 'core.restart.profile-apply-failed',
+        title: applied
+            ? 'core.restart.completed'
+            : 'core.restart.profile-apply-failed',
+        message:
+            '${DateTime.now().difference(startedAt).inMilliseconds} ms · '
+            'revision=$_requestedRestartRevision',
+        details: {
+          'durationMs': DateTime.now().difference(startedAt).inMilliseconds,
+          'requestedRevision': _requestedRestartRevision,
+        },
+      );
       return applied;
-    } catch (_) {
+    } catch (error) {
       ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+      _recordLifecycle(
+        severity: LogbookSeverity.error,
+        eventType: 'core.restart.failed',
+        title: 'core.restart.failed',
+        message: compactError(error),
+        details: {
+          'durationMs': DateTime.now().difference(startedAt).inMilliseconds,
+        },
+      );
       rethrow;
     } finally {
       _restartOperation = null;

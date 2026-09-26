@@ -81,6 +81,7 @@ func handleForceGC() {
 
 func handleShutdown() bool {
 	handleStopLog()
+	disableHTTPObservation()
 
 	configMu.Lock()
 	isRunning.Store(false)
@@ -695,9 +696,12 @@ func init() {
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
+		// Snapshot response-capable trackers before the message enters the batch
+		// queue. Otherwise the initial and response-update events can both marshal
+		// the same later mutable tracker state.
 		sendMessage(Message{
 			Type: RequestMessage,
-			Data: c,
+			Data: c.Info(),
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {

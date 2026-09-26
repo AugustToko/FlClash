@@ -54,6 +54,7 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
       title: appLocalizations.requests,
       searchState: AppBarSearchState(onSearch: _listController.search),
       onKeywordsUpdate: _listController.updateKeywords,
+      actions: const [QuickRoutingDiagnosticsButton()],
       floatingActionButton: ValueListenableBuilder(
         valueListenable: _listController,
         builder: (_, state, _) {
@@ -114,6 +115,9 @@ class _RequestsViewState extends ConsumerState<RequestsView> {
                     detailTitle: appLocalizations.details(
                       appLocalizations.request,
                     ),
+                    trailingBuilder: (trackerInfo) {
+                      return QuickRoutingButton(trackerInfo: trackerInfo);
+                    },
                   ),
                 ),
               ),

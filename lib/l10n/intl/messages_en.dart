@@ -266,6 +266,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "The app is already up to date",
     ),
     "clearData": MessageLookupByLibrary.simpleMessage("Clear data"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("Clear Logbook"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "Clear all stored Logbook events?",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Export to clipboard",
@@ -397,11 +401,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "New version found",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("Additional"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Answers"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("Authority"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage(
       "Update DNS-related settings",
     ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS diagnostics"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Query the running Core and inspect DNS records",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS hijacking"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("No records returned"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS query failed"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage(
+      "Domain or IP address",
+    ),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS response"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Record type"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Resolver"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Active Core resolver",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "Direct outbound DNS",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "Proxy server DNS",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("System DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Response flags"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Run query"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "The active Core resolver was unavailable, so system DNS was used",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "The response contains no answer records",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "The response was truncated",
+    ),
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
@@ -516,6 +557,173 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("hours"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP Capture"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "All profiles",
+    ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello complete",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Complete"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "Connection metadata fallback",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core passive observer",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core observer is still stopping",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "Current profile",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Passively observe initial HTTP/1 requests and responses, TLS ClientHello metadata, and connection-level fallbacks from the running Core",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "No HTTP observations yet",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Observed endpoint",
+    ),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "HTTP/1 request prefix observed by Core",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage(
+          "TLS ClientHello observed by Core",
+        ),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "Host observed; protocol unknown",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "Common HTTP port",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "Common QUIC port",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "Common TLS port",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Scheme reported by Core",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "Transport metadata only",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "Export HAR-compatible observations",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP observations exported",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR export remains observation-only. For observed cleartext HTTP/1 it may include the request method, sanitized target and header names, plus the first response status, version and header names. Reason phrases, all header values, bodies, later keep-alive messages, decrypted TLS data, and detailed timings remain unknown.",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Header names",
+    ),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Header-name list truncated",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Headers complete",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host truncated",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "HTTP version",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("Incomplete"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "Informational status codes",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Informational status list truncated",
+        ),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
+      "Not observed",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
+      "Observation delay",
+    ),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "Opt-in passive observation. Core may inspect a bounded initial HTTP/1 request and its first cleartext response headers, or TLS ClientHello metadata. It never stores query strings, reason phrases, header values, bodies, certificates, decrypted TLS data, or later keep-alive messages. New connections only; local records are excluded from backups.",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Observed prefix",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Present"),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
+      "Process path",
+    ),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "Unknown protocol",
+    ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "Request method",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "Sanitized target",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
+      "Observed response",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Response header names",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Response header-name list truncated",
+        ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Response headers complete",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Response HTTP version",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Response observed after",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Observed response prefix",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "Response status",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "Response observation truncated",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "Request target truncated",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "Legacy TLS version",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS server name",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "Supported TLS versions",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
+      "Observation truncated",
+    ),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon style"),
@@ -629,6 +837,150 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("Log"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Log level"),
+    "logbook": MessageLookupByLibrary.simpleMessage("Logbook"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("All"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "Backup cancelled",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "Backup completed",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "Backup failed",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage(
+      "Creating backup",
+    ),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "Connectivity changed",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("Core"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "Core crash requested",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "Core restart failed",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "Core restarted with profile errors",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage(
+      "Core restarted",
+    ),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "Core failed to start",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "Core start superseded",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("Core started"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "Persistent timeline of network and configuration events",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS query completed",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "DNS query failed",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage(
+      "Querying DNS",
+    ),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage(
+      "No events have been recorded yet",
+    ),
+    "logbookError": MessageLookupByLibrary.simpleMessage("Error"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage(
+      "Geo data is already up to date",
+    ),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo data update failed",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Updating Geo data",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
+      "Geo data updated",
+    ),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture stopped",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture interrupted",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture started",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("Info"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "Stored locally on this device",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("Network"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "Profile applied",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "Profile apply raised an exception",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Profile apply failed",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("Provider"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Provider data import failed",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "Importing provider data",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "Provider data imported",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Provider update failed",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Updating provider",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "Provider updated",
+    ),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "Quick route verification is approximate",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "Quick route mismatch",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Quick route verification unavailable",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "Quick route verified",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "Restore completed",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage(
+      "Restore failed",
+    ),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage(
+      "Restoring backup",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("Routing"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("Script"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "Configuration script failed",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "Running configuration script",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "Configuration script completed",
+    ),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("Success"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("System"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("Warning"),
     "logcat": MessageLookupByLibrary.simpleMessage("Logcat"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
       "Disabling hides the log entry point",

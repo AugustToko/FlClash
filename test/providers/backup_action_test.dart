@@ -7,6 +7,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/logbook.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -41,7 +42,9 @@ void main() {
   });
 
   ProviderContainer buildContainer() {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [logbookPersistenceEnabledProvider.overrideWithValue(false)],
+    );
     addTearDown(container.dispose);
     return container;
   }
@@ -68,6 +71,7 @@ void main() {
           backupActionProvider.overrideWith(
             () => _StubbedArchiveBackupAction(archivePath),
           ),
+          logbookPersistenceEnabledProvider.overrideWithValue(false),
         ],
       );
       addTearDown(container.dispose);
@@ -87,6 +91,11 @@ void main() {
       expect(result, isTrue);
       expect(sent, archive.path);
       expect(archive.existsSync(), isFalse);
+      final event = container.read(logbookProvider).single;
+      expect(event.eventType, 'system.backup');
+      expect(event.severity, LogbookSeverity.success);
+      expect(event.details['status'], 'completed');
+      expect(event.searchText, isNot(contains(archive.path)));
     });
 
     test('deletes the archive when sending it fails', () async {
@@ -101,7 +110,30 @@ void main() {
       );
 
       expect(archive.existsSync(), isFalse);
+      final event = container.read(logbookProvider).single;
+      expect(event.severity, LogbookSeverity.error);
+      expect(event.details['status'], 'failed');
+      expect(event.details['failureKind'], 'SocketException');
+      expect(event.searchText, isNot(contains('offline')));
     });
+
+    test(
+      'records a cancelled backup when the target declines the file',
+      () async {
+        final archive = stubArchive();
+        final container = containerFor(archive.path);
+
+        final result = await actionOf(
+          container,
+        ).consumeBackup((_) async => false);
+
+        expect(result, isFalse);
+        expect(archive.existsSync(), isFalse);
+        final event = container.read(logbookProvider).single;
+        expect(event.severity, LogbookSeverity.info);
+        expect(event.details['status'], 'cancelled');
+      },
+    );
   });
 
   group('applyRestore writes the database', () {

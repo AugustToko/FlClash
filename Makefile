@@ -10,3 +10,4 @@ help:
 
 submodules:
 	git submodule update --init --recursive
+	bash tool/apply_core_patches.sh

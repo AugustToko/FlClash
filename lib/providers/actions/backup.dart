@@ -5,15 +5,82 @@ class BackupAction extends _$BackupAction {
   @override
   void build() {}
 
+  void _recordTransfer({
+    required String eventType,
+    required String correlationId,
+    required String status,
+    required DateTime startedAt,
+    Map<String, Object?> details = const {},
+    String? failureKind,
+  }) {
+    final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
+    final severity = switch (status) {
+      'completed' => LogbookSeverity.success,
+      'failed' => LogbookSeverity.error,
+      _ => LogbookSeverity.info,
+    };
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            category: LogbookCategory.system,
+            severity: severity,
+            eventType: eventType,
+            title: eventType,
+            message: '$durationMs ms',
+            correlationId: correlationId,
+            details: {
+              'status': status,
+              'durationMs': durationMs,
+              ...details,
+              'failureKind': ?failureKind,
+            },
+          ),
+    );
+  }
+
   Future<bool> consumeBackup(Future<bool> Function(String path) send) async {
-    final path = await backup();
-    if (path.isEmpty) {
-      return false;
-    }
+    final startedAt = DateTime.now();
+    final correlationId = 'backup:${startedAt.microsecondsSinceEpoch}';
+    _recordTransfer(
+      eventType: 'system.backup',
+      correlationId: correlationId,
+      status: 'running',
+      startedAt: startedAt,
+    );
+    String path = '';
     try {
-      return await send(path);
+      path = await backup();
+      if (path.isEmpty) {
+        _recordTransfer(
+          eventType: 'system.backup',
+          correlationId: correlationId,
+          status: 'cancelled',
+          startedAt: startedAt,
+        );
+        return false;
+      }
+      final sent = await send(path);
+      _recordTransfer(
+        eventType: 'system.backup',
+        correlationId: correlationId,
+        status: sent ? 'completed' : 'cancelled',
+        startedAt: startedAt,
+      );
+      return sent;
+    } catch (error) {
+      _recordTransfer(
+        eventType: 'system.backup',
+        correlationId: correlationId,
+        status: 'failed',
+        startedAt: startedAt,
+        failureKind: error.runtimeType.toString(),
+      );
+      rethrow;
     } finally {
-      await File(path).safeDelete();
+      if (path.isNotEmpty) {
+        await File(path).safeDelete();
+      }
     }
   }
 
@@ -31,6 +98,15 @@ class BackupAction extends _$BackupAction {
   }
 
   Future<void> restore(RestoreOption option) async {
+    final startedAt = DateTime.now();
+    final correlationId = 'restore:${startedAt.microsecondsSinceEpoch}';
+    _recordTransfer(
+      eventType: 'system.restore',
+      correlationId: correlationId,
+      status: 'running',
+      startedAt: startedAt,
+      details: {'option': option.name},
+    );
     final restoreDirPath = await appPath.restoreDirPath;
     final restoreDir = Directory(restoreDirPath);
     try {
@@ -39,6 +115,28 @@ class BackupAction extends _$BackupAction {
         throw MessageException(currentAppLocalizations.restoreException);
       }
       await applyRestore(migrationData, option);
+      _recordTransfer(
+        eventType: 'system.restore',
+        correlationId: correlationId,
+        status: 'completed',
+        startedAt: startedAt,
+        details: {
+          'option': option.name,
+          'profiles': migrationData.profiles.length,
+          'scripts': migrationData.scripts.length,
+          'rules': migrationData.rules.length,
+        },
+      );
+    } catch (error) {
+      _recordTransfer(
+        eventType: 'system.restore',
+        correlationId: correlationId,
+        status: 'failed',
+        startedAt: startedAt,
+        details: {'option': option.name},
+        failureKind: error.runtimeType.toString(),
+      );
+      rethrow;
     } finally {
       await restoreDir.safeDelete(recursive: true);
     }

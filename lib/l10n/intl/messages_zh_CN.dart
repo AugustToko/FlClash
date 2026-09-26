@@ -196,6 +196,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("当前应用已经是最新版了"),
     "clearData": MessageLookupByLibrary.simpleMessage("清除数据"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("清空事件日志"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage("确定清空所有已保存的事件日志吗？"),
     "clearSearch": MessageLookupByLibrary.simpleMessage("清除搜索"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("导出剪贴板"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("剪贴板导入"),
@@ -285,9 +287,32 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "disconnected": MessageLookupByLibrary.simpleMessage("已断开"),
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage("发现新版本"),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("附加记录"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("应答记录"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("权威记录"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("更新DNS相关设置"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS 诊断"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "通过当前 Core 查询并检查 DNS 记录",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS劫持"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS模式"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("未返回记录"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 查询失败"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("域名或 IP 地址"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS 响应"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("记录类型"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("解析器"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage("当前 Core 解析器"),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage("直连出口 DNS"),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage("代理服务器 DNS"),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("系统 DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("响应标志"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("开始查询"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage("当前 Core 解析器不可用，已改用系统 DNS"),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage("响应中没有应答记录"),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage("响应已被截断"),
     "domain": MessageLookupByLibrary.simpleMessage("域名"),
     "download": MessageLookupByLibrary.simpleMessage("下载"),
     "edit": MessageLookupByLibrary.simpleMessage("编辑"),
@@ -370,6 +395,133 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("小时"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP 捕获"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage("全部配置"),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello 是否完整",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完整"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "连接元数据回退",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core 被动观察器",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core 观察器仍在停止中",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "被动观察运行中 Core 的首个 HTTP/1 请求与响应、TLS ClientHello 元数据及连接级回退信息",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage("暂无 HTTP 观察记录"),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("观察到的端点"),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core 已观察到 HTTP/1 请求前缀",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core 已观察到 TLS ClientHello"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "已观察到主机，协议未知",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "常见 HTTP 端口",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "常见 QUIC 端口",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "常见 TLS 端口",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Core 报告的协议方案",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "仅有传输层元数据",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "导出 HAR 兼容观察记录",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP 观察记录已导出",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR 导出仍仅表示观察结果。对于已观察到的明文 HTTP/1，可包含请求方法、已净化目标和请求头名称，以及首个响应的状态码、版本和响应头名称。Reason Phrase、所有请求头/响应头值、正文、Keep-Alive 后续消息、解密后的 TLS 数据与详细时序仍保持未知。",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("请求头名称"),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "请求头名称列表已截断",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "请求头是否完整",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host 已截断",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage("HTTP 版本"),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完整"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "信息性状态码",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage("信息性状态码列表已截断"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未观察到"),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "仅在主动开启时被动观察。Core 可检查有界的首个 HTTP/1 请求及首个明文响应头，或 TLS ClientHello 元数据；不会保存查询参数、Reason Phrase、请求头/响应头值、正文、证书、解密后的 TLS 数据及 Keep-Alive 后续消息。仅适用于开启后新建的连接；记录只保存在本机并从备份中排除。",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage("已观察前缀"),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("存在"),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("进程路径"),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage("未知协议"),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage("请求方法"),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage("已净化目标"),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("已观察响应"),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "响应头名称",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage("响应头名称列表已截断"),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "响应头是否完整",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "响应 HTTP 版本",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "响应观察延迟",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "已观察响应前缀",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage("响应状态码"),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "响应观察是否截断",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("正在捕获"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("已停止"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "请求目标已截断",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage("加密 ClientHello"),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "旧版 TLS 版本字段",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS 服务器名称",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "支持的 TLS 版本",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("观察是否截断"),
     "icon": MessageLookupByLibrary.simpleMessage("图片"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("图标记录"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("图标样式"),
@@ -450,6 +602,108 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("日志"),
     "logLevel": MessageLookupByLibrary.simpleMessage("日志等级"),
+    "logbook": MessageLookupByLibrary.simpleMessage("事件日志"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("全部"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage("备份已取消"),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage("备份已完成"),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage("备份失败"),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage("正在创建备份"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "网络连接发生变化",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("核心"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "已请求核心诊断崩溃",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage("核心重启失败"),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "核心已重启，但配置应用异常",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage("核心已重启"),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage("核心启动失败"),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "核心启动请求已被替代",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("核心已启动"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage("持久记录网络、配置与运行事件的时间线"),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS 查询完成",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 查询失败"),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage("正在查询 DNS"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage("暂未记录任何事件"),
+    "logbookError": MessageLookupByLibrary.simpleMessage("错误"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo 数据已是最新"),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo 数据更新失败",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在更新 Geo 数据",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo 数据已更新"),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已停止",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已中断",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已开始",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("信息"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage("仅保存在当前设备"),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("网络"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("配置"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage("配置已应用"),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "配置应用出现异常",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage("配置应用失败"),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("资源提供器"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "资源提供器数据导入失败",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "正在导入资源提供器数据",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "资源提供器数据已导入",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "资源提供器更新失败",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在更新资源提供器",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage("资源提供器已更新"),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "快速分流为近似验证",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "快速分流结果不匹配",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "快速分流暂时无法验证",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "快速分流已验证",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage("恢复已完成"),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage("恢复失败"),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage("正在恢复备份"),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("分流"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("脚本"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "配置脚本执行失败",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在执行配置脚本",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage("配置脚本执行完成"),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("系统"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("日志捕获"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("禁用将会隐藏日志入口"),
     "logs": MessageLookupByLibrary.simpleMessage("日志"),

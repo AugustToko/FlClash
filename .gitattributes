@@ -1,0 +1,4 @@
+# Unified-diff syntax intentionally prefixes context lines with one space.
+# Do not interpret those patch markers as whitespace errors in the patch file.
+core/patches/*.patch -whitespace
+core/patches/migrations/*.patch -whitespace

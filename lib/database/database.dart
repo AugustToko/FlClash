@@ -11,9 +11,12 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 part 'converter.dart';
+part 'diagnostics.dart';
 part 'generated/database.g.dart';
 part 'groups.dart';
+part 'http_capture.dart';
 part 'icons.dart';
+part 'logbook.dart';
 part 'links.dart';
 part 'profiles.dart';
 part 'rules.dart';
@@ -34,7 +37,7 @@ class Database extends _$Database {
   Database([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 6;
 
   static LazyDatabase _openConnection() {
     return LazyDatabase(() async {
@@ -46,6 +49,12 @@ class Database extends _$Database {
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
+      onCreate: (m) async {
+        await m.createAll();
+        await _createQuickRoutingDiagnosticsSchema(this);
+        await _createLogbookSchema(this);
+        await _createHttpCaptureSchema(this);
+      },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
           await m.createTable(proxyGroups);
@@ -56,6 +65,24 @@ class Database extends _$Database {
         if (from < 3) {
           await _addColumnIfMissing(m, profiles, profiles.matchTarget);
         }
+        if (from < 4) {
+          await _createQuickRoutingDiagnosticsSchema(this);
+        }
+        if (from < 5) {
+          await _createLogbookSchema(this);
+        }
+        if (from < 6) {
+          await _createHttpCaptureSchema(this);
+        }
+      },
+      beforeOpen: (_) async {
+        // These operational-history tables intentionally use custom SQL
+        // instead of generated Drift tables. Reconcile their indexes and
+        // triggers on every open so development builds that already reached a
+        // schema version also gain later idempotent integrity fixes.
+        await _createQuickRoutingDiagnosticsSchema(this);
+        await _createLogbookSchema(this);
+        await _createHttpCaptureSchema(this);
       },
     );
   }

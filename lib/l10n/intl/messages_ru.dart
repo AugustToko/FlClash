@@ -274,6 +274,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "У вас уже последняя версия",
     ),
     "clearData": MessageLookupByLibrary.simpleMessage("Очистить данные"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("Очистить журнал"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "Удалить все сохранённые события журнала?",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Очистить поиск"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Экспорт в буфер обмена",
@@ -407,11 +411,54 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "Доступна новая версия",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage(
+      "Дополнительные записи",
+    ),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Ответы"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage(
+      "Авторитетные записи",
+    ),
     "dnsDesc": MessageLookupByLibrary.simpleMessage(
       "Настройки, связанные с DNS",
     ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("Диагностика DNS"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Запрос DNS через работающий Core и просмотр записей",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Перехват DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Режим DNS"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage(
+      "Записи не возвращены",
+    ),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("Домен или IP-адрес"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("Ответ DNS"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Тип записи"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Резолвер"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Активный резолвер Core",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "DNS прямого подключения",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "DNS прокси-сервера",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("Системный DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Флаги ответа"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Выполнить запрос"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Активный резолвер Core недоступен, использован системный DNS",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "В ответе нет записей",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "Ответ был усечён",
+    ),
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
@@ -530,6 +577,175 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("часов"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("Захват HTTP"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "Все профили",
+    ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота ClientHello",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Полностью"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "Резервные метаданные соединения",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Пассивный наблюдатель Core",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Наблюдатель Core всё ещё останавливается",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "Текущий профиль",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Пассивное наблюдение первого запроса и ответа HTTP/1, метаданных TLS ClientHello и резервных метаданных соединения из работающего Core",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "Наблюдений HTTP пока нет",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый адрес",
+    ),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core наблюдал префикс запроса HTTP/1",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core наблюдал TLS ClientHello"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "Хост наблюдается, протокол неизвестен",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт HTTP",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт QUIC",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт TLS",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Схема сообщена Core",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "Только транспортные метаданные",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "Экспорт HAR-совместимых наблюдений",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Наблюдения HTTP экспортированы",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "Экспорт HAR остаётся наблюдением. Для наблюдаемого открытого HTTP/1 он может содержать метод запроса, очищенный адрес и имена заголовков запроса, а также статус, версию и имена заголовков первого ответа. Reason Phrase, все значения заголовков, тела, последующие сообщения Keep-Alive, расшифрованные данные TLS и подробные тайминги остаются неизвестными.",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Имена заголовков",
+    ),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Список имён заголовков усечён",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота заголовков",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host усечён",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Версия HTTP",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage(
+      "Неполностью",
+    ),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "Информационные коды состояния",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Список информационных кодов усечён",
+        ),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
+      "Не наблюдается",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения",
+    ),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "Пассивное наблюдение включается явно. Core может проверить ограниченный первый запрос HTTP/1 и заголовки первого открытого ответа либо метаданные TLS ClientHello. Query-параметры, Reason Phrase, значения заголовков, тела, сертификаты, расшифрованные данные TLS и последующие сообщения Keep-Alive не сохраняются. Учитываются только новые соединения; локальные записи исключены из резервных копий.",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый префикс",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Есть"),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
+      "Путь процесса",
+    ),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "Неизвестный протокол",
+    ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "Метод запроса",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "Очищенный адрес",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый ответ",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Имена заголовков ответа",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Список имён заголовков ответа усечён",
+        ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота заголовков ответа",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Версия HTTP ответа",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения ответа",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый префикс ответа",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "Статус ответа",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение ответа усечено",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "Захват выполняется",
+    ),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Остановлено"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "Цель запроса усечена",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "Устаревшая версия TLS",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "Имя сервера TLS",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "Поддерживаемые версии TLS",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение усечено",
+    ),
     "icon": MessageLookupByLibrary.simpleMessage("Значок"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("История значков"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль значков"),
@@ -641,6 +857,150 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("Лог"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Уровень логов"),
+    "logbook": MessageLookupByLibrary.simpleMessage("Журнал событий"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("Все"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "Резервное копирование отменено",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "Резервное копирование завершено",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка резервного копирования",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage(
+      "Создание резервной копии",
+    ),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "Состояние подключения изменилось",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("Ядро"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "Запрошен диагностический сбой ядра",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось перезапустить ядро",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "Ядро перезапущено с ошибками профиля",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage(
+      "Ядро перезапущено",
+    ),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось запустить ядро",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "Запрос запуска ядра заменён",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("Ядро запущено"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "Постоянная хронология сетевых событий и изменений конфигурации",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS-запрос завершён",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage(
+      "Выполняется DNS-запрос",
+    ),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage(
+      "События пока не записаны",
+    ),
+    "logbookError": MessageLookupByLibrary.simpleMessage("Ошибка"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage(
+      "Geo-данные уже актуальны",
+    ),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить Geo-данные",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Обновление Geo-данных",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
+      "Geo-данные обновлены",
+    ),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "Захват HTTP остановлен",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP-перехват прерван",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "Захват HTTP начат",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("Информация"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "Хранится только на этом устройстве",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("Сеть"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("Профиль"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "Профиль применён",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "Исключение при применении профиля",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось применить профиль",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("Провайдер"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось импортировать данные провайдера",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "Импорт данных провайдера",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "Данные провайдера импортированы",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить провайдер",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Обновление провайдера",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "Провайдер обновлён",
+    ),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "Проверка быстрого маршрута приблизительная",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "Быстрый маршрут не совпадает",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Проверка быстрого маршрута недоступна",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "Быстрый маршрут проверен",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "Восстановление завершено",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка восстановления",
+    ),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage(
+      "Восстановление резервной копии",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("Маршрутизация"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("Скрипт"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка скрипта конфигурации",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "Выполнение скрипта конфигурации",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "Скрипт конфигурации выполнен",
+    ),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("Успешно"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("Система"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("Предупреждение"),
     "logcat": MessageLookupByLibrary.simpleMessage("Захват логов"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
       "При отключении раздел логов будет скрыт",

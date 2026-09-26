@@ -174,10 +174,63 @@ class ProxiesAction extends _$ProxiesAction {
     ref.read(checkIpNumProvider.notifier).add();
   }
 
+  void _recordProviderOperation({
+    required ExternalProvider provider,
+    required int? profileId,
+    required String eventType,
+    required String correlationId,
+    required String status,
+    required DateTime startedAt,
+    int? count,
+    String? failureKind,
+  }) {
+    final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
+    final severity = switch (status) {
+      'completed' => LogbookSeverity.success,
+      'failed' => LogbookSeverity.error,
+      _ => LogbookSeverity.info,
+    };
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            profileId: profileId,
+            category: LogbookCategory.provider,
+            severity: severity,
+            eventType: eventType,
+            title: eventType,
+            message: '${provider.name} · $durationMs ms',
+            correlationId: correlationId,
+            details: {
+              'status': status,
+              'provider': provider.name,
+              'providerType': provider.type,
+              'vehicleType': provider.vehicleType,
+              'durationMs': durationMs,
+              'count': ?count,
+              'failureKind': ?failureKind,
+            },
+          ),
+    );
+  }
+
   Future<String> updateProvider(
     ExternalProvider provider, {
     bool showLoading = false,
   }) async {
+    final startedAt = DateTime.now();
+    final profileId = ref.read(currentProfileIdProvider);
+    final correlationId =
+        'provider-update:${provider.name}:${startedAt.microsecondsSinceEpoch}';
+    _recordProviderOperation(
+      provider: provider,
+      profileId: profileId,
+      eventType: 'provider.external.update',
+      correlationId: correlationId,
+      status: 'running',
+      startedAt: startedAt,
+      count: provider.count,
+    );
     final operation = showLoading
         ? ref
               .read(updatingKeysProvider.notifier)
@@ -187,11 +240,44 @@ class ProxiesAction extends _$ProxiesAction {
       final message = await _core.updateExternalProvider(
         providerName: provider.name,
       );
-      if (message.isNotEmpty) return message;
-      ref
-          .read(providersProvider.notifier)
-          .setProvider(await _core.getExternalProvider(provider.name));
+      if (message.isNotEmpty) {
+        _recordProviderOperation(
+          provider: provider,
+          profileId: profileId,
+          eventType: 'provider.external.update',
+          correlationId: correlationId,
+          status: 'failed',
+          startedAt: startedAt,
+          count: provider.count,
+          failureKind: 'core-message',
+        );
+        return message;
+      }
+      final refreshed = await _core.getExternalProvider(provider.name);
+      ref.read(providersProvider.notifier).setProvider(refreshed);
+      final resolved = refreshed ?? provider;
+      _recordProviderOperation(
+        provider: resolved,
+        profileId: profileId,
+        eventType: 'provider.external.update',
+        correlationId: correlationId,
+        status: 'completed',
+        startedAt: startedAt,
+        count: resolved.count,
+      );
       return '';
+    } catch (error) {
+      _recordProviderOperation(
+        provider: provider,
+        profileId: profileId,
+        eventType: 'provider.external.update',
+        correlationId: correlationId,
+        status: 'failed',
+        startedAt: startedAt,
+        count: provider.count,
+        failureKind: error.runtimeType.toString(),
+      );
+      rethrow;
     } finally {
       if (operation != null) {
         ref
@@ -206,6 +292,19 @@ class ProxiesAction extends _$ProxiesAction {
     String data, {
     bool showLoading = false,
   }) async {
+    final startedAt = DateTime.now();
+    final profileId = ref.read(currentProfileIdProvider);
+    final correlationId =
+        'provider-sideload:${provider.name}:${startedAt.microsecondsSinceEpoch}';
+    _recordProviderOperation(
+      provider: provider,
+      profileId: profileId,
+      eventType: 'provider.external.sideload',
+      correlationId: correlationId,
+      status: 'running',
+      startedAt: startedAt,
+      count: provider.count,
+    );
     final operation = showLoading
         ? ref
               .read(updatingKeysProvider.notifier)
@@ -216,11 +315,44 @@ class ProxiesAction extends _$ProxiesAction {
         providerName: provider.name,
         data: data,
       );
-      if (message.isNotEmpty) return message;
-      ref
-          .read(providersProvider.notifier)
-          .setProvider(await _core.getExternalProvider(provider.name));
+      if (message.isNotEmpty) {
+        _recordProviderOperation(
+          provider: provider,
+          profileId: profileId,
+          eventType: 'provider.external.sideload',
+          correlationId: correlationId,
+          status: 'failed',
+          startedAt: startedAt,
+          count: provider.count,
+          failureKind: 'core-message',
+        );
+        return message;
+      }
+      final refreshed = await _core.getExternalProvider(provider.name);
+      ref.read(providersProvider.notifier).setProvider(refreshed);
+      final resolved = refreshed ?? provider;
+      _recordProviderOperation(
+        provider: resolved,
+        profileId: profileId,
+        eventType: 'provider.external.sideload',
+        correlationId: correlationId,
+        status: 'completed',
+        startedAt: startedAt,
+        count: resolved.count,
+      );
       return '';
+    } catch (error) {
+      _recordProviderOperation(
+        provider: provider,
+        profileId: profileId,
+        eventType: 'provider.external.sideload',
+        correlationId: correlationId,
+        status: 'failed',
+        startedAt: startedAt,
+        count: provider.count,
+        failureKind: error.runtimeType.toString(),
+      );
+      rethrow;
     } finally {
       if (operation != null) {
         ref

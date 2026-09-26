@@ -35,7 +35,7 @@ class _RecordingCoreHandler extends CoreHandlerInterface {
   }) async {
     calls[method] = arguments;
     final result = switch (method) {
-      CoreMethod.initClash => true as T,
+      CoreMethod.initClash || CoreMethod.setHttpObservationEnabled => true as T,
       CoreMethod.getTraffic ||
       CoreMethod.getTotalTraffic => {'up': 12, 'down': 34},
       CoreMethod.asyncTestDelay => {
@@ -155,6 +155,10 @@ void main() {
     await handler.sideLoadExternalProvider(providerName: 'provider', data: 'x');
     await handler.asyncTestDelay('https://example.com', 'DIRECT');
     await handler.clearEffect(42);
+    expect(
+      await handler.setHttpObservationEnabled(true, sessionId: 'session-a'),
+      isTrue,
+    );
 
     for (final method in [
       CoreMethod.initClash,
@@ -166,6 +170,10 @@ void main() {
       expect(handler.calls[method], isA<Map>());
     }
     expect(handler.calls[CoreMethod.clearEffect], 42);
+    expect(handler.calls[CoreMethod.setHttpObservationEnabled], {
+      'enabled': true,
+      'sessionId': 'session-a',
+    });
   });
 
   test('event contract accepts batches and legacy single events', () async {

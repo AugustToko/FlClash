@@ -212,6 +212,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkUpdate": MessageLookupByLibrary.simpleMessage("更新を確認"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("すでに最新バージョンです"),
     "clearData": MessageLookupByLibrary.simpleMessage("データを消去"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("イベントログを消去"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "保存されたイベントログをすべて消去しますか？",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("検索をクリア"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("クリップボードへエクスポート"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("クリップボードからインポート"),
@@ -323,9 +327,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "新しいバージョンが見つかりました",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("追加"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("回答"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("権威"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("DNS関連の設定を更新します"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS 診断"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "実行中の Core で DNS を照会し、レコードを確認します",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNSハイジャック"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNSモード"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("レコードが返されませんでした"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 照会に失敗しました"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("ドメインまたは IP アドレス"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS 応答"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("レコードタイプ"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("リゾルバー"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "現在の Core リゾルバー",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage("直接接続 DNS"),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage("プロキシサーバー DNS"),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("システム DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("応答フラグ"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("照会を実行"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "現在の Core リゾルバーが利用できないため、システム DNS を使用しました",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "応答に回答レコードがありません",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage("応答が切り詰められました"),
     "domain": MessageLookupByLibrary.simpleMessage("ドメイン"),
     "download": MessageLookupByLibrary.simpleMessage("ダウンロード"),
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
@@ -420,6 +453,153 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("時間"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP キャプチャ"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "すべてのプロファイル",
+    ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello の完全性",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完全"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "接続メタデータへフォールバック",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core 受動オブザーバー",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core オブザーバーを停止中です",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイル",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "実行中の Core から最初の HTTP/1 リクエストとレスポンス、TLS ClientHello メタデータ、接続レベルのフォールバックを受動観測します",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "HTTP 観測データはありません",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("観測したエンドポイント"),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core が HTTP/1 リクエスト先頭を観測",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core が TLS ClientHello を観測"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "ホストを観測、プロトコルは不明",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な HTTP ポート",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な QUIC ポート",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な TLS ポート",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Core が報告したスキーム",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "トランスポートメタデータのみ",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "HAR 互換の観測データをエクスポート",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP 観測データをエクスポートしました",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR エクスポートは観測専用です。観測済みの平文 HTTP/1 では、リクエストメソッド、サニタイズ済みターゲット、リクエストヘッダー名に加え、最初のレスポンスのステータス、バージョン、レスポンスヘッダー名を含む場合があります。Reason Phrase、すべてのヘッダー値、本文、Keep-Alive の後続メッセージ、復号済み TLS データ、詳細タイミングは不明のままです。",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("ヘッダー名"),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー名一覧を切り詰めました",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "ヘッダーの完全性",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host を切り詰めました",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "HTTP バージョン",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完全"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "情報レスポンスのステータスコード",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage("情報ステータス一覧を切り詰めました"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "明示的に開始した場合のみ受動観測します。Core は上限付きの最初の HTTP/1 リクエストと最初の平文レスポンスヘッダー、または TLS ClientHello メタデータを調べます。クエリ、Reason Phrase、ヘッダー値、本文、証明書、復号済み TLS、Keep-Alive の後続メッセージは保存しません。開始後の新規接続のみが対象で、記録は端末内に保存されバックアップから除外されます。",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "観測した先頭部分",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("あり"),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("プロセスパス"),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "不明なプロトコル",
+    ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "リクエストメソッド",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "サニタイズ済みターゲット",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("観測したレスポンス"),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダー名",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage("レスポンスヘッダー名一覧を切り詰めました"),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダーの完全性",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "レスポンス HTTP バージョン",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "レスポンス観測遅延",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "観測したレスポンス先頭",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "レスポンスステータス",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "レスポンス観測の切り詰め",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "リクエストターゲットを切り詰めました",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "レガシー TLS バージョン",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS サーバー名",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "対応 TLS バージョン",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("観測の切り詰め"),
     "icon": MessageLookupByLibrary.simpleMessage("アイコン"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("アイコン履歴"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("アイコンスタイル"),
@@ -518,6 +698,134 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("ログ"),
     "logLevel": MessageLookupByLibrary.simpleMessage("ログレベル"),
+    "logbook": MessageLookupByLibrary.simpleMessage("イベントログ"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("すべて"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "バックアップをキャンセルしました",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "バックアップが完了しました",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "バックアップに失敗しました",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage("バックアップを作成中"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "接続状態が変わりました",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("コア"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "コアの診断クラッシュを要求しました",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "コアの再起動に失敗しました",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "コアを再起動しましたが、プロファイル適用に問題があります",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage("コアを再起動しました"),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "コアの起動に失敗しました",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "コア起動要求が置き換えられました",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("コアを起動しました"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "ネットワーク、構成、実行イベントの永続タイムライン",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS 照会が完了しました",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "DNS 照会に失敗しました",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage("DNS を照会中"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage("記録されたイベントはありません"),
+    "logbookError": MessageLookupByLibrary.simpleMessage("エラー"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo データは最新です"),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo データの更新に失敗しました",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Geo データを更新中",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo データを更新しました"),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャを停止しました",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャが中断されました",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャを開始しました",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("情報"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "このデバイスにのみ保存されます",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("ネットワーク"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("プロファイル"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "プロファイルを適用しました",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "プロファイル適用中に例外が発生しました",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "プロファイルの適用に失敗しました",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータのインポートに失敗しました",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータをインポート中",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータをインポートしました",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーの更新に失敗しました",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーを更新中",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーを更新しました",
+    ),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "クイックルートは近似検証です",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "クイックルートが一致しません",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "クイックルートを検証できません",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "クイックルートを検証しました",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "復元が完了しました",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage("復元に失敗しました"),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage("バックアップを復元中"),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("ルーティング"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("スクリプト"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトの実行に失敗しました",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトを実行中",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトが完了しました",
+    ),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("システム"),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("ログキャプチャ"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("無効にするとログの入り口が非表示になります"),
     "logs": MessageLookupByLibrary.simpleMessage("ログ"),
