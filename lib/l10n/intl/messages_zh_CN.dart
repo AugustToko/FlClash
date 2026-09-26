@@ -397,12 +397,30 @@ class MessageLookup extends MessageLookupByLibrary {
     "hoursCount": m13,
     "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP 捕获"),
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage("全部配置"),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello 是否完整",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完整"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "连接元数据回退",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core 被动观察器",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core 观察器仍在停止中",
+    ),
     "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "观察运行中 Core 的 HTTP、TLS 与 QUIC 连接元数据",
+      "被动观察运行中 Core 的 HTTP/1 请求前缀、TLS ClientHello 元数据与连接级回退信息",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage("暂无 HTTP 观察记录"),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("观察到的端点"),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core 已观察到 HTTP/1 请求前缀",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core 已观察到 TLS ClientHello"),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "已观察到主机，协议未知",
     ),
@@ -428,12 +446,27 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 观察记录已导出",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR 导出仅包含观察记录，并明确将 HTTP 方法、响应状态、请求头、响应头、正文和详细时序保留为未知。",
+      "HAR 导出仍仅表示观察结果。对于 HTTP/1，可包含方法、已去除查询参数的目标、版本和请求头名称；请求头值、正文、响应状态、响应头、解密后的 TLS 数据与详细时序仍保持未知。",
     ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("请求头名称"),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "请求头名称列表已截断",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "请求头是否完整",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host 已截断",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage("HTTP 版本"),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完整"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未观察到"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "仅进行连接级观察；记录只保存在本机并从备份中排除。不会捕获方法、状态码、请求头、响应头、正文或完整时序。",
+      "仅在主动开启时进行被动观察。对于每条新 TCP 连接，Core 只检查最初一段有界客户端前缀，以识别 HTTP/1 请求行、Host、请求头名称或 TLS ClientHello 元数据；不会持续观察 Keep-Alive 后续请求，也不会保存查询参数、请求头值、正文、响应、证书或解密后的 TLS 数据。只有开始捕获后新建的连接才可能包含 Core 协议元数据。记录只保存在本机并从备份中排除。",
     ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage("已观察前缀"),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("存在"),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("进程路径"),
     "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
     "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
@@ -443,8 +476,25 @@ class MessageLookup extends MessageLookupByLibrary {
       "TLS / HTTPS",
     ),
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage("未知协议"),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage("请求方法"),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage("已净化目标"),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("正在捕获"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("已停止"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "请求目标已截断",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage("加密 ClientHello"),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "旧版 TLS 版本字段",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS 服务器名称",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "支持的 TLS 版本",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("观察是否截断"),
     "icon": MessageLookupByLibrary.simpleMessage("图片"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("图标记录"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("图标样式"),

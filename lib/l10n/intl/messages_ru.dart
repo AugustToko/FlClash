@@ -581,11 +581,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
       "Все профили",
     ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота ClientHello",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Полностью"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "Резервные метаданные соединения",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Пассивный наблюдатель Core",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Наблюдатель Core всё ещё останавливается",
+    ),
     "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
       "Текущий профиль",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Наблюдение метаданных соединений HTTP, TLS и QUIC из работающего Core",
+      "Пассивное наблюдение префиксов запросов HTTP/1, метаданных TLS ClientHello и резервных метаданных соединения из работающего Core",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "Наблюдений HTTP пока нет",
@@ -593,6 +606,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый адрес",
     ),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core наблюдал префикс запроса HTTP/1",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core наблюдал TLS ClientHello"),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "Хост наблюдается, протокол неизвестен",
     ),
@@ -618,14 +636,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "Наблюдения HTTP экспортированы",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "Экспорт HAR содержит только наблюдения: HTTP-метод, статус ответа, заголовки, тела и подробные тайминги остаются неизвестными.",
+      "Экспорт HAR остаётся наблюдением. Для HTTP/1 он может содержать метод, очищенный адрес без query-параметров, версию и имена заголовков; значения заголовков, тела, статус и заголовки ответа, расшифрованные данные TLS и подробные тайминги остаются неизвестными.",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Имена заголовков",
+    ),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Список имён заголовков усечён",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота заголовков",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host усечён",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Версия HTTP",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage(
+      "Неполностью",
+    ),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
+      "Не наблюдается",
     ),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
       "Задержка наблюдения",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Только наблюдение на уровне соединений. Записи хранятся только на этом устройстве и исключаются из резервных копий. Методы, статусы, заголовки, тела и полные тайминги не захватываются.",
+      "Пассивное наблюдение выполняется только после явного запуска. Для каждого нового TCP-соединения Core проверяет только начальный ограниченный клиентский префикс, чтобы распознать строку запроса HTTP/1, Host, имена заголовков или метаданные TLS ClientHello. Последующие запросы Keep-Alive, строки запроса URL, значения заголовков, тела, ответы, сертификаты и расшифрованные данные TLS не сохраняются. Метаданные протокола Core могут появиться только у соединений, созданных после запуска захвата. Записи остаются на устройстве и исключаются из резервных копий.",
     ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый префикс",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Есть"),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
       "Путь процесса",
     ),
@@ -639,10 +682,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
       "Неизвестный протокол",
     ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "Метод запроса",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "Очищенный адрес",
+    ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
       "Захват выполняется",
     ),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Остановлено"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "Цель запроса усечена",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "Устаревшая версия TLS",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "Имя сервера TLS",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "Поддерживаемые версии TLS",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение усечено",
+    ),
     "icon": MessageLookupByLibrary.simpleMessage("Значок"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("История значков"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль значков"),

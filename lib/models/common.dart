@@ -94,6 +94,199 @@ abstract class Metadata with _$Metadata {
       _$MetadataFromJson(json);
 }
 
+String _boundedProtocolString(
+  Object? value,
+  int maxLength, {
+  bool lowerCase = false,
+}) {
+  var text = value?.toString() ?? '';
+  if (lowerCase) {
+    text = text.toLowerCase();
+  }
+  return text.length <= maxLength ? text : text.substring(0, maxLength);
+}
+
+List<String> _boundedProtocolStrings(
+  Object? value, {
+  required int maxItems,
+  required int maxLength,
+  bool lowerCase = false,
+}) {
+  if (value is! List) {
+    return const [];
+  }
+  return List.unmodifiable(
+    value
+        .whereType<Object>()
+        .map(
+          (item) =>
+              _boundedProtocolString(item, maxLength, lowerCase: lowerCase),
+        )
+        .where((item) => item.isNotEmpty)
+        .take(maxItems),
+  );
+}
+
+class HttpProtocolObservation {
+  final String method;
+  final String target;
+  final String version;
+  final String host;
+  final List<String> headerNames;
+  final bool headersComplete;
+  final bool targetTruncated;
+  final bool hostTruncated;
+  final bool headerNamesTruncated;
+
+  const HttpProtocolObservation({
+    this.method = '',
+    this.target = '',
+    this.version = '',
+    this.host = '',
+    this.headerNames = const [],
+    this.headersComplete = false,
+    this.targetTruncated = false,
+    this.hostTruncated = false,
+    this.headerNamesTruncated = false,
+  });
+
+  factory HttpProtocolObservation.fromJson(Map<String, Object?> json) {
+    return HttpProtocolObservation(
+      method: _boundedProtocolString(json['method'], 16),
+      target: _boundedProtocolString(json['target'], 512),
+      version: _boundedProtocolString(json['version'], 16),
+      host: _boundedProtocolString(json['host'], 255, lowerCase: true),
+      headerNames: _boundedProtocolStrings(
+        json['headerNames'],
+        maxItems: 64,
+        maxLength: 128,
+        lowerCase: true,
+      ),
+      headersComplete: json['headersComplete'] as bool? ?? false,
+      targetTruncated: json['targetTruncated'] as bool? ?? false,
+      hostTruncated: json['hostTruncated'] as bool? ?? false,
+      headerNamesTruncated: json['headerNamesTruncated'] as bool? ?? false,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'method': method,
+    'target': target,
+    'version': version,
+    if (host.isNotEmpty) 'host': host,
+    if (headerNames.isNotEmpty) 'headerNames': headerNames,
+    'headersComplete': headersComplete,
+    if (targetTruncated) 'targetTruncated': targetTruncated,
+    if (hostTruncated) 'hostTruncated': hostTruncated,
+    if (headerNamesTruncated) 'headerNamesTruncated': headerNamesTruncated,
+  };
+}
+
+class TlsClientHelloObservation {
+  final String serverName;
+  final List<String> alpn;
+  final String legacyVersion;
+  final List<String> supportedVersions;
+  final bool encryptedClientHello;
+  final bool clientHelloComplete;
+  final bool alpnTruncated;
+  final bool supportedVersionsTruncated;
+
+  const TlsClientHelloObservation({
+    this.serverName = '',
+    this.alpn = const [],
+    this.legacyVersion = '',
+    this.supportedVersions = const [],
+    this.encryptedClientHello = false,
+    this.clientHelloComplete = false,
+    this.alpnTruncated = false,
+    this.supportedVersionsTruncated = false,
+  });
+
+  factory TlsClientHelloObservation.fromJson(Map<String, Object?> json) {
+    return TlsClientHelloObservation(
+      serverName: _boundedProtocolString(
+        json['serverName'],
+        255,
+        lowerCase: true,
+      ),
+      alpn: _boundedProtocolStrings(json['alpn'], maxItems: 16, maxLength: 255),
+      legacyVersion: _boundedProtocolString(json['legacyVersion'], 32),
+      supportedVersions: _boundedProtocolStrings(
+        json['supportedVersions'],
+        maxItems: 16,
+        maxLength: 32,
+      ),
+      encryptedClientHello: json['encryptedClientHello'] as bool? ?? false,
+      clientHelloComplete: json['clientHelloComplete'] as bool? ?? false,
+      alpnTruncated: json['alpnTruncated'] as bool? ?? false,
+      supportedVersionsTruncated:
+          json['supportedVersionsTruncated'] as bool? ?? false,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    if (serverName.isNotEmpty) 'serverName': serverName,
+    if (alpn.isNotEmpty) 'alpn': alpn,
+    if (legacyVersion.isNotEmpty) 'legacyVersion': legacyVersion,
+    if (supportedVersions.isNotEmpty) 'supportedVersions': supportedVersions,
+    if (encryptedClientHello) 'encryptedClientHello': encryptedClientHello,
+    'clientHelloComplete': clientHelloComplete,
+    if (alpnTruncated) 'alpnTruncated': alpnTruncated,
+    if (supportedVersionsTruncated)
+      'supportedVersionsTruncated': supportedVersionsTruncated,
+  };
+}
+
+class ProtocolObservation {
+  final String sessionId;
+  final String kind;
+  final int observedBytes;
+  final bool truncated;
+  final HttpProtocolObservation? http;
+  final TlsClientHelloObservation? tls;
+
+  const ProtocolObservation({
+    this.sessionId = '',
+    this.kind = '',
+    this.observedBytes = 0,
+    this.truncated = false,
+    this.http,
+    this.tls,
+  });
+
+  factory ProtocolObservation.fromJson(Map<String, Object?> json) {
+    int integer(Object? value) => switch (value) {
+      final int number => number,
+      final num number => number.toInt(),
+      _ => int.tryParse(value?.toString() ?? '') ?? 0,
+    };
+    final http = json['http'];
+    final tls = json['tls'];
+    return ProtocolObservation(
+      sessionId: _boundedProtocolString(json['sessionId'], 128),
+      kind: _boundedProtocolString(json['kind'], 32),
+      observedBytes: integer(json['observedBytes']).clamp(0, 32 * 1024),
+      truncated: json['truncated'] as bool? ?? false,
+      http: http is Map
+          ? HttpProtocolObservation.fromJson(Map<String, Object?>.from(http))
+          : null,
+      tls: tls is Map
+          ? TlsClientHelloObservation.fromJson(Map<String, Object?>.from(tls))
+          : null,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    if (sessionId.isNotEmpty) 'sessionId': sessionId,
+    'kind': kind,
+    'observedBytes': observedBytes,
+    if (truncated) 'truncated': truncated,
+    if (http != null) 'http': http!.toJson(),
+    if (tls != null) 'tls': tls!.toJson(),
+  };
+}
+
 @freezed
 abstract class TrackerInfo with _$TrackerInfo {
   const factory TrackerInfo({
@@ -105,6 +298,7 @@ abstract class TrackerInfo with _$TrackerInfo {
     required List<String> chains,
     required String rule,
     required String rulePayload,
+    ProtocolObservation? observation,
     int? downloadSpeed,
     int? uploadSpeed,
   }) = _TrackerInfo;

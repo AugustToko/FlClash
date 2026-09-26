@@ -4,7 +4,9 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/logbook.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,10 +24,32 @@ final httpCapturePersistenceEnabledProvider = Provider<bool>(
   (_) => _hasHttpCaptureServicesBinding(),
 );
 
+final httpCaptureCoreDisableRetryDelayProvider = Provider<Duration>(
+  (_) => const Duration(seconds: 1),
+);
+
+typedef HttpCaptureCoreControl =
+    Future<bool> Function(bool enabled, String sessionId);
+
+final httpCaptureCoreControlProvider = Provider<HttpCaptureCoreControl>((ref) {
+  return (enabled, sessionId) async {
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return false;
+    }
+    return ref
+        .read(coreHandlerProvider)
+        .setHttpObservationEnabled(
+          enabled,
+          sessionId: enabled ? sessionId : '',
+        );
+  };
+});
+
 class HttpCaptureState {
   final bool enabled;
   final DateTime? sessionStartedAt;
   final String sessionId;
+  final bool coreObserverActive;
   final List<HttpCaptureEntry> entries;
   final int revision;
 
@@ -33,6 +57,7 @@ class HttpCaptureState {
     this.enabled = false,
     this.sessionStartedAt,
     this.sessionId = '',
+    this.coreObserverActive = false,
     this.entries = const [],
     this.revision = 0,
   });
@@ -42,6 +67,7 @@ class HttpCaptureState {
     DateTime? sessionStartedAt,
     bool clearSessionStartedAt = false,
     String? sessionId,
+    bool? coreObserverActive,
     List<HttpCaptureEntry>? entries,
     int? revision,
   }) {
@@ -51,6 +77,7 @@ class HttpCaptureState {
           ? null
           : sessionStartedAt ?? this.sessionStartedAt,
       sessionId: sessionId ?? this.sessionId,
+      coreObserverActive: coreObserverActive ?? this.coreObserverActive,
       entries: List.unmodifiable(entries ?? this.entries),
       revision: revision ?? this.revision,
     );
@@ -70,9 +97,15 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
 
   Future<void>? _loadOperation;
   Future<void> _writeTail = Future<void>.value();
+  Future<void> _coreToggleTail = Future<void>.value();
+  Timer? _coreDisableRetryTimer;
+  DateTime? _lastCoreToggleFailureLogAt;
 
   @override
-  HttpCaptureState build() => const HttpCaptureState();
+  HttpCaptureState build() {
+    ref.onDispose(() => _coreDisableRetryTimer?.cancel());
+    return const HttpCaptureState();
+  }
 
   List<HttpCaptureEntry> _bounded(Iterable<HttpCaptureEntry> entries) {
     final values = entries.toList(growable: false)
@@ -152,6 +185,133 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     }
   }
 
+  Future<({bool reached, bool active})> _setCoreObservation(
+    bool enabled,
+    String sessionId,
+  ) async {
+    try {
+      final active = await ref.read(httpCaptureCoreControlProvider)(
+        enabled,
+        sessionId,
+      );
+      _lastCoreToggleFailureLogAt = null;
+      return (reached: true, active: active);
+    } catch (error, stackTrace) {
+      final now = DateTime.now();
+      final lastLogAt = _lastCoreToggleFailureLogAt;
+      if (lastLogAt == null ||
+          now.difference(lastLogAt) >= const Duration(seconds: 30)) {
+        _lastCoreToggleFailureLogAt = now;
+        commonPrint.log(
+          'HTTP passive observer toggle failed: ${compactError(error)}, $stackTrace',
+          logLevel: LogLevel.warning,
+        );
+      }
+      return (reached: false, active: state.coreObserverActive);
+    }
+  }
+
+  Future<({bool reached, bool active})> _setCoreObservationSafely(
+    bool enabled,
+    String sessionId,
+  ) async {
+    var result = await _setCoreObservation(enabled, sessionId);
+    if (enabled) {
+      return result;
+    }
+    for (
+      var attempt = 1;
+      attempt < 3 && (!result.reached || result.active);
+      attempt++
+    ) {
+      if (!ref.mounted ||
+          ref.read(coreStatusProvider) != CoreStatus.connected) {
+        return (reached: true, active: false);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      result = await _setCoreObservation(false, '');
+    }
+    return result;
+  }
+
+  void _reconcileCoreDisableRetry() {
+    _coreDisableRetryTimer?.cancel();
+    _coreDisableRetryTimer = null;
+    if (state.enabled ||
+        !state.coreObserverActive ||
+        ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
+    _coreDisableRetryTimer = Timer(
+      ref.read(httpCaptureCoreDisableRetryDelayProvider),
+      () {
+        _coreDisableRetryTimer = null;
+        unawaited(syncCoreObservation());
+      },
+    );
+  }
+
+  Future<void> syncCoreObservation() {
+    final completer = Completer<void>();
+    _coreToggleTail = _coreToggleTail
+        .then((_) async {
+          try {
+            if (!ref.mounted) {
+              return;
+            }
+            final sessionId = state.sessionId;
+            final desired =
+                state.enabled &&
+                ref.read(coreStatusProvider) == CoreStatus.connected;
+            final result = await _setCoreObservationSafely(
+              desired,
+              desired ? sessionId : '',
+            );
+            if (!ref.mounted) {
+              return;
+            }
+            final stillDesired =
+                state.enabled &&
+                state.sessionId == sessionId &&
+                ref.read(coreStatusProvider) == CoreStatus.connected;
+            final active = desired
+                ? stillDesired && result.reached && result.active
+                : result.reached
+                ? result.active
+                // Preserve a previously confirmed active state. If enable
+                // never succeeded, a missing/older Core must not be treated as
+                // an observer that needs indefinite disable retries.
+                : state.coreObserverActive;
+            state = state.copyWith(
+              coreObserverActive: active,
+              revision: state.revision + 1,
+            );
+            _reconcileCoreDisableRetry();
+          } finally {
+            if (!completer.isCompleted) {
+              completer.complete();
+            }
+          }
+        })
+        .catchError((Object error, StackTrace stackTrace) {
+          if (!completer.isCompleted) {
+            completer.completeError(error, stackTrace);
+          }
+        });
+    return completer.future;
+  }
+
+  void markCoreObserverUnavailable() {
+    if (!state.coreObserverActive) {
+      return;
+    }
+    state = state.copyWith(
+      coreObserverActive: false,
+      revision: state.revision + 1,
+    );
+    _reconcileCoreDisableRetry();
+  }
+
   Future<void> reload() {
     if (!ref.read(httpCapturePersistenceEnabledProvider)) {
       return Future<void>.value();
@@ -204,14 +364,15 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
       return;
     }
     final now = DateTime.now();
-    final sessionId = 'http-capture:${now.microsecondsSinceEpoch}';
+    final sessionId = 'http-capture:${snowflake.id}';
     state = state.copyWith(
       enabled: true,
       sessionStartedAt: now,
       sessionId: sessionId,
+      coreObserverActive: false,
       revision: state.revision + 1,
     );
-    await ref
+    final logbookWrite = ref
         .read(logbookProvider.notifier)
         .record(
           category: LogbookCategory.network,
@@ -222,6 +383,10 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           correlationId: sessionId,
           details: const {'status': 'running', 'observationOnly': true},
         );
+    // Enable the Core observer before waiting for local history persistence so
+    // connections created immediately after the user taps Start are eligible.
+    await syncCoreObservation();
+    await logbookWrite;
   }
 
   Future<void> stop() async {
@@ -231,12 +396,14 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     final startedAt = state.sessionStartedAt;
     final sessionId = state.sessionId;
     final count = state.sessionEntryCount;
+    final coreObserverActive = state.coreObserverActive;
     state = state.copyWith(
       enabled: false,
       clearSessionStartedAt: true,
       sessionId: '',
       revision: state.revision + 1,
     );
+    await syncCoreObservation();
     if (sessionId.isEmpty) {
       return;
     }
@@ -255,6 +422,7 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           details: {
             'status': 'completed',
             'observationOnly': true,
+            'coreObserverActive': coreObserverActive,
             'count': count,
             'durationMs': durationMs,
           },
@@ -263,6 +431,11 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
 
   Future<HttpCaptureEntry?> observe(TrackerInfo tracker) async {
     if (!state.enabled || !shouldCaptureHttpObservation(tracker)) {
+      return null;
+    }
+    final observationSessionId = tracker.observation?.sessionId ?? '';
+    if (observationSessionId.isNotEmpty &&
+        observationSessionId != state.sessionId) {
       return null;
     }
     final entry = HttpCaptureEntry.fromTracker(

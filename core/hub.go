@@ -81,6 +81,7 @@ func handleForceGC() {
 
 func handleShutdown() bool {
 	handleStopLog()
+	disableHTTPObservation()
 
 	configMu.Lock()
 	isRunning.Store(false)

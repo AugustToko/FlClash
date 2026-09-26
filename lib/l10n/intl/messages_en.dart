@@ -561,11 +561,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
       "All profiles",
     ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello complete",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Complete"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "Connection metadata fallback",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core passive observer",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core observer is still stopping",
+    ),
     "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
       "Current profile",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Observe HTTP, TLS, and QUIC connection metadata from the running Core",
+      "Passively observe HTTP/1 request prefixes, TLS ClientHello metadata, and connection-level fallbacks from the running Core",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "No HTTP observations yet",
@@ -573,6 +586,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
       "Observed endpoint",
     ),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "HTTP/1 request prefix observed by Core",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage(
+          "TLS ClientHello observed by Core",
+        ),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "Host observed; protocol unknown",
     ),
@@ -598,14 +618,37 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP observations exported",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "The HAR export is observation-only and intentionally leaves HTTP method, response status, headers, bodies, and detailed timings unknown.",
+      "HAR export remains observation-only. For HTTP/1 it may include the method, sanitized target, version, and header names; header values, bodies, response status, response headers, decrypted TLS data, and detailed timings remain unknown.",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Header names",
+    ),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Header-name list truncated",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Headers complete",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host truncated",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "HTTP version",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("Incomplete"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
+      "Not observed",
     ),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
       "Observation delay",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Connection-level observation only. Records stay on this device and are excluded from backups. Methods, status codes, headers, bodies, and full timings are not captured.",
+      "Opt-in passive observation only. For each new TCP connection, the Core may inspect only the initial bounded client prefix for an HTTP/1 request line, Host, header names, or TLS ClientHello metadata. Later keep-alive requests, query strings, header values, bodies, responses, certificates, and decrypted TLS data are not captured. Only connections created after capture starts can carry Core protocol metadata. Records stay on this device and are excluded from backups.",
     ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Observed prefix",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Present"),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
       "Process path",
     ),
@@ -619,8 +662,33 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
       "Unknown protocol",
     ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "Request method",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "Sanitized target",
+    ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "Request target truncated",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "Legacy TLS version",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS server name",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "Supported TLS versions",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
+      "Observation truncated",
+    ),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon style"),

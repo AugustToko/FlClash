@@ -24,7 +24,7 @@ enum HttpCaptureProtocol {
 }
 
 class HttpCaptureEntry {
-  static const formatVersion = 1;
+  static const formatVersion = 2;
 
   final int id;
   final String connectionId;
@@ -49,6 +49,7 @@ class HttpCaptureEntry {
   final int upload;
   final int download;
   final String remoteDestination;
+  final ProtocolObservation? observation;
 
   const HttpCaptureEntry({
     required this.id,
@@ -74,6 +75,7 @@ class HttpCaptureEntry {
     required this.upload,
     required this.download,
     required this.remoteDestination,
+    this.observation,
   });
 
   factory HttpCaptureEntry.fromTracker({
@@ -86,12 +88,21 @@ class HttpCaptureEntry {
     final metadata = tracker.metadata;
     final destinationPort = int.tryParse(metadata.destinationPort) ?? 0;
     final sourcePort = int.tryParse(metadata.sourcePort) ?? 0;
+    final observation = tracker.observation;
     final classification = classifyHttpObservation(
       network: metadata.network,
       port: destinationPort,
       host: metadata.host,
       remoteDestination: metadata.remoteDestination,
+      observation: observation,
     );
+    final observedHost = switch (observation) {
+      ProtocolObservation(http: final http?) when http.host.isNotEmpty =>
+        http.host,
+      ProtocolObservation(tls: final tls?) when tls.serverName.isNotEmpty =>
+        tls.serverName,
+      _ => metadata.host,
+    };
     return HttpCaptureEntry(
       id: id,
       connectionId: tracker.id,
@@ -102,7 +113,7 @@ class HttpCaptureEntry {
       protocol: classification.protocol,
       evidence: classification.evidence,
       network: metadata.network.toLowerCase(),
-      host: metadata.host.trim().toLowerCase(),
+      host: observedHost.trim().toLowerCase(),
       destinationIP: metadata.destinationIP.trim(),
       destinationPort: destinationPort,
       sourceIP: metadata.sourceIP.trim(),
@@ -116,6 +127,7 @@ class HttpCaptureEntry {
       upload: tracker.upload,
       download: tracker.download,
       remoteDestination: metadata.remoteDestination.trim(),
+      observation: observation,
     );
   }
 
@@ -131,6 +143,7 @@ class HttpCaptureEntry {
       final num number => number.toInt(),
       _ => int.tryParse(value?.toString() ?? '') ?? 0,
     };
+    final rawObservation = json['observation'];
 
     return HttpCaptureEntry(
       id: integer(json['id']),
@@ -156,6 +169,11 @@ class HttpCaptureEntry {
       upload: integer(json['upload']),
       download: integer(json['download']),
       remoteDestination: json['remoteDestination'] as String? ?? '',
+      observation: rawObservation is Map
+          ? ProtocolObservation.fromJson(
+              Map<String, Object?>.from(rawObservation),
+            )
+          : null,
     );
   }
 
@@ -184,6 +202,7 @@ class HttpCaptureEntry {
     'upload': upload,
     'download': download,
     'remoteDestination': remoteDestination,
+    if (observation != null) 'observation': observation!.toJson(),
   };
 
   String encodePayload() => jsonEncode(toJson());
@@ -221,6 +240,8 @@ class HttpCaptureEntry {
     int? upload,
     int? download,
     String? remoteDestination,
+    ProtocolObservation? observation,
+    bool clearObservation = false,
   }) {
     return HttpCaptureEntry(
       id: id ?? this.id,
@@ -246,6 +267,7 @@ class HttpCaptureEntry {
       upload: upload ?? this.upload,
       download: download ?? this.download,
       remoteDestination: remoteDestination ?? this.remoteDestination,
+      observation: clearObservation ? null : observation ?? this.observation,
     );
   }
 
@@ -254,10 +276,17 @@ class HttpCaptureEntry {
   String get endpointHost => host.isNotEmpty ? host : destinationIP;
 
   bool get isHttpCandidate =>
+      observation != null ||
       protocol != HttpCaptureProtocol.unknown ||
       (network == 'tcp' && host.isNotEmpty);
 
   bool get harObservationOnly => true;
+
+  bool get isCoreObserved => observation != null;
+
+  HttpProtocolObservation? get httpObservation => observation?.http;
+
+  TlsClientHelloObservation? get tlsObservation => observation?.tls;
 
   int get observationDelayMs {
     final value = observedAt.difference(startedAt).inMilliseconds;
@@ -298,6 +327,25 @@ class HttpCaptureEntry {
     return '$transport://$value';
   }
 
+  String get requestUrl {
+    final base = origin;
+    final http = httpObservation;
+    if (base.isEmpty) {
+      return http?.target.isNotEmpty == true ? http!.target : 'unknown://';
+    }
+    final target = http?.target ?? '';
+    if (target.isEmpty) {
+      return '$base/';
+    }
+    if (http?.method == 'CONNECT') {
+      return 'https://$target/';
+    }
+    if (target == '*') {
+      return '$base/*';
+    }
+    return target.startsWith('/') ? '$base$target' : '$base/$target';
+  }
+
   String get ruleText {
     if (rule.isEmpty) {
       return '';
@@ -305,25 +353,41 @@ class HttpCaptureEntry {
     return rulePayload.isEmpty ? rule : '$rule($rulePayload)';
   }
 
-  String get searchText => [
-    sessionId,
-    protocol.name,
-    evidence,
-    network,
-    host,
-    destinationIP,
-    destinationPort,
-    sourceIP,
-    sourcePort,
-    process,
-    processPath,
-    uid,
-    rule,
-    rulePayload,
-    chains.join(' '),
-    remoteDestination,
-    origin,
-  ].join('\n').toLowerCase();
+  String get searchText {
+    final http = httpObservation;
+    final tls = tlsObservation;
+    return [
+      sessionId,
+      protocol.name,
+      evidence,
+      network,
+      host,
+      destinationIP,
+      destinationPort,
+      sourceIP,
+      sourcePort,
+      process,
+      processPath,
+      uid,
+      rule,
+      rulePayload,
+      chains.join(' '),
+      remoteDestination,
+      origin,
+      observation?.kind ?? '',
+      observation?.observedBytes ?? 0,
+      http?.method ?? '',
+      http?.target ?? '',
+      http?.version ?? '',
+      http?.host ?? '',
+      http?.headerNames.join(' ') ?? '',
+      tls?.serverName ?? '',
+      tls?.alpn.join(' ') ?? '',
+      tls?.legacyVersion ?? '',
+      tls?.supportedVersions.join(' ') ?? '',
+      if (tls?.encryptedClientHello == true) 'ech',
+    ].join('\n').toLowerCase();
+  }
 
   TrackerInfo toTrackerInfo() {
     return TrackerInfo(
@@ -346,6 +410,7 @@ class HttpCaptureEntry {
       chains: chains,
       rule: rule,
       rulePayload: rulePayload,
+      observation: observation,
     );
   }
 }
@@ -355,7 +420,18 @@ class HttpCaptureEntry {
   required int port,
   required String host,
   required String remoteDestination,
+  ProtocolObservation? observation,
 }) {
+  if (observation?.kind == 'http1' && observation?.http != null) {
+    return (protocol: HttpCaptureProtocol.http, evidence: 'core-http1');
+  }
+  if (observation?.kind == 'tls-client-hello' && observation?.tls != null) {
+    return (
+      protocol: HttpCaptureProtocol.tls,
+      evidence: 'core-tls-client-hello',
+    );
+  }
+
   final remote = Uri.tryParse(remoteDestination.trim());
   if (remote?.scheme == 'http') {
     return (protocol: HttpCaptureProtocol.http, evidence: 'remote-scheme');
@@ -384,6 +460,9 @@ class HttpCaptureEntry {
 }
 
 bool shouldCaptureHttpObservation(TrackerInfo tracker) {
+  if (tracker.observation != null) {
+    return true;
+  }
   final metadata = tracker.metadata;
   final network = metadata.network.toLowerCase();
   final port = int.tryParse(metadata.destinationPort) ?? 0;
@@ -402,7 +481,7 @@ bool shouldCaptureHttpObservation(TrackerInfo tracker) {
 Map<String, Object?> buildHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'foundation-1',
+  String creatorVersion = 'passive-2',
 }) {
   final ordered = entries.toList(growable: false)
     ..sort((a, b) {
@@ -417,16 +496,21 @@ Map<String, Object?> buildHttpCaptureHar({
       'pages': const <Object?>[],
       'entries': [for (final entry in ordered) _httpCaptureHarEntry(entry)],
       '_flclash': {
-        'format': 'flclash-http-observation',
-        'version': 1,
+        'format': 'flclash-passive-http-observation',
+        'version': 2,
         'observationOnly': true,
         'exportedAt': timestamp.toIso8601String(),
         'limitations': const [
-          'method-not-captured',
-          'status-not-captured',
-          'headers-not-captured',
+          'initial-client-prefix-only',
+          'later-keep-alive-requests-not-captured',
+          'request-method-only-for-observed-http1',
+          'request-target-query-and-fragment-removed',
+          'header-values-not-captured',
+          'response-status-not-captured',
+          'response-headers-not-captured',
           'body-not-captured',
           'timings-not-captured',
+          'tls-not-decrypted',
         ],
       },
     },
@@ -436,7 +520,7 @@ Map<String, Object?> buildHttpCaptureHar({
 String encodeHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'foundation-1',
+  String creatorVersion = 'passive-2',
 }) {
   return const JsonEncoder.withIndent('  ').convert(
     buildHttpCaptureHar(
@@ -448,15 +532,17 @@ String encodeHttpCaptureHar({
 }
 
 Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
-  final url = entry.origin.isEmpty ? 'unknown://' : '${entry.origin}/';
+  final http = entry.httpObservation;
   return {
     'startedDateTime': entry.startedAt.toUtc().toIso8601String(),
     'time': 0,
     'request': {
-      'method': 'UNKNOWN',
-      'url': url,
-      'httpVersion': '',
+      'method': http?.method.isNotEmpty == true ? http!.method : 'UNKNOWN',
+      'url': entry.requestUrl,
+      'httpVersion': http?.version ?? '',
       'cookies': const <Object?>[],
+      // Header values are deliberately not retained. Names are kept only in
+      // the FlClash extension below so an empty value is never fabricated.
       'headers': const <Object?>[],
       'queryString': const <Object?>[],
       'headersSize': -1,
@@ -474,14 +560,14 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
       'bodySize': -1,
     },
     'cache': const <String, Object?>{},
-    'timings': {
+    'timings': const {
       'blocked': -1,
       'dns': -1,
       'connect': -1,
       'ssl': -1,
-      'send': 0,
-      'wait': 0,
-      'receive': 0,
+      'send': -1,
+      'wait': -1,
+      'receive': -1,
     },
     'serverIPAddress': entry.destinationIP,
     'connection': entry.connectionId,
@@ -498,6 +584,13 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
       'policyChain': entry.chains,
       'uploadAtObservation': entry.upload,
       'downloadAtObservation': entry.download,
+      if (entry.observation != null)
+        'coreObservation': entry.observation!.toJson(),
+      if (http != null) ...{
+        'headerNames': http.headerNames,
+        'headersComplete': http.headersComplete,
+        'headerNamesTruncated': http.headerNamesTruncated,
+      },
     },
   };
 }
