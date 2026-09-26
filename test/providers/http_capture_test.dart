@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
+
 import 'package:fl_clash/database/database.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/http_capture.dart';
 import 'package:fl_clash/providers/logbook.dart';
@@ -12,6 +17,7 @@ TrackerInfo tracker({
   String network = 'tcp',
   String host = 'api.example.com',
   String port = '443',
+  ProtocolObservation? observation,
 }) {
   return TrackerInfo(
     id: id,
@@ -31,18 +37,29 @@ TrackerInfo tracker({
     chains: const ['Proxy'],
     rule: 'Domain',
     rulePayload: 'api.example.com',
+    observation: observation,
   );
 }
 
 ProviderContainer container({
   bool persistence = false,
   bool logbookPersistence = false,
+  CoreStatus coreStatus = CoreStatus.disconnected,
+  HttpCaptureCoreControl? coreControl,
+  Duration? coreDisableRetryDelay,
 }) {
   return ProviderContainer(
     overrides: [
       currentProfileIdProvider.overrideWithBuild((_, _) => 1),
+      coreStatusProvider.overrideWithBuild((_, _) => coreStatus),
       httpCapturePersistenceEnabledProvider.overrideWithValue(persistence),
       logbookPersistenceEnabledProvider.overrideWithValue(logbookPersistence),
+      if (coreControl != null)
+        httpCaptureCoreControlProvider.overrideWithValue(coreControl),
+      if (coreDisableRetryDelay != null)
+        httpCaptureCoreDisableRetryDelayProvider.overrideWithValue(
+          coreDisableRetryDelay,
+        ),
     ],
   );
 }
@@ -102,7 +119,6 @@ void main() {
     await notifier.start();
     await notifier.observe(tracker(id: 'reused'));
     await notifier.stop();
-    await Future<void>.delayed(const Duration(microseconds: 1));
     await notifier.start();
     await notifier.observe(tracker(id: 'reused'));
 
@@ -236,5 +252,227 @@ void main() {
       second.read(httpCaptureProvider).entries.single.connectionId,
       'connection-1',
     );
+  });
+
+  test('capture session toggles the Core passive observer', () async {
+    final calls = <({bool enabled, String sessionId})>[];
+    final scope = container(
+      coreStatus: CoreStatus.connected,
+      coreControl: (enabled, sessionId) async {
+        calls.add((enabled: enabled, sessionId: sessionId));
+        return enabled;
+      },
+    );
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+
+    await notifier.start();
+    expect(scope.read(httpCaptureProvider).coreObserverActive, isTrue);
+    final sessionId = scope.read(httpCaptureProvider).sessionId;
+    expect(calls, [(enabled: true, sessionId: sessionId)]);
+
+    await notifier.stop();
+    expect(scope.read(httpCaptureProvider).coreObserverActive, isFalse);
+    expect(calls, [
+      (enabled: true, sessionId: sessionId),
+      (enabled: false, sessionId: ''),
+    ]);
+    expect(
+      scope.read(logbookProvider).single.details['coreObserverActive'],
+      isTrue,
+    );
+  });
+
+  test('a late enable is serialized before the final disable', () async {
+    final enableResult = Completer<bool>();
+    final calls = <({bool enabled, String sessionId})>[];
+    final scope = container(
+      coreStatus: CoreStatus.connected,
+      coreControl: (enabled, sessionId) {
+        calls.add((enabled: enabled, sessionId: sessionId));
+        return enabled ? enableResult.future : Future<bool>.value(false);
+      },
+    );
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+
+    final start = notifier.start();
+    while (calls.isEmpty) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    final stop = notifier.stop();
+    enableResult.complete(true);
+    await Future.wait([start, stop]);
+
+    expect(calls.map((call) => call.enabled), [true, false]);
+    expect(calls.first.sessionId, isNotEmpty);
+    expect(calls.last.sessionId, isEmpty);
+    expect(scope.read(httpCaptureProvider).enabled, isFalse);
+    expect(scope.read(httpCaptureProvider).coreObserverActive, isFalse);
+  });
+
+  test('stopping retries a failed Core observer disable', () async {
+    var disableAttempts = 0;
+    final calls = <({bool enabled, String sessionId})>[];
+    final scope = container(
+      coreStatus: CoreStatus.connected,
+      coreControl: (enabled, sessionId) async {
+        calls.add((enabled: enabled, sessionId: sessionId));
+        if (enabled) {
+          return true;
+        }
+        disableAttempts++;
+        if (disableAttempts < 3) {
+          throw StateError('temporary Core IPC failure');
+        }
+        return false;
+      },
+    );
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+
+    await notifier.start();
+    expect(scope.read(httpCaptureProvider).coreObserverActive, isTrue);
+    await notifier.stop();
+
+    expect(calls.map((call) => call.enabled), [true, false, false, false]);
+    expect(calls.first.sessionId, isNotEmpty);
+    expect(calls.skip(1).every((call) => call.sessionId.isEmpty), isTrue);
+    expect(scope.read(httpCaptureProvider).enabled, isFalse);
+    expect(scope.read(httpCaptureProvider).coreObserverActive, isFalse);
+  });
+
+  test('a failed disable keeps retrying until Core confirms it', () async {
+    var disableAttempts = 0;
+    final calls = <({bool enabled, String sessionId})>[];
+    final scope = container(
+      coreStatus: CoreStatus.connected,
+      coreDisableRetryDelay: Duration.zero,
+      coreControl: (enabled, sessionId) async {
+        calls.add((enabled: enabled, sessionId: sessionId));
+        if (enabled) {
+          return true;
+        }
+        disableAttempts++;
+        if (disableAttempts <= 3) {
+          throw StateError('Core is temporarily unavailable');
+        }
+        return false;
+      },
+    );
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+
+    await notifier.start();
+    await notifier.stop();
+    expect(scope.read(httpCaptureProvider).coreObserverActive, isTrue);
+
+    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    while (scope.read(httpCaptureProvider).coreObserverActive) {
+      if (DateTime.now().isAfter(deadline)) {
+        fail('Core observer disable retry did not converge');
+      }
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    expect(calls.map((call) => call.enabled), [
+      true,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(calls.first.sessionId, isNotEmpty);
+    expect(calls.skip(1).every((call) => call.sessionId.isEmpty), isTrue);
+    expect(scope.read(httpCaptureProvider).enabled, isFalse);
+  });
+
+  test('a delayed Core observation cannot cross capture sessions', () async {
+    final scope = container();
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+
+    await notifier.start();
+    final firstSession = scope.read(httpCaptureProvider).sessionId;
+    await notifier.stop();
+    await notifier.start();
+    final secondSession = scope.read(httpCaptureProvider).sessionId;
+
+    final stale = await notifier.observe(
+      tracker(
+        id: 'stale-core-observation',
+        host: '',
+        port: '18080',
+        observation: ProtocolObservation(
+          sessionId: firstSession,
+          kind: 'http1',
+          observedBytes: 64,
+          http: const HttpProtocolObservation(
+            method: 'GET',
+            target: '/stale',
+            version: 'HTTP/1.1',
+            host: 'stale.example',
+            headersComplete: true,
+          ),
+        ),
+      ),
+    );
+    final current = await notifier.observe(
+      tracker(
+        id: 'current-core-observation',
+        host: '',
+        port: '18080',
+        observation: ProtocolObservation(
+          sessionId: secondSession,
+          kind: 'http1',
+          observedBytes: 64,
+          http: const HttpProtocolObservation(
+            method: 'GET',
+            target: '/current',
+            version: 'HTTP/1.1',
+            host: 'current.example',
+            headersComplete: true,
+          ),
+        ),
+      ),
+    );
+
+    expect(firstSession, isNot(secondSession));
+    expect(stale, isNull);
+    expect(current?.connectionId, 'current-core-observation');
+    expect(scope.read(httpCaptureProvider).entries, hasLength(1));
+  });
+
+  test('Core protocol metadata is retained by the capture pipeline', () async {
+    const observation = ProtocolObservation(
+      kind: 'http1',
+      observedBytes: 96,
+      http: HttpProtocolObservation(
+        method: 'GET',
+        target: '/health',
+        version: 'HTTP/1.1',
+        host: 'service.example',
+        headerNames: ['host'],
+        headersComplete: true,
+      ),
+    );
+    final scope = container();
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+    await notifier.start();
+
+    final captured = await notifier.observe(
+      tracker(
+        id: 'core-http',
+        network: 'tcp',
+        host: '',
+        port: '18080',
+        observation: observation,
+      ),
+    );
+
+    expect(captured, isNotNull);
+    expect(captured?.evidence, 'core-http1');
+    expect(captured?.httpObservation?.target, '/health');
   });
 }

@@ -59,6 +59,8 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
   String _evidenceLabel(BuildContext context, String evidence) {
     final l = context.appLocalizations;
     return switch (evidence) {
+      'core-http1' => l.httpCaptureEvidenceCoreHttp1,
+      'core-tls-client-hello' => l.httpCaptureEvidenceCoreTlsClientHello,
       'remote-scheme' => l.httpCaptureEvidenceRemoteScheme,
       'known-http-port' => l.httpCaptureEvidenceKnownHttpPort,
       'known-tls-port' => l.httpCaptureEvidenceKnownTlsPort,
@@ -193,6 +195,13 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
         props: const SheetProps(isScrollControlled: true),
         builder: (sheetContext) {
           final l = sheetContext.appLocalizations;
+          final observation = entry.observation;
+          final http = entry.httpObservation;
+          final tls = entry.tlsObservation;
+          String completeness(bool value) =>
+              value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
+          String presence(bool value) =>
+              value ? l.httpCapturePresent : l.httpCaptureNotPresent;
           return AdaptiveSheetScaffold(
             title: l.details(l.httpCapture),
             actions: [
@@ -217,10 +226,110 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
               children: [
                 _HttpCaptureDetailHeader(entry: entry),
                 const SizedBox(height: 12),
+                CommonCard(
+                  type: CommonCardType.filled,
+                  radius: AppCorner.md,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: sheetContext.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(l.httpCaptureHarWarning)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureEndpoint,
                   value: entry.origin,
                 ),
+                if (http != null) ...[
+                  if (http.method.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureRequestMethod,
+                      value: http.method,
+                    ),
+                  if (http.target.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureRequestTarget,
+                      value: http.target,
+                    ),
+                  if (http.version.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureHttpVersion,
+                      value: http.version,
+                    ),
+                  if (http.headerNames.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureHeaderNames,
+                      value: http.headerNames.join(', '),
+                    ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureHeadersComplete,
+                    value: completeness(http.headersComplete),
+                  ),
+                  if (http.targetTruncated)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureTargetTruncated,
+                      value: presence(true),
+                    ),
+                  if (http.hostTruncated)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureHostTruncated,
+                      value: presence(true),
+                    ),
+                  if (http.headerNamesTruncated)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureHeaderNamesTruncated,
+                      value: presence(true),
+                    ),
+                ],
+                if (tls != null) ...[
+                  if (tls.serverName.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureTlsServerName,
+                      value: tls.serverName,
+                    ),
+                  if (tls.alpn.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureTlsAlpn,
+                      value: tls.alpn.join(', '),
+                    ),
+                  if (tls.supportedVersions.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureTlsVersions,
+                      value: tls.supportedVersions.join(', '),
+                    ),
+                  if (tls.legacyVersion.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureTlsLegacyVersion,
+                      value: tls.legacyVersion,
+                    ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureTlsEch,
+                    value: presence(tls.encryptedClientHello),
+                  ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureClientHelloComplete,
+                    value: completeness(tls.clientHelloComplete),
+                  ),
+                ],
+                if (observation != null) ...[
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureObservedBytes,
+                    value: '${observation.observedBytes} B',
+                  ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureTruncated,
+                    value: presence(observation.truncated),
+                  ),
+                ],
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureObservationDelay,
                   value: '${entry.observationDelayMs} ms',
@@ -263,25 +372,6 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   value:
                       '${entry.upload.traffic.show} ↑  '
                       '${entry.download.traffic.show} ↓',
-                ),
-                const SizedBox(height: 16),
-                CommonCard(
-                  type: CommonCardType.filled,
-                  radius: AppCorner.md,
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: sheetContext.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(l.httpCaptureHarWarning)),
-                      ],
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 16),
                 Align(
@@ -395,6 +485,24 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   avatar: const Icon(Icons.storage_outlined, size: 18),
                   label: Text('${state.entries.length}'),
                 ),
+                if (state.enabled || state.coreObserverActive)
+                  Chip(
+                    avatar: Icon(
+                      state.coreObserverActive
+                          ? state.enabled
+                                ? Icons.memory_outlined
+                                : Icons.privacy_tip_outlined
+                          : Icons.hub_outlined,
+                      size: 18,
+                    ),
+                    label: Text(
+                      !state.enabled && state.coreObserverActive
+                          ? l.httpCaptureCoreObserverStopping
+                          : state.coreObserverActive
+                          ? l.httpCaptureCoreObserverActive
+                          : l.httpCaptureConnectionFallback,
+                    ),
+                  ),
               ],
             ),
           ],
@@ -503,6 +611,26 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                       color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (entry.httpObservation case final http?) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      '${http.method} ${http.target}'.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.toSoftBold,
+                    ),
+                  ] else if (entry.tlsObservation case final tls?) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      [
+                        if (tls.serverName.isNotEmpty) tls.serverName,
+                        if (tls.alpn.isNotEmpty) tls.alpn.join(', '),
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.toSoftBold,
+                    ),
+                  ],
                   if (entry.process.isNotEmpty ||
                       entry.ruleText.isNotEmpty) ...[
                     const SizedBox(height: 6),

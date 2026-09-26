@@ -457,16 +457,34 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
       "すべてのプロファイル",
     ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello の完全性",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完全"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "接続メタデータへフォールバック",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core 受動オブザーバー",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core オブザーバーを停止中です",
+    ),
     "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
       "現在のプロファイル",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "実行中の Core から HTTP、TLS、QUIC 接続メタデータを観測します",
+      "実行中の Core から HTTP/1 リクエスト先頭、TLS ClientHello メタデータ、接続レベルのフォールバックを受動観測します",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "HTTP 観測データはありません",
     ),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("観測したエンドポイント"),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core が HTTP/1 リクエスト先頭を観測",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core が TLS ClientHello を観測"),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "ホストを観測、プロトコルは不明",
     ),
@@ -492,12 +510,31 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 観測データをエクスポートしました",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR エクスポートは観測専用で、HTTP メソッド、応答ステータス、ヘッダー、本文、詳細タイミングは不明のままです。",
+      "HAR エクスポートは観測専用です。HTTP/1 ではメソッド、クエリを除いたターゲット、バージョン、ヘッダー名を含む場合がありますが、ヘッダー値、本文、応答ステータス、応答ヘッダー、復号済み TLS データ、詳細タイミングは不明のままです。",
     ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("ヘッダー名"),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー名一覧を切り詰めました",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "ヘッダーの完全性",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host を切り詰めました",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "HTTP バージョン",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完全"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "接続レベルの観測のみです。記録はこの端末にのみ保存され、バックアップから除外されます。メソッド、ステータス、ヘッダー、本文、完全なタイミングは取得しません。",
+      "明示的に開始した場合のみ受動観測します。新しい TCP 接続ごとに、Core は最初の上限付きクライアントプレフィックスだけを調べ、HTTP/1 のリクエスト行、Host、ヘッダー名、TLS ClientHello メタデータを識別します。Keep-Alive の後続リクエスト、クエリ文字列、ヘッダー値、本文、応答、証明書、復号済み TLS データは取得しません。Core プロトコルメタデータを持つ可能性があるのは、キャプチャ開始後に作成された接続だけです。記録は端末内だけに保存され、バックアップから除外されます。",
     ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "観測した先頭部分",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("あり"),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("プロセスパス"),
     "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
     "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
@@ -509,8 +546,31 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
       "不明なプロトコル",
     ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "リクエストメソッド",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "サニタイズ済みターゲット",
+    ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "リクエストターゲットを切り詰めました",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "レガシー TLS バージョン",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS サーバー名",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "対応 TLS バージョン",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("観測の切り詰め"),
     "icon": MessageLookupByLibrary.simpleMessage("アイコン"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("アイコン履歴"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("アイコンスタイル"),

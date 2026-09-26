@@ -5820,20 +5820,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Observe HTTP, TLS, and QUIC connection metadata from the running Core`
+  /// `Passively observe HTTP/1 request prefixes, TLS ClientHello metadata, and connection-level fallbacks from the running Core`
   String get httpCaptureDesc {
     return Intl.message(
-      'Observe HTTP, TLS, and QUIC connection metadata from the running Core',
+      'Passively observe HTTP/1 request prefixes, TLS ClientHello metadata, and connection-level fallbacks from the running Core',
       name: 'httpCaptureDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `Connection-level observation only. Records stay on this device and are excluded from backups. Methods, status codes, headers, bodies, and full timings are not captured.`
+  /// `Opt-in passive observation only. For each new TCP connection, the Core may inspect only the initial bounded client prefix for an HTTP/1 request line, Host, header names, or TLS ClientHello metadata. Later keep-alive requests, query strings, header values, bodies, responses, certificates, and decrypted TLS data are not captured. Only connections created after capture starts can carry Core protocol metadata. Records stay on this device and are excluded from backups.`
   String get httpCaptureObservationOnly {
     return Intl.message(
-      'Connection-level observation only. Records stay on this device and are excluded from backups. Methods, status codes, headers, bodies, and full timings are not captured.',
+      'Opt-in passive observation only. For each new TCP connection, the Core may inspect only the initial bounded client prefix for an HTTP/1 request line, Host, header names, or TLS ClientHello metadata. Later keep-alive requests, query strings, header values, bodies, responses, certificates, and decrypted TLS data are not captured. Only connections created after capture starts can carry Core protocol metadata. Records stay on this device and are excluded from backups.',
       name: 'httpCaptureObservationOnly',
       desc: '',
       args: [],
@@ -6030,10 +6030,10 @@ class AppLocalizations {
     );
   }
 
-  /// `The HAR export is observation-only and intentionally leaves HTTP method, response status, headers, bodies, and detailed timings unknown.`
+  /// `HAR export remains observation-only. For HTTP/1 it may include the method, sanitized target, version, and header names; header values, bodies, response status, response headers, decrypted TLS data, and detailed timings remain unknown.`
   String get httpCaptureHarWarning {
     return Intl.message(
-      'The HAR export is observation-only and intentionally leaves HTTP method, response status, headers, bodies, and detailed timings unknown.',
+      'HAR export remains observation-only. For HTTP/1 it may include the method, sanitized target, version, and header names; header values, bodies, response status, response headers, decrypted TLS data, and detailed timings remain unknown.',
       name: 'httpCaptureHarWarning',
       desc: '',
       args: [],
@@ -6075,6 +6075,251 @@ class AppLocalizations {
     return Intl.message(
       'Process path',
       name: 'httpCaptureProcessPath',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/1 request prefix observed by Core`
+  String get httpCaptureEvidenceCoreHttp1 {
+    return Intl.message(
+      'HTTP/1 request prefix observed by Core',
+      name: 'httpCaptureEvidenceCoreHttp1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS ClientHello observed by Core`
+  String get httpCaptureEvidenceCoreTlsClientHello {
+    return Intl.message(
+      'TLS ClientHello observed by Core',
+      name: 'httpCaptureEvidenceCoreTlsClientHello',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core passive observer`
+  String get httpCaptureCoreObserverActive {
+    return Intl.message(
+      'Core passive observer',
+      name: 'httpCaptureCoreObserverActive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection metadata fallback`
+  String get httpCaptureConnectionFallback {
+    return Intl.message(
+      'Connection metadata fallback',
+      name: 'httpCaptureConnectionFallback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request method`
+  String get httpCaptureRequestMethod {
+    return Intl.message(
+      'Request method',
+      name: 'httpCaptureRequestMethod',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sanitized target`
+  String get httpCaptureRequestTarget {
+    return Intl.message(
+      'Sanitized target',
+      name: 'httpCaptureRequestTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP version`
+  String get httpCaptureHttpVersion {
+    return Intl.message(
+      'HTTP version',
+      name: 'httpCaptureHttpVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header names`
+  String get httpCaptureHeaderNames {
+    return Intl.message(
+      'Header names',
+      name: 'httpCaptureHeaderNames',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Headers complete`
+  String get httpCaptureHeadersComplete {
+    return Intl.message(
+      'Headers complete',
+      name: 'httpCaptureHeadersComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS server name`
+  String get httpCaptureTlsServerName {
+    return Intl.message(
+      'TLS server name',
+      name: 'httpCaptureTlsServerName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ALPN`
+  String get httpCaptureTlsAlpn {
+    return Intl.message('ALPN', name: 'httpCaptureTlsAlpn', desc: '', args: []);
+  }
+
+  /// `Supported TLS versions`
+  String get httpCaptureTlsVersions {
+    return Intl.message(
+      'Supported TLS versions',
+      name: 'httpCaptureTlsVersions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Legacy TLS version`
+  String get httpCaptureTlsLegacyVersion {
+    return Intl.message(
+      'Legacy TLS version',
+      name: 'httpCaptureTlsLegacyVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Encrypted ClientHello`
+  String get httpCaptureTlsEch {
+    return Intl.message(
+      'Encrypted ClientHello',
+      name: 'httpCaptureTlsEch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ClientHello complete`
+  String get httpCaptureClientHelloComplete {
+    return Intl.message(
+      'ClientHello complete',
+      name: 'httpCaptureClientHelloComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed prefix`
+  String get httpCaptureObservedBytes {
+    return Intl.message(
+      'Observed prefix',
+      name: 'httpCaptureObservedBytes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observation truncated`
+  String get httpCaptureTruncated {
+    return Intl.message(
+      'Observation truncated',
+      name: 'httpCaptureTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete`
+  String get httpCaptureComplete {
+    return Intl.message(
+      'Complete',
+      name: 'httpCaptureComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Incomplete`
+  String get httpCaptureIncomplete {
+    return Intl.message(
+      'Incomplete',
+      name: 'httpCaptureIncomplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Present`
+  String get httpCapturePresent {
+    return Intl.message(
+      'Present',
+      name: 'httpCapturePresent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not observed`
+  String get httpCaptureNotPresent {
+    return Intl.message(
+      'Not observed',
+      name: 'httpCaptureNotPresent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request target truncated`
+  String get httpCaptureTargetTruncated {
+    return Intl.message(
+      'Request target truncated',
+      name: 'httpCaptureTargetTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host truncated`
+  String get httpCaptureHostTruncated {
+    return Intl.message(
+      'Host truncated',
+      name: 'httpCaptureHostTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header-name list truncated`
+  String get httpCaptureHeaderNamesTruncated {
+    return Intl.message(
+      'Header-name list truncated',
+      name: 'httpCaptureHeaderNamesTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core observer is still stopping`
+  String get httpCaptureCoreObserverStopping {
+    return Intl.message(
+      'Core observer is still stopping',
+      name: 'httpCaptureCoreObserverStopping',
       desc: '',
       args: [],
     );

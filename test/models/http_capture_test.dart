@@ -12,6 +12,7 @@ TrackerInfo tracker({
   String sourceIP = '10.0.0.2',
   String sourcePort = '54321',
   String remoteDestination = '',
+  ProtocolObservation? observation,
 }) {
   return TrackerInfo(
     id: id,
@@ -33,6 +34,7 @@ TrackerInfo tracker({
     chains: const ['Proxy', 'HK-01'],
     rule: 'DomainSuffix',
     rulePayload: 'example.com',
+    observation: observation,
   );
 }
 
@@ -176,11 +178,186 @@ void main() {
     expect(extension['observationOnly'], isTrue);
     expect(extension['sessionId'], 'session-har');
     expect(extension['protocol'], 'tls');
-    expect(rootExtension['limitations'], contains('headers-not-captured'));
+    expect(
+      rootExtension['limitations'],
+      contains('initial-client-prefix-only'),
+    );
+    expect(
+      rootExtension['limitations'],
+      contains('later-keep-alive-requests-not-captured'),
+    );
+    expect(
+      rootExtension['limitations'],
+      contains('header-values-not-captured'),
+    );
     expect(rootExtension['limitations'], contains('body-not-captured'));
 
     final encoded = encodeHttpCaptureHar(entries: [entry]);
     expect(jsonDecode(encoded), isA<Map<String, dynamic>>());
     expect(encoded, isNot(contains('Authorization')));
+  });
+
+  test(
+    'Core HTTP/1 metadata overrides port guesses without retaining values',
+    () {
+      const observation = ProtocolObservation(
+        sessionId: 'session-http1',
+        kind: 'http1',
+        observedBytes: 148,
+        http: HttpProtocolObservation(
+          method: 'GET',
+          target: '/v1/models',
+          version: 'HTTP/1.1',
+          host: 'api.openai.com',
+          headerNames: ['host', 'authorization', 'accept'],
+          headersComplete: true,
+          targetTruncated: true,
+          hostTruncated: true,
+        ),
+      );
+      final entry = HttpCaptureEntry.fromTracker(
+        id: 12,
+        tracker: tracker(
+          host: '',
+          destinationPort: '80',
+          observation: observation,
+        ),
+        sessionId: 'session-http1',
+        profileId: 7,
+      );
+
+      expect(entry.protocol, HttpCaptureProtocol.http);
+      expect(entry.evidence, 'core-http1');
+      expect(entry.host, 'api.openai.com');
+      expect(entry.requestUrl, 'http://api.openai.com/v1/models');
+      expect(entry.httpObservation?.headerNames, contains('authorization'));
+
+      final decoded = HttpCaptureEntry.decodePayload(entry.encodePayload());
+      expect(decoded.observation?.sessionId, 'session-http1');
+      expect(decoded.observation?.kind, 'http1');
+      expect(decoded.httpObservation?.method, 'GET');
+      expect(decoded.httpObservation?.targetTruncated, isTrue);
+      expect(decoded.httpObservation?.hostTruncated, isTrue);
+      expect(decoded.toTrackerInfo().observation?.sessionId, 'session-http1');
+      expect(decoded.toTrackerInfo().observation?.observedBytes, 148);
+
+      final payload = buildHttpCaptureHar(entries: [entry]);
+      final log = payload['log']! as Map<String, Object?>;
+      final harEntry =
+          (log['entries']! as List<Object?>).single! as Map<String, Object?>;
+      final request = harEntry['request']! as Map<String, Object?>;
+      final extension = harEntry['_flclash']! as Map<String, Object?>;
+
+      expect(request['method'], 'GET');
+      expect(request['url'], 'http://api.openai.com/v1/models');
+      expect(request['httpVersion'], 'HTTP/1.1');
+      expect(request['headers'], isEmpty);
+      expect(extension['headerNames'], contains('authorization'));
+      final encoded = jsonEncode(payload);
+      expect(encoded, isNot(contains('Bearer')));
+      expect(encoded, isNot(contains('api_key=')));
+    },
+  );
+
+  test('TLS ClientHello metadata supplies SNI, ALPN and version evidence', () {
+    const observation = ProtocolObservation(
+      kind: 'tls-client-hello',
+      observedBytes: 312,
+      tls: TlsClientHelloObservation(
+        serverName: 'edge.example.com',
+        alpn: ['h2', 'http/1.1'],
+        legacyVersion: 'TLS 1.2',
+        supportedVersions: ['TLS 1.3', 'TLS 1.2'],
+        encryptedClientHello: true,
+        clientHelloComplete: true,
+      ),
+    );
+    final source = tracker(
+      network: 'tcp',
+      host: '',
+      destinationPort: '9443',
+      observation: observation,
+    );
+
+    expect(shouldCaptureHttpObservation(source), isTrue);
+    final entry = HttpCaptureEntry.fromTracker(
+      id: 13,
+      tracker: source,
+      sessionId: 'session-tls',
+      profileId: null,
+    );
+
+    expect(entry.protocol, HttpCaptureProtocol.tls);
+    expect(entry.evidence, 'core-tls-client-hello');
+    expect(entry.host, 'edge.example.com');
+    expect(entry.tlsObservation?.alpn, ['h2', 'http/1.1']);
+    expect(entry.searchText, contains('tls 1.3'));
+    expect(entry.searchText, contains('ech'));
+  });
+
+  test('Core observation JSON is bounded defensively on the Dart side', () {
+    final observation = ProtocolObservation.fromJson({
+      'kind': 'k' * 100,
+      'observedBytes': 999999,
+      'http': {
+        'method': 'M' * 100,
+        'target': '/${'x' * 1000}',
+        'version': 'HTTP/1.1${'v' * 100}',
+        'host': '${'A' * 300}.EXAMPLE',
+        'headerNames': [
+          for (var index = 0; index < 100; index++)
+            'X-${index.toString().padLeft(3, '0')}-${'H' * 200}',
+        ],
+      },
+      'tls': {
+        'serverName': '${'S' * 300}.EXAMPLE',
+        'alpn': [for (var index = 0; index < 40; index++) 'p$index'],
+        'legacyVersion': 'TLS ${'v' * 100}',
+        'supportedVersions': [
+          for (var index = 0; index < 40; index++) 'version-$index',
+        ],
+      },
+    });
+
+    expect(observation.kind.length, 32);
+    expect(observation.observedBytes, 32 * 1024);
+    expect(observation.http?.method.length, 16);
+    expect(observation.http?.target.length, 512);
+    expect(observation.http?.version.length, 16);
+    expect(observation.http?.host.length, 255);
+    expect(observation.http?.host, observation.http?.host.toLowerCase());
+    expect(observation.http?.headerNames, hasLength(64));
+    expect(
+      observation.http!.headerNames.every((name) => name.length <= 128),
+      isTrue,
+    );
+    expect(observation.tls?.serverName.length, 255);
+    expect(observation.tls?.alpn, hasLength(16));
+    expect(observation.tls?.legacyVersion.length, 32);
+    expect(observation.tls?.supportedVersions, hasLength(16));
+  });
+
+  test('a Core observation remains eligible even without a candidate port', () {
+    const observation = ProtocolObservation(
+      kind: 'http1',
+      observedBytes: 64,
+      http: HttpProtocolObservation(
+        method: 'OPTIONS',
+        target: '*',
+        version: 'HTTP/1.1',
+        headersComplete: true,
+      ),
+    );
+    expect(
+      shouldCaptureHttpObservation(
+        tracker(
+          network: 'udp',
+          host: '',
+          destinationPort: '53',
+          observation: observation,
+        ),
+      ),
+      isTrue,
+    );
   });
 }

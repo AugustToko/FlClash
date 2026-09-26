@@ -26,6 +26,7 @@ HttpCaptureEntry _entry({
   int download = 0,
   String network = 'tcp',
   int? profileId = 7,
+  ProtocolObservation? observation,
 }) {
   final observedAt = DateTime(
     2026,
@@ -63,6 +64,7 @@ HttpCaptureEntry _entry({
     upload: upload,
     download: download,
     remoteDestination: '',
+    observation: observation,
   );
 }
 
@@ -70,7 +72,7 @@ List<HttpCaptureEntry> _previewEntries() => [
   _entry(
     id: 1,
     protocol: HttpCaptureProtocol.tls,
-    evidence: 'known-tls-port',
+    evidence: 'core-tls-client-hello',
     host: 'api.openai.com',
     port: 443,
     process: 'com.openai.chatgpt',
@@ -79,6 +81,18 @@ List<HttpCaptureEntry> _previewEntries() => [
     minutesAgo: 1,
     upload: 12890,
     download: 486210,
+    observation: const ProtocolObservation(
+      kind: 'tls-client-hello',
+      observedBytes: 312,
+      tls: TlsClientHelloObservation(
+        serverName: 'api.openai.com',
+        alpn: ['h2', 'http/1.1'],
+        legacyVersion: 'TLS 1.2',
+        supportedVersions: ['TLS 1.3', 'TLS 1.2'],
+        encryptedClientHello: true,
+        clientHelloComplete: true,
+      ),
+    ),
   ),
   _entry(
     id: 2,
@@ -97,7 +111,7 @@ List<HttpCaptureEntry> _previewEntries() => [
   _entry(
     id: 3,
     protocol: HttpCaptureProtocol.http,
-    evidence: 'known-http-port',
+    evidence: 'core-http1',
     host: 'router.home',
     port: 80,
     process: 'com.android.chrome',
@@ -106,6 +120,18 @@ List<HttpCaptureEntry> _previewEntries() => [
     minutesAgo: 5,
     upload: 1024,
     download: 6048,
+    observation: const ProtocolObservation(
+      kind: 'http1',
+      observedBytes: 126,
+      http: HttpProtocolObservation(
+        method: 'GET',
+        target: '/status',
+        version: 'HTTP/1.1',
+        host: 'router.home',
+        headerNames: ['host', 'accept', 'user-agent'],
+        headersComplete: true,
+      ),
+    ),
   ),
   _entry(
     id: 4,
@@ -161,6 +187,7 @@ class _PreviewHttpCapture extends HttpCaptureNotifier {
       enabled: true,
       sessionStartedAt: DateTime(2026, 9, 25, 18),
       sessionId: 'preview-session',
+      coreObserverActive: true,
       entries: entries,
     );
   }
@@ -174,6 +201,7 @@ class _PreviewHttpCapture extends HttpCaptureNotifier {
       enabled: true,
       sessionStartedAt: DateTime(2026, 9, 25, 18),
       sessionId: 'preview-session',
+      coreObserverActive: true,
       revision: state.revision + 1,
     );
   }
@@ -184,6 +212,17 @@ class _PreviewHttpCapture extends HttpCaptureNotifier {
       enabled: false,
       clearSessionStartedAt: true,
       sessionId: '',
+      coreObserverActive: false,
+      revision: state.revision + 1,
+    );
+  }
+
+  void markCoreObserverStopping() {
+    state = state.copyWith(
+      enabled: false,
+      clearSessionStartedAt: true,
+      sessionId: '',
+      coreObserverActive: true,
       revision: state.revision + 1,
     );
   }
@@ -230,11 +269,23 @@ void main() {
     await _pumpCapture(tester, size: const Size(430, 932));
 
     expect(find.text('HTTP 捕获'), findsWidgets);
-    expect(find.textContaining('仅进行连接级观察'), findsOneWidget);
+    expect(find.textContaining('仅在主动开启时进行被动观察'), findsOneWidget);
     expect(find.text('https://api.openai.com'), findsOneWidget);
-    expect(find.text('https://www.youtube.com'), findsOneWidget);
+    expect(find.textContaining('Core 已观察到 TLS ClientHello'), findsOneWidget);
     expect(find.textContaining('UNKNOWN'), findsNothing);
     expect(find.textContaining('200'), findsNothing);
+  });
+
+  testWidgets('a pending Core disable remains visible', (tester) async {
+    final container = await _pumpCapture(tester, size: const Size(430, 932));
+    final notifier =
+        container.read(httpCaptureProvider.notifier) as _PreviewHttpCapture;
+
+    notifier.markCoreObserverStopping();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Core 观察器仍在停止中'), findsOneWidget);
+    expect(find.byIcon(Icons.privacy_tip_outlined), findsOneWidget);
   });
 
   testWidgets('capture toggle stops and restarts the current session', (
@@ -286,10 +337,18 @@ void main() {
     await tester.tap(find.text('https://api.openai.com'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('HAR 导出仅包含观察记录'), findsOneWidget);
-    expect(find.text('RuleSet(api.openai.com)'), findsOneWidget);
-    expect(find.text('OpenAI → 香港自动选择 → HK-01'), findsOneWidget);
-    expect(find.byIcon(Icons.alt_route), findsWidgets);
+    expect(find.textContaining('HAR 导出仍仅表示观察结果'), findsOneWidget);
+    expect(find.text('api.openai.com'), findsWidgets);
+    expect(find.text('h2, http/1.1'), findsOneWidget);
+    expect(
+      find.text('RuleSet(api.openai.com)', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.text('OpenAI → 香港自动选择 → HK-01', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.alt_route, skipOffstage: false), findsWidgets);
   });
 
   testWidgets('HTTP capture Logbook event reopens the source page', (
@@ -347,6 +406,23 @@ void main() {
     await expectLater(
       find.byType(Overlay).first,
       matchesGoldenFile('../goldens/http_capture_detail_preview.png'),
+    );
+  });
+
+  testWidgets('HTTP capture HTTP/1 detail preview', (tester) async {
+    await _pumpCapture(tester, size: const Size(430, 932));
+    await tester.tap(find.text('HTTP').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('http://router.home'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('GET'), findsOneWidget);
+    expect(find.text('/status'), findsOneWidget);
+    expect(find.text('host, accept, user-agent'), findsOneWidget);
+
+    await expectLater(
+      find.byType(Overlay).first,
+      matchesGoldenFile('../goldens/http_capture_http1_detail_preview.png'),
     );
   });
 

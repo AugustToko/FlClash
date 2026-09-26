@@ -78,6 +78,14 @@ _MockCoreHandlerInterface _coreInterface() {
   final coreInterface = _MockCoreHandlerInterface();
   when(() => coreInterface.startLog()).thenAnswer((_) {});
   when(() => coreInterface.stopLog()).thenAnswer((_) {});
+  when(
+    () => coreInterface.setHttpObservationEnabled(
+      any(),
+      sessionId: any(named: 'sessionId'),
+    ),
+  ).thenAnswer(
+    (invocation) async => invocation.positionalArguments.first as bool,
+  );
   return coreInterface;
 }
 
@@ -171,6 +179,7 @@ void main() {
       ],
     );
     await container.read(httpCaptureProvider.notifier).start();
+    final captureSessionId = container.read(httpCaptureProvider).sessionId;
     final tracker = TrackerInfo(
       id: 'capture-request',
       upload: 12,
@@ -189,6 +198,18 @@ void main() {
       chains: const ['Proxy', 'HK-01'],
       rule: 'Domain',
       rulePayload: 'api.example.com',
+      observation: ProtocolObservation(
+        sessionId: captureSessionId,
+        kind: 'tls-client-hello',
+        observedBytes: 288,
+        tls: const TlsClientHelloObservation(
+          serverName: 'api.example.com',
+          alpn: ['h2', 'http/1.1'],
+          legacyVersion: 'TLS 1.2',
+          supportedVersions: ['TLS 1.3', 'TLS 1.2'],
+          clientHelloComplete: true,
+        ),
+      ),
     );
 
     coreEventManager.sendEvent(
@@ -204,7 +225,43 @@ void main() {
     expect(entries, hasLength(1));
     expect(entries.single.connectionId, 'capture-request');
     expect(entries.single.protocol, HttpCaptureProtocol.tls);
+    expect(entries.single.evidence, 'core-tls-client-hello');
+    expect(entries.single.tlsObservation?.alpn, ['h2', 'http/1.1']);
     expect(entries.single.profileId, 7);
+  });
+
+  testWidgets('an active capture follows Core reconnect and disconnect', (
+    tester,
+  ) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(
+      tester,
+      coreInterface,
+      overrides: [
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    final capture = container.read(httpCaptureProvider.notifier);
+    await capture.start();
+    expect(container.read(httpCaptureProvider).coreObserverActive, isFalse);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
+    await tester.pump();
+    expect(container.read(httpCaptureProvider).coreObserverActive, isTrue);
+    verify(
+      () => coreInterface.setHttpObservationEnabled(
+        true,
+        sessionId: any(named: 'sessionId'),
+      ),
+    ).called(1);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+    expect(container.read(httpCaptureProvider).coreObserverActive, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('duplicate crash events disconnect the core only once', (
@@ -212,6 +269,14 @@ void main() {
   ) async {
     final coreInterface = _MockCoreHandlerInterface();
     when(() => coreInterface.stopLog()).thenAnswer((_) {});
+    when(
+      () => coreInterface.setHttpObservationEnabled(
+        any(),
+        sessionId: any(named: 'sessionId'),
+      ),
+    ).thenAnswer(
+      (invocation) async => invocation.positionalArguments.first as bool,
+    );
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(

@@ -69,6 +69,7 @@ brew install --cask flclash
 1. Update submodules
    ```bash
    git submodule update --init --recursive
+   bash tool/apply_core_patches.sh
    ```
 
 2. Install `Flutter` and `Golang` environment

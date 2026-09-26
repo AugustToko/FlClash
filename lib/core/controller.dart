@@ -172,6 +172,13 @@ class CoreController {
     return _interface.getConnections();
   }
 
+  Future<bool> setHttpObservationEnabled(
+    bool enabled, {
+    String sessionId = '',
+  }) async {
+    return _interface.setHttpObservationEnabled(enabled, sessionId: sessionId);
+  }
+
   Future<void> closeConnection(String id) async {
     await _interface.closeConnection(id);
   }
