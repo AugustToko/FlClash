@@ -474,7 +474,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "現在のプロファイル",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "実行中の Core から HTTP/1 リクエスト先頭、TLS ClientHello メタデータ、接続レベルのフォールバックを受動観測します",
+      "実行中の Core から最初の HTTP/1 リクエストとレスポンス、TLS ClientHello メタデータ、接続レベルのフォールバックを受動観測します",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "HTTP 観測データはありません",
@@ -510,7 +510,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 観測データをエクスポートしました",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR エクスポートは観測専用です。HTTP/1 ではメソッド、クエリを除いたターゲット、バージョン、ヘッダー名を含む場合がありますが、ヘッダー値、本文、応答ステータス、応答ヘッダー、復号済み TLS データ、詳細タイミングは不明のままです。",
+      "HAR エクスポートは観測専用です。観測済みの平文 HTTP/1 では、リクエストメソッド、サニタイズ済みターゲット、リクエストヘッダー名に加え、最初のレスポンスのステータス、バージョン、レスポンスヘッダー名を含む場合があります。Reason Phrase、すべてのヘッダー値、本文、Keep-Alive の後続メッセージ、復号済み TLS データ、詳細タイミングは不明のままです。",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("ヘッダー名"),
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
@@ -526,10 +526,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP バージョン",
     ),
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完全"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "情報レスポンスのステータスコード",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage("情報ステータス一覧を切り詰めました"),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "明示的に開始した場合のみ受動観測します。新しい TCP 接続ごとに、Core は最初の上限付きクライアントプレフィックスだけを調べ、HTTP/1 のリクエスト行、Host、ヘッダー名、TLS ClientHello メタデータを識別します。Keep-Alive の後続リクエスト、クエリ文字列、ヘッダー値、本文、応答、証明書、復号済み TLS データは取得しません。Core プロトコルメタデータを持つ可能性があるのは、キャプチャ開始後に作成された接続だけです。記録は端末内だけに保存され、バックアップから除外されます。",
+      "明示的に開始した場合のみ受動観測します。Core は上限付きの最初の HTTP/1 リクエストと最初の平文レスポンスヘッダー、または TLS ClientHello メタデータを調べます。クエリ、Reason Phrase、ヘッダー値、本文、証明書、復号済み TLS、Keep-Alive の後続メッセージは保存しません。開始後の新規接続のみが対象で、記録は端末内に保存されバックアップから除外されます。",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "観測した先頭部分",
@@ -551,6 +556,30 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
       "サニタイズ済みターゲット",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("観測したレスポンス"),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダー名",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage("レスポンスヘッダー名一覧を切り詰めました"),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダーの完全性",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "レスポンス HTTP バージョン",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "レスポンス観測遅延",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "観測したレスポンス先頭",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "レスポンスステータス",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "レスポンス観測の切り詰め",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),

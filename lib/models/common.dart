@@ -182,6 +182,83 @@ class HttpProtocolObservation {
   };
 }
 
+class HttpResponseProtocolObservation {
+  final String version;
+  final int statusCode;
+  final List<int> informationalStatusCodes;
+  final List<String> headerNames;
+  final bool headersComplete;
+  final int observedBytes;
+  final int observedAfterMilliseconds;
+  final bool truncated;
+  final bool headerNamesTruncated;
+  final bool informationalStatusCodesTruncated;
+
+  const HttpResponseProtocolObservation({
+    this.version = '',
+    this.statusCode = 0,
+    this.informationalStatusCodes = const [],
+    this.headerNames = const [],
+    this.headersComplete = false,
+    this.observedBytes = 0,
+    this.observedAfterMilliseconds = 0,
+    this.truncated = false,
+    this.headerNamesTruncated = false,
+    this.informationalStatusCodesTruncated = false,
+  });
+
+  factory HttpResponseProtocolObservation.fromJson(Map<String, Object?> json) {
+    int integer(Object? value) => switch (value) {
+      final int number => number,
+      final num number => number.toInt(),
+      _ => int.tryParse(value?.toString() ?? '') ?? 0,
+    };
+    final statusCode = integer(json['statusCode']);
+    final rawInformational = json['informationalStatusCodes'];
+    return HttpResponseProtocolObservation(
+      version: _boundedProtocolString(json['version'], 16),
+      statusCode: statusCode >= 100 && statusCode <= 599 ? statusCode : 0,
+      informationalStatusCodes: List.unmodifiable(
+        (rawInformational is List ? rawInformational : const <Object?>[])
+            .map(integer)
+            .where((status) => status >= 100 && status < 200)
+            .take(8),
+      ),
+      headerNames: _boundedProtocolStrings(
+        json['headerNames'],
+        maxItems: 64,
+        maxLength: 128,
+        lowerCase: true,
+      ),
+      headersComplete: json['headersComplete'] as bool? ?? false,
+      observedBytes: integer(json['observedBytes']).clamp(0, 32 * 1024),
+      observedAfterMilliseconds: integer(
+        json['observedAfterMilliseconds'],
+      ).clamp(0, 0x7fffffff),
+      truncated: json['truncated'] as bool? ?? false,
+      headerNamesTruncated: json['headerNamesTruncated'] as bool? ?? false,
+      informationalStatusCodesTruncated:
+          json['informationalStatusCodesTruncated'] as bool? ?? false,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    if (version.isNotEmpty) 'version': version,
+    if (statusCode != 0) 'statusCode': statusCode,
+    if (informationalStatusCodes.isNotEmpty)
+      'informationalStatusCodes': informationalStatusCodes,
+    if (headerNames.isNotEmpty) 'headerNames': headerNames,
+    'headersComplete': headersComplete,
+    'observedBytes': observedBytes,
+    if (observedAfterMilliseconds != 0)
+      'observedAfterMilliseconds': observedAfterMilliseconds,
+    if (truncated) 'truncated': truncated,
+    if (headerNamesTruncated) 'headerNamesTruncated': headerNamesTruncated,
+    if (informationalStatusCodesTruncated)
+      'informationalStatusCodesTruncated': informationalStatusCodesTruncated,
+  };
+}
+
 class TlsClientHelloObservation {
   final String serverName;
   final List<String> alpn;
@@ -244,6 +321,7 @@ class ProtocolObservation {
   final int observedBytes;
   final bool truncated;
   final HttpProtocolObservation? http;
+  final HttpResponseProtocolObservation? httpResponse;
   final TlsClientHelloObservation? tls;
 
   const ProtocolObservation({
@@ -252,6 +330,7 @@ class ProtocolObservation {
     this.observedBytes = 0,
     this.truncated = false,
     this.http,
+    this.httpResponse,
     this.tls,
   });
 
@@ -262,6 +341,7 @@ class ProtocolObservation {
       _ => int.tryParse(value?.toString() ?? '') ?? 0,
     };
     final http = json['http'];
+    final httpResponse = json['httpResponse'];
     final tls = json['tls'];
     return ProtocolObservation(
       sessionId: _boundedProtocolString(json['sessionId'], 128),
@@ -270,6 +350,11 @@ class ProtocolObservation {
       truncated: json['truncated'] as bool? ?? false,
       http: http is Map
           ? HttpProtocolObservation.fromJson(Map<String, Object?>.from(http))
+          : null,
+      httpResponse: httpResponse is Map
+          ? HttpResponseProtocolObservation.fromJson(
+              Map<String, Object?>.from(httpResponse),
+            )
           : null,
       tls: tls is Map
           ? TlsClientHelloObservation.fromJson(Map<String, Object?>.from(tls))
@@ -283,6 +368,7 @@ class ProtocolObservation {
     'observedBytes': observedBytes,
     if (truncated) 'truncated': truncated,
     if (http != null) 'http': http!.toJson(),
+    if (httpResponse != null) 'httpResponse': httpResponse!.toJson(),
     if (tls != null) 'tls': tls!.toJson(),
   };
 }

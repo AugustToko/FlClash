@@ -59,6 +59,35 @@ void main() {
     expect(inputs, hasLength(1));
   });
 
+  test('upgrades a tree with a legacy patch already applied', () {
+    final currentPatch = File(p.join(patches.path, '0001-sample.patch'));
+    final migrationDirectory = Directory(p.join(patches.path, 'migrations'))
+      ..createSync();
+    final migrationPatch = File(
+      p.join(migrationDirectory.path, '0001-sample-v1.patch'),
+    );
+
+    source.writeAsStringSync('legacy\n');
+    final legacyDiff = git(['diff', '--binary', '--full-index']);
+    expect(legacyDiff.exitCode, 0);
+    migrationPatch.writeAsStringSync(legacyDiff.stdout as String);
+    expect(git(['checkout', '--', 'sample.txt']).exitCode, 0);
+
+    source.writeAsStringSync('after-v2\n');
+    final currentDiff = git(['diff', '--binary', '--full-index']);
+    expect(currentDiff.exitCode, 0);
+    currentPatch.writeAsStringSync(currentDiff.stdout as String);
+    expect(git(['checkout', '--', 'sample.txt']).exitCode, 0);
+    expect(git(['apply', migrationPatch.path]).exitCode, 0);
+
+    final inputs = applyCorePatches(rootDir: root.path);
+    final repeated = applyCorePatches(rootDir: root.path);
+
+    expect(source.readAsStringSync(), 'after-v2\n');
+    expect(inputs, [currentPatch.absolute.path, migrationPatch.absolute.path]);
+    expect(repeated, inputs);
+  });
+
   test('rejects a source tree that matches neither side of the patch', () {
     source.writeAsStringSync('conflict\n');
 
@@ -68,7 +97,7 @@ void main() {
         isA<BuildException>().having(
           (error) => error.message,
           'message',
-          contains('neither applies cleanly nor appears to be present'),
+          contains('nor matches a supported migration'),
         ),
       ),
     );

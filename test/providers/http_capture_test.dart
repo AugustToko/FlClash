@@ -17,13 +17,14 @@ TrackerInfo tracker({
   String network = 'tcp',
   String host = 'api.example.com',
   String port = '443',
+  DateTime? start,
   ProtocolObservation? observation,
 }) {
   return TrackerInfo(
     id: id,
     upload: 1,
     download: 2,
-    start: DateTime.now().subtract(const Duration(milliseconds: 20)),
+    start: start ?? DateTime.now().subtract(const Duration(milliseconds: 20)),
     metadata: Metadata(
       uid: 10001,
       network: network,
@@ -99,17 +100,320 @@ void main() {
     expect(event.details['observationOnly'], isTrue);
   });
 
-  test('same connection updates rather than duplicating', () async {
+  test(
+    'response updates enrich the same connection without reordering',
+    () async {
+      final scope = container();
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final startedAt = DateTime.utc(2026, 9, 26, 6);
+
+      final initial = await notifier.observe(
+        tracker(
+          id: 'same',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: ProtocolObservation(
+            sessionId: sessionId,
+            kind: 'http1',
+            observedBytes: 72,
+            http: const HttpProtocolObservation(
+              method: 'GET',
+              target: '/health',
+              version: 'HTTP/1.1',
+              host: 'service.example',
+              headersComplete: true,
+            ),
+          ),
+        ),
+      );
+      final firstObservedAt = initial!.observedAt;
+
+      final updated = await notifier.observe(
+        tracker(
+          id: 'same',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: ProtocolObservation(
+            sessionId: sessionId,
+            kind: 'http1',
+            observedBytes: 72,
+            http: const HttpProtocolObservation(
+              method: 'GET',
+              target: '/health',
+              version: 'HTTP/1.1',
+              host: 'service.example',
+              headersComplete: true,
+            ),
+            httpResponse: const HttpResponseProtocolObservation(
+              version: 'HTTP/1.1',
+              statusCode: 204,
+              informationalStatusCodes: [100],
+              headerNames: ['date', 'server'],
+              headersComplete: true,
+              observedBytes: 64,
+              observedAfterMilliseconds: 37,
+            ),
+          ),
+        ),
+      );
+
+      final entries = scope.read(httpCaptureProvider).entries;
+      expect(entries, hasLength(1));
+      expect(updated?.id, initial.id);
+      expect(updated?.observedAt, firstObservedAt);
+      expect(entries.single.httpResponseObservation?.statusCode, 204);
+      expect(entries.single.httpResponseObservation?.headerNames, [
+        'date',
+        'server',
+      ]);
+    },
+  );
+
+  test(
+    'a response update stays in the Profile that observed the request',
+    () async {
+      final scope = container();
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final startedAt = DateTime.utc(2026, 9, 26, 7);
+      final request = ProtocolObservation(
+        sessionId: sessionId,
+        kind: 'http1',
+        observedBytes: 64,
+        http: const HttpProtocolObservation(
+          method: 'GET',
+          target: '/profile',
+          version: 'HTTP/1.1',
+          host: 'service.example',
+          headersComplete: true,
+        ),
+      );
+      final initial = await notifier.observe(
+        tracker(
+          id: 'profile-bound',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: request,
+        ),
+      );
+      expect(initial?.profileId, 1);
+
+      scope.read(currentProfileIdProvider.notifier).value = 2;
+      final updated = await notifier.observe(
+        tracker(
+          id: 'profile-bound',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: ProtocolObservation(
+            sessionId: sessionId,
+            kind: 'http1',
+            observedBytes: 64,
+            http: request.http,
+            httpResponse: const HttpResponseProtocolObservation(
+              version: 'HTTP/1.1',
+              statusCode: 204,
+              headersComplete: true,
+              observedBytes: 36,
+            ),
+          ),
+        ),
+      );
+
+      expect(updated?.profileId, 1);
+      expect(scope.read(httpCaptureProvider).entries, hasLength(1));
+      expect(scope.read(httpCaptureProvider).entries.single.profileId, 1);
+      expect(
+        scope
+            .read(httpCaptureProvider)
+            .entries
+            .single
+            .httpResponseObservation
+            ?.statusCode,
+        204,
+      );
+    },
+  );
+
+  test(
+    'a deleted active connection is not recreated by a response update',
+    () async {
+      final scope = container();
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final startedAt = DateTime.utc(2026, 9, 26, 7);
+      final request = ProtocolObservation(
+        sessionId: sessionId,
+        kind: 'http1',
+        observedBytes: 64,
+        http: const HttpProtocolObservation(
+          method: 'GET',
+          target: '/deleted',
+          version: 'HTTP/1.1',
+          host: 'service.example',
+          headersComplete: true,
+        ),
+      );
+      final initial = await notifier.observe(
+        tracker(
+          id: 'deleted-live',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: request,
+        ),
+      );
+      expect(initial, isNotNull);
+
+      await notifier.remove(initial!.id);
+      expect(scope.read(httpCaptureProvider).entries, isEmpty);
+
+      final delayed = await notifier.observe(
+        tracker(
+          id: 'deleted-live',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: ProtocolObservation(
+            sessionId: sessionId,
+            kind: 'http1',
+            observedBytes: 64,
+            http: request.http,
+            httpResponse: const HttpResponseProtocolObservation(
+              version: 'HTTP/1.1',
+              statusCode: 200,
+              headerNames: ['content-type'],
+              headersComplete: true,
+              observedBytes: 48,
+            ),
+          ),
+        ),
+      );
+
+      expect(delayed, isNull);
+      expect(scope.read(httpCaptureProvider).entries, isEmpty);
+    },
+  );
+
+  test('delete remains authoritative after switching Profiles', () async {
     final scope = container();
     addTearDown(scope.dispose);
     final notifier = scope.read(httpCaptureProvider.notifier);
     await notifier.start();
+    final sessionId = scope.read(httpCaptureProvider).sessionId;
+    final request = ProtocolObservation(
+      sessionId: sessionId,
+      kind: 'http1',
+      observedBytes: 64,
+      http: const HttpProtocolObservation(
+        method: 'GET',
+        target: '/deleted-profile',
+        version: 'HTTP/1.1',
+        host: 'service.example',
+        headersComplete: true,
+      ),
+    );
+    final initial = await notifier.observe(
+      tracker(
+        id: 'deleted-across-profile',
+        host: '',
+        port: '18080',
+        observation: request,
+      ),
+    );
+    expect(initial?.profileId, 1);
+    await notifier.remove(initial!.id);
+    scope.read(currentProfileIdProvider.notifier).value = 2;
 
-    await notifier.observe(tracker(id: 'same'));
-    await notifier.observe(tracker(id: 'same'));
+    final delayed = await notifier.observe(
+      tracker(
+        id: 'deleted-across-profile',
+        host: '',
+        port: '18080',
+        observation: ProtocolObservation(
+          sessionId: sessionId,
+          kind: 'http1',
+          observedBytes: 64,
+          http: request.http,
+          httpResponse: const HttpResponseProtocolObservation(
+            version: 'HTTP/1.1',
+            statusCode: 200,
+            headersComplete: true,
+            observedBytes: 40,
+          ),
+        ),
+      ),
+    );
 
-    expect(scope.read(httpCaptureProvider).entries, hasLength(1));
+    expect(delayed, isNull);
+    expect(scope.read(httpCaptureProvider).entries, isEmpty);
   });
+
+  test(
+    'clear prevents a pending response from recreating the request',
+    () async {
+      final scope = container();
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final request = ProtocolObservation(
+        sessionId: sessionId,
+        kind: 'http1',
+        observedBytes: 64,
+        http: const HttpProtocolObservation(
+          method: 'GET',
+          target: '/clear',
+          version: 'HTTP/1.1',
+          host: 'service.example',
+          headersComplete: true,
+        ),
+      );
+      await notifier.observe(
+        tracker(
+          id: 'cleared-live',
+          host: '',
+          port: '18080',
+          observation: request,
+        ),
+      );
+      await notifier.clear(profileId: 1);
+      expect(scope.read(httpCaptureProvider).entries, isEmpty);
+
+      final delayed = await notifier.observe(
+        tracker(
+          id: 'cleared-live',
+          host: '',
+          port: '18080',
+          observation: ProtocolObservation(
+            sessionId: sessionId,
+            kind: 'http1',
+            observedBytes: 64,
+            http: request.http,
+            httpResponse: const HttpResponseProtocolObservation(
+              version: 'HTTP/1.1',
+              statusCode: 200,
+              headersComplete: true,
+              observedBytes: 40,
+            ),
+          ),
+        ),
+      );
+
+      expect(delayed, isNull);
+      expect(scope.read(httpCaptureProvider).entries, isEmpty);
+    },
+  );
 
   test('the same connection can be observed in separate sessions', () async {
     final scope = container();
@@ -176,6 +480,98 @@ void main() {
   });
 
   test(
+    'an older canonical request cannot overwrite a newer response snapshot',
+    () async {
+      final originalDatabase = database;
+      final testDatabase = Database(NativeDatabase.memory());
+      database = testDatabase;
+      addTearDown(() async {
+        database = originalDatabase;
+        await testDatabase.close();
+      });
+      await testDatabase.profilesDao.putAll([
+        const Profile(
+          id: 1,
+          label: 'Capture profile',
+          autoUpdateDuration: Duration.zero,
+        ).toCompanion(),
+      ]);
+
+      final scope = container(persistence: true);
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final startedAt = DateTime.utc(2026, 9, 26, 8);
+      final request = ProtocolObservation(
+        sessionId: sessionId,
+        kind: 'http1',
+        observedBytes: 64,
+        http: const HttpProtocolObservation(
+          method: 'GET',
+          target: '/race',
+          version: 'HTTP/1.1',
+          host: 'service.example',
+          headersComplete: true,
+        ),
+      );
+      final responsePresence = <bool>[];
+      final subscription = scope.listen<HttpCaptureState>(httpCaptureProvider, (
+        _,
+        next,
+      ) {
+        if (next.entries case [final entry]) {
+          responsePresence.add(entry.httpResponseObservation != null);
+        }
+      });
+      addTearDown(subscription.close);
+
+      final initialFuture = notifier.observe(
+        tracker(
+          id: 'canonical-race',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: request,
+        ),
+      );
+      final responseFuture = notifier.observe(
+        tracker(
+          id: 'canonical-race',
+          host: '',
+          port: '18080',
+          start: startedAt,
+          observation: ProtocolObservation(
+            sessionId: sessionId,
+            kind: 'http1',
+            observedBytes: 64,
+            http: request.http,
+            httpResponse: const HttpResponseProtocolObservation(
+              version: 'HTTP/1.1',
+              statusCode: 201,
+              headersComplete: true,
+              observedBytes: 48,
+            ),
+          ),
+        ),
+      );
+      await Future.wait([initialFuture, responseFuture]);
+
+      final entries = scope.read(httpCaptureProvider).entries;
+      expect(entries, hasLength(1));
+      expect(entries.single.httpResponseObservation?.statusCode, 201);
+      final firstResponse = responsePresence.indexOf(true);
+      expect(firstResponse, isNonNegative);
+      expect(
+        responsePresence.skip(firstResponse),
+        everyElement(isTrue),
+        reason:
+            'persistence must not roll a response snapshot back to request-only',
+      );
+    },
+  );
+
+  test(
     'deleting an optimistic update cannot resurrect its canonical row',
     () async {
       final originalDatabase = database;
@@ -211,7 +607,7 @@ void main() {
 
       final observe = notifier.observe(tracker(id: 'race'));
       final optimistic = scope.read(httpCaptureProvider).entries.single;
-      expect(optimistic.id, isNot(1));
+      expect(optimistic.id, 1);
       final remove = notifier.remove(optimistic.id);
       await Future.wait<void>([observe.then((_) {}), remove]);
 
@@ -455,6 +851,14 @@ void main() {
         headerNames: ['host'],
         headersComplete: true,
       ),
+      httpResponse: HttpResponseProtocolObservation(
+        version: 'HTTP/1.1',
+        statusCode: 200,
+        headerNames: ['content-type'],
+        headersComplete: true,
+        observedBytes: 48,
+        observedAfterMilliseconds: 12,
+      ),
     );
     final scope = container();
     addTearDown(scope.dispose);
@@ -474,5 +878,6 @@ void main() {
     expect(captured, isNotNull);
     expect(captured?.evidence, 'core-http1');
     expect(captured?.httpObservation?.target, '/health');
+    expect(captured?.httpResponseObservation?.statusCode, 200);
   });
 }

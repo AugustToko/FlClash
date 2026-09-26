@@ -131,6 +131,15 @@ List<HttpCaptureEntry> _previewEntries() => [
         headerNames: ['host', 'accept', 'user-agent'],
         headersComplete: true,
       ),
+      httpResponse: HttpResponseProtocolObservation(
+        version: 'HTTP/1.1',
+        statusCode: 200,
+        informationalStatusCodes: [103],
+        headerNames: ['content-type', 'cache-control', 'server'],
+        headersComplete: true,
+        observedBytes: 118,
+        observedAfterMilliseconds: 35,
+      ),
     ),
   ),
   _entry(
@@ -269,11 +278,11 @@ void main() {
     await _pumpCapture(tester, size: const Size(430, 932));
 
     expect(find.text('HTTP 捕获'), findsWidgets);
-    expect(find.textContaining('仅在主动开启时进行被动观察'), findsOneWidget);
+    expect(find.textContaining('仅在主动开启时被动观察'), findsOneWidget);
     expect(find.text('https://api.openai.com'), findsOneWidget);
     expect(find.textContaining('Core 已观察到 TLS ClientHello'), findsOneWidget);
     expect(find.textContaining('UNKNOWN'), findsNothing);
-    expect(find.textContaining('200'), findsNothing);
+    expect(find.textContaining('首个明文响应头'), findsOneWidget);
   });
 
   testWidgets('a pending Core disable remains visible', (tester) async {
@@ -334,7 +343,10 @@ void main() {
   testWidgets('details keep HAR limitations explicit', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
 
-    await tester.tap(find.text('https://api.openai.com'));
+    final target = find.text('https://api.openai.com');
+    await tester.ensureVisible(target);
+    await tester.pumpAndSettle();
+    await tester.tap(target);
     await tester.pumpAndSettle();
 
     expect(find.textContaining('HAR 导出仍仅表示观察结果'), findsOneWidget);
@@ -400,7 +412,10 @@ void main() {
 
   testWidgets('HTTP capture detail preview', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
-    await tester.tap(find.text('https://api.openai.com'));
+    final target = find.text('https://api.openai.com');
+    await tester.ensureVisible(target);
+    await tester.pumpAndSettle();
+    await tester.tap(target);
     await tester.pumpAndSettle();
 
     await expectLater(
@@ -413,12 +428,22 @@ void main() {
     await _pumpCapture(tester, size: const Size(430, 932));
     await tester.tap(find.text('HTTP').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('http://router.home'));
+    final target = find.text('http://router.home');
+    await tester.ensureVisible(target);
+    await tester.pumpAndSettle();
+    await tester.tap(target);
     await tester.pumpAndSettle();
 
     expect(find.text('GET'), findsOneWidget);
     expect(find.text('/status'), findsOneWidget);
     expect(find.text('host, accept, user-agent'), findsOneWidget);
+    expect(find.text('已观察响应', skipOffstage: false), findsOneWidget);
+    expect(find.text('200', skipOffstage: false), findsOneWidget);
+    expect(
+      find.text('content-type, cache-control, server', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.text('103', skipOffstage: false), findsOneWidget);
 
     await expectLater(
       find.byType(Overlay).first,

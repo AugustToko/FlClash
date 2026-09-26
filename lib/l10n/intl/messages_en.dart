@@ -578,7 +578,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Current profile",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Passively observe HTTP/1 request prefixes, TLS ClientHello metadata, and connection-level fallbacks from the running Core",
+      "Passively observe initial HTTP/1 requests and responses, TLS ClientHello metadata, and connection-level fallbacks from the running Core",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "No HTTP observations yet",
@@ -618,7 +618,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP observations exported",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR export remains observation-only. For HTTP/1 it may include the method, sanitized target, version, and header names; header values, bodies, response status, response headers, decrypted TLS data, and detailed timings remain unknown.",
+      "HAR export remains observation-only. For observed cleartext HTTP/1 it may include the request method, sanitized target and header names, plus the first response status, version and header names. Reason phrases, all header values, bodies, later keep-alive messages, decrypted TLS data, and detailed timings remain unknown.",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Header names",
@@ -636,6 +636,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP version",
     ),
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("Incomplete"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "Informational status codes",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Informational status list truncated",
+        ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Not observed",
     ),
@@ -643,7 +650,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Observation delay",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Opt-in passive observation only. For each new TCP connection, the Core may inspect only the initial bounded client prefix for an HTTP/1 request line, Host, header names, or TLS ClientHello metadata. Later keep-alive requests, query strings, header values, bodies, responses, certificates, and decrypted TLS data are not captured. Only connections created after capture starts can carry Core protocol metadata. Records stay on this device and are excluded from backups.",
+      "Opt-in passive observation. Core may inspect a bounded initial HTTP/1 request and its first cleartext response headers, or TLS ClientHello metadata. It never stores query strings, reason phrases, header values, bodies, certificates, decrypted TLS data, or later keep-alive messages. New connections only; local records are excluded from backups.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Observed prefix",
@@ -667,6 +674,34 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
       "Sanitized target",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
+      "Observed response",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Response header names",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Response header-name list truncated",
+        ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Response headers complete",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Response HTTP version",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Response observed after",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Observed response prefix",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "Response status",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "Response observation truncated",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),

@@ -10,6 +10,7 @@ HttpCaptureEntry capture({
   int? profileId = 1,
   DateTime? observedAt,
   HttpCaptureProtocol protocol = HttpCaptureProtocol.tls,
+  ProtocolObservation? observation,
 }) {
   final now = observedAt ?? DateTime.utc(2026, 9, 25, 10);
   return HttpCaptureEntry(
@@ -36,6 +37,7 @@ HttpCaptureEntry capture({
     upload: 0,
     download: 0,
     remoteDestination: '',
+    observation: observation,
   );
 }
 
@@ -56,7 +58,32 @@ void main() {
   tearDown(() => database.close());
 
   test('HTTP observations survive a database round trip', () async {
-    final entry = capture(id: 1, connectionId: 'connection-1');
+    final entry = capture(
+      id: 1,
+      connectionId: 'connection-1',
+      protocol: HttpCaptureProtocol.http,
+      observation: const ProtocolObservation(
+        sessionId: 'session-1',
+        kind: 'http1',
+        observedBytes: 74,
+        http: HttpProtocolObservation(
+          method: 'GET',
+          target: '/health',
+          version: 'HTTP/1.1',
+          host: 'api.example.com',
+          headersComplete: true,
+        ),
+        httpResponse: HttpResponseProtocolObservation(
+          version: 'HTTP/1.1',
+          statusCode: 204,
+          informationalStatusCodes: [100],
+          headerNames: ['date', 'server'],
+          headersComplete: true,
+          observedBytes: 58,
+          observedAfterMilliseconds: 31,
+        ),
+      ),
+    );
 
     final stored = await database.upsertHttpCaptureEntry(entry);
     final loaded = await database.loadHttpCaptureEntries(
@@ -67,7 +94,12 @@ void main() {
     expect(stored.id, 1);
     expect(loaded, hasLength(1));
     expect(loaded.single.connectionId, 'connection-1');
-    expect(loaded.single.origin, 'https://api.example.com');
+    expect(loaded.single.origin, 'http://api.example.com:443');
+    expect(loaded.single.httpResponseObservation?.statusCode, 204);
+    expect(loaded.single.httpResponseObservation?.headerNames, [
+      'date',
+      'server',
+    ]);
     expect(await database.countHttpCaptureEntries(profileId: 1), 1);
   });
 

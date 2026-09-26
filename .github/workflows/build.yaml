@@ -127,8 +127,8 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: |
-          test -z "$(gofmt -l component/observer constant/observation.go tunnel/observation_test.go tunnel/statistic/tracker.go tunnel/tunnel.go)" || {
-            gofmt -l component/observer constant/observation.go tunnel/observation_test.go tunnel/statistic/tracker.go tunnel/tunnel.go >&2
+          test -z "$(gofmt -l component/observer constant/observation.go tunnel/observation_test.go tunnel/statistic tunnel/tunnel.go)" || {
+            gofmt -l component/observer constant/observation.go tunnel/observation_test.go tunnel/statistic tunnel/tunnel.go >&2
             exit 1
           }
           go test -count=1 ./component/observer ./tunnel/statistic ./tunnel
