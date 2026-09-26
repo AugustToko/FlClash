@@ -72,6 +72,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   void dispose() {
     coreEventManager.removeListener(this);
+    debouncer.cancel(FunctionTag.updateDelay);
+    debouncer.cancel(FunctionTag.loadedProvider);
+    throttler.cancel(FunctionTag.coreErrorNotifier);
     super.dispose();
   }
 

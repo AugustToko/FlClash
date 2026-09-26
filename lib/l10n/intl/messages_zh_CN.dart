@@ -412,7 +412,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "被动观察运行中 Core 的 HTTP/1 请求前缀、TLS ClientHello 元数据与连接级回退信息",
+      "被动观察运行中 Core 的首个 HTTP/1 请求与响应、TLS ClientHello 元数据及连接级回退信息",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage("暂无 HTTP 观察记录"),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("观察到的端点"),
@@ -446,7 +446,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 观察记录已导出",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR 导出仍仅表示观察结果。对于 HTTP/1，可包含方法、已去除查询参数的目标、版本和请求头名称；请求头值、正文、响应状态、响应头、解密后的 TLS 数据与详细时序仍保持未知。",
+      "HAR 导出仍仅表示观察结果。对于已观察到的明文 HTTP/1，可包含请求方法、已净化目标和请求头名称，以及首个响应的状态码、版本和响应头名称。Reason Phrase、所有请求头/响应头值、正文、Keep-Alive 后续消息、解密后的 TLS 数据与详细时序仍保持未知。",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("请求头名称"),
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
@@ -460,10 +460,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage("HTTP 版本"),
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完整"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "信息性状态码",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage("信息性状态码列表已截断"),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未观察到"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "仅在主动开启时进行被动观察。对于每条新 TCP 连接，Core 只检查最初一段有界客户端前缀，以识别 HTTP/1 请求行、Host、请求头名称或 TLS ClientHello 元数据；不会持续观察 Keep-Alive 后续请求，也不会保存查询参数、请求头值、正文、响应、证书或解密后的 TLS 数据。只有开始捕获后新建的连接才可能包含 Core 协议元数据。记录只保存在本机并从备份中排除。",
+      "仅在主动开启时被动观察。Core 可检查有界的首个 HTTP/1 请求及首个明文响应头，或 TLS ClientHello 元数据；不会保存查询参数、Reason Phrase、请求头/响应头值、正文、证书、解密后的 TLS 数据及 Keep-Alive 后续消息。仅适用于开启后新建的连接；记录只保存在本机并从备份中排除。",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage("已观察前缀"),
     "httpCapturePresent": MessageLookupByLibrary.simpleMessage("存在"),
@@ -478,6 +483,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage("未知协议"),
     "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage("请求方法"),
     "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage("已净化目标"),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("已观察响应"),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "响应头名称",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage("响应头名称列表已截断"),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "响应头是否完整",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "响应 HTTP 版本",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "响应观察延迟",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "已观察响应前缀",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage("响应状态码"),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "响应观察是否截断",
+    ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("正在捕获"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("已停止"),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(

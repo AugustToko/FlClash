@@ -188,9 +188,12 @@ void main() {
     );
     expect(
       rootExtension['limitations'],
-      contains('header-values-not-captured'),
+      contains('request-header-values-not-captured'),
     );
-    expect(rootExtension['limitations'], contains('body-not-captured'));
+    expect(
+      rootExtension['limitations'],
+      contains('response-body-not-captured'),
+    );
 
     final encoded = encodeHttpCaptureHar(entries: [entry]);
     expect(jsonDecode(encoded), isA<Map<String, dynamic>>());
@@ -213,6 +216,15 @@ void main() {
           headersComplete: true,
           targetTruncated: true,
           hostTruncated: true,
+        ),
+        httpResponse: HttpResponseProtocolObservation(
+          version: 'HTTP/1.1',
+          statusCode: 200,
+          informationalStatusCodes: [100],
+          headerNames: ['content-type', 'set-cookie'],
+          headersComplete: true,
+          observedBytes: 93,
+          observedAfterMilliseconds: 42,
         ),
       );
       final entry = HttpCaptureEntry.fromTracker(
@@ -238,6 +250,14 @@ void main() {
       expect(decoded.httpObservation?.method, 'GET');
       expect(decoded.httpObservation?.targetTruncated, isTrue);
       expect(decoded.httpObservation?.hostTruncated, isTrue);
+      expect(decoded.httpResponseObservation?.statusCode, 200);
+      expect(decoded.httpResponseObservation?.informationalStatusCodes, [100]);
+      expect(decoded.httpResponseObservation?.headerNames, [
+        'content-type',
+        'set-cookie',
+      ]);
+      expect(decoded.searchText, contains('200'));
+      expect(decoded.searchText, contains('set-cookie'));
       expect(decoded.toTrackerInfo().observation?.sessionId, 'session-http1');
       expect(decoded.toTrackerInfo().observation?.observedBytes, 148);
 
@@ -246,16 +266,28 @@ void main() {
       final harEntry =
           (log['entries']! as List<Object?>).single! as Map<String, Object?>;
       final request = harEntry['request']! as Map<String, Object?>;
+      final response = harEntry['response']! as Map<String, Object?>;
       final extension = harEntry['_flclash']! as Map<String, Object?>;
 
       expect(request['method'], 'GET');
       expect(request['url'], 'http://api.openai.com/v1/models');
       expect(request['httpVersion'], 'HTTP/1.1');
       expect(request['headers'], isEmpty);
+      expect(response['status'], 200);
+      expect(response['statusText'], '');
+      expect(response['httpVersion'], 'HTTP/1.1');
+      expect(response['headers'], isEmpty);
       expect(extension['headerNames'], contains('authorization'));
+      expect(extension['responseObserved'], isTrue);
+      expect(extension['responseReasonPhraseCaptured'], isFalse);
+      expect(extension['responseHeaderNames'], ['content-type', 'set-cookie']);
+      expect(extension['responseObservedAfterMilliseconds'], 42);
       final encoded = jsonEncode(payload);
       expect(encoded, isNot(contains('Bearer')));
       expect(encoded, isNot(contains('api_key=')));
+      expect(encoded, isNot(contains('private-reason')));
+      expect(encoded, isNot(contains('private-cookie')));
+      expect(encoded, isNot(contains('private-body')));
     },
   );
 
@@ -309,6 +341,20 @@ void main() {
             'X-${index.toString().padLeft(3, '0')}-${'H' * 200}',
         ],
       },
+      'httpResponse': {
+        'version': 'HTTP/1.1${'r' * 100}',
+        'statusCode': 9999,
+        'informationalStatusCodes': [
+          for (var index = 0; index < 20; index++) 100 + (index % 50),
+          200,
+        ],
+        'headerNames': [
+          for (var index = 0; index < 100; index++)
+            'X-Response-${index.toString().padLeft(3, '0')}-${'R' * 200}',
+        ],
+        'observedBytes': 999999,
+        'observedAfterMilliseconds': 999999999999,
+      },
       'tls': {
         'serverName': '${'S' * 300}.EXAMPLE',
         'alpn': [for (var index = 0; index < 40; index++) 'p$index'],
@@ -331,10 +377,51 @@ void main() {
       observation.http!.headerNames.every((name) => name.length <= 128),
       isTrue,
     );
+    expect(observation.httpResponse?.version.length, 16);
+    expect(observation.httpResponse?.statusCode, 0);
+    expect(observation.httpResponse?.informationalStatusCodes, hasLength(8));
+    expect(observation.httpResponse?.headerNames, hasLength(64));
+    expect(
+      observation.httpResponse!.headerNames.every((name) => name.length <= 128),
+      isTrue,
+    );
+    expect(observation.httpResponse?.observedBytes, 32 * 1024);
+    expect(observation.httpResponse?.observedAfterMilliseconds, 0x7fffffff);
     expect(observation.tls?.serverName.length, 255);
     expect(observation.tls?.alpn, hasLength(16));
     expect(observation.tls?.legacyVersion.length, 32);
     expect(observation.tls?.supportedVersions, hasLength(16));
+  });
+
+  test('response metadata is ignored outside an HTTP/1 observation', () {
+    const observation = ProtocolObservation(
+      kind: 'tls-client-hello',
+      tls: TlsClientHelloObservation(serverName: 'secure.example'),
+      httpResponse: HttpResponseProtocolObservation(
+        version: 'HTTP/1.1',
+        statusCode: 200,
+        headersComplete: true,
+      ),
+    );
+    final entry = HttpCaptureEntry.fromTracker(
+      id: 14,
+      tracker: tracker(
+        host: '',
+        destinationPort: '443',
+        observation: observation,
+      ),
+      sessionId: 'session-tls',
+      profileId: null,
+    );
+
+    expect(entry.protocol, HttpCaptureProtocol.tls);
+    expect(entry.httpResponseObservation, isNull);
+    final payload = buildHttpCaptureHar(entries: [entry]);
+    final log = payload['log']! as Map<String, Object?>;
+    final harEntry =
+        (log['entries']! as List<Object?>).single! as Map<String, Object?>;
+    final response = harEntry['response']! as Map<String, Object?>;
+    expect(response['status'], 0);
   });
 
   test('a Core observation remains eligible even without a candidate port', () {

@@ -598,7 +598,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Текущий профиль",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Пассивное наблюдение префиксов запросов HTTP/1, метаданных TLS ClientHello и резервных метаданных соединения из работающего Core",
+      "Пассивное наблюдение первого запроса и ответа HTTP/1, метаданных TLS ClientHello и резервных метаданных соединения из работающего Core",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "Наблюдений HTTP пока нет",
@@ -636,7 +636,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Наблюдения HTTP экспортированы",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "Экспорт HAR остаётся наблюдением. Для HTTP/1 он может содержать метод, очищенный адрес без query-параметров, версию и имена заголовков; значения заголовков, тела, статус и заголовки ответа, расшифрованные данные TLS и подробные тайминги остаются неизвестными.",
+      "Экспорт HAR остаётся наблюдением. Для наблюдаемого открытого HTTP/1 он может содержать метод запроса, очищенный адрес и имена заголовков запроса, а также статус, версию и имена заголовков первого ответа. Reason Phrase, все значения заголовков, тела, последующие сообщения Keep-Alive, расшифрованные данные TLS и подробные тайминги остаются неизвестными.",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Имена заголовков",
@@ -656,6 +656,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage(
       "Неполностью",
     ),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "Информационные коды состояния",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Список информационных кодов усечён",
+        ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Не наблюдается",
     ),
@@ -663,7 +670,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Задержка наблюдения",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Пассивное наблюдение выполняется только после явного запуска. Для каждого нового TCP-соединения Core проверяет только начальный ограниченный клиентский префикс, чтобы распознать строку запроса HTTP/1, Host, имена заголовков или метаданные TLS ClientHello. Последующие запросы Keep-Alive, строки запроса URL, значения заголовков, тела, ответы, сертификаты и расшифрованные данные TLS не сохраняются. Метаданные протокола Core могут появиться только у соединений, созданных после запуска захвата. Записи остаются на устройстве и исключаются из резервных копий.",
+      "Пассивное наблюдение включается явно. Core может проверить ограниченный первый запрос HTTP/1 и заголовки первого открытого ответа либо метаданные TLS ClientHello. Query-параметры, Reason Phrase, значения заголовков, тела, сертификаты, расшифрованные данные TLS и последующие сообщения Keep-Alive не сохраняются. Учитываются только новые соединения; локальные записи исключены из резервных копий.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый префикс",
@@ -687,6 +694,34 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
       "Очищенный адрес",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый ответ",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Имена заголовков ответа",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Список имён заголовков ответа усечён",
+        ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота заголовков ответа",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Версия HTTP ответа",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения ответа",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый префикс ответа",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "Статус ответа",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение ответа усечено",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
       "Захват выполняется",

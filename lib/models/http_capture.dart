@@ -24,7 +24,7 @@ enum HttpCaptureProtocol {
 }
 
 class HttpCaptureEntry {
-  static const formatVersion = 2;
+  static const formatVersion = 3;
 
   final int id;
   final String connectionId;
@@ -286,6 +286,9 @@ class HttpCaptureEntry {
 
   HttpProtocolObservation? get httpObservation => observation?.http;
 
+  HttpResponseProtocolObservation? get httpResponseObservation =>
+      observation?.kind == 'http1' ? observation?.httpResponse : null;
+
   TlsClientHelloObservation? get tlsObservation => observation?.tls;
 
   int get observationDelayMs {
@@ -355,6 +358,7 @@ class HttpCaptureEntry {
 
   String get searchText {
     final http = httpObservation;
+    final response = httpResponseObservation;
     final tls = tlsObservation;
     return [
       sessionId,
@@ -381,6 +385,10 @@ class HttpCaptureEntry {
       http?.version ?? '',
       http?.host ?? '',
       http?.headerNames.join(' ') ?? '',
+      response?.version ?? '',
+      response == null || response.statusCode == 0 ? '' : response.statusCode,
+      response?.informationalStatusCodes.join(' ') ?? '',
+      response?.headerNames.join(' ') ?? '',
       tls?.serverName ?? '',
       tls?.alpn.join(' ') ?? '',
       tls?.legacyVersion ?? '',
@@ -481,7 +489,7 @@ bool shouldCaptureHttpObservation(TrackerInfo tracker) {
 Map<String, Object?> buildHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'passive-2',
+  String creatorVersion = 'passive-3',
 }) {
   final ordered = entries.toList(growable: false)
     ..sort((a, b) {
@@ -497,18 +505,22 @@ Map<String, Object?> buildHttpCaptureHar({
       'entries': [for (final entry in ordered) _httpCaptureHarEntry(entry)],
       '_flclash': {
         'format': 'flclash-passive-http-observation',
-        'version': 2,
+        'version': 3,
         'observationOnly': true,
         'exportedAt': timestamp.toIso8601String(),
         'limitations': const [
           'initial-client-prefix-only',
           'later-keep-alive-requests-not-captured',
+          'initial-server-response-headers-only',
+          'later-keep-alive-responses-not-captured',
           'request-method-only-for-observed-http1',
           'request-target-query-and-fragment-removed',
-          'header-values-not-captured',
-          'response-status-not-captured',
-          'response-headers-not-captured',
-          'body-not-captured',
+          'request-header-values-not-captured',
+          'request-body-not-captured',
+          'response-status-only-for-observed-http1',
+          'response-reason-phrase-not-captured',
+          'response-header-values-not-captured',
+          'response-body-not-captured',
           'timings-not-captured',
           'tls-not-decrypted',
         ],
@@ -520,7 +532,7 @@ Map<String, Object?> buildHttpCaptureHar({
 String encodeHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'passive-2',
+  String creatorVersion = 'passive-3',
 }) {
   return const JsonEncoder.withIndent('  ').convert(
     buildHttpCaptureHar(
@@ -533,6 +545,9 @@ String encodeHttpCaptureHar({
 
 Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
   final http = entry.httpObservation;
+  final responseObservation = entry.httpResponseObservation;
+  final hasObservedResponse =
+      responseObservation != null && responseObservation.statusCode != 0;
   return {
     'startedDateTime': entry.startedAt.toUtc().toIso8601String(),
     'time': 0,
@@ -549,9 +564,9 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
       'bodySize': -1,
     },
     'response': {
-      'status': 0,
-      'statusText': 'Not captured',
-      'httpVersion': '',
+      'status': hasObservedResponse ? responseObservation.statusCode : 0,
+      'statusText': hasObservedResponse ? '' : 'Not captured',
+      'httpVersion': hasObservedResponse ? responseObservation.version : '',
       'cookies': const <Object?>[],
       'headers': const <Object?>[],
       'content': {'size': -1, 'mimeType': ''},
@@ -590,6 +605,22 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
         'headerNames': http.headerNames,
         'headersComplete': http.headersComplete,
         'headerNamesTruncated': http.headerNamesTruncated,
+      },
+      if (responseObservation != null) ...{
+        'responseObserved': true,
+        'responseReasonPhraseCaptured': false,
+        'responseHeaderNames': responseObservation.headerNames,
+        'responseHeadersComplete': responseObservation.headersComplete,
+        'responseObservedBytes': responseObservation.observedBytes,
+        'responseObservedAfterMilliseconds':
+            responseObservation.observedAfterMilliseconds,
+        'responseTruncated': responseObservation.truncated,
+        'responseHeaderNamesTruncated':
+            responseObservation.headerNamesTruncated,
+        'informationalStatusCodes':
+            responseObservation.informationalStatusCodes,
+        'informationalStatusCodesTruncated':
+            responseObservation.informationalStatusCodesTruncated,
       },
     },
   };

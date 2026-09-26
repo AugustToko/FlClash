@@ -197,6 +197,7 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
           final l = sheetContext.appLocalizations;
           final observation = entry.observation;
           final http = entry.httpObservation;
+          final response = entry.httpResponseObservation;
           final tls = entry.tlsObservation;
           String completeness(bool value) =>
               value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
@@ -287,6 +288,60 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   if (http.headerNamesTruncated)
                     _HttpCaptureDetailRow(
                       label: l.httpCaptureHeaderNamesTruncated,
+                      value: presence(true),
+                    ),
+                ],
+                if (response != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    l.httpCaptureResponse,
+                    style: sheetContext.textTheme.titleSmall?.toSoftBold,
+                  ),
+                  const SizedBox(height: 4),
+                  if (response.statusCode != 0)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureResponseStatus,
+                      value: '${response.statusCode}',
+                    ),
+                  if (response.version.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureResponseHttpVersion,
+                      value: response.version,
+                    ),
+                  if (response.informationalStatusCodes.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureInformationalStatusCodes,
+                      value: response.informationalStatusCodes.join(', '),
+                    ),
+                  if (response.headerNames.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureResponseHeaderNames,
+                      value: response.headerNames.join(', '),
+                    ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureResponseHeadersComplete,
+                    value: completeness(response.headersComplete),
+                  ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureResponseObservedBytes,
+                    value: '${response.observedBytes} B',
+                  ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureResponseObservedAfter,
+                    value: '${response.observedAfterMilliseconds} ms',
+                  ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureResponseTruncated,
+                    value: presence(response.truncated),
+                  ),
+                  if (response.headerNamesTruncated)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureResponseHeaderNamesTruncated,
+                      value: presence(true),
+                    ),
+                  if (response.informationalStatusCodesTruncated)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureInformationalStatusCodesTruncated,
                       value: presence(true),
                     ),
                 ],
@@ -614,7 +669,12 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   if (entry.httpObservation case final http?) ...[
                     const SizedBox(height: 6),
                     Text(
-                      '${http.method} ${http.target}'.trim(),
+                      [
+                        '${http.method} ${http.target}'.trim(),
+                        if (entry.httpResponseObservation case final response?
+                            when response.statusCode != 0)
+                          '→ ${response.statusCode}',
+                      ].join(' '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.bodySmall?.toSoftBold,

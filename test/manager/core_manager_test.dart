@@ -230,6 +230,105 @@ void main() {
     expect(entries.single.profileId, 7);
   });
 
+  testWidgets('response updates replace the existing request and capture row', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [
+        currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    await container.read(httpCaptureProvider.notifier).start();
+    final sessionId = container.read(httpCaptureProvider).sessionId;
+    final startedAt = DateTime.utc(2026, 9, 26, 6);
+
+    TrackerInfo value({HttpResponseProtocolObservation? response}) {
+      return TrackerInfo(
+        id: 'response-update',
+        upload: 12,
+        download: response == null ? 0 : 48,
+        start: startedAt,
+        metadata: const Metadata(
+          uid: 10001,
+          network: 'tcp',
+          sourceIP: '10.0.0.2',
+          sourcePort: '52000',
+          destinationIP: '192.0.2.10',
+          destinationPort: '8080',
+          host: 'service.example',
+          process: 'example.app',
+        ),
+        chains: const ['DIRECT'],
+        rule: 'Domain',
+        rulePayload: 'service.example',
+        observation: ProtocolObservation(
+          sessionId: sessionId,
+          kind: 'http1',
+          observedBytes: 81,
+          http: const HttpProtocolObservation(
+            method: 'GET',
+            target: '/health',
+            version: 'HTTP/1.1',
+            host: 'service.example',
+            headerNames: ['host'],
+            headersComplete: true,
+          ),
+          httpResponse: response,
+        ),
+      );
+    }
+
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.request,
+        data: jsonDecode(jsonEncode(value())),
+      ),
+    );
+    await tester.pump();
+    final firstEntry = container.read(httpCaptureProvider).entries.single;
+
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.request,
+        data: jsonDecode(
+          jsonEncode(
+            value(
+              response: const HttpResponseProtocolObservation(
+                version: 'HTTP/1.1',
+                statusCode: 204,
+                informationalStatusCodes: [100],
+                headerNames: ['date', 'server'],
+                headersComplete: true,
+                observedBytes: 62,
+                observedAfterMilliseconds: 31,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final requests = container.read(requestsProvider).list;
+    expect(requests, hasLength(1));
+    expect(requests.single.observation?.httpResponse?.statusCode, 204);
+    expect(requests.single.download, 48);
+
+    final entries = container.read(httpCaptureProvider).entries;
+    expect(entries, hasLength(1));
+    expect(entries.single.id, firstEntry.id);
+    expect(entries.single.observedAt, firstEntry.observedAt);
+    expect(entries.single.httpResponseObservation?.statusCode, 204);
+    expect(entries.single.httpResponseObservation?.headerNames, [
+      'date',
+      'server',
+    ]);
+  });
+
   testWidgets('an active capture follows Core reconnect and disconnect', (
     tester,
   ) async {

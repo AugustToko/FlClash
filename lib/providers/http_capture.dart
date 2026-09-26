@@ -98,6 +98,10 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
   Future<void>? _loadOperation;
   Future<void> _writeTail = Future<void>.value();
   Future<void> _coreToggleTail = Future<void>.value();
+  final _suppressedIdentities = <String>{};
+  final _suppressedConnections = <String>{};
+  final _activeConnectionBindings =
+      <String, ({int id, int? profileId, DateTime observedAt})>{};
   Timer? _coreDisableRetryTimer;
   DateTime? _lastCoreToggleFailureLogAt;
 
@@ -106,6 +110,23 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     ref.onDispose(() => _coreDisableRetryTimer?.cancel());
     return const HttpCaptureState();
   }
+
+  String _identity({
+    required String scopeKey,
+    required String sessionId,
+    required String connectionId,
+  }) => '$scopeKey\u0000$sessionId\u0000$connectionId';
+
+  String _connectionIdentity({
+    required String sessionId,
+    required String connectionId,
+  }) => '$sessionId\u0000$connectionId';
+
+  String _entryIdentity(HttpCaptureEntry entry) => _identity(
+    scopeKey: entry.scopeKey,
+    sessionId: entry.sessionId,
+    connectionId: entry.connectionId,
+  );
 
   List<HttpCaptureEntry> _bounded(Iterable<HttpCaptureEntry> entries) {
     final values = entries.toList(growable: false)
@@ -116,7 +137,49 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     return List.unmodifiable(values.take(maxLoadedEntries));
   }
 
+  HttpCaptureEntry _mergeCanonicalWithMemory(HttpCaptureEntry canonical) {
+    HttpCaptureEntry? current;
+    for (final entry in state.entries) {
+      if (entry.scopeKey == canonical.scopeKey &&
+          entry.sessionId == canonical.sessionId &&
+          entry.connectionId == canonical.connectionId) {
+        current = entry;
+        break;
+      }
+    }
+    if (current == null) {
+      return canonical;
+    }
+    final currentResponse = current.httpResponseObservation;
+    final canonicalResponse = canonical.httpResponseObservation;
+    final currentIsRicher =
+        (currentResponse != null && canonicalResponse == null) ||
+        current.upload > canonical.upload ||
+        current.download > canonical.download;
+    return currentIsRicher ? current.copyWith(id: canonical.id) : canonical;
+  }
+
+  void _rememberActiveConnection(HttpCaptureEntry entry) {
+    if (entry.httpObservation == null ||
+        entry.httpResponseObservation != null) {
+      _activeConnectionBindings.remove(entry.connectionId);
+      return;
+    }
+    if (!_activeConnectionBindings.containsKey(entry.connectionId) &&
+        _activeConnectionBindings.length >= maxLoadedEntries) {
+      _activeConnectionBindings.remove(_activeConnectionBindings.keys.first);
+    }
+    _activeConnectionBindings[entry.connectionId] = (
+      id: entry.id,
+      profileId: entry.profileId,
+      observedAt: entry.observedAt,
+    );
+  }
+
   void _upsertMemory(HttpCaptureEntry entry) {
+    if (_suppressedIdentities.contains(_entryIdentity(entry))) {
+      return;
+    }
     final next =
         state.entries
             .where(
@@ -330,12 +393,11 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
         }
         final byIdentity = <String, HttpCaptureEntry>{
           for (final entry in persisted)
-            '${entry.scopeKey}\u0000${entry.sessionId}\u0000${entry.connectionId}':
-                entry,
+            if (!_suppressedIdentities.contains(_entryIdentity(entry)))
+              _entryIdentity(entry): entry,
         };
         for (final entry in state.entries) {
-          final key =
-              '${entry.scopeKey}\u0000${entry.sessionId}\u0000${entry.connectionId}';
+          final key = _entryIdentity(entry);
           final stored = byIdentity[key];
           if (stored == null || entry.observedAt.isAfter(stored.observedAt)) {
             byIdentity[key] = entry;
@@ -365,6 +427,8 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     }
     final now = DateTime.now();
     final sessionId = 'http-capture:${snowflake.id}';
+    _activeConnectionBindings.clear();
+    _suppressedConnections.clear();
     state = state.copyWith(
       enabled: true,
       sessionStartedAt: now,
@@ -438,12 +502,40 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
         observationSessionId != state.sessionId) {
       return null;
     }
+    if (_suppressedConnections.contains(
+      _connectionIdentity(sessionId: state.sessionId, connectionId: tracker.id),
+    )) {
+      return null;
+    }
+    HttpCaptureEntry? previous;
+    for (final current in state.entries) {
+      if (current.sessionId == state.sessionId &&
+          current.connectionId == tracker.id) {
+        previous = current;
+        break;
+      }
+    }
+    final binding = _activeConnectionBindings[tracker.id];
+    final profileId = previous != null
+        ? previous.profileId
+        : binding != null
+        ? binding.profileId
+        : ref.read(currentProfileIdProvider);
+    final id = previous?.id ?? binding?.id ?? snowflake.id;
+    final observedAt = previous?.observedAt ?? binding?.observedAt;
     final entry = HttpCaptureEntry.fromTracker(
-      id: snowflake.id,
+      id: id,
       tracker: tracker,
       sessionId: state.sessionId,
-      profileId: ref.read(currentProfileIdProvider),
+      profileId: profileId,
+      // A response-side Tracker update enriches the original observation; it
+      // must not reorder or move the connection into a newly selected Profile.
+      observedAt: observedAt,
     );
+    if (_suppressedIdentities.contains(_entryIdentity(entry))) {
+      return null;
+    }
+    _rememberActiveConnection(entry);
     _upsertMemory(entry);
     if (!ref.read(httpCapturePersistenceEnabledProvider)) {
       return entry;
@@ -455,8 +547,12 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           maxEntriesPerScope: maxEntriesPerScope,
         ),
       );
-      if (ref.mounted) {
-        _upsertMemory(canonical);
+      if (ref.mounted &&
+          !_suppressedIdentities.contains(_entryIdentity(canonical))) {
+        final resolved = _mergeCanonicalWithMemory(canonical);
+        _rememberActiveConnection(resolved);
+        _upsertMemory(resolved);
+        return resolved;
       }
       return canonical;
     } catch (error, stackTrace) {
@@ -475,6 +571,18 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
         target = entry;
         break;
       }
+    }
+
+    final targetIdentity = target == null ? null : _entryIdentity(target);
+    if (targetIdentity != null) {
+      _suppressedIdentities.add(targetIdentity);
+      _suppressedConnections.add(
+        _connectionIdentity(
+          sessionId: target!.sessionId,
+          connectionId: target.connectionId,
+        ),
+      );
+      _activeConnectionBindings.remove(target.connectionId);
     }
 
     bool matchesTarget(HttpCaptureEntry entry) {
@@ -520,17 +628,61 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
   }
 
   Future<void> clear({int? profileId, bool includeGlobal = false}) async {
+    bool shouldRemove(HttpCaptureEntry entry) {
+      if (profileId == null) {
+        return true;
+      }
+      if (entry.profileId == profileId) {
+        return true;
+      }
+      return includeGlobal && entry.profileId == null;
+    }
+
+    for (final entry in state.entries.where(shouldRemove)) {
+      _suppressedIdentities.add(_entryIdentity(entry));
+      _suppressedConnections.add(
+        _connectionIdentity(
+          sessionId: entry.sessionId,
+          connectionId: entry.connectionId,
+        ),
+      );
+    }
+    final pendingToRemove = _activeConnectionBindings.entries
+        .where((item) {
+          final bindingProfileId = item.value.profileId;
+          if (profileId == null) {
+            return true;
+          }
+          if (bindingProfileId == profileId) {
+            return true;
+          }
+          return includeGlobal && bindingProfileId == null;
+        })
+        .map((item) => item.key)
+        .toList(growable: false);
+    for (final connectionId in pendingToRemove) {
+      final binding = _activeConnectionBindings.remove(connectionId)!;
+      final scopeKey = binding.profileId == null
+          ? 'global'
+          : 'profile:${binding.profileId}';
+      _suppressedIdentities.add(
+        _identity(
+          scopeKey: scopeKey,
+          sessionId: state.sessionId,
+          connectionId: connectionId,
+        ),
+      );
+      _suppressedConnections.add(
+        _connectionIdentity(
+          sessionId: state.sessionId,
+          connectionId: connectionId,
+        ),
+      );
+    }
+
     void clearFromMemory() {
       state = state.copyWith(
-        entries: state.entries.where((entry) {
-          if (profileId == null) {
-            return false;
-          }
-          if (entry.profileId == profileId) {
-            return false;
-          }
-          return !(includeGlobal && entry.profileId == null);
-        }).toList(),
+        entries: state.entries.where((entry) => !shouldRemove(entry)).toList(),
         revision: state.revision + 1,
       );
     }

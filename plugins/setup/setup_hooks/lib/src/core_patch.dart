@@ -7,23 +7,21 @@ import 'util.dart';
 
 /// Applies repository-owned patches to the pinned Mihomo submodule.
 ///
-/// The patch set lives in the parent repository so a feature branch never
-/// points at a submodule commit that collaborators cannot fetch. Application
-/// is idempotent: a patch is applied when possible and accepted as already
-/// present only when its reverse check succeeds.
+/// Current patches live directly under `core/patches`. Older patch versions
+/// under `core/patches/migrations` are build inputs and can be removed from a
+/// dirty source tree before the corresponding current patch is applied.
 List<String> applyCorePatches({required String rootDir}) {
   final patchDirectory = Directory(p.join(rootDir, 'core', 'patches'));
   if (!patchDirectory.existsSync()) return const [];
 
-  final patches =
-      patchDirectory
-          .listSync(followLinks: false)
-          .whereType<File>()
-          .where((file) => file.path.endsWith('.patch'))
-          .map((file) => p.normalize(file.absolute.path))
-          .toList()
-        ..sort();
+  final patches = _patchFiles(patchDirectory);
   if (patches.isEmpty) return const [];
+  final migrationDirectory = Directory(
+    p.join(patchDirectory.path, 'migrations'),
+  );
+  final migrations = migrationDirectory.existsSync()
+      ? _patchFiles(migrationDirectory)
+      : const <String>[];
 
   final coreDirectory = Directory(p.join(rootDir, 'core', 'Clash.Meta'));
   if (!coreDirectory.existsSync()) {
@@ -41,16 +39,36 @@ List<String> applyCorePatches({required String rootDir}) {
   lock.lockSync(FileLock.exclusive);
   try {
     for (final patch in patches) {
-      _applyPatch(coreDirectory.path, patch);
+      final stem = p.basenameWithoutExtension(patch);
+      final candidates = migrations
+          .where(
+            (migration) =>
+                p.basenameWithoutExtension(migration).startsWith('$stem-'),
+          )
+          .toList(growable: false);
+      _applyPatch(coreDirectory.path, patch, candidates);
     }
   } finally {
     lock.unlockSync();
     lock.closeSync();
   }
-  return List.unmodifiable(patches);
+
+  final inputs = <String>[...patches, ...migrations]..sort();
+  return List.unmodifiable(inputs);
 }
 
-void _applyPatch(String coreDirectory, String patch) {
+List<String> _patchFiles(Directory directory) {
+  final files = directory
+      .listSync(followLinks: false)
+      .whereType<File>()
+      .where((file) => file.path.endsWith('.patch'))
+      .map((file) => p.normalize(file.absolute.path))
+      .toList();
+  files.sort();
+  return files;
+}
+
+void _applyPatch(String coreDirectory, String patch, List<String> migrations) {
   final check = _gitApply(
     coreDirectory: coreDirectory,
     patch: patch,
@@ -76,12 +94,74 @@ void _applyPatch(String coreDirectory, String patch) {
   );
   if (reverse.exitCode == 0) return;
 
+  for (final migration in migrations) {
+    final legacyPresent = _gitApply(
+      coreDirectory: coreDirectory,
+      patch: migration,
+      check: true,
+      reverse: true,
+    );
+    if (legacyPresent.exitCode != 0) continue;
+
+    final removed = _gitApply(
+      coreDirectory: coreDirectory,
+      patch: migration,
+      check: false,
+      reverse: true,
+    );
+    if (removed.exitCode != 0) {
+      throw _patchFailure(
+        patch: migration,
+        action: 'remove legacy',
+        result: removed,
+      );
+    }
+
+    final migratedCheck = _gitApply(
+      coreDirectory: coreDirectory,
+      patch: patch,
+      check: true,
+    );
+    if (migratedCheck.exitCode == 0) {
+      final migrated = _gitApply(
+        coreDirectory: coreDirectory,
+        patch: patch,
+        check: false,
+      );
+      if (migrated.exitCode == 0) return;
+      _restoreLegacy(coreDirectory, migration);
+      throw _patchFailure(
+        patch: patch,
+        action: 'apply after migration',
+        result: migrated,
+      );
+    }
+
+    _restoreLegacy(coreDirectory, migration);
+  }
+
   throw BuildException(
-    'Core patch ${p.basename(patch)} neither applies cleanly nor appears to '
-    'be present. Reset core/Clash.Meta to the pinned submodule revision and '
-    'retry.\napply check: ${_processDiagnostic(check)}\n'
+    'Core patch ${p.basename(patch)} neither applies cleanly, appears to be '
+    'present, nor matches a supported migration. Reset core/Clash.Meta to the '
+    'pinned submodule revision and retry.\n'
+    'apply check: ${_processDiagnostic(check)}\n'
     'reverse check: ${_processDiagnostic(reverse)}',
   );
+}
+
+void _restoreLegacy(String coreDirectory, String migration) {
+  final restored = _gitApply(
+    coreDirectory: coreDirectory,
+    patch: migration,
+    check: false,
+  );
+  if (restored.exitCode != 0) {
+    throw _patchFailure(
+      patch: migration,
+      action: 'restore legacy',
+      result: restored,
+    );
+  }
 }
 
 ProcessResult _gitApply({

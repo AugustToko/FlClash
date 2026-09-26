@@ -299,6 +299,48 @@ void main() {
 
       expect(notifications, 1);
       expect(container.read(requestsProvider).length, 1);
+
+      container
+          .read(requestsProvider.notifier)
+          .addRequest(
+            TrackerInfo(
+              id: '1',
+              start: DateTime.utc(2026),
+              metadata: const Metadata(network: 'tcp', host: 'example.com'),
+              chains: const ['Proxy'],
+              rule: 'DOMAIN',
+              rulePayload: 'example.com',
+              observation: const ProtocolObservation(
+                sessionId: 'capture-session',
+                kind: 'http1',
+                http: HttpProtocolObservation(
+                  method: 'GET',
+                  target: '/',
+                  version: 'HTTP/1.1',
+                  headersComplete: true,
+                ),
+                httpResponse: HttpResponseProtocolObservation(
+                  version: 'HTTP/1.1',
+                  statusCode: 204,
+                  headersComplete: true,
+                  observedBytes: 27,
+                ),
+              ),
+            ),
+          );
+
+      expect(notifications, 2);
+      expect(container.read(requestsProvider).length, 1);
+      expect(
+        container
+            .read(requestsProvider)
+            .list
+            .single
+            .observation
+            ?.httpResponse
+            ?.statusCode,
+        204,
+      );
     });
 
     test('Traffics.addTraffic reaches listeners and clear resets', () {
