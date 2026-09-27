@@ -1254,6 +1254,179 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("時刻"),
     "timeout": MessageLookupByLibrary.simpleMessage("タイムアウト"),
     "tip": MessageLookupByLibrary.simpleMessage("ヒント"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage("HTTPS 検査の安全設定"),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "リスクを確認",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage("ドメインを追加"),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("アルゴリズム"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage("検査許可リスト"),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "後の段階で対象になり得る正確なドメインまたはドメインツリーです。",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "明示的な許可リストのみ",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage("ローカル認証局"),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage("破損"),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "期限切れ",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "未作成",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "まだ有効ではありません",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage("秘密鍵の権限を確認してください"),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage("準備完了"),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "古い秘密鍵データの削除が必要です",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "利用不可",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "この段階では証明書とポリシー制御のみを準備します。HTTPS 通信の復号・傍受・書き換えは行いません。",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage("安全境界"),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage("確認を解除"),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "システム信頼を確認しました",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "ローカル認証局を作成",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "認証局を削除",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "ローカルの秘密鍵と証明書ファイルを削除し、準備済みポリシーを無効にします。システム信頼ストアにインストール済みの証明書は別途削除してください。",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "復号を有効にせず、ローカル認証局と明示的なドメインポリシーを準備します",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "既定では無効",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "ドメインとサブドメイン",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "先に有効なローカル認証局を作成してください。",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "範囲が広すぎます。example.com のような登録可能ドメインを入力してください。",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Core に接続してからローカル認証局を管理してください。",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "操作を完了できませんでした。",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "IP アドレスは使用できません。登録可能なドメインを入力してください。",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "ドメインルールの上限に達しました。",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "保存済みポリシーに安全でないドメイン範囲が含まれています。削除して登録可能なドメインを追加し直してください。",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "認証局、信頼、リスク、許可リストの条件を完了してください。",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage("完全一致のみ"),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "より広い許可ルールに一致しても、除外ルールが優先されます。",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage("強制除外"),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "除外は常に許可リストより優先されます。",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "公開証明書をエクスポート",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "公開証明書をエクスポートしました",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 フィンガープリント",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "安全基盤のみです。HTTPS 復号エンジンはまだ接続されていません。",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "システム信頼を自動変更しない",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値と本文は保存しない",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage("ドメインは未設定です"),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "すべての前提条件を完了してください。",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "FlClash のローカルおよび WebDAV バックアップには証明書材料とドメインポリシーを含めません。OS レベルのバックアップ動作はプラットフォーム設定に依存します。",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage("安全ポリシー準備済み"),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "前提条件は完了しています。実際の検査には別のエンジンと明示的な有効化が必要です。",
+    ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "秘密鍵はアプリのデータディレクトリにファイルとして保存され、ハードウェア保護ではありません。FlClash は秘密鍵をエクスポートせず、公開証明書だけをエクスポートできます。",
+    ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage("準備状況"),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "1 件以上の許可ルール",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "有効なローカル認証局",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "リスク確認済み",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "現在のフィンガープリントを手動確認済み",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage("リスク確認"),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "リスク確認済み",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS 検査は認証情報や私的内容を露出させる可能性があります。許可リストを最小限にし、必要がない限りアカウント、銀行、医療などを検査しないでください。",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "認証局を更新",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "更新すると以前の信頼確認は無効になります。システム内の古い証明書を手動で置き換えてください。",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage("ドメイン範囲"),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage("シリアル番号"),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage("秘密鍵の保存先"),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "アプリデータディレクトリ（ファイル保存）",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("サブジェクト"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage("システム信頼"),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "現在のフィンガープリントを手動確認済み",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "信頼ストアの自動検証はまだ接続されていません。公開証明書をエクスポートして手動でインストールし、システム設定でフィンガープリントを確認してください。",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "ユーザー認証局を無視するアプリがあり、証明書ピンニングも回避されません。",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "現在のフィンガープリントは未確認",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage("有効期間"),
     "toggle": MessageLookupByLibrary.simpleMessage("切り替え"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("ラベルを切り替え"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("トーナルスポット"),

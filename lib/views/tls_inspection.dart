@@ -1,0 +1,843 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+class TlsInspectionView extends ConsumerStatefulWidget {
+  const TlsInspectionView({super.key});
+
+  @override
+  ConsumerState<TlsInspectionView> createState() => _TlsInspectionViewState();
+}
+
+class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(ref.read(tlsInspectionProvider.notifier).reload());
+      }
+    });
+  }
+
+  String _authorityStateLabel(String state) {
+    final l = context.appLocalizations;
+    return switch (state) {
+      'missing' => l.tlsInspectionAuthorityMissing,
+      'ready' => l.tlsInspectionAuthorityReady,
+      'corrupt' => l.tlsInspectionAuthorityCorrupt,
+      'expired' => l.tlsInspectionAuthorityExpired,
+      'not-yet-valid' => l.tlsInspectionAuthorityNotYetValid,
+      'permissions-warning' => l.tlsInspectionAuthorityPermissionsWarning,
+      'stale-material-warning' => l.tlsInspectionAuthorityStaleMaterial,
+      _ => l.tlsInspectionAuthorityUnavailable,
+    };
+  }
+
+  String _errorLabel(Object error) {
+    final l = context.appLocalizations;
+    final code = switch (error) {
+      final TlsInspectionPolicyException value => value.code,
+      final CoreMethodException value => value.code,
+      _ => '',
+    };
+    return switch (code) {
+      'ip_not_supported' => l.tlsInspectionErrorIp,
+      'domain_too_broad' => l.tlsInspectionErrorBroad,
+      'policy_rule_invalid' => l.tlsInspectionErrorPolicyRule,
+      'rule_limit_reached' => l.tlsInspectionErrorLimit,
+      'authority_not_ready' ||
+      'authority_requires_rotation' => l.tlsInspectionErrorAuthority,
+      'safety_requirements_incomplete' => l.tlsInspectionErrorRequirements,
+      'transport_disconnected' ||
+      'transport_error' => l.tlsInspectionErrorCoreDisconnected,
+      _ => l.tlsInspectionErrorGeneric,
+    };
+  }
+
+  Future<void> _run(
+    Future<void> Function() action, {
+    String? successMessage,
+  }) async {
+    try {
+      await action();
+      if (mounted && successMessage != null) {
+        context.showNotifier(successMessage, level: MessageLevel.success);
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showNotifier(_errorLabel(error), level: MessageLevel.error);
+      }
+    }
+  }
+
+  Future<void> _createAuthority() {
+    return _run(ref.read(tlsInspectionProvider.notifier).ensureAuthority);
+  }
+
+  Future<void> _rotateAuthority() async {
+    final l = context.appLocalizations;
+    final confirmed = await dialogs.showMessage(
+      context: context,
+      title: l.tlsInspectionRotateAuthority,
+      message: TextSpan(text: l.tlsInspectionRotateWarning),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    await _run(ref.read(tlsInspectionProvider.notifier).rotateAuthority);
+  }
+
+  Future<void> _deleteAuthority() async {
+    final l = context.appLocalizations;
+    final confirmed = await dialogs.showMessage(
+      context: context,
+      title: l.tlsInspectionDeleteAuthority,
+      message: TextSpan(text: l.tlsInspectionDeleteWarning),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    await _run(ref.read(tlsInspectionProvider.notifier).deleteAuthority);
+  }
+
+  Future<void> _exportCertificate() async {
+    final l = context.appLocalizations;
+    try {
+      final value = await ref
+          .read(tlsInspectionProvider.notifier)
+          .exportCertificate();
+      final saved = await picker.saveFile(
+        value.fileName,
+        Uint8List.fromList(utf8.encode(value.pem)),
+      );
+      if (saved == null || !mounted) {
+        return;
+      }
+      context.showNotifier(
+        l.tlsInspectionExportSuccess,
+        level: MessageLevel.success,
+      );
+    } catch (error) {
+      if (mounted) {
+        context.showNotifier(_errorLabel(error), level: MessageLevel.error);
+      }
+    }
+  }
+
+  Future<void> _copyFingerprint(String value) async {
+    if (value.isEmpty) {
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: value));
+    if (mounted) {
+      context.showNotifier(
+        context.appLocalizations.copySuccess,
+        level: MessageLevel.success,
+      );
+    }
+  }
+
+  Future<void> _acknowledgeRisk() async {
+    final l = context.appLocalizations;
+    final confirmed = await dialogs.showMessage(
+      context: context,
+      title: l.tlsInspectionRisk,
+      message: TextSpan(text: l.tlsInspectionRiskDesc),
+      confirmText: l.tlsInspectionAcknowledgeRisk,
+    );
+    if (confirmed == true && mounted) {
+      await _run(ref.read(tlsInspectionProvider.notifier).acknowledgeRisk);
+    }
+  }
+
+  Future<void> _confirmManualTrust() async {
+    final l = context.appLocalizations;
+    final state = ref.read(tlsInspectionProvider);
+    final confirmed = await dialogs.showMessage(
+      context: context,
+      title: l.tlsInspectionTrust,
+      message: TextSpan(
+        text:
+            '${l.tlsInspectionTrustDesc}\n\n'
+            '${l.tlsInspectionFingerprint}: '
+            '${state.authority.fingerprintSha256}',
+      ),
+      confirmText: l.tlsInspectionConfirmTrust,
+    );
+    if (confirmed == true && mounted) {
+      await _run(ref.read(tlsInspectionProvider.notifier).confirmManualTrust);
+    }
+  }
+
+  Future<void> _togglePrepared(bool value) {
+    return _run(
+      () => ref.read(tlsInspectionProvider.notifier).setPrepared(value),
+    );
+  }
+
+  Future<void> _addRule(bool exclusion) async {
+    final l = context.appLocalizations;
+    final value = await dialogs
+        .showCommonDialog<({String input, TlsInspectionRuleScope scope})>(
+          context: context,
+          child: _TlsInspectionRuleDialog(
+            title: exclusion
+                ? l.tlsInspectionExclusions
+                : l.tlsInspectionAllowlist,
+          ),
+        );
+    if (value == null || !mounted) {
+      return;
+    }
+    await _run(
+      () => ref
+          .read(tlsInspectionProvider.notifier)
+          .addRule(
+            exclusion: exclusion,
+            input: value.input,
+            scope: value.scope,
+          ),
+    );
+  }
+
+  Widget _boundaryCard() {
+    final l = context.appLocalizations;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.security_outlined,
+                  color: context.colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l.tlsInspectionBoundaryTitle,
+                    style: context.textTheme.titleMedium?.toSoftBold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l.tlsInspectionBoundaryDesc),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(label: Text(l.tlsInspectionDisabledByDefault)),
+                Chip(label: Text(l.tlsInspectionAllowlistOnly)),
+                Chip(label: Text(l.tlsInspectionMetadataOnly)),
+                Chip(label: Text(l.tlsInspectionManualTrustOnly)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _requirementRow(String label, bool complete) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            complete ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 20,
+            color: complete
+                ? context.colorScheme.primary
+                : context.colorScheme.outline,
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
+        ],
+      ),
+    );
+  }
+
+  Widget _readinessCard(TlsInspectionState state) {
+    final l = context.appLocalizations;
+    return Card(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      state.prepared
+                          ? Icons.verified_user_outlined
+                          : Icons.fact_check_outlined,
+                      color: state.prepared
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l.tlsInspectionReadiness,
+                        style: context.textTheme.titleMedium?.toSoftBold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _requirementRow(
+                  l.tlsInspectionRequirementAuthority,
+                  state.authority.validNow,
+                ),
+                _requirementRow(
+                  l.tlsInspectionRequirementRisk,
+                  state.policy.riskAcknowledged,
+                ),
+                _requirementRow(
+                  l.tlsInspectionRequirementTrust,
+                  state.manuallyTrusted,
+                ),
+                _requirementRow(
+                  l.tlsInspectionRequirementAllowlist,
+                  state.policy.allowlist.isNotEmpty,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          SwitchListTile(
+            value: state.prepared,
+            onChanged: state.busy ? null : _togglePrepared,
+            title: Text(l.tlsInspectionPrepared),
+            subtitle: Text(
+              state.prepared
+                  ? l.tlsInspectionPreparedDesc
+                  : l.tlsInspectionNotPreparedDesc,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value, {Widget? trailing}) {
+    if (value.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 150,
+            child: Text(
+              label,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(child: SelectableText(value)),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _authorityCard(TlsInspectionState state) {
+    final l = context.appLocalizations;
+    final authority = state.authority;
+    final validity = authority.notBefore == null || authority.notAfter == null
+        ? ''
+        : '${authority.notBefore!.toLocal().show} → '
+              '${authority.notAfter!.toLocal().show}';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.workspace_premium_outlined),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l.tlsInspectionAuthority,
+                    style: context.textTheme.titleMedium?.toSoftBold,
+                  ),
+                ),
+                Chip(label: Text(_authorityStateLabel(authority.state))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (authority.state == 'missing')
+              FilledButton.icon(
+                onPressed: state.busy ? null : _createAuthority,
+                icon: const Icon(Icons.add_moderator_outlined),
+                label: Text(l.tlsInspectionCreateAuthority),
+              )
+            else if (authority.exists) ...[
+              _detailRow(
+                l.tlsInspectionFingerprint,
+                authority.fingerprintSha256,
+                trailing: IconButton(
+                  tooltip: context.appLocalizations.copy,
+                  onPressed: () =>
+                      _copyFingerprint(authority.fingerprintSha256),
+                  icon: const Icon(Icons.copy_outlined),
+                ),
+              ),
+              _detailRow(l.tlsInspectionSubject, authority.subject),
+              _detailRow(l.tlsInspectionSerial, authority.serialNumber),
+              _detailRow(l.tlsInspectionAlgorithm, authority.algorithm),
+              _detailRow(l.tlsInspectionValidity, validity),
+              _detailRow(
+                l.tlsInspectionStorage,
+                authority.keyStorage == 'app-data-file'
+                    ? l.tlsInspectionStorageAppSandbox
+                    : authority.keyStorage,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: authority.validNow && !state.busy
+                        ? _exportCertificate
+                        : null,
+                    icon: const Icon(Icons.download_outlined),
+                    label: Text(l.tlsInspectionExportCertificate),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: state.busy ? null : _rotateAuthority,
+                    icon: const Icon(Icons.refresh_outlined),
+                    label: Text(l.tlsInspectionRotateAuthority),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: state.busy ? null : _deleteAuthority,
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(l.tlsInspectionDeleteAuthority),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              l.tlsInspectionPrivateKeyNeverExported,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l.tlsInspectionPolicyNotBackedUp,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _trustCard(TlsInspectionState state) {
+    final l = context.appLocalizations;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.admin_panel_settings_outlined),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l.tlsInspectionTrust,
+                    style: context.textTheme.titleMedium?.toSoftBold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l.tlsInspectionTrustDesc),
+            const SizedBox(height: 8),
+            Text(
+              l.tlsInspectionTrustLimitations,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                state.manuallyTrusted
+                    ? Icons.verified_outlined
+                    : Icons.help_outline,
+                color: state.manuallyTrusted
+                    ? context.colorScheme.primary
+                    : context.colorScheme.onSurfaceVariant,
+              ),
+              title: Text(
+                state.manuallyTrusted
+                    ? l.tlsInspectionTrustConfirmed
+                    : l.tlsInspectionTrustUnconfirmed,
+              ),
+              subtitle: state.policy.manuallyTrustedAt == null
+                  ? null
+                  : Text(state.policy.manuallyTrustedAt!.toLocal().showFull),
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: state.authority.validNow && !state.busy
+                      ? _confirmManualTrust
+                      : null,
+                  icon: const Icon(Icons.verified_user_outlined),
+                  label: Text(l.tlsInspectionConfirmTrust),
+                ),
+                if (state.policy.manuallyTrustedFingerprint.isNotEmpty)
+                  TextButton(
+                    onPressed: state.busy
+                        ? null
+                        : () => _run(
+                            ref
+                                .read(tlsInspectionProvider.notifier)
+                                .clearManualTrust,
+                          ),
+                    child: Text(l.tlsInspectionClearTrust),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _riskCard(TlsInspectionState state) {
+    final l = context.appLocalizations;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_outlined,
+                  color: context.colorScheme.error,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l.tlsInspectionRisk,
+                    style: context.textTheme.titleMedium?.toSoftBold,
+                  ),
+                ),
+                if (state.policy.riskAcknowledged)
+                  Chip(
+                    avatar: const Icon(Icons.check, size: 18),
+                    label: Text(l.tlsInspectionRiskAcknowledged),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l.tlsInspectionRiskDesc),
+            if (!state.policy.riskAcknowledged) ...[
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: _acknowledgeRisk,
+                child: Text(l.tlsInspectionAcknowledgeRisk),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ruleCard({
+    required String title,
+    required String description,
+    required bool exclusion,
+    required List<TlsInspectionDomainRule> rules,
+  }) {
+    final l = context.appLocalizations;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  exclusion
+                      ? Icons.block_outlined
+                      : Icons.domain_verification_outlined,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: context.textTheme.titleMedium?.toSoftBold,
+                  ),
+                ),
+                IconButton(
+                  tooltip: l.tlsInspectionAddDomain,
+                  onPressed: () => _addRule(exclusion),
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(description),
+            const SizedBox(height: 10),
+            if (rules.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  l.tlsInspectionNoRules,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              for (final rule in rules)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: Icon(
+                    rule.scope == TlsInspectionRuleScope.exact
+                        ? Icons.filter_1_outlined
+                        : Icons.account_tree_outlined,
+                  ),
+                  title: Text(rule.host),
+                  subtitle: Text(
+                    rule.scope == TlsInspectionRuleScope.exact
+                        ? l.tlsInspectionExactDomain
+                        : l.tlsInspectionDomainAndSubdomains,
+                  ),
+                  trailing: IconButton(
+                    tooltip: context.appLocalizations.delete,
+                    onPressed: () => _run(
+                      () => ref
+                          .read(tlsInspectionProvider.notifier)
+                          .removeRule(exclusion: exclusion, rule: rule),
+                    ),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+            if (exclusion) ...[
+              const SizedBox(height: 6),
+              Text(
+                l.tlsInspectionExclusionWins,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final state = ref.watch(tlsInspectionProvider);
+    return CommonScaffold(
+      title: l.tlsInspection,
+      actions: [
+        IconButton(
+          tooltip: context.appLocalizations.update,
+          onPressed: state.loading
+              ? null
+              : () => unawaited(
+                  ref.read(tlsInspectionProvider.notifier).reload(),
+                ),
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth > 960
+              ? 960.0
+              : constraints.maxWidth;
+          return Center(
+            child: SizedBox(
+              width: width,
+              height: constraints.maxHeight,
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  12,
+                  12,
+                  12,
+                  24 + BottomInsetScope.of(context),
+                ),
+                children: [
+                  _boundaryCard(),
+                  const SizedBox(height: 10),
+                  _readinessCard(state),
+                  const SizedBox(height: 10),
+                  _authorityCard(state),
+                  const SizedBox(height: 10),
+                  _trustCard(state),
+                  const SizedBox(height: 10),
+                  _riskCard(state),
+                  const SizedBox(height: 10),
+                  _ruleCard(
+                    title: l.tlsInspectionAllowlist,
+                    description: l.tlsInspectionAllowlistDesc,
+                    exclusion: false,
+                    rules: state.policy.allowlist,
+                  ),
+                  const SizedBox(height: 10),
+                  _ruleCard(
+                    title: l.tlsInspectionExclusions,
+                    description: l.tlsInspectionExclusionsDesc,
+                    exclusion: true,
+                    rules: state.policy.exclusions,
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(l.tlsInspectionFoundationOnly),
+                  ),
+                  if (state.errorCode.isNotEmpty)
+                    ListTile(
+                      leading: Icon(
+                        Icons.error_outline,
+                        color: context.colorScheme.error,
+                      ),
+                      title: Text(
+                        _errorLabel(
+                          TlsInspectionPolicyException(
+                            state.errorCode,
+                            state.errorCode,
+                          ),
+                        ),
+                      ),
+                      subtitle: Text(state.errorCode),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TlsInspectionRuleDialog extends StatefulWidget {
+  final String title;
+
+  const _TlsInspectionRuleDialog({required this.title});
+
+  @override
+  State<_TlsInspectionRuleDialog> createState() =>
+      _TlsInspectionRuleDialogState();
+}
+
+class _TlsInspectionRuleDialogState extends State<_TlsInspectionRuleDialog> {
+  final _controller = TextEditingController();
+  TlsInspectionRuleScope _scope = TlsInspectionRuleScope.exact;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    return CommonDialog(
+      title: widget.title,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final input = _controller.text.trim();
+            if (input.isEmpty) {
+              return;
+            }
+            Navigator.of(context).pop((input: input, scope: _scope));
+          },
+          child: Text(l.tlsInspectionAddDomain),
+        ),
+      ],
+      child: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: InputDecoration(
+                labelText: l.tlsInspectionAddDomain,
+                hintText: l.tlsInspectionDomainHint,
+              ),
+              onSubmitted: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<TlsInspectionRuleScope>(
+              initialValue: _scope,
+              decoration: InputDecoration(labelText: l.tlsInspectionRuleScope),
+              items: [
+                DropdownMenuItem(
+                  value: TlsInspectionRuleScope.exact,
+                  child: Text(l.tlsInspectionExactDomain),
+                ),
+                DropdownMenuItem(
+                  value: TlsInspectionRuleScope.subdomains,
+                  child: Text(l.tlsInspectionDomainAndSubdomains),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _scope = value);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -15,6 +15,7 @@ import 'package:fl_clash/views/dns_diagnostics.dart';
 import 'package:fl_clash/views/profiles/profiles.dart';
 import 'package:fl_clash/views/proxies/providers.dart';
 import 'package:fl_clash/views/resources.dart';
+import 'package:fl_clash/views/tls_inspection.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -125,6 +126,10 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
       'failed' => l.logbookDnsQueryFailed,
       _ => event.title,
     },
+    'tls.inspection.authority.create' => l.tlsInspectionCreateAuthority,
+    'tls.inspection.authority.rotate' => l.tlsInspectionRotateAuthority,
+    'tls.inspection.authority.delete' => l.tlsInspectionDeleteAuthority,
+    'tls.inspection.policy' => l.tlsInspection,
     _ => event.title,
   };
 }
@@ -273,6 +278,9 @@ class _LogbookViewState extends ConsumerState<LogbookView> {
     }
     if (event.eventType == 'http.capture.session') {
       return const HttpCaptureView();
+    }
+    if (event.eventType.startsWith('tls.inspection.')) {
+      return const TlsInspectionView();
     }
     return null;
   }

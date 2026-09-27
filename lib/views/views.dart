@@ -15,3 +15,4 @@ export 'profiles/profiles.dart';
 export 'proxies/proxies.dart';
 export 'resources.dart';
 export 'tools.dart';
+export 'tls_inspection.dart';

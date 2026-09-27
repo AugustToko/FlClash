@@ -1487,6 +1487,215 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("Time"),
     "timeout": MessageLookupByLibrary.simpleMessage("Timeout"),
     "tip": MessageLookupByLibrary.simpleMessage("Tip"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage(
+      "HTTPS inspection safety",
+    ),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "Acknowledge risk",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage(
+      "Add domain",
+    ),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("Algorithm"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage(
+      "Inspection allowlist",
+    ),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "Only these exact domains or domain trees may become eligible in a later inspection stage.",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "Explicit allowlist only",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage(
+      "Local certificate authority",
+    ),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage(
+      "Corrupted",
+    ),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "Expired",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "Not created",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "Not yet valid",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage(
+          "Private-key permissions need attention",
+        ),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage(
+      "Ready",
+    ),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "Stale private-key material needs cleanup",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "This stage prepares certificate and policy controls only. HTTPS traffic is not decrypted, intercepted, or rewritten.",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage(
+      "Safety boundary",
+    ),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage(
+      "Clear confirmation",
+    ),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "I verified system trust",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Create local authority",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "Delete authority",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "This deletes the local private-key and certificate files. The prepared policy will be disabled; remove any previously installed certificate from the system trust store separately.",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Prepare a local authority and explicit domain policy without enabling decryption",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "Off by default",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "Domain and subdomains",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "Create a valid local authority first.",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "This domain is too broad. Enter a registrable domain such as example.com.",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Connect the Core before managing the local authority.",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "The operation could not be completed.",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "IP addresses are not accepted; enter a registrable domain.",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "The domain-rule limit has been reached.",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "The saved policy contains a domain that is no longer safe. Remove it and add a registrable domain again.",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "Complete the authority, trust, risk, and allowlist requirements first.",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage(
+      "Exact domain only",
+    ),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "An exclusion wins even when a broader allowlist rule matches.",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage(
+      "Mandatory exclusions",
+    ),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "Exclusions always override the allowlist.",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "Export public certificate",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Public certificate exported",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 fingerprint",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "Foundation only: no HTTPS decryption engine is connected yet.",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "No automatic system trust changes",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "No header values or bodies",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage(
+      "No domains configured",
+    ),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "Complete every prerequisite before the policy can be prepared.",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage(
+      "Safety policy prepared",
+    ),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.",
+    ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.",
+    ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
+      "Readiness checklist",
+    ),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "At least one allowlist rule",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "Valid local authority",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "Risk acknowledged",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "Current fingerprint manually verified",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage(
+      "Risk acknowledgement",
+    ),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "Risk acknowledged",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS inspection can expose credentials and private content. Use the smallest possible allowlist and never inspect accounts, banking, healthcare, or other sensitive services unless strictly required.",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Rotate authority",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "Rotating the authority invalidates the previous trust confirmation. Existing system trust entries must be replaced manually.",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage(
+      "Domain scope",
+    ),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage(
+      "Serial number",
+    ),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage(
+      "Private-key storage",
+    ),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "App data directory (file-backed)",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("Subject"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage("System trust"),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "Manually confirmed for this fingerprint",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "Automatic trust-store verification is not connected yet. Export the public certificate, install it manually, verify the fingerprint in system settings, then confirm below.",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Not confirmed for the current fingerprint",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage("Validity"),
     "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("Toggle labels"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Tonal spot"),

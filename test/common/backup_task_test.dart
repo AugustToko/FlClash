@@ -481,6 +481,46 @@ void main() {
       expect(names, isNot(contains('9.yaml')));
     });
 
+    test(
+      'local TLS inspection material is excluded from backup archives',
+      () async {
+        await seedDatabase();
+        writeFile(
+          join(
+            home.path,
+            'tls-inspection',
+            'authorities',
+            'generation',
+            'authority-key.pem',
+          ),
+          'PRIVATE KEY MUST STAY LOCAL',
+        );
+        writeFile(
+          join(home.path, 'shared_preferences.json'),
+          '{"tls_inspection_policy":"accounts.example.com"}',
+        );
+
+        final archivePath = await backup();
+        final archive = ZipDecoder().decodeStream(InputFileStream(archivePath));
+        final names = archive.files.map((file) => file.name).toList();
+        final serialized = archive.files
+            .where((file) => file.isFile)
+            .map(
+              (file) =>
+                  utf8.decode(file.content as List<int>, allowMalformed: true),
+            )
+            .join('\n');
+
+        expect(names.any((name) => name.contains('tls-inspection')), isFalse);
+        expect(
+          names.any((name) => name.contains('shared_preferences')),
+          isFalse,
+        );
+        expect(serialized, isNot(contains('PRIVATE KEY MUST STAY LOCAL')));
+        expect(serialized, isNot(contains('accounts.example.com')));
+      },
+    );
+
     test('local diagnostic history is excluded from backup archives', () async {
       await seedDatabase();
       final liveDatabase = db.Database(NativeDatabase(File(databasePath)));
