@@ -13,6 +13,7 @@ import 'package:path/path.dart';
 part 'domain_analysis.dart';
 part 'dns_diagnostic.dart';
 part 'rule_match.dart';
+part 'tls_inspection.dart';
 
 @visibleForTesting
 Map<String, String> extractProxyGroupFixedStates(ProxiesData data) {

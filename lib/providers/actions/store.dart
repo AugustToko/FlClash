@@ -52,6 +52,17 @@ class StoreAction extends _$StoreAction {
     for (final error in clearResults.where((error) => error.isNotEmpty)) {
       commonPrint.log(error, logLevel: LogLevel.warning);
     }
+    try {
+      await _core.deleteTlsInspectionAuthority();
+    } catch (error) {
+      commonPrint.log(
+        'deleteTlsInspectionAuthority failed: $error',
+        logLevel: LogLevel.warning,
+      );
+    }
+    await Directory(
+      join(await appPath.homeDirPath, 'tls-inspection'),
+    ).safeDelete(recursive: true);
     await preferences.clearPreferences();
     commonPrint.log('clear preferences');
     await database.close();

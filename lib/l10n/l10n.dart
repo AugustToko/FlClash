@@ -6434,6 +6434,726 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `HTTPS inspection safety`
+  String get tlsInspection {
+    return Intl.message(
+      'HTTPS inspection safety',
+      name: 'tlsInspection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Prepare a local authority and explicit domain policy without enabling decryption`
+  String get tlsInspectionDesc {
+    return Intl.message(
+      'Prepare a local authority and explicit domain policy without enabling decryption',
+      name: 'tlsInspectionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Safety boundary`
+  String get tlsInspectionBoundaryTitle {
+    return Intl.message(
+      'Safety boundary',
+      name: 'tlsInspectionBoundaryTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This stage prepares certificate and policy controls only. HTTPS traffic is not decrypted, intercepted, or rewritten.`
+  String get tlsInspectionBoundaryDesc {
+    return Intl.message(
+      'This stage prepares certificate and policy controls only. HTTPS traffic is not decrypted, intercepted, or rewritten.',
+      name: 'tlsInspectionBoundaryDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off by default`
+  String get tlsInspectionDisabledByDefault {
+    return Intl.message(
+      'Off by default',
+      name: 'tlsInspectionDisabledByDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Explicit allowlist only`
+  String get tlsInspectionAllowlistOnly {
+    return Intl.message(
+      'Explicit allowlist only',
+      name: 'tlsInspectionAllowlistOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No header values or bodies`
+  String get tlsInspectionMetadataOnly {
+    return Intl.message(
+      'No header values or bodies',
+      name: 'tlsInspectionMetadataOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No automatic system trust changes`
+  String get tlsInspectionManualTrustOnly {
+    return Intl.message(
+      'No automatic system trust changes',
+      name: 'tlsInspectionManualTrustOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Foundation only: no HTTPS decryption engine is connected yet.`
+  String get tlsInspectionFoundationOnly {
+    return Intl.message(
+      'Foundation only: no HTTPS decryption engine is connected yet.',
+      name: 'tlsInspectionFoundationOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Readiness checklist`
+  String get tlsInspectionReadiness {
+    return Intl.message(
+      'Readiness checklist',
+      name: 'tlsInspectionReadiness',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Safety policy prepared`
+  String get tlsInspectionPrepared {
+    return Intl.message(
+      'Safety policy prepared',
+      name: 'tlsInspectionPrepared',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.`
+  String get tlsInspectionPreparedDesc {
+    return Intl.message(
+      'All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.',
+      name: 'tlsInspectionPreparedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete every prerequisite before the policy can be prepared.`
+  String get tlsInspectionNotPreparedDesc {
+    return Intl.message(
+      'Complete every prerequisite before the policy can be prepared.',
+      name: 'tlsInspectionNotPreparedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local certificate authority`
+  String get tlsInspectionAuthority {
+    return Intl.message(
+      'Local certificate authority',
+      name: 'tlsInspectionAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not created`
+  String get tlsInspectionAuthorityMissing {
+    return Intl.message(
+      'Not created',
+      name: 'tlsInspectionAuthorityMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready`
+  String get tlsInspectionAuthorityReady {
+    return Intl.message(
+      'Ready',
+      name: 'tlsInspectionAuthorityReady',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Corrupted`
+  String get tlsInspectionAuthorityCorrupt {
+    return Intl.message(
+      'Corrupted',
+      name: 'tlsInspectionAuthorityCorrupt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expired`
+  String get tlsInspectionAuthorityExpired {
+    return Intl.message(
+      'Expired',
+      name: 'tlsInspectionAuthorityExpired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not yet valid`
+  String get tlsInspectionAuthorityNotYetValid {
+    return Intl.message(
+      'Not yet valid',
+      name: 'tlsInspectionAuthorityNotYetValid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private-key permissions need attention`
+  String get tlsInspectionAuthorityPermissionsWarning {
+    return Intl.message(
+      'Private-key permissions need attention',
+      name: 'tlsInspectionAuthorityPermissionsWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stale private-key material needs cleanup`
+  String get tlsInspectionAuthorityStaleMaterial {
+    return Intl.message(
+      'Stale private-key material needs cleanup',
+      name: 'tlsInspectionAuthorityStaleMaterial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable`
+  String get tlsInspectionAuthorityUnavailable {
+    return Intl.message(
+      'Unavailable',
+      name: 'tlsInspectionAuthorityUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create local authority`
+  String get tlsInspectionCreateAuthority {
+    return Intl.message(
+      'Create local authority',
+      name: 'tlsInspectionCreateAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rotate authority`
+  String get tlsInspectionRotateAuthority {
+    return Intl.message(
+      'Rotate authority',
+      name: 'tlsInspectionRotateAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete authority`
+  String get tlsInspectionDeleteAuthority {
+    return Intl.message(
+      'Delete authority',
+      name: 'tlsInspectionDeleteAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export public certificate`
+  String get tlsInspectionExportCertificate {
+    return Intl.message(
+      'Export public certificate',
+      name: 'tlsInspectionExportCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Public certificate exported`
+  String get tlsInspectionExportSuccess {
+    return Intl.message(
+      'Public certificate exported',
+      name: 'tlsInspectionExportSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SHA-256 fingerprint`
+  String get tlsInspectionFingerprint {
+    return Intl.message(
+      'SHA-256 fingerprint',
+      name: 'tlsInspectionFingerprint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subject`
+  String get tlsInspectionSubject {
+    return Intl.message(
+      'Subject',
+      name: 'tlsInspectionSubject',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Serial number`
+  String get tlsInspectionSerial {
+    return Intl.message(
+      'Serial number',
+      name: 'tlsInspectionSerial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Algorithm`
+  String get tlsInspectionAlgorithm {
+    return Intl.message(
+      'Algorithm',
+      name: 'tlsInspectionAlgorithm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Validity`
+  String get tlsInspectionValidity {
+    return Intl.message(
+      'Validity',
+      name: 'tlsInspectionValidity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private-key storage`
+  String get tlsInspectionStorage {
+    return Intl.message(
+      'Private-key storage',
+      name: 'tlsInspectionStorage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System trust`
+  String get tlsInspectionTrust {
+    return Intl.message(
+      'System trust',
+      name: 'tlsInspectionTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Automatic trust-store verification is not connected yet. Export the public certificate, install it manually, verify the fingerprint in system settings, then confirm below.`
+  String get tlsInspectionTrustDesc {
+    return Intl.message(
+      'Automatic trust-store verification is not connected yet. Export the public certificate, install it manually, verify the fingerprint in system settings, then confirm below.',
+      name: 'tlsInspectionTrustDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manually confirmed for this fingerprint`
+  String get tlsInspectionTrustConfirmed {
+    return Intl.message(
+      'Manually confirmed for this fingerprint',
+      name: 'tlsInspectionTrustConfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not confirmed for the current fingerprint`
+  String get tlsInspectionTrustUnconfirmed {
+    return Intl.message(
+      'Not confirmed for the current fingerprint',
+      name: 'tlsInspectionTrustUnconfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `I verified system trust`
+  String get tlsInspectionConfirmTrust {
+    return Intl.message(
+      'I verified system trust',
+      name: 'tlsInspectionConfirmTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear confirmation`
+  String get tlsInspectionClearTrust {
+    return Intl.message(
+      'Clear confirmation',
+      name: 'tlsInspectionClearTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Risk acknowledgement`
+  String get tlsInspectionRisk {
+    return Intl.message(
+      'Risk acknowledgement',
+      name: 'tlsInspectionRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTPS inspection can expose credentials and private content. Use the smallest possible allowlist and never inspect accounts, banking, healthcare, or other sensitive services unless strictly required.`
+  String get tlsInspectionRiskDesc {
+    return Intl.message(
+      'HTTPS inspection can expose credentials and private content. Use the smallest possible allowlist and never inspect accounts, banking, healthcare, or other sensitive services unless strictly required.',
+      name: 'tlsInspectionRiskDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Risk acknowledged`
+  String get tlsInspectionRiskAcknowledged {
+    return Intl.message(
+      'Risk acknowledged',
+      name: 'tlsInspectionRiskAcknowledged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Acknowledge risk`
+  String get tlsInspectionAcknowledgeRisk {
+    return Intl.message(
+      'Acknowledge risk',
+      name: 'tlsInspectionAcknowledgeRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspection allowlist`
+  String get tlsInspectionAllowlist {
+    return Intl.message(
+      'Inspection allowlist',
+      name: 'tlsInspectionAllowlist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only these exact domains or domain trees may become eligible in a later inspection stage.`
+  String get tlsInspectionAllowlistDesc {
+    return Intl.message(
+      'Only these exact domains or domain trees may become eligible in a later inspection stage.',
+      name: 'tlsInspectionAllowlistDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mandatory exclusions`
+  String get tlsInspectionExclusions {
+    return Intl.message(
+      'Mandatory exclusions',
+      name: 'tlsInspectionExclusions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exclusions always override the allowlist.`
+  String get tlsInspectionExclusionsDesc {
+    return Intl.message(
+      'Exclusions always override the allowlist.',
+      name: 'tlsInspectionExclusionsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An exclusion wins even when a broader allowlist rule matches.`
+  String get tlsInspectionExclusionWins {
+    return Intl.message(
+      'An exclusion wins even when a broader allowlist rule matches.',
+      name: 'tlsInspectionExclusionWins',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add domain`
+  String get tlsInspectionAddDomain {
+    return Intl.message(
+      'Add domain',
+      name: 'tlsInspectionAddDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exact domain only`
+  String get tlsInspectionExactDomain {
+    return Intl.message(
+      'Exact domain only',
+      name: 'tlsInspectionExactDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain and subdomains`
+  String get tlsInspectionDomainAndSubdomains {
+    return Intl.message(
+      'Domain and subdomains',
+      name: 'tlsInspectionDomainAndSubdomains',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `api.example.com`
+  String get tlsInspectionDomainHint {
+    return Intl.message(
+      'api.example.com',
+      name: 'tlsInspectionDomainHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No domains configured`
+  String get tlsInspectionNoRules {
+    return Intl.message(
+      'No domains configured',
+      name: 'tlsInspectionNoRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain scope`
+  String get tlsInspectionRuleScope {
+    return Intl.message(
+      'Domain scope',
+      name: 'tlsInspectionRuleScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rotating the authority invalidates the previous trust confirmation. Existing system trust entries must be replaced manually.`
+  String get tlsInspectionRotateWarning {
+    return Intl.message(
+      'Rotating the authority invalidates the previous trust confirmation. Existing system trust entries must be replaced manually.',
+      name: 'tlsInspectionRotateWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This deletes the local private-key and certificate files. The prepared policy will be disabled; remove any previously installed certificate from the system trust store separately.`
+  String get tlsInspectionDeleteWarning {
+    return Intl.message(
+      'This deletes the local private-key and certificate files. The prepared policy will be disabled; remove any previously installed certificate from the system trust store separately.',
+      name: 'tlsInspectionDeleteWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.`
+  String get tlsInspectionPrivateKeyNeverExported {
+    return Intl.message(
+      'The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.',
+      name: 'tlsInspectionPrivateKeyNeverExported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.`
+  String get tlsInspectionPolicyNotBackedUp {
+    return Intl.message(
+      'FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.',
+      name: 'tlsInspectionPolicyNotBackedUp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Valid local authority`
+  String get tlsInspectionRequirementAuthority {
+    return Intl.message(
+      'Valid local authority',
+      name: 'tlsInspectionRequirementAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Risk acknowledged`
+  String get tlsInspectionRequirementRisk {
+    return Intl.message(
+      'Risk acknowledged',
+      name: 'tlsInspectionRequirementRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current fingerprint manually verified`
+  String get tlsInspectionRequirementTrust {
+    return Intl.message(
+      'Current fingerprint manually verified',
+      name: 'tlsInspectionRequirementTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `At least one allowlist rule`
+  String get tlsInspectionRequirementAllowlist {
+    return Intl.message(
+      'At least one allowlist rule',
+      name: 'tlsInspectionRequirementAllowlist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `IP addresses are not accepted; enter a registrable domain.`
+  String get tlsInspectionErrorIp {
+    return Intl.message(
+      'IP addresses are not accepted; enter a registrable domain.',
+      name: 'tlsInspectionErrorIp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This domain is too broad. Enter a registrable domain such as example.com.`
+  String get tlsInspectionErrorBroad {
+    return Intl.message(
+      'This domain is too broad. Enter a registrable domain such as example.com.',
+      name: 'tlsInspectionErrorBroad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The saved policy contains a domain that is no longer safe. Remove it and add a registrable domain again.`
+  String get tlsInspectionErrorPolicyRule {
+    return Intl.message(
+      'The saved policy contains a domain that is no longer safe. Remove it and add a registrable domain again.',
+      name: 'tlsInspectionErrorPolicyRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The domain-rule limit has been reached.`
+  String get tlsInspectionErrorLimit {
+    return Intl.message(
+      'The domain-rule limit has been reached.',
+      name: 'tlsInspectionErrorLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create a valid local authority first.`
+  String get tlsInspectionErrorAuthority {
+    return Intl.message(
+      'Create a valid local authority first.',
+      name: 'tlsInspectionErrorAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete the authority, trust, risk, and allowlist requirements first.`
+  String get tlsInspectionErrorRequirements {
+    return Intl.message(
+      'Complete the authority, trust, risk, and allowlist requirements first.',
+      name: 'tlsInspectionErrorRequirements',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connect the Core before managing the local authority.`
+  String get tlsInspectionErrorCoreDisconnected {
+    return Intl.message(
+      'Connect the Core before managing the local authority.',
+      name: 'tlsInspectionErrorCoreDisconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The operation could not be completed.`
+  String get tlsInspectionErrorGeneric {
+    return Intl.message(
+      'The operation could not be completed.',
+      name: 'tlsInspectionErrorGeneric',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App data directory (file-backed)`
+  String get tlsInspectionStorageAppSandbox {
+    return Intl.message(
+      'App data directory (file-backed)',
+      name: 'tlsInspectionStorageAppSandbox',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.`
+  String get tlsInspectionTrustLimitations {
+    return Intl.message(
+      'User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.',
+      name: 'tlsInspectionTrustLimitations',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -19,6 +19,7 @@ import 'config/advanced.dart';
 import 'developer.dart';
 import 'dns_diagnostics.dart';
 import 'http_capture.dart';
+import 'tls_inspection.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -79,6 +80,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _AdvancedConfigItem(),
         const _DnsDiagnosticsItem(),
         const _HttpCaptureItem(),
+        const _TlsInspectionItem(),
         const _SettingItem(),
       ],
     );
@@ -279,6 +281,20 @@ class _HttpCaptureItem extends StatelessWidget {
       title: Text(context.appLocalizations.httpCapture),
       subtitle: Text(context.appLocalizations.httpCaptureDesc),
       widget: const HttpCaptureView(),
+    );
+  }
+}
+
+class _TlsInspectionItem extends StatelessWidget {
+  const _TlsInspectionItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const Icon(Icons.security_outlined),
+      title: Text(context.appLocalizations.tlsInspection),
+      subtitle: Text(context.appLocalizations.tlsInspectionDesc),
+      widget: const TlsInspectionView(),
     );
   }
 }

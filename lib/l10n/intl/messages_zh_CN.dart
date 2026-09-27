@@ -1070,6 +1070,182 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("时间"),
     "timeout": MessageLookupByLibrary.simpleMessage("超时"),
     "tip": MessageLookupByLibrary.simpleMessage("提示"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage("HTTPS 检查安全"),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "确认风险",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage("添加域名"),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("算法"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage("检查白名单"),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "后续阶段中，只有这些精确域名或域名树才可能进入检查范围。",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "仅显式白名单",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage("本地证书机构"),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage(
+      "已损坏",
+    ),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "已过期",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "尚未创建",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "尚未生效",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage("私钥权限需要处理"),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage("可用"),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "旧私钥材料需要清理",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "不可用",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "本阶段只准备证书和策略控制，不会解密、拦截或改写 HTTPS 流量。",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage("安全边界"),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage("清除确认"),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "我已核对系统信任",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "创建本地证书机构",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "删除证书机构",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "这会删除本地私钥与证书文件，并停用已准备的策略；已安装到系统信任库的旧证书仍需另行移除。",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "准备本地证书机构与显式域名策略，但不启用解密",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "默认关闭",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "域名及其子域",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "请先创建有效的本地证书机构。",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "域名范围过宽，请输入 example.com 这类可注册域名。",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "请先连接 Core，再管理本地证书机构。",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "操作未能完成。",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "不接受 IP 地址，请输入可注册域名。",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "域名规则数量已达到上限。",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "已保存策略包含不再安全的域名范围，请删除后重新添加可注册域名。",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "请先完成证书、信任、风险和白名单要求。",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage("仅精确域名"),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "即使更宽的白名单命中，排除规则仍然优先。",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage("强制排除"),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "排除规则始终优先于白名单。",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "导出公用证书",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "公用证书已导出",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 指纹",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "当前仅为安全底座，尚未连接 HTTPS 解密引擎。",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "不自动修改系统信任",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "不保存头值和正文",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage("尚未配置域名"),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "完成全部前置条件后才能准备策略。",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "FlClash 的本地与 WebDAV 备份包不会包含证书材料和域名策略；操作系统级备份行为取决于平台设置。",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage("安全策略已准备"),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "所有前置条件均已满足；后续仍需独立引擎与显式启用才会进行检查。",
+    ),
+    "tlsInspectionPrivateKeyNeverExported":
+        MessageLookupByLibrary.simpleMessage(
+          "私钥以文件形式保存在应用数据目录中，不是硬件密钥，FlClash 不会导出私钥；只能导出公用证书。",
+        ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage("准备状态"),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "至少一条白名单规则",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "有效的本地证书机构",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "已确认风险",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "已手动核对当前指纹",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage("风险确认"),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "风险已确认",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS 检查可能暴露账号凭据和私密内容。应使用尽可能小的白名单；除非确有必要，不要检查账号、银行、医疗等敏感服务。",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "轮换证书机构",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "轮换后，旧指纹的信任确认会失效；系统中的旧证书需要手动替换。",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage("域名范围"),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage("序列号"),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage("私钥存储"),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "应用数据目录（文件存储）",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("主题"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage("系统信任"),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "已为当前指纹手动确认",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "当前尚未接入系统信任库自动校验。请导出公用证书并手动安装，在系统设置中核对指纹后再于下方确认。",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "部分应用可能忽略用户安装的证书机构；证书固定（Pinning）也不会被绕过。",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "尚未确认当前指纹",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage("有效期"),
     "toggle": MessageLookupByLibrary.simpleMessage("切换"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("切换标签"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("调性点缀"),

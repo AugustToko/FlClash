@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/core/method.dart';
 import 'package:fl_clash/database/database.dart' as db;
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -62,6 +63,13 @@ void main() {
     await preferences.setVersion(7);
     core = _MockCoreHandlerInterface();
     when(() => core.clearEffect(any())).thenAnswer((_) async => '');
+    when(
+      () => core.invokeMethod<bool>(
+        method: CoreMethod.deleteTlsInspectionAuthority,
+        arguments: any(named: 'arguments'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenAnswer((_) async => true);
     testDatabase = db.Database(NativeDatabase.memory());
     db.database = testDatabase;
     _RecordingSystemAction.exits.clear();
@@ -134,6 +142,37 @@ void main() {
       await container.read(storeActionProvider.notifier).handleClear();
 
       verifyNever(() => core.clearEffect(any()));
+    });
+
+    test('deletes the local inspection authority and private key', () async {
+      final authorityDir = Directory(
+        join(
+          await appPath.homeDirPath,
+          'tls-inspection',
+          'authorities',
+          'test',
+        ),
+      )..createSync(recursive: true);
+      File(
+        join(authorityDir.path, 'authority-key.pem'),
+      ).writeAsStringSync('private');
+      final container = buildContainer();
+
+      await container.read(storeActionProvider.notifier).handleClear();
+
+      verify(
+        () => core.invokeMethod<bool>(
+          method: CoreMethod.deleteTlsInspectionAuthority,
+          arguments: {'confirm': true},
+          timeout: const Duration(seconds: 10),
+        ),
+      ).called(1);
+      expect(
+        Directory(
+          join(await appPath.homeDirPath, 'tls-inspection'),
+        ).existsSync(),
+        isFalse,
+      );
     });
 
     test('empties the preferences it was asked to clear', () async {

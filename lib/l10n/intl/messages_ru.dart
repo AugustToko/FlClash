@@ -1549,6 +1549,219 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("Время"),
     "timeout": MessageLookupByLibrary.simpleMessage("Тайм-аут"),
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage(
+      "Безопасность HTTPS-инспекции",
+    ),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "Подтвердить риск",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage(
+      "Добавить домен",
+    ),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("Алгоритм"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage(
+      "Список разрешений",
+    ),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "Только эти точные домены или деревья доменов смогут стать доступными для будущей инспекции.",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "Только явный список разрешений",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage(
+      "Локальный центр сертификации",
+    ),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage(
+      "Повреждён",
+    ),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "Истёк",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "Не создан",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "Ещё не действует",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage(
+          "Проверьте права секретного ключа",
+        ),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage(
+      "Готов",
+    ),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "Требуется удалить старые материалы закрытого ключа",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "На этом этапе подготавливаются только сертификат и политика. HTTPS-трафик не расшифровывается, не перехватывается и не изменяется.",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage(
+      "Граница безопасности",
+    ),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage(
+      "Сбросить подтверждение",
+    ),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "Я проверил доверие системы",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Создать локальный центр",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "Удалить центр",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "Локальные файлы секретного ключа и сертификата будут удалены, а подготовленная политика отключена. Ранее установленный сертификат нужно отдельно удалить из системного хранилища доверия.",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Подготовка локального центра и явной политики доменов без включения расшифровки",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "По умолчанию выключено",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "Домен и поддомены",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "Сначала создайте действующий локальный центр.",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "Диапазон слишком широк. Укажите регистрируемый домен, например example.com.",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Подключите Core перед управлением локальным центром.",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "Не удалось выполнить операцию.",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "IP-адреса не принимаются; укажите регистрируемый домен.",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "Достигнут предел правил доменов.",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "Сохранённая политика содержит небезопасную область домена. Удалите её и снова добавьте регистрируемый домен.",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала выполните требования центра, доверия, риска и списка разрешений.",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage(
+      "Только точный домен",
+    ),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "Исключение имеет приоритет даже при совпадении с более широким разрешением.",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage(
+      "Обязательные исключения",
+    ),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "Исключения всегда важнее списка разрешений.",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "Экспортировать публичный сертификат",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Публичный сертификат экспортирован",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "Отпечаток SHA-256",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "Только безопасная основа: движок расшифровки HTTPS ещё не подключён.",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "Без автоматического изменения доверия ОС",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "Без значений заголовков и тел",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage(
+      "Домены не настроены",
+    ),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "Сначала выполните все обязательные условия.",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "Локальные и WebDAV-архивы FlClash не содержат материалы центра сертификации и политику доменов. Резервное копирование ОС зависит от настроек платформы.",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage(
+      "Политика безопасности подготовлена",
+    ),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "Все условия выполнены. Для реальной инспекции всё ещё нужны отдельный движок и явное включение.",
+    ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "Секретный ключ хранится файлом в каталоге данных приложения и не защищён аппаратно. FlClash не экспортирует секретный ключ; экспортируется только публичный сертификат.",
+    ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
+      "Готовность",
+    ),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "Хотя бы одно правило разрешения",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "Действующий локальный центр",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "Риск подтверждён",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "Текущий отпечаток проверен вручную",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage(
+      "Подтверждение риска",
+    ),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "Риск подтверждён",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS-инспекция может раскрыть учётные данные и личное содержимое. Используйте минимальный список разрешений и не проверяйте банковские, медицинские и другие чувствительные сервисы без строгой необходимости.",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Сменить центр",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "Смена центра аннулирует прежнее подтверждение доверия. Старый сертификат в системе потребуется заменить вручную.",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage(
+      "Область домена",
+    ),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage(
+      "Серийный номер",
+    ),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage(
+      "Хранилище секретного ключа",
+    ),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "Каталог данных приложения (файловое хранение)",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("Субъект"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage(
+      "Доверие системы",
+    ),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "Текущий отпечаток подтверждён вручную",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "Автоматическая проверка хранилища доверия пока не подключена. Экспортируйте публичный сертификат, установите его вручную и сверьте отпечаток в настройках системы.",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Некоторые приложения игнорируют пользовательские центры, а закрепление сертификатов не обходится.",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Текущий отпечаток не подтверждён",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage(
+      "Срок действия",
+    ),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("Переключить подписи"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Тональный акцент"),
