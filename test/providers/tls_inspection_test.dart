@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:certificate_trust/certificate_trust.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/desktop/model.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -10,6 +11,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/providers/tls_inspection.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -48,11 +50,70 @@ class _MemoryPolicyStore implements TlsInspectionPolicyStore {
   }
 }
 
+class _FakeTrustClient implements CertificateTrustClient {
+  CertificateTrustStatus status;
+  @override
+  final String platform = 'android';
+  @override
+  final bool verificationSupported;
+  CertificateInstallResult installResult;
+  int checks = 0;
+  int installs = 0;
+  int settingsOpened = 0;
+  Exception? checkError;
+  Uint8List? lastCertificate;
+  String lastFingerprint = '';
+
+  _FakeTrustClient({
+    this.status = const CertificateTrustStatus(),
+    bool? verificationSupported,
+    this.installResult = const CertificateInstallResult(
+      outcome: CertificateInstallOutcome.cancelled,
+    ),
+  }) : verificationSupported =
+           verificationSupported ?? status.verificationSupported;
+
+  @override
+  Future<CertificateTrustStatus> checkCertificate({
+    required Uint8List certificateDer,
+    required String fingerprintSha256,
+  }) async {
+    checks++;
+    final error = checkError;
+    if (error != null) {
+      throw error;
+    }
+    lastCertificate = Uint8List.fromList(certificateDer);
+    lastFingerprint = fingerprintSha256;
+    return status;
+  }
+
+  @override
+  Future<CertificateInstallResult> requestInstall({
+    required Uint8List certificateDer,
+    required String fingerprintSha256,
+    required String displayName,
+  }) async {
+    installs++;
+    lastCertificate = Uint8List.fromList(certificateDer);
+    lastFingerprint = fingerprintSha256;
+    return installResult;
+  }
+
+  @override
+  Future<bool> openTrustSettings() async {
+    settingsOpened++;
+    return true;
+  }
+}
+
 class _FoundationCoreHandler extends CoreHandlerInterface {
   String fingerprint = _fingerprintA;
   String? exportedFingerprint;
   String exportedPem =
       '-----BEGIN CERTIFICATE-----\nTEST\n-----END CERTIFICATE-----\n';
+  String notBefore = '2026-09-27T00:00:00Z';
+  String notAfter = '2029-09-26T00:00:00Z';
   Completer<void>? authorityGate;
 
   Map<String, Object?> get authority => {
@@ -64,8 +125,8 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
     'fingerprintSha256': fingerprint,
     'subject': 'CN=FlClash Local Inspection CA',
     'serialNumber': '01',
-    'notBefore': '2026-09-27T00:00:00Z',
-    'notAfter': '2029-09-26T00:00:00Z',
+    'notBefore': notBefore,
+    'notAfter': notAfter,
     'algorithm': 'ECDSA P-256 / SHA-256',
     'keyStorage': 'app-data-file',
     'keyPermissionsRestricted': true,
@@ -155,6 +216,7 @@ void main() {
     required _MemoryPolicyStore store,
     required _FoundationCoreHandler core,
     CoreStatus status = CoreStatus.connected,
+    CertificateTrustClient? trustClient,
   }) {
     final value = ProviderContainer(
       overrides: [
@@ -162,6 +224,8 @@ void main() {
         coreStatusProvider.overrideWithBuild((_, _) => status),
         tlsInspectionPersistenceEnabledProvider.overrideWithValue(true),
         tlsInspectionPolicyStoreProvider.overrideWithValue(store),
+        if (trustClient != null)
+          certificateTrustClientProvider.overrideWithValue(trustClient),
         logbookPersistenceEnabledProvider.overrideWithValue(false),
       ],
     );
@@ -209,6 +273,611 @@ void main() {
     expect(state.policy.allowlist.single.host, 'example.com');
     expect(store.writes, greaterThanOrEqualTo(4));
   });
+
+  test(
+    'Android platform trust cannot be replaced by manual confirmation',
+    () async {
+      final trust = _FakeTrustClient(
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.notTrusted,
+          store: CertificateTrustStore.none,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: true,
+          fingerprintSha256: _fingerprintA,
+          platformVersion: 35,
+        ),
+      );
+      final store = _MemoryPolicyStore(
+        const TlsInspectionPolicy(
+          acknowledgedRiskVersion: tlsInspectionRiskVersion,
+          manuallyTrustedFingerprint: _fingerprintA,
+          allowlist: [
+            TlsInspectionDomainRule(
+              host: 'example.com',
+              scope: TlsInspectionRuleScope.exact,
+            ),
+          ],
+        ),
+      );
+      final scope = container(
+        store: store,
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+
+      await notifier.reload();
+      final initial = scope.read(tlsInspectionProvider);
+      expect(initial.manuallyTrusted, isTrue);
+      expect(initial.platformTrustRequired, isTrue);
+      expect(initial.platformTrusted, isFalse);
+      expect(initial.trustSatisfied, isFalse);
+      expect(trust.checks, 1);
+      expect(trust.lastFingerprint, _fingerprintA);
+
+      await expectLater(
+        notifier.confirmManualTrust(),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'platform_trust_required',
+          ),
+        ),
+      );
+      await expectLater(
+        notifier.setPrepared(true),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'safety_requirements_incomplete',
+          ),
+        ),
+      );
+
+      trust.status = const CertificateTrustStatus(
+        platform: 'android',
+        state: CertificateTrustState.trusted,
+        store: CertificateTrustStore.user,
+        installMode: CertificateInstallMode.settings,
+        verificationSupported: true,
+        fingerprintSha256: _fingerprintA,
+        platformVersion: 35,
+      );
+      await notifier.refreshPlatformTrust();
+      await notifier.setPrepared(true);
+
+      final prepared = scope.read(tlsInspectionProvider);
+      expect(prepared.platformTrusted, isTrue);
+      expect(prepared.trustSatisfied, isTrue);
+      expect(prepared.prepared, isTrue);
+    },
+  );
+
+  test(
+    'supported platform capability stays fail-closed on an incomplete status',
+    () async {
+      final trust = _FakeTrustClient(
+        verificationSupported: true,
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.unavailable,
+          verificationSupported: false,
+          errorCode: 'empty-result',
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(
+          const TlsInspectionPolicy(
+            acknowledgedRiskVersion: tlsInspectionRiskVersion,
+            manuallyTrustedFingerprint: _fingerprintA,
+            allowlist: [
+              TlsInspectionDomainRule(
+                host: 'example.com',
+                scope: TlsInspectionRuleScope.exact,
+              ),
+            ],
+          ),
+        ),
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+
+      await notifier.reload();
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(state.platformTrustRequired, isTrue);
+      expect(state.manuallyTrusted, isTrue);
+      expect(state.trustSatisfied, isFalse);
+      await expectLater(
+        notifier.confirmManualTrust(),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'platform_trust_required',
+          ),
+        ),
+      );
+      await expectLater(
+        notifier.setPrepared(true),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'safety_requirements_incomplete',
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'a trusted result without verification capability stays fail-closed',
+    () async {
+      final trust = _FakeTrustClient(
+        verificationSupported: true,
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.trusted,
+          store: CertificateTrustStore.user,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: false,
+          fingerprintSha256: _fingerprintA,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(
+          const TlsInspectionPolicy(
+            acknowledgedRiskVersion: tlsInspectionRiskVersion,
+            allowlist: [
+              TlsInspectionDomainRule(
+                host: 'example.com',
+                scope: TlsInspectionRuleScope.exact,
+              ),
+            ],
+          ),
+        ),
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+
+      await scope.read(tlsInspectionProvider.notifier).reload();
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(state.platformTrust.state, CertificateTrustState.unavailable);
+      expect(state.platformTrust.errorCode, 'verification-not-supported');
+      expect(state.platformTrusted, isFalse);
+      expect(state.trustSatisfied, isFalse);
+      expect(state.prepared, isFalse);
+    },
+  );
+
+  test(
+    'invalid public certificate export clears stale trusted state',
+    () async {
+      final trust = _FakeTrustClient(
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.trusted,
+          store: CertificateTrustStore.user,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: true,
+          fingerprintSha256: _fingerprintA,
+        ),
+      );
+      final core = _FoundationCoreHandler();
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: core,
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+      expect(scope.read(tlsInspectionProvider).platformTrusted, isTrue);
+
+      core.exportedPem = 'not a public certificate';
+      await expectLater(
+        notifier.refreshPlatformTrust(),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'authority_export_invalid',
+          ),
+        ),
+      );
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(state.platformTrustRequired, isTrue);
+      expect(state.platformTrusted, isFalse);
+      expect(state.platformTrust.state, CertificateTrustState.unavailable);
+      expect(state.platformTrust.errorCode, 'authority_export_invalid');
+    },
+  );
+
+  test(
+    'a trust-check failure still exposes the current authority and policy',
+    () async {
+      const policy = TlsInspectionPolicy(
+        prepared: true,
+        acknowledgedRiskVersion: tlsInspectionRiskVersion,
+        allowlist: [
+          TlsInspectionDomainRule(
+            host: 'example.com',
+            scope: TlsInspectionRuleScope.exact,
+          ),
+        ],
+      );
+      final store = _MemoryPolicyStore(policy);
+      final trust = _FakeTrustClient(
+        verificationSupported: true,
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          verificationSupported: true,
+        ),
+      )..checkError = PlatformException(code: 'trust-store-busy');
+      final scope = container(
+        store: store,
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+
+      await scope.read(tlsInspectionProvider.notifier).reload();
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(state.authority.validNow, isTrue);
+      expect(state.authority.fingerprintSha256, _fingerprintA);
+      expect(state.policy.prepared, isTrue);
+      expect(state.prepared, isFalse);
+      expect(state.platformTrust.state, CertificateTrustState.unavailable);
+      expect(state.platformTrust.errorCode, 'trust-store-busy');
+      expect(state.errorCode, 'trust-store-busy');
+      expect(store.writes, 0);
+    },
+  );
+
+  test('preparing performs a fresh platform trust check', () async {
+    final trust = _FakeTrustClient(
+      status: const CertificateTrustStatus(
+        platform: 'android',
+        state: CertificateTrustState.trusted,
+        store: CertificateTrustStore.user,
+        installMode: CertificateInstallMode.settings,
+        verificationSupported: true,
+        fingerprintSha256: _fingerprintA,
+      ),
+    );
+    final scope = container(
+      store: _MemoryPolicyStore(
+        const TlsInspectionPolicy(
+          acknowledgedRiskVersion: tlsInspectionRiskVersion,
+          allowlist: [
+            TlsInspectionDomainRule(
+              host: 'example.com',
+              scope: TlsInspectionRuleScope.exact,
+            ),
+          ],
+        ),
+      ),
+      core: _FoundationCoreHandler(),
+      trustClient: trust,
+    );
+    final notifier = scope.read(tlsInspectionProvider.notifier);
+    await notifier.reload();
+    expect(trust.checks, 1);
+
+    trust.status = const CertificateTrustStatus(
+      platform: 'android',
+      state: CertificateTrustState.notTrusted,
+      store: CertificateTrustStore.none,
+      installMode: CertificateInstallMode.settings,
+      verificationSupported: true,
+      fingerprintSha256: _fingerprintA,
+    );
+    await expectLater(
+      notifier.setPrepared(true),
+      throwsA(
+        isA<TlsInspectionPolicyException>().having(
+          (error) => error.code,
+          'code',
+          'safety_requirements_incomplete',
+        ),
+      ),
+    );
+
+    final state = scope.read(tlsInspectionProvider);
+    expect(trust.checks, 2);
+    expect(state.platformTrust.state, CertificateTrustState.notTrusted);
+    expect(state.platformTrusted, isFalse);
+    expect(state.prepared, isFalse);
+  });
+
+  test('platform trust cannot bypass an expired authority', () async {
+    final core = _FoundationCoreHandler()..notAfter = '2026-09-26T00:00:00Z';
+    final trust = _FakeTrustClient(
+      status: const CertificateTrustStatus(
+        platform: 'android',
+        state: CertificateTrustState.trusted,
+        store: CertificateTrustStore.user,
+        installMode: CertificateInstallMode.settings,
+        verificationSupported: true,
+        fingerprintSha256: _fingerprintA,
+      ),
+    );
+    final scope = container(
+      store: _MemoryPolicyStore(
+        const TlsInspectionPolicy(
+          prepared: true,
+          acknowledgedRiskVersion: tlsInspectionRiskVersion,
+          allowlist: [
+            TlsInspectionDomainRule(
+              host: 'example.com',
+              scope: TlsInspectionRuleScope.exact,
+            ),
+          ],
+        ),
+      ),
+      core: core,
+      trustClient: trust,
+    );
+
+    await scope.read(tlsInspectionProvider.notifier).reload();
+
+    final state = scope.read(tlsInspectionProvider);
+    expect(state.authority.validNow, isFalse);
+    expect(state.platformTrusted, isFalse);
+    expect(state.trustSatisfied, isFalse);
+    expect(state.prepared, isFalse);
+    expect(state.policy.prepared, isFalse);
+    expect(trust.checks, 0);
+  });
+
+  test('platform trust is bound to the exact current fingerprint', () async {
+    final trust = _FakeTrustClient(
+      status: const CertificateTrustStatus(
+        platform: 'android',
+        state: CertificateTrustState.trusted,
+        store: CertificateTrustStore.user,
+        installMode: CertificateInstallMode.settings,
+        verificationSupported: true,
+        fingerprintSha256: _fingerprintB,
+      ),
+    );
+    final scope = container(
+      store: _MemoryPolicyStore(),
+      core: _FoundationCoreHandler(),
+      trustClient: trust,
+    );
+
+    await scope.read(tlsInspectionProvider.notifier).reload();
+
+    final state = scope.read(tlsInspectionProvider);
+    expect(state.platformTrust.state, CertificateTrustState.unavailable);
+    expect(state.platformTrust.errorCode, 'fingerprint-mismatch');
+    expect(state.platformTrusted, isFalse);
+    expect(state.trustSatisfied, isFalse);
+  });
+
+  test(
+    'transient platform trust failure does not erase prepared policy',
+    () async {
+      final policy = TlsInspectionPolicy(
+        prepared: true,
+        acknowledgedRiskVersion: tlsInspectionRiskVersion,
+        manuallyTrustedFingerprint: _fingerprintA,
+        manuallyTrustedAt: DateTime.utc(2026, 9, 27),
+        allowlist: const [
+          TlsInspectionDomainRule(
+            host: 'example.com',
+            scope: TlsInspectionRuleScope.exact,
+          ),
+        ],
+      );
+      final store = _MemoryPolicyStore(policy);
+      final trust = _FakeTrustClient(
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.unavailable,
+          store: CertificateTrustStore.unknown,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: true,
+          errorCode: 'store-busy',
+        ),
+      );
+      final scope = container(
+        store: store,
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+
+      await scope.read(tlsInspectionProvider.notifier).reload();
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(state.policy.prepared, isTrue);
+      expect(state.prepared, isFalse);
+      expect(state.platformTrust.state, CertificateTrustState.unavailable);
+      expect(store.writes, 0);
+    },
+  );
+
+  test('definitive platform trust loss revokes the prepared policy', () async {
+    const policy = TlsInspectionPolicy(
+      prepared: true,
+      acknowledgedRiskVersion: tlsInspectionRiskVersion,
+      allowlist: [
+        TlsInspectionDomainRule(
+          host: 'example.com',
+          scope: TlsInspectionRuleScope.exact,
+        ),
+      ],
+    );
+    final store = _MemoryPolicyStore(policy);
+    final trust = _FakeTrustClient(
+      status: const CertificateTrustStatus(
+        platform: 'android',
+        state: CertificateTrustState.trusted,
+        store: CertificateTrustStore.user,
+        installMode: CertificateInstallMode.settings,
+        verificationSupported: true,
+        fingerprintSha256: _fingerprintA,
+        platformVersion: 35,
+      ),
+    );
+    final scope = container(
+      store: store,
+      core: _FoundationCoreHandler(),
+      trustClient: trust,
+    );
+    final notifier = scope.read(tlsInspectionProvider.notifier);
+    await notifier.reload();
+    expect(scope.read(tlsInspectionProvider).prepared, isTrue);
+    final writesBeforeLoss = store.writes;
+
+    trust.status = const CertificateTrustStatus(
+      platform: 'android',
+      state: CertificateTrustState.notTrusted,
+      store: CertificateTrustStore.none,
+      installMode: CertificateInstallMode.settings,
+      verificationSupported: true,
+      fingerprintSha256: _fingerprintA,
+      platformVersion: 35,
+    );
+    await notifier.refreshPlatformTrust();
+
+    final state = scope.read(tlsInspectionProvider);
+    expect(state.platformTrust.state, CertificateTrustState.notTrusted);
+    expect(state.policy.prepared, isFalse);
+    expect(state.rulesValidated, isFalse);
+    expect(state.prepared, isFalse);
+    expect(store.value.prepared, isFalse);
+    expect(store.writes, writesBeforeLoss + 1);
+  });
+
+  test('platform install result refreshes the effective trust state', () async {
+    const trusted = CertificateTrustStatus(
+      platform: 'android',
+      state: CertificateTrustState.trusted,
+      store: CertificateTrustStore.user,
+      installMode: CertificateInstallMode.settings,
+      verificationSupported: true,
+      fingerprintSha256: _fingerprintA,
+      platformVersion: 35,
+    );
+    final trust = _FakeTrustClient(
+      status: const CertificateTrustStatus(
+        platform: 'android',
+        state: CertificateTrustState.notTrusted,
+        store: CertificateTrustStore.none,
+        installMode: CertificateInstallMode.settings,
+        verificationSupported: true,
+        fingerprintSha256: _fingerprintA,
+      ),
+      installResult: const CertificateInstallResult(
+        outcome: CertificateInstallOutcome.installed,
+        trustStatus: trusted,
+      ),
+    );
+    final scope = container(
+      store: _MemoryPolicyStore(),
+      core: _FoundationCoreHandler(),
+      trustClient: trust,
+    );
+    final notifier = scope.read(tlsInspectionProvider.notifier);
+    await notifier.reload();
+
+    final result = await notifier.requestPlatformTrustInstall();
+
+    expect(result.outcome, CertificateInstallOutcome.installed);
+    expect(trust.installs, 1);
+    expect(trust.lastFingerprint, _fingerprintA);
+    expect(scope.read(tlsInspectionProvider).platformTrusted, isTrue);
+  });
+
+  test(
+    'an installed outcome is rejected when the current CA is not verified',
+    () async {
+      final trust = _FakeTrustClient(
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.notTrusted,
+          store: CertificateTrustStore.none,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: true,
+          fingerprintSha256: _fingerprintA,
+        ),
+        installResult: const CertificateInstallResult(
+          outcome: CertificateInstallOutcome.installed,
+          trustStatus: CertificateTrustStatus(
+            platform: 'android',
+            state: CertificateTrustState.trusted,
+            store: CertificateTrustStore.user,
+            installMode: CertificateInstallMode.settings,
+            verificationSupported: true,
+            fingerprintSha256: _fingerprintB,
+          ),
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+
+      final result = await notifier.requestPlatformTrustInstall();
+
+      expect(result.outcome, CertificateInstallOutcome.failed);
+      expect(result.errorCode, 'trust-not-confirmed');
+      expect(result.trustStatus?.state, CertificateTrustState.unavailable);
+      expect(result.trustStatus?.errorCode, 'fingerprint-mismatch');
+      final state = scope.read(tlsInspectionProvider);
+      expect(state.platformTrusted, isFalse);
+      expect(state.errorCode, 'trust-not-confirmed');
+    },
+  );
+
+  test(
+    'settings install outcome is rechecked instead of being assumed trusted',
+    () async {
+      final trust = _FakeTrustClient(
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.notTrusted,
+          store: CertificateTrustStore.none,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: true,
+          fingerprintSha256: _fingerprintA,
+        ),
+        installResult: const CertificateInstallResult(
+          outcome: CertificateInstallOutcome.settingsOpened,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: _FoundationCoreHandler(),
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+      final checksBeforeInstall = trust.checks;
+
+      final result = await notifier.requestPlatformTrustInstall();
+
+      expect(result.outcome, CertificateInstallOutcome.settingsOpened);
+      expect(trust.installs, 1);
+      expect(trust.checks, checksBeforeInstall + 1);
+      expect(scope.read(tlsInspectionProvider).platformTrusted, isFalse);
+      expect(
+        scope.read(tlsInspectionProvider).platformTrust.state,
+        CertificateTrustState.notTrusted,
+      );
+    },
+  );
 
   test(
     'concurrent rule mutations are serialized without lost updates',

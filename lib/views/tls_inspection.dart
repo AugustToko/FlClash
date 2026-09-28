@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:certificate_trust/certificate_trust.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -18,15 +19,48 @@ class TlsInspectionView extends ConsumerStatefulWidget {
   ConsumerState<TlsInspectionView> createState() => _TlsInspectionViewState();
 }
 
-class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
+class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(ref.read(tlsInspectionProvider.notifier).reload());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) {
+      return;
+    }
+    final current = ref.read(tlsInspectionProvider);
+    if (current.authority.validNow &&
+        current.platformTrust.verificationSupported &&
+        !current.busy) {
+      unawaited(_refreshPlatformTrustAfterResume());
+    }
+  }
+
+  Future<void> _refreshPlatformTrustAfterResume() async {
+    try {
+      await ref.read(tlsInspectionProvider.notifier).refreshPlatformTrust();
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'TLS inspection trust refresh after resume failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+    }
   }
 
   String _authorityStateLabel(String state) {
@@ -40,6 +74,55 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
       'permissions-warning' => l.tlsInspectionAuthorityPermissionsWarning,
       'stale-material-warning' => l.tlsInspectionAuthorityStaleMaterial,
       _ => l.tlsInspectionAuthorityUnavailable,
+    };
+  }
+
+  String _platformTrustStateLabel(CertificateTrustState state) {
+    final l = context.appLocalizations;
+    return switch (state) {
+      CertificateTrustState.trusted => l.tlsInspectionPlatformTrustVerified,
+      CertificateTrustState.notTrusted => l.tlsInspectionPlatformTrustMissing,
+      CertificateTrustState.blocked => l.tlsInspectionPlatformTrustBlocked,
+      CertificateTrustState.unavailable =>
+        l.tlsInspectionPlatformTrustUnavailable,
+      CertificateTrustState.unsupported =>
+        l.tlsInspectionPlatformTrustUnsupported,
+    };
+  }
+
+  String _platformTrustConstraintLabel(String value) {
+    final l = context.appLocalizations;
+    return switch (value) {
+      'android-user-ca-opt-in' => l.tlsInspectionPlatformConstraintUserCaOptIn,
+      'certificate-pinning-may-block' =>
+        l.tlsInspectionPlatformConstraintCertificatePinning,
+      'manual-settings-install-required' =>
+        l.tlsInspectionPlatformConstraintManualSettings,
+      'user-confirmation-required' =>
+        l.tlsInspectionPlatformConstraintUserConfirmation,
+      _ => value,
+    };
+  }
+
+  String _platformTrustErrorLabel(String errorCode) {
+    final l = context.appLocalizations;
+    return switch (errorCode) {
+      'not-checked' => l.tlsInspectionPlatformTrustNotChecked,
+      'core-disconnected' => l.tlsInspectionErrorCoreDisconnected,
+      'authority_export_invalid' => l.tlsInspectionErrorAuthority,
+      'fingerprint-mismatch' => l.tlsInspectionPlatformTrustFingerprintMismatch,
+      _ => l.tlsInspectionPlatformTrustCheckFailed,
+    };
+  }
+
+  String _platformTrustStoreLabel(CertificateTrustStore store) {
+    final l = context.appLocalizations;
+    return switch (store) {
+      CertificateTrustStore.user => l.tlsInspectionPlatformTrustStoreUser,
+      CertificateTrustStore.system => l.tlsInspectionPlatformTrustStoreSystem,
+      CertificateTrustStore.both => l.tlsInspectionPlatformTrustStoreBoth,
+      CertificateTrustStore.none => l.tlsInspectionPlatformTrustStoreNone,
+      CertificateTrustStore.unknown => l.tlsInspectionPlatformTrustStoreUnknown,
     };
   }
 
@@ -57,7 +140,8 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
       'rule_limit_reached' => l.tlsInspectionErrorLimit,
       'authority_not_ready' ||
       'authority_requires_rotation' => l.tlsInspectionErrorAuthority,
-      'safety_requirements_incomplete' => l.tlsInspectionErrorRequirements,
+      'safety_requirements_incomplete' ||
+      'platform_trust_required' => l.tlsInspectionErrorRequirements,
       'transport_disconnected' ||
       'transport_error' => l.tlsInspectionErrorCoreDisconnected,
       _ => l.tlsInspectionErrorGeneric,
@@ -110,7 +194,7 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
     await _run(ref.read(tlsInspectionProvider.notifier).deleteAuthority);
   }
 
-  Future<void> _exportCertificate() async {
+  Future<bool> _saveCertificate({bool notify = true}) async {
     final l = context.appLocalizations;
     try {
       final value = await ref
@@ -121,12 +205,82 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
         Uint8List.fromList(utf8.encode(value.pem)),
       );
       if (saved == null || !mounted) {
+        return false;
+      }
+      if (notify) {
+        context.showNotifier(
+          l.tlsInspectionExportSuccess,
+          level: MessageLevel.success,
+        );
+      }
+      return true;
+    } catch (error) {
+      if (mounted) {
+        context.showNotifier(_errorLabel(error), level: MessageLevel.error);
+      }
+      return false;
+    }
+  }
+
+  Future<void> _exportCertificate() async {
+    await _saveCertificate();
+  }
+
+  Future<void> _refreshPlatformTrust() {
+    return _run(
+      () async {
+        await ref.read(tlsInspectionProvider.notifier).refreshPlatformTrust();
+      },
+      successMessage:
+          context.appLocalizations.tlsInspectionPlatformTrustChecked,
+    );
+  }
+
+  Future<void> _openPlatformTrustSettings() async {
+    final opened = await ref
+        .read(tlsInspectionProvider.notifier)
+        .openPlatformTrustSettings();
+    if (!opened && mounted) {
+      context.showNotifier(
+        context.appLocalizations.tlsInspectionPlatformTrustInstallFailed,
+        level: MessageLevel.error,
+      );
+    }
+  }
+
+  Future<void> _installPlatformTrust() async {
+    final l = context.appLocalizations;
+    final current = ref.read(tlsInspectionProvider);
+    if (current.platformTrust.installMode == CertificateInstallMode.settings) {
+      final saved = await _saveCertificate(notify: false);
+      if (!saved || !mounted) {
         return;
       }
-      context.showNotifier(
-        l.tlsInspectionExportSuccess,
-        level: MessageLevel.success,
-      );
+    }
+    try {
+      final result = await ref
+          .read(tlsInspectionProvider.notifier)
+          .requestPlatformTrustInstall();
+      if (!mounted) {
+        return;
+      }
+      switch (result.outcome) {
+        case CertificateInstallOutcome.installed:
+          context.showNotifier(
+            l.tlsInspectionPlatformTrustInstalled,
+            level: MessageLevel.success,
+          );
+        case CertificateInstallOutcome.settingsOpened:
+          context.showNotifier(l.tlsInspectionPlatformTrustSettingsOpened);
+        case CertificateInstallOutcome.cancelled:
+          break;
+        case CertificateInstallOutcome.unsupported:
+        case CertificateInstallOutcome.failed:
+          context.showNotifier(
+            l.tlsInspectionPlatformTrustInstallFailed,
+            level: MessageLevel.error,
+          );
+      }
     } catch (error) {
       if (mounted) {
         context.showNotifier(_errorLabel(error), level: MessageLevel.error);
@@ -210,7 +364,7 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
     );
   }
 
-  Widget _boundaryCard() {
+  Widget _boundaryCard(TlsInspectionState state) {
     final l = context.appLocalizations;
     return Card(
       child: Padding(
@@ -243,7 +397,13 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
                 Chip(label: Text(l.tlsInspectionDisabledByDefault)),
                 Chip(label: Text(l.tlsInspectionAllowlistOnly)),
                 Chip(label: Text(l.tlsInspectionMetadataOnly)),
-                Chip(label: Text(l.tlsInspectionManualTrustOnly)),
+                Chip(
+                  label: Text(
+                    state.platformTrustRequired
+                        ? l.tlsInspectionPlatformTrustVerifiedOnly
+                        : l.tlsInspectionManualTrustOnly,
+                  ),
+                ),
               ],
             ),
           ],
@@ -311,7 +471,7 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
                 ),
                 _requirementRow(
                   l.tlsInspectionRequirementTrust,
-                  state.manuallyTrusted,
+                  state.trustSatisfied,
                 ),
                 _requirementRow(
                   l.tlsInspectionRequirementAllowlist,
@@ -462,6 +622,8 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
 
   Widget _trustCard(TlsInspectionState state) {
     final l = context.appLocalizations;
+    final trust = state.platformTrust;
+    final usesPlatformVerification = state.platformTrustRequired;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -478,61 +640,149 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
                     style: context.textTheme.titleMedium?.toSoftBold,
                   ),
                 ),
+                if (usesPlatformVerification)
+                  Chip(label: Text(_platformTrustStateLabel(trust.state))),
               ],
             ),
             const SizedBox(height: 8),
-            Text(l.tlsInspectionTrustDesc),
+            Text(
+              usesPlatformVerification
+                  ? l.tlsInspectionPlatformTrustDesc
+                  : l.tlsInspectionTrustDesc,
+            ),
             const SizedBox(height: 8),
             Text(
-              l.tlsInspectionTrustLimitations,
+              usesPlatformVerification
+                  ? l.tlsInspectionPlatformTrustLimitations
+                  : l.tlsInspectionTrustLimitations,
               style: context.textTheme.bodySmall?.copyWith(
                 color: context.colorScheme.error,
               ),
             ),
             const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                state.manuallyTrusted
-                    ? Icons.verified_outlined
-                    : Icons.help_outline,
-                color: state.manuallyTrusted
-                    ? context.colorScheme.primary
-                    : context.colorScheme.onSurfaceVariant,
-              ),
-              title: Text(
-                state.manuallyTrusted
-                    ? l.tlsInspectionTrustConfirmed
-                    : l.tlsInspectionTrustUnconfirmed,
-              ),
-              subtitle: state.policy.manuallyTrustedAt == null
-                  ? null
-                  : Text(state.policy.manuallyTrustedAt!.toLocal().showFull),
-            ),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.tonalIcon(
-                  onPressed: state.authority.validNow && !state.busy
-                      ? _confirmManualTrust
-                      : null,
-                  icon: const Icon(Icons.verified_user_outlined),
-                  label: Text(l.tlsInspectionConfirmTrust),
+            if (usesPlatformVerification) ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  state.platformTrusted
+                      ? Icons.verified_outlined
+                      : trust.state == CertificateTrustState.unavailable
+                      ? Icons.sync_problem_outlined
+                      : Icons.gpp_maybe_outlined,
+                  color: state.platformTrusted
+                      ? context.colorScheme.primary
+                      : context.colorScheme.onSurfaceVariant,
                 ),
-                if (state.policy.manuallyTrustedFingerprint.isNotEmpty)
-                  TextButton(
-                    onPressed: state.busy
-                        ? null
-                        : () => _run(
-                            ref
-                                .read(tlsInspectionProvider.notifier)
-                                .clearManualTrust,
-                          ),
-                    child: Text(l.tlsInspectionClearTrust),
+                title: Text(_platformTrustStateLabel(trust.state)),
+                subtitle: Text(
+                  trust.errorCode.isEmpty
+                      ? l.tlsInspectionPlatformTrustFingerprintMatch
+                      : _platformTrustErrorLabel(trust.errorCode),
+                ),
+              ),
+              _detailRow(
+                l.tlsInspectionPlatformTrustStore,
+                _platformTrustStoreLabel(trust.store),
+              ),
+              if (trust.checkedAt != null)
+                _detailRow(
+                  l.tlsInspectionPlatformTrustLastChecked,
+                  trust.checkedAt!.toLocal().showFull,
+                ),
+              if (trust.platformVersion > 0)
+                _detailRow(
+                  l.tlsInspectionPlatformVersion,
+                  '${trust.platformVersion}',
+                ),
+              if (trust.limitations.isNotEmpty)
+                _detailRow(
+                  l.tlsInspectionPlatformTrustConstraints,
+                  trust.limitations
+                      .map(_platformTrustConstraintLabel)
+                      .join('\n'),
+                ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (!state.platformTrusted &&
+                      trust.installMode != CertificateInstallMode.unsupported)
+                    FilledButton.tonalIcon(
+                      onPressed: state.authority.validNow && !state.busy
+                          ? _installPlatformTrust
+                          : null,
+                      icon: Icon(
+                        trust.installMode == CertificateInstallMode.settings
+                            ? Icons.settings_outlined
+                            : Icons.install_mobile_outlined,
+                      ),
+                      label: Text(
+                        trust.installMode == CertificateInstallMode.settings
+                            ? l.tlsInspectionPlatformTrustExportAndOpenSettings
+                            : l.tlsInspectionPlatformTrustInstall,
+                      ),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: state.authority.validNow && !state.busy
+                        ? _refreshPlatformTrust
+                        : null,
+                    icon: const Icon(Icons.refresh_outlined),
+                    label: Text(l.tlsInspectionPlatformTrustCheckAgain),
                   ),
-              ],
-            ),
+                  if (trust.installMode == CertificateInstallMode.settings)
+                    TextButton.icon(
+                      onPressed: state.busy ? null : _openPlatformTrustSettings,
+                      icon: const Icon(Icons.open_in_new_outlined),
+                      label: Text(l.tlsInspectionPlatformTrustOpenSettings),
+                    ),
+                ],
+              ),
+            ] else ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  state.manuallyTrusted
+                      ? Icons.verified_outlined
+                      : Icons.help_outline,
+                  color: state.manuallyTrusted
+                      ? context.colorScheme.primary
+                      : context.colorScheme.onSurfaceVariant,
+                ),
+                title: Text(
+                  state.manuallyTrusted
+                      ? l.tlsInspectionTrustConfirmed
+                      : l.tlsInspectionTrustUnconfirmed,
+                ),
+                subtitle: state.policy.manuallyTrustedAt == null
+                    ? null
+                    : Text(state.policy.manuallyTrustedAt!.toLocal().showFull),
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: state.authority.validNow && !state.busy
+                        ? _confirmManualTrust
+                        : null,
+                    icon: const Icon(Icons.verified_user_outlined),
+                    label: Text(l.tlsInspectionConfirmTrust),
+                  ),
+                  if (state.policy.manuallyTrustedFingerprint.isNotEmpty)
+                    TextButton(
+                      onPressed: state.busy
+                          ? null
+                          : () => _run(
+                              ref
+                                  .read(tlsInspectionProvider.notifier)
+                                  .clearManualTrust,
+                            ),
+                      child: Text(l.tlsInspectionClearTrust),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -704,7 +954,7 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView> {
                   24 + BottomInsetScope.of(context),
                 ),
                 children: [
-                  _boundaryCard(),
+                  _boundaryCard(state),
                   const SizedBox(height: 10),
                   _readinessCard(state),
                   const SizedBox(height: 10),

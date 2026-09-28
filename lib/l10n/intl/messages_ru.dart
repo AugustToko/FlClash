@@ -1000,6 +1000,21 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("Успешно"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("Система"),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "Установка CA отменена",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось установить CA",
+    ),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "Установка CA инспекции",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "CA инспекции установлен",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "Открыты настройки сертификатов",
+    ),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("Предупреждение"),
     "logcat": MessageLookupByLibrary.simpleMessage("Захват логов"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
@@ -1689,6 +1704,113 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "Сначала выполните все обязательные условия.",
     ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage(
+          "Закрепление сертификатов по-прежнему может блокировать инспекцию.",
+        ),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "В Android 11 и новее сертификат нужно вручную установить в настройках безопасности.",
+        ),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage(
+          "Приложение должно явно разрешать доверие пользовательским CA.",
+        ),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage(
+          "Android требует явного подтверждения пользователя перед установкой.",
+        ),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "Установка доверия заблокирована",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("Проверить снова"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android не удалось проверить этот CA в хранилище сертификатов.",
+        ),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "Статус доверия платформы обновлён",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("Ограничения платформы"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash проверяет, что точный отпечаток текущего CA присутствует в хранилище сертификатов Android. Ручное подтверждение не заменяет результат платформы.",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "Экспортировать CA и открыть настройки",
+        ),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Результат привязан к отпечатку текущего CA.",
+        ),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Результат доверия Android относится к другому отпечатку CA.",
+        ),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "Установить CA через Android",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android не смог запустить установку сертификата",
+        ),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android подтвердил установку CA",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("Последняя проверка"),
+    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Приложения Android могут отвергать пользовательские CA без явного разрешения, а закрепление сертификатов по-прежнему блокирует инспекцию.",
+    ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "Не установлен в хранилище Android",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage(
+          "Доверие платформы ещё не проверено.",
+        ),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("Открыть настройки безопасности"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "Сертификат экспортирован; завершите установку в настройках безопасности Android и вернитесь в FlClash",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "Хранилище сертификатов",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Пользовательское и системное хранилища Android",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "Не найден",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Системное хранилище Android"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage("Найден в неопознанном хранилище"),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Пользовательское хранилище Android",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Статус доверия Android недоступен",
+        ),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage(
+          "Автоматическая проверка недоступна",
+        ),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "Присутствует в хранилище CA Android",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage(
+          "Требуется проверенное платформой доверие",
+        ),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Уровень Android API",
+    ),
     "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
       "Локальные и WebDAV-архивы FlClash не содержат материалы центра сертификации и политику доменов. Резервное копирование ОС зависит от настроек платформы.",
     ),
@@ -1714,7 +1836,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Риск подтверждён",
     ),
     "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
-      "Текущий отпечаток проверен вручную",
+      "Текущий CA доверен платформой или проверен вручную",
     ),
     "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage(
       "Подтверждение риска",

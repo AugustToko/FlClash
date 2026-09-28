@@ -703,6 +703,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage("配置脚本执行完成"),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("系统"),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "CA 安装已取消",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage("CA 安装失败"),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "正在安装检查 CA",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "检查 CA 已安装",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "已打开证书设置",
+    ),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("日志捕获"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("禁用将会隐藏日志入口"),
@@ -1188,6 +1201,88 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "完成全部前置条件后才能准备策略。",
     ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage("证书固定仍可能阻止检查。"),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage("Android 11 及以上版本需要在安全设置中手动完成安装。"),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage("应用必须显式选择信任用户安装的 CA。"),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage("Android 会要求用户明确确认后才安装。"),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "信任安装被阻止",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("重新检查"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage("Android 无法在证书存储中验证当前 CA。"),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "已刷新系统信任状态",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("平台限制"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash 会核对当前 CA 的精确指纹是否真实存在于 Android 证书存储中；人工确认不能替代系统结果。",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage("导出 CA 并打开设置"),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage("验证结果与当前 CA 指纹绑定。"),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage("Android 返回的信任结果与当前 CA 指纹不匹配。"),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "交给 Android 安装 CA",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage("Android 无法启动证书安装流程"),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android 已确认 CA 安装完成",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("最近检查"),
+    "tlsInspectionPlatformTrustLimitations":
+        MessageLookupByLibrary.simpleMessage(
+          "Android 应用若未显式接受用户 CA，仍可能拒绝该证书；证书固定也仍会阻止检查。",
+        ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "未安装到 Android 信任库",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage("尚未检查平台信任状态。"),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("打开安全设置"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "证书已导出；请在 Android 安全设置中完成安装，然后返回 FlClash",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "证书存储",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Android 用户与系统证书存储",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "未找到",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Android 系统证书存储"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage("存在于未识别的存储中"),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Android 用户证书存储",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage("暂时无法读取 Android 信任状态"),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage("无法自动验证系统信任"),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "已存在于 Android CA 存储",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage("必须通过系统信任验证"),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Android API 级别",
+    ),
     "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
       "FlClash 的本地与 WebDAV 备份包不会包含证书材料和域名策略；操作系统级备份行为取决于平台设置。",
     ),
@@ -1210,7 +1305,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "已确认风险",
     ),
     "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
-      "已手动核对当前指纹",
+      "系统已信任当前 CA，或已完成手动核对",
     ),
     "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage("风险确认"),
     "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(

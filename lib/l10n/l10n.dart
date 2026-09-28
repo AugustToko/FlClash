@@ -7035,10 +7035,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Current fingerprint manually verified`
+  /// `Current CA trusted by the platform or manually verified`
   String get tlsInspectionRequirementTrust {
     return Intl.message(
-      'Current fingerprint manually verified',
+      'Current CA trusted by the platform or manually verified',
       name: 'tlsInspectionRequirementTrust',
       desc: '',
       args: [],
@@ -7150,6 +7150,386 @@ class AppLocalizations {
     return Intl.message(
       'User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.',
       name: 'tlsInspectionTrustLimitations',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform-verified trust required`
+  String get tlsInspectionPlatformTrustVerifiedOnly {
+    return Intl.message(
+      'Platform-verified trust required',
+      name: 'tlsInspectionPlatformTrustVerifiedOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Present in Android CA store`
+  String get tlsInspectionPlatformTrustVerified {
+    return Intl.message(
+      'Present in Android CA store',
+      name: 'tlsInspectionPlatformTrustVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not installed in Android trust store`
+  String get tlsInspectionPlatformTrustMissing {
+    return Intl.message(
+      'Not installed in Android trust store',
+      name: 'tlsInspectionPlatformTrustMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trust installation blocked`
+  String get tlsInspectionPlatformTrustBlocked {
+    return Intl.message(
+      'Trust installation blocked',
+      name: 'tlsInspectionPlatformTrustBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android trust status unavailable`
+  String get tlsInspectionPlatformTrustUnavailable {
+    return Intl.message(
+      'Android trust status unavailable',
+      name: 'tlsInspectionPlatformTrustUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Automatic verification unavailable`
+  String get tlsInspectionPlatformTrustUnsupported {
+    return Intl.message(
+      'Automatic verification unavailable',
+      name: 'tlsInspectionPlatformTrustUnsupported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `FlClash verifies that this exact CA fingerprint is present in the Android certificate store. A manual confirmation cannot replace the platform result.`
+  String get tlsInspectionPlatformTrustDesc {
+    return Intl.message(
+      'FlClash verifies that this exact CA fingerprint is present in the Android certificate store. A manual confirmation cannot replace the platform result.',
+      name: 'tlsInspectionPlatformTrustDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.`
+  String get tlsInspectionPlatformTrustLimitations {
+    return Intl.message(
+      'Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.',
+      name: 'tlsInspectionPlatformTrustLimitations',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The result is bound to the current CA fingerprint.`
+  String get tlsInspectionPlatformTrustFingerprintMatch {
+    return Intl.message(
+      'The result is bound to the current CA fingerprint.',
+      name: 'tlsInspectionPlatformTrustFingerprintMatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate store`
+  String get tlsInspectionPlatformTrustStore {
+    return Intl.message(
+      'Certificate store',
+      name: 'tlsInspectionPlatformTrustStore',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android user store`
+  String get tlsInspectionPlatformTrustStoreUser {
+    return Intl.message(
+      'Android user store',
+      name: 'tlsInspectionPlatformTrustStoreUser',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android system store`
+  String get tlsInspectionPlatformTrustStoreSystem {
+    return Intl.message(
+      'Android system store',
+      name: 'tlsInspectionPlatformTrustStoreSystem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android user and system stores`
+  String get tlsInspectionPlatformTrustStoreBoth {
+    return Intl.message(
+      'Android user and system stores',
+      name: 'tlsInspectionPlatformTrustStoreBoth',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not present`
+  String get tlsInspectionPlatformTrustStoreNone {
+    return Intl.message(
+      'Not present',
+      name: 'tlsInspectionPlatformTrustStoreNone',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Present in an unidentified store`
+  String get tlsInspectionPlatformTrustStoreUnknown {
+    return Intl.message(
+      'Present in an unidentified store',
+      name: 'tlsInspectionPlatformTrustStoreUnknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last checked`
+  String get tlsInspectionPlatformTrustLastChecked {
+    return Intl.message(
+      'Last checked',
+      name: 'tlsInspectionPlatformTrustLastChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android API level`
+  String get tlsInspectionPlatformVersion {
+    return Intl.message(
+      'Android API level',
+      name: 'tlsInspectionPlatformVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform constraints`
+  String get tlsInspectionPlatformTrustConstraints {
+    return Intl.message(
+      'Platform constraints',
+      name: 'tlsInspectionPlatformTrustConstraints',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export CA and open Settings`
+  String get tlsInspectionPlatformTrustExportAndOpenSettings {
+    return Intl.message(
+      'Export CA and open Settings',
+      name: 'tlsInspectionPlatformTrustExportAndOpenSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Install CA with Android`
+  String get tlsInspectionPlatformTrustInstall {
+    return Intl.message(
+      'Install CA with Android',
+      name: 'tlsInspectionPlatformTrustInstall',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check again`
+  String get tlsInspectionPlatformTrustCheckAgain {
+    return Intl.message(
+      'Check again',
+      name: 'tlsInspectionPlatformTrustCheckAgain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open security settings`
+  String get tlsInspectionPlatformTrustOpenSettings {
+    return Intl.message(
+      'Open security settings',
+      name: 'tlsInspectionPlatformTrustOpenSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform trust status refreshed`
+  String get tlsInspectionPlatformTrustChecked {
+    return Intl.message(
+      'Platform trust status refreshed',
+      name: 'tlsInspectionPlatformTrustChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android confirmed the CA is installed`
+  String get tlsInspectionPlatformTrustInstalled {
+    return Intl.message(
+      'Android confirmed the CA is installed',
+      name: 'tlsInspectionPlatformTrustInstalled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate exported; finish installation in Android security settings, then return to FlClash`
+  String get tlsInspectionPlatformTrustSettingsOpened {
+    return Intl.message(
+      'Certificate exported; finish installation in Android security settings, then return to FlClash',
+      name: 'tlsInspectionPlatformTrustSettingsOpened',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android could not start the certificate installation workflow`
+  String get tlsInspectionPlatformTrustInstallFailed {
+    return Intl.message(
+      'Android could not start the certificate installation workflow',
+      name: 'tlsInspectionPlatformTrustInstallFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps must explicitly opt in to trust user-installed CAs.`
+  String get tlsInspectionPlatformConstraintUserCaOptIn {
+    return Intl.message(
+      'Apps must explicitly opt in to trust user-installed CAs.',
+      name: 'tlsInspectionPlatformConstraintUserCaOptIn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate pinning can still block inspection.`
+  String get tlsInspectionPlatformConstraintCertificatePinning {
+    return Intl.message(
+      'Certificate pinning can still block inspection.',
+      name: 'tlsInspectionPlatformConstraintCertificatePinning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android 11 and later require manual installation in security settings.`
+  String get tlsInspectionPlatformConstraintManualSettings {
+    return Intl.message(
+      'Android 11 and later require manual installation in security settings.',
+      name: 'tlsInspectionPlatformConstraintManualSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android requires explicit user confirmation before installation.`
+  String get tlsInspectionPlatformConstraintUserConfirmation {
+    return Intl.message(
+      'Android requires explicit user confirmation before installation.',
+      name: 'tlsInspectionPlatformConstraintUserConfirmation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Installing inspection CA`
+  String get logbookTlsTrustInstallRunning {
+    return Intl.message(
+      'Installing inspection CA',
+      name: 'logbookTlsTrustInstallRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspection CA installed`
+  String get logbookTlsTrustInstalled {
+    return Intl.message(
+      'Inspection CA installed',
+      name: 'logbookTlsTrustInstalled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate settings opened`
+  String get logbookTlsTrustSettingsOpened {
+    return Intl.message(
+      'Certificate settings opened',
+      name: 'logbookTlsTrustSettingsOpened',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `CA installation cancelled`
+  String get logbookTlsTrustCancelled {
+    return Intl.message(
+      'CA installation cancelled',
+      name: 'logbookTlsTrustCancelled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `CA installation failed`
+  String get logbookTlsTrustFailed {
+    return Intl.message(
+      'CA installation failed',
+      name: 'logbookTlsTrustFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform trust has not been checked yet.`
+  String get tlsInspectionPlatformTrustNotChecked {
+    return Intl.message(
+      'Platform trust has not been checked yet.',
+      name: 'tlsInspectionPlatformTrustNotChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android returned trust for a different certificate fingerprint.`
+  String get tlsInspectionPlatformTrustFingerprintMismatch {
+    return Intl.message(
+      'Android returned trust for a different certificate fingerprint.',
+      name: 'tlsInspectionPlatformTrustFingerprintMismatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android could not verify this CA in the certificate store.`
+  String get tlsInspectionPlatformTrustCheckFailed {
+    return Intl.message(
+      'Android could not verify this CA in the certificate store.',
+      name: 'tlsInspectionPlatformTrustCheckFailed',
       desc: '',
       args: [],
     );

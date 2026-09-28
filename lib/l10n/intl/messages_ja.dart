@@ -825,6 +825,21 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("システム"),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "CA のインストールをキャンセルしました",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage(
+      "CA のインストールに失敗しました",
+    ),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "検査用 CA をインストール中",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "検査用 CA をインストールしました",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "証明書設定を開きました",
+    ),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("ログキャプチャ"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("無効にするとログの入り口が非表示になります"),
@@ -1370,6 +1385,96 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "すべての前提条件を完了してください。",
     ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage("証明書ピンニングにより検査が拒否される場合があります。"),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "Android 11 以降ではセキュリティ設定で手動インストールが必要です。",
+        ),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage("アプリ側でユーザー CA を明示的に信頼する必要があります。"),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage(
+          "インストールには Android の明示的なユーザー確認が必要です。",
+        ),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "信頼のインストールがブロックされました",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("再確認"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android の証明書ストアで現在の CA を確認できませんでした。",
+        ),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "プラットフォームの信頼状態を更新しました",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("プラットフォーム制約"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash は現在の CA の正確なフィンガープリントが Android の証明書ストアに存在することを確認します。手動確認では代用できません。",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage("CA を書き出して設定を開く"),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage("結果は現在の CA フィンガープリントに結び付けられています。"),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Android が返した信頼結果は現在の CA フィンガープリントと一致しません。",
+        ),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "Android で CA をインストール",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage("Android の証明書インストールを開始できませんでした"),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android が CA のインストールを確認しました",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("最終確認"),
+    "tlsInspectionPlatformTrustLimitations":
+        MessageLookupByLibrary.simpleMessage(
+          "ユーザー CA を明示的に許可しない Android アプリは拒否する場合があり、証明書ピンニングも検査を妨げます。",
+        ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "Android の信頼ストアに未登録",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage("プラットフォームの信頼状態はまだ確認されていません。"),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("セキュリティ設定を開く"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "証明書を書き出しました。Android のセキュリティ設定でインストールを完了し、FlClash に戻ってください",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "証明書ストア",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Android ユーザー／システムストア",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "未登録",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Android システムストア"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage("未識別のストアに存在"),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Android ユーザーストア",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage("Android の信頼状態を取得できません"),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage("自動信頼検証は利用できません"),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "Android CA ストアに存在",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage("プラットフォーム検証済みの信頼が必要"),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Android API レベル",
+    ),
     "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
       "FlClash のローカルおよび WebDAV バックアップには証明書材料とドメインポリシーを含めません。OS レベルのバックアップ動作はプラットフォーム設定に依存します。",
     ),
@@ -1391,7 +1496,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "リスク確認済み",
     ),
     "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
-      "現在のフィンガープリントを手動確認済み",
+      "現在の CA がプラットフォームで信頼済み、または手動確認済み",
     ),
     "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage("リスク確認"),
     "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(

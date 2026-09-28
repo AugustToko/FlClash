@@ -172,8 +172,14 @@ class TlsInspectionPolicy {
       manuallyTrustedFingerprint.isNotEmpty &&
       manuallyTrustedFingerprint == authority.fingerprintSha256;
 
-  bool canPrepareWith(TlsInspectionAuthorityStatus authority) =>
-      allowlist.isNotEmpty && riskAcknowledged && manuallyTrusts(authority);
+  bool canPrepareWith(
+    TlsInspectionAuthorityStatus authority, {
+    bool? trustSatisfied,
+  }) =>
+      authority.validNow &&
+      allowlist.isNotEmpty &&
+      riskAcknowledged &&
+      (trustSatisfied ?? manuallyTrusts(authority));
 
   bool isExcluded(String host) => exclusions.any((rule) => rule.matches(host));
 
