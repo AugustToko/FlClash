@@ -182,6 +182,7 @@ void main() {
     expect(authority.validNow, isFalse);
     expect(policy.manuallyTrusts(authority), isFalse);
     expect(policy.canPrepareWith(authority), isFalse);
+    expect(policy.canPrepareWith(authority, trustSatisfied: true), isFalse);
   });
 
   test('authority status parsing drops malformed dates and bounds fields', () {

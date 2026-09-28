@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:certificate_trust/certificate_trust.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -22,6 +23,10 @@ bool _hasTlsInspectionServicesBinding() {
 
 final tlsInspectionPersistenceEnabledProvider = Provider<bool>(
   (_) => _hasTlsInspectionServicesBinding(),
+);
+
+final certificateTrustClientProvider = Provider<CertificateTrustClient>(
+  (_) => certificateTrustManager,
 );
 
 abstract interface class TlsInspectionPolicyStore {
@@ -93,6 +98,8 @@ class TlsInspectionState {
   final bool busy;
   final TlsInspectionPolicy policy;
   final TlsInspectionAuthorityStatus authority;
+  final CertificateTrustStatus platformTrust;
+  final bool requiresPlatformTrust;
   final bool rulesValidated;
   final String errorCode;
   final int revision;
@@ -102,6 +109,8 @@ class TlsInspectionState {
     this.busy = false,
     this.policy = const TlsInspectionPolicy(),
     this.authority = const TlsInspectionAuthorityStatus(),
+    this.platformTrust = const CertificateTrustStatus(),
+    this.requiresPlatformTrust = false,
     this.rulesValidated = false,
     this.errorCode = '',
     this.revision = 0,
@@ -112,6 +121,8 @@ class TlsInspectionState {
     bool? busy,
     TlsInspectionPolicy? policy,
     TlsInspectionAuthorityStatus? authority,
+    CertificateTrustStatus? platformTrust,
+    bool? requiresPlatformTrust,
     bool? rulesValidated,
     String? errorCode,
     int? revision,
@@ -121,6 +132,9 @@ class TlsInspectionState {
       busy: busy ?? this.busy,
       policy: policy ?? this.policy,
       authority: authority ?? this.authority,
+      platformTrust: platformTrust ?? this.platformTrust,
+      requiresPlatformTrust:
+          requiresPlatformTrust ?? this.requiresPlatformTrust,
       rulesValidated: rulesValidated ?? this.rulesValidated,
       errorCode: errorCode ?? this.errorCode,
       revision: revision ?? this.revision,
@@ -129,8 +143,21 @@ class TlsInspectionState {
 
   bool get manuallyTrusted => policy.manuallyTrusts(authority);
 
+  bool get platformTrustRequired =>
+      requiresPlatformTrust || platformTrust.verificationSupported;
+
+  bool get platformTrusted =>
+      authority.validNow &&
+      platformTrust.verificationSupported &&
+      platformTrust.matchesFingerprint(authority.fingerprintSha256);
+
+  bool get trustSatisfied =>
+      platformTrustRequired ? platformTrusted : manuallyTrusted;
+
   bool get prepared =>
-      policy.prepared && rulesValidated && policy.canPrepareWith(authority);
+      policy.prepared &&
+      rulesValidated &&
+      policy.canPrepareWith(authority, trustSatisfied: trustSatisfied);
 
   bool isAllowed(String host) => prepared && policy.matchesAllowlist(host);
 }
@@ -158,11 +185,27 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           state: 'unavailable',
           issue: 'core-disconnected',
         ),
+        platformTrust: _unavailablePlatformTrust(
+          state.platformTrust,
+          'core-disconnected',
+        ),
         rulesValidated: false,
         revision: state.revision + 1,
       );
     });
-    return const TlsInspectionState();
+    final trustClient = ref.read(certificateTrustClientProvider);
+    final requiresPlatformTrust = trustClient.verificationSupported;
+    return TlsInspectionState(
+      requiresPlatformTrust: requiresPlatformTrust,
+      platformTrust: requiresPlatformTrust
+          ? CertificateTrustStatus(
+              platform: trustClient.platform,
+              state: CertificateTrustState.unavailable,
+              verificationSupported: true,
+              errorCode: 'not-checked',
+            )
+          : CertificateTrustStatus(platform: trustClient.platform),
+    );
   }
 
   Future<T> _serialize<T>(Future<T> Function() action) {
@@ -213,6 +256,151 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       );
     }
     return ref.read(coreHandlerProvider).getTlsInspectionAuthorityStatus();
+  }
+
+  bool _trustSatisfied(
+    TlsInspectionPolicy policy,
+    TlsInspectionAuthorityStatus authority,
+    CertificateTrustStatus platformTrust,
+  ) =>
+      authority.validNow &&
+      (state.platformTrustRequired
+          ? platformTrust.verificationSupported &&
+                platformTrust.matchesFingerprint(authority.fingerprintSha256)
+          : policy.manuallyTrusts(authority));
+
+  bool _platformTrustIsDefinitive(CertificateTrustStatus value) =>
+      !state.platformTrustRequired ||
+      value.state == CertificateTrustState.trusted ||
+      value.state == CertificateTrustState.notTrusted ||
+      value.state == CertificateTrustState.blocked;
+
+  CertificateTrustStatus _unavailablePlatformTrust(
+    CertificateTrustStatus current,
+    String errorCode,
+  ) {
+    if (!state.platformTrustRequired) {
+      return current;
+    }
+    final client = ref.read(certificateTrustClientProvider);
+    return CertificateTrustStatus(
+      platform: current.platform.isEmpty ? client.platform : current.platform,
+      state: CertificateTrustState.unavailable,
+      store: CertificateTrustStore.unknown,
+      installMode: current.installMode,
+      verificationSupported: true,
+      platformVersion: current.platformVersion,
+      limitations: current.limitations,
+      errorCode: errorCode,
+      checkedAt: DateTime.now().toUtc(),
+    );
+  }
+
+  CertificateTrustStatus _trustAfterAuthorityUnavailable() {
+    final current = state.platformTrust;
+    if (!state.platformTrustRequired) {
+      return current;
+    }
+    final client = ref.read(certificateTrustClientProvider);
+    return CertificateTrustStatus(
+      platform: current.platform.isEmpty ? client.platform : current.platform,
+      state: CertificateTrustState.notTrusted,
+      store: CertificateTrustStore.none,
+      installMode: current.installMode,
+      verificationSupported: true,
+      platformVersion: current.platformVersion,
+      limitations: current.limitations,
+      checkedAt: DateTime.now().toUtc(),
+    );
+  }
+
+  Future<TlsInspectionAuthorityExport> _readAuthorityExport(
+    TlsInspectionAuthorityStatus authority,
+  ) async {
+    final value = await ref
+        .read(coreHandlerProvider)
+        .exportTlsInspectionCertificate();
+    if (!value.valid ||
+        !authority.validNow ||
+        value.fingerprintSha256 != authority.fingerprintSha256) {
+      throw const TlsInspectionPolicyException(
+        'authority_export_invalid',
+        'Core returned an invalid or stale public certificate export.',
+      );
+    }
+    return value;
+  }
+
+  Uint8List _decodePublicCertificate(TlsInspectionAuthorityExport value) {
+    const begin = '-----BEGIN CERTIFICATE-----';
+    const end = '-----END CERTIFICATE-----';
+    final normalized = value.pem.trim();
+    if (!normalized.startsWith('$begin\n') || !normalized.endsWith(end)) {
+      throw const TlsInspectionPolicyException(
+        'authority_export_invalid',
+        'The exported public certificate has an invalid PEM envelope.',
+      );
+    }
+    final payload = normalized
+        .substring(begin.length, normalized.length - end.length)
+        .replaceAll(RegExp(r'\s+'), '');
+    try {
+      final decoded = base64Decode(payload);
+      if (decoded.isEmpty || decoded.length > 64 * 1024) {
+        throw const FormatException('certificate DER is outside its bounds');
+      }
+      return decoded;
+    } on FormatException {
+      throw const TlsInspectionPolicyException(
+        'authority_export_invalid',
+        'The exported public certificate contains invalid base64 data.',
+      );
+    }
+  }
+
+  CertificateTrustStatus _validatedPlatformTrust(
+    TlsInspectionAuthorityStatus authority,
+    CertificateTrustStatus value,
+  ) {
+    if (value.state != CertificateTrustState.trusted) {
+      return value;
+    }
+    final errorCode = !value.verificationSupported
+        ? 'verification-not-supported'
+        : value.matchesFingerprint(authority.fingerprintSha256)
+        ? ''
+        : 'fingerprint-mismatch';
+    if (errorCode.isEmpty) {
+      return value;
+    }
+    return CertificateTrustStatus(
+      platform: value.platform,
+      state: CertificateTrustState.unavailable,
+      store: value.store,
+      installMode: value.installMode,
+      verificationSupported: true,
+      fingerprintSha256: value.fingerprintSha256,
+      platformVersion: value.platformVersion,
+      limitations: value.limitations,
+      errorCode: errorCode,
+      checkedAt: value.checkedAt ?? DateTime.now().toUtc(),
+    );
+  }
+
+  Future<CertificateTrustStatus> _readPlatformTrust(
+    TlsInspectionAuthorityStatus authority,
+  ) async {
+    if (!authority.validNow) {
+      return _trustAfterAuthorityUnavailable();
+    }
+    final value = await _readAuthorityExport(authority);
+    final trust = await ref
+        .read(certificateTrustClientProvider)
+        .checkCertificate(
+          certificateDer: _decodePublicCertificate(value),
+          fingerprintSha256: value.fingerprintSha256,
+        );
+    return _validatedPlatformTrust(authority, trust);
   }
 
   Future<void> _validatePolicyRules(TlsInspectionPolicy policy) async {
@@ -268,8 +456,30 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           );
         }
         final authorityWasChecked = authority.issue != 'core-disconnected';
-        var rulesValidated = false;
+        var platformTrust = _unavailablePlatformTrust(
+          state.platformTrust,
+          'core-disconnected',
+        );
         var validationErrorCode = '';
+        if (authorityWasChecked) {
+          try {
+            platformTrust = await _readPlatformTrust(authority);
+          } catch (error, stackTrace) {
+            validationErrorCode = validationErrorCode.isEmpty
+                ? _errorCode(error)
+                : validationErrorCode;
+            platformTrust = _unavailablePlatformTrust(
+              state.platformTrust,
+              validationErrorCode,
+            );
+            commonPrint.log(
+              'TLS inspection platform trust check failed: '
+              '${compactError(error)}, $stackTrace',
+              logLevel: coreFailureLogLevel(error),
+            );
+          }
+        }
+        var rulesValidated = false;
         if (authorityWasChecked && policy.prepared) {
           try {
             await _validatePolicyRules(policy);
@@ -296,10 +506,16 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
             authorityWasChecked &&
             policy.manuallyTrustedFingerprint.isNotEmpty &&
             !policy.manuallyTrusts(authority);
+        final trustSatisfied = _trustSatisfied(
+          policy,
+          authority,
+          platformTrust,
+        );
         final stalePreparation =
             authorityWasChecked &&
             policy.prepared &&
-            !policy.canPrepareWith(authority);
+            _platformTrustIsDefinitive(platformTrust) &&
+            !policy.canPrepareWith(authority, trustSatisfied: trustSatisfied);
         if (staleTrust || stalePreparation) {
           policy = policy.copyWith(
             prepared: false,
@@ -316,6 +532,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           loading: false,
           policy: policy,
           authority: authority,
+          platformTrust: platformTrust,
           rulesValidated: rulesValidated,
           errorCode: validationErrorCode,
           revision: state.revision + 1,
@@ -331,6 +548,10 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
         }
         state = state.copyWith(
           loading: false,
+          platformTrust: _unavailablePlatformTrust(
+            state.platformTrust,
+            _errorCode(error),
+          ),
           errorCode: _errorCode(error),
           revision: state.revision + 1,
         );
@@ -421,11 +642,24 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
               state: 'unavailable',
               issue: 'core-disconnected',
             );
+      final platformTrust = visibleAuthority.validNow
+          ? await _readPlatformTrust(authority)
+          : _trustAfterAuthorityUnavailable();
       final staleTrust =
           state.policy.manuallyTrustedFingerprint.isNotEmpty &&
           !state.policy.manuallyTrusts(authority);
+      final trustSatisfied = _trustSatisfied(
+        state.policy,
+        authority,
+        platformTrust,
+      );
       final disablePrepared =
-          state.policy.prepared && !state.policy.canPrepareWith(authority);
+          state.policy.prepared &&
+          _platformTrustIsDefinitive(platformTrust) &&
+          !state.policy.canPrepareWith(
+            authority,
+            trustSatisfied: trustSatisfied,
+          );
       final policyInvalidated = clearTrust || staleTrust || disablePrepared;
       safePolicy = policyInvalidated
           ? state.policy.copyWith(
@@ -437,6 +671,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       if (ref.mounted) {
         state = state.copyWith(
           authority: visibleAuthority,
+          platformTrust: platformTrust,
           policy: safePolicy,
           rulesValidated: policyInvalidated ? false : state.rulesValidated,
           revision: state.revision + 1,
@@ -485,6 +720,10 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
         state = state.copyWith(
           busy: false,
           authority: visibleAuthority ?? state.authority,
+          platformTrust: _unavailablePlatformTrust(
+            state.platformTrust,
+            _errorCode(error),
+          ),
           policy: safePolicy ?? state.policy,
           errorCode: _errorCode(error),
           revision: state.revision + 1,
@@ -511,21 +750,200 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
     }
   }
 
-  Future<TlsInspectionAuthorityExport> exportCertificate() =>
+  Future<CertificateTrustStatus> refreshPlatformTrust() =>
       _serializeStateOperation(() async {
-        final value = await ref
-            .read(coreHandlerProvider)
-            .exportTlsInspectionCertificate();
-        if (!value.valid ||
-            !state.authority.validNow ||
-            value.fingerprintSha256 != state.authority.fingerprintSha256) {
+        if (!state.authority.validNow) {
           throw const TlsInspectionPolicyException(
-            'authority_export_invalid',
-            'Core returned an invalid or stale public certificate export.',
+            'authority_not_ready',
+            'Create a valid local authority before checking platform trust.',
           );
         }
-        return value;
+        state = state.copyWith(
+          busy: true,
+          errorCode: '',
+          revision: state.revision + 1,
+        );
+        try {
+          final value = await _readPlatformTrust(state.authority);
+          await _applyPlatformTrust(value);
+          if (ref.mounted) {
+            state = state.copyWith(
+              busy: false,
+              errorCode: '',
+              revision: state.revision + 1,
+            );
+          }
+          return value;
+        } catch (error) {
+          if (ref.mounted) {
+            state = state.copyWith(
+              busy: false,
+              platformTrust: _unavailablePlatformTrust(
+                state.platformTrust,
+                _errorCode(error),
+              ),
+              errorCode: _errorCode(error),
+              revision: state.revision + 1,
+            );
+          }
+          rethrow;
+        }
       });
+
+  Future<CertificateInstallResult>
+  requestPlatformTrustInstall() => _serializeStateOperation(() async {
+    final authority = state.authority;
+    if (!authority.validNow) {
+      throw const TlsInspectionPolicyException(
+        'authority_not_ready',
+        'Create a valid local authority before installing trust.',
+      );
+    }
+    final correlationId =
+        'tls.inspection.trust.install:${DateTime.now().microsecondsSinceEpoch}';
+    state = state.copyWith(
+      busy: true,
+      errorCode: '',
+      revision: state.revision + 1,
+    );
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            category: LogbookCategory.system,
+            severity: LogbookSeverity.info,
+            eventType: 'tls.inspection.trust.install',
+            title: 'tls.inspection.trust.install',
+            message: 'running',
+            correlationId: correlationId,
+            details: const {'status': 'running', 'localOnly': true},
+          ),
+    );
+    try {
+      final exported = await _readAuthorityExport(authority);
+      final result = await ref
+          .read(certificateTrustClientProvider)
+          .requestInstall(
+            certificateDer: _decodePublicCertificate(exported),
+            fingerprintSha256: exported.fingerprintSha256,
+            displayName: 'FlClash Local Inspection CA',
+          );
+      final rawTrust =
+          result.trustStatus ?? await _readPlatformTrust(authority);
+      final trust = _validatedPlatformTrust(state.authority, rawTrust);
+      final installedConfirmed =
+          result.outcome != CertificateInstallOutcome.installed ||
+          _trustSatisfied(state.policy, state.authority, trust);
+      final effectiveResult = installedConfirmed
+          ? CertificateInstallResult(
+              outcome: result.outcome,
+              trustStatus: trust,
+              errorCode: result.errorCode,
+            )
+          : CertificateInstallResult(
+              outcome: CertificateInstallOutcome.failed,
+              trustStatus: trust,
+              errorCode: result.errorCode.isEmpty
+                  ? 'trust-not-confirmed'
+                  : result.errorCode,
+            );
+      await _applyPlatformTrust(trust);
+      if (ref.mounted) {
+        state = state.copyWith(
+          busy: false,
+          errorCode: effectiveResult.errorCode,
+          revision: state.revision + 1,
+        );
+      }
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              category: LogbookCategory.system,
+              severity: switch (effectiveResult.outcome) {
+                CertificateInstallOutcome.installed => LogbookSeverity.success,
+                CertificateInstallOutcome.settingsOpened ||
+                CertificateInstallOutcome.cancelled => LogbookSeverity.info,
+                CertificateInstallOutcome.unsupported =>
+                  LogbookSeverity.warning,
+                CertificateInstallOutcome.failed => LogbookSeverity.error,
+              },
+              eventType: 'tls.inspection.trust.install',
+              title: 'tls.inspection.trust.install',
+              message: effectiveResult.outcome.name,
+              correlationId: correlationId,
+              details: {
+                'status': effectiveResult.outcome.name,
+                'localOnly': true,
+                'trustState': trust.state.name,
+                'trustStore': trust.store.name,
+              },
+            ),
+      );
+      return effectiveResult;
+    } catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(
+          busy: false,
+          platformTrust: _unavailablePlatformTrust(
+            state.platformTrust,
+            _errorCode(error),
+          ),
+          errorCode: _errorCode(error),
+          revision: state.revision + 1,
+        );
+      }
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              category: LogbookCategory.system,
+              severity: LogbookSeverity.error,
+              eventType: 'tls.inspection.trust.install',
+              title: 'tls.inspection.trust.install',
+              message: _errorCode(error),
+              correlationId: correlationId,
+              details: {
+                'status': 'failed',
+                'localOnly': true,
+                'failureKind': error.runtimeType.toString(),
+              },
+            ),
+      );
+      rethrow;
+    }
+  });
+
+  Future<bool> openPlatformTrustSettings() =>
+      ref.read(certificateTrustClientProvider).openTrustSettings();
+
+  Future<void> _applyPlatformTrust(CertificateTrustStatus value) async {
+    var policy = state.policy;
+    final trustSatisfied = _trustSatisfied(policy, state.authority, value);
+    final shouldDisable =
+        policy.prepared &&
+        _platformTrustIsDefinitive(value) &&
+        !policy.canPrepareWith(state.authority, trustSatisfied: trustSatisfied);
+    if (shouldDisable) {
+      policy = policy.copyWith(
+        prepared: false,
+        updatedAt: DateTime.now().toUtc(),
+      );
+      await _serialize(() => _writePolicy(policy));
+    }
+    if (!ref.mounted) {
+      return;
+    }
+    state = state.copyWith(
+      policy: policy,
+      platformTrust: value,
+      rulesValidated: shouldDisable ? false : state.rulesValidated,
+      revision: state.revision + 1,
+    );
+  }
+
+  Future<TlsInspectionAuthorityExport> exportCertificate() =>
+      _serializeStateOperation(() => _readAuthorityExport(state.authority));
 
   Future<TlsInspectionDomainRule> normalizeRule({
     required String input,
@@ -596,6 +1014,12 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
   });
 
   Future<void> confirmManualTrust() => _serializeStateOperation(() async {
+    if (state.platformTrustRequired) {
+      throw const TlsInspectionPolicyException(
+        'platform_trust_required',
+        'Platform verification is required before preparation.',
+      );
+    }
     final authority = state.authority;
     if (!authority.validNow || authority.fingerprintSha256.isEmpty) {
       throw const TlsInspectionPolicyException(
@@ -619,7 +1043,29 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
   });
 
   Future<void> setPrepared(bool value) => _serializeStateOperation(() async {
-    if (value && !state.policy.canPrepareWith(state.authority)) {
+    if (value && state.platformTrustRequired) {
+      try {
+        final liveTrust = await _readPlatformTrust(state.authority);
+        await _applyPlatformTrust(liveTrust);
+      } catch (error) {
+        if (ref.mounted) {
+          state = state.copyWith(
+            platformTrust: _unavailablePlatformTrust(
+              state.platformTrust,
+              _errorCode(error),
+            ),
+            errorCode: _errorCode(error),
+            revision: state.revision + 1,
+          );
+        }
+        rethrow;
+      }
+    }
+    if (value &&
+        !state.policy.canPrepareWith(
+          state.authority,
+          trustSatisfied: state.trustSatisfied,
+        )) {
       throw const TlsInspectionPolicyException(
         'safety_requirements_incomplete',
         'Authority, manual trust confirmation, risk acknowledgement, and an allowlist are required.',
@@ -667,6 +1113,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
               'exclusionCount': updated.exclusions.length,
               'riskAcknowledged': updated.riskAcknowledged,
               'manualTrustConfirmed': updated.manuallyTrusts(state.authority),
+              'platformTrustVerified': state.platformTrusted,
             },
           ),
     );
@@ -675,6 +1122,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
   String _errorCode(Object error) => switch (error) {
     final CoreMethodException value => value.code,
     final TlsInspectionPolicyException value => value.code,
+    final PlatformException value when value.code.isNotEmpty => value.code,
     final FormatException _ => 'policy_invalid',
     _ => 'unexpected_error',
   };

@@ -130,6 +130,14 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
     'tls.inspection.authority.rotate' => l.tlsInspectionRotateAuthority,
     'tls.inspection.authority.delete' => l.tlsInspectionDeleteAuthority,
     'tls.inspection.policy' => l.tlsInspection,
+    'tls.inspection.trust.install' => switch (event.details['status']) {
+      'running' => l.logbookTlsTrustInstallRunning,
+      'installed' => l.logbookTlsTrustInstalled,
+      'settingsOpened' => l.logbookTlsTrustSettingsOpened,
+      'cancelled' => l.logbookTlsTrustCancelled,
+      'unsupported' || 'failed' => l.logbookTlsTrustFailed,
+      _ => event.title,
+    },
     _ => event.title,
   };
 }

@@ -1,3 +1,4 @@
+import 'package:certificate_trust/certificate_trust.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/tls_inspection.dart';
@@ -29,6 +30,20 @@ TlsInspectionState _notReadyState() => const TlsInspectionState(
 
 TlsInspectionState _preparedState() => TlsInspectionState(
   rulesValidated: true,
+  platformTrust: const CertificateTrustStatus(
+    platform: 'android',
+    state: CertificateTrustState.trusted,
+    store: CertificateTrustStore.user,
+    installMode: CertificateInstallMode.settings,
+    verificationSupported: true,
+    fingerprintSha256: _fingerprint,
+    platformVersion: 35,
+    limitations: [
+      'android-user-ca-opt-in',
+      'certificate-pinning-may-block',
+      'manual-settings-install-required',
+    ],
+  ),
   authority: TlsInspectionAuthorityStatus(
     state: 'ready',
     ready: true,
@@ -74,6 +89,28 @@ TlsInspectionState _preparedState() => TlsInspectionState(
     ],
   ),
 );
+
+TlsInspectionState _platformNotTrustedState() {
+  final prepared = _preparedState();
+  return prepared.copyWith(
+    rulesValidated: false,
+    policy: prepared.policy.copyWith(prepared: false, clearManualTrust: true),
+    platformTrust: const CertificateTrustStatus(
+      platform: 'android',
+      state: CertificateTrustState.notTrusted,
+      store: CertificateTrustStore.none,
+      installMode: CertificateInstallMode.settings,
+      verificationSupported: true,
+      fingerprintSha256: _fingerprint,
+      platformVersion: 35,
+      limitations: [
+        'android-user-ca-opt-in',
+        'certificate-pinning-may-block',
+        'manual-settings-install-required',
+      ],
+    ),
+  );
+}
 
 Future<void> _pumpPreview(
   WidgetTester tester, {
@@ -133,6 +170,31 @@ void main() {
     await expectLater(
       find.byType(TlsInspectionView),
       matchesGoldenFile('../goldens/tls_inspection_not_ready_preview.png'),
+    );
+  });
+
+  testWidgets('TLS inspection Android trust setup preview', (tester) async {
+    await _pumpPreview(
+      tester,
+      size: const Size(430, 932),
+      state: _platformNotTrustedState(),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('导出 CA 并打开设置'),
+      420,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('导出 CA 并打开设置'), findsOneWidget);
+    expect(find.text('重新检查'), findsOneWidget);
+    expect(find.textContaining('android-user-ca-opt-in'), findsNothing);
+    expect(find.textContaining('应用必须显式选择信任用户安装的 CA。'), findsOneWidget);
+    expect(find.textContaining('证书固定仍可能阻止检查。'), findsOneWidget);
+    await expectLater(
+      find.byType(TlsInspectionView),
+      matchesGoldenFile('../goldens/tls_inspection_platform_trust_preview.png'),
     );
   });
 

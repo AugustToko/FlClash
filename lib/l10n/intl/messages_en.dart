@@ -980,6 +980,21 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("Success"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("System"),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "CA installation cancelled",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage(
+      "CA installation failed",
+    ),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "Installing inspection CA",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Inspection CA installed",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "Certificate settings opened",
+    ),
     "logbookWarning": MessageLookupByLibrary.simpleMessage("Warning"),
     "logcat": MessageLookupByLibrary.simpleMessage("Logcat"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
@@ -1627,6 +1642,113 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "Complete every prerequisite before the policy can be prepared.",
     ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage(
+          "Certificate pinning can still block inspection.",
+        ),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "Android 11 and later require manual installation in security settings.",
+        ),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage(
+          "Apps must explicitly opt in to trust user-installed CAs.",
+        ),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage(
+          "Android requires explicit user confirmation before installation.",
+        ),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "Trust installation blocked",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("Check again"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android could not verify this CA in the certificate store.",
+        ),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "Platform trust status refreshed",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("Platform constraints"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash verifies that this exact CA fingerprint is present in the Android certificate store. A manual confirmation cannot replace the platform result.",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage("Export CA and open Settings"),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage(
+          "The result is bound to the current CA fingerprint.",
+        ),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Android returned trust for a different certificate fingerprint.",
+        ),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "Install CA with Android",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android could not start the certificate installation workflow",
+        ),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android confirmed the CA is installed",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("Last checked"),
+    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.",
+    ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "Not installed in Android trust store",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage(
+          "Platform trust has not been checked yet.",
+        ),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("Open security settings"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "Certificate exported; finish installation in Android security settings, then return to FlClash",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "Certificate store",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Android user and system stores",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "Not present",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Android system store"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage(
+          "Present in an unidentified store",
+        ),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Android user store",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Android trust status unavailable",
+        ),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage(
+          "Automatic verification unavailable",
+        ),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "Present in Android CA store",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage(
+          "Platform-verified trust required",
+        ),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Android API level",
+    ),
     "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
       "FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.",
     ),
@@ -1652,7 +1774,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Risk acknowledged",
     ),
     "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
-      "Current fingerprint manually verified",
+      "Current CA trusted by the platform or manually verified",
     ),
     "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage(
       "Risk acknowledgement",
