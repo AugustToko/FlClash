@@ -1162,6 +1162,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
       "不接受 IP 地址，请输入可注册域名。",
     ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "无法准备叶证书安全缓存。",
+    ),
     "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
       "域名规则数量已达到上限。",
     ),
@@ -1189,7 +1192,43 @@ class MessageLookup extends MessageLookupByLibrary {
       "SHA-256 指纹",
     ),
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
-      "当前仅为安全底座，尚未连接 HTTPS 解密引擎。",
+      "当前仅为证书签发与缓存安全底座，尚未连接 HTTPS 解密引擎。",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage("叶证书缓存"),
+    "tlsInspectionLeafCacheAuthorityChanged":
+        MessageLookupByLibrary.simpleMessage("本地 CA 已变化，请重新验证信任并准备策略。"),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core 仅为当前白名单中的域名生成短期独立证书；本阶段仍不会拦截或解密 HTTPS 流量。",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "已停用",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "已缓存证书",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "最近更新",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "叶证书私钥始终保留在 Core 应用数据中，不会通过 IPC 返回，也不会被导出。",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "叶证书私钥存储权限限制不足。",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "策略摘要",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage("已就绪"),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "不可用",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "最长有效期",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("最长 24 小时"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "正在等待策略完成准备并满足当前信任要求。",
     ),
     "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
       "不自动修改系统信任",
@@ -1300,6 +1339,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
       "有效的本地证书机构",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "叶证书缓存已绑定当前 CA 与策略",
     ),
     "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
       "已确认风险",

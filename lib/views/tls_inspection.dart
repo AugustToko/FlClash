@@ -126,6 +126,29 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
     };
   }
 
+  String _leafCacheStateLabel(String state) {
+    final l = context.appLocalizations;
+    return switch (state) {
+      'ready' => l.tlsInspectionLeafCacheReady,
+      'disabled' => l.tlsInspectionLeafCacheDisabled,
+      _ => l.tlsInspectionLeafCacheUnavailable,
+    };
+  }
+
+  String _leafCacheIssueLabel(String issue) {
+    final l = context.appLocalizations;
+    return switch (issue) {
+      'runtime-authorization-missing' ||
+      'policy-disabled' ||
+      'not-configured' ||
+      'not-checked' => l.tlsInspectionLeafCacheWaiting,
+      'core-disconnected' => l.tlsInspectionErrorCoreDisconnected,
+      'authority-changed' => l.tlsInspectionLeafCacheAuthorityChanged,
+      'leaf-key-permissions' => l.tlsInspectionLeafCachePermissions,
+      _ => l.tlsInspectionErrorLeafCache,
+    };
+  }
+
   String _errorLabel(Object error) {
     final l = context.appLocalizations;
     final code = switch (error) {
@@ -142,6 +165,15 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
       'authority_requires_rotation' => l.tlsInspectionErrorAuthority,
       'safety_requirements_incomplete' ||
       'platform_trust_required' => l.tlsInspectionErrorRequirements,
+      'leaf_cache_clear_failed' ||
+      'leaf_cache_unavailable' ||
+      'leaf_key_permissions' ||
+      'leaf_issue_failed' ||
+      'leaf_policy_invalid' ||
+      'leaf_policy_not_configured' ||
+      'leaf_policy_mismatch' ||
+      'leaf_result_invalid' ||
+      'leaf_cache_invalid' => l.tlsInspectionErrorLeafCache,
       'transport_disconnected' ||
       'transport_error' => l.tlsInspectionErrorCoreDisconnected,
       _ => l.tlsInspectionErrorGeneric,
@@ -477,6 +509,10 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
                   l.tlsInspectionRequirementAllowlist,
                   state.policy.allowlist.isNotEmpty,
                 ),
+                _requirementRow(
+                  l.tlsInspectionRequirementLeafCache,
+                  state.leafCache.matchesAuthority(state.authority),
+                ),
               ],
             ),
           ),
@@ -789,6 +825,88 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
     );
   }
 
+  Widget _leafCacheCard(TlsInspectionState state) {
+    final l = context.appLocalizations;
+    final cache = state.leafCache;
+    final ready = cache.matchesAuthority(state.authority);
+    final effectiveState = ready
+        ? 'ready'
+        : cache.state == 'disabled'
+        ? 'disabled'
+        : 'unavailable';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.enhanced_encryption_outlined,
+                  color: ready
+                      ? context.colorScheme.primary
+                      : context.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l.tlsInspectionLeafCache,
+                    style: context.textTheme.titleMedium?.toSoftBold,
+                  ),
+                ),
+                Chip(label: Text(_leafCacheStateLabel(effectiveState))),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l.tlsInspectionLeafCacheDesc),
+            const SizedBox(height: 12),
+            if (ready) ...[
+              _detailRow(
+                l.tlsInspectionLeafCacheEntries,
+                '${cache.entryCount} / ${cache.capacity}',
+              ),
+              if (cache.leafValiditySeconds > 0)
+                _detailRow(
+                  l.tlsInspectionLeafCacheValidity,
+                  l.tlsInspectionLeafCacheValidityOneDay,
+                ),
+              _detailRow(l.tlsInspectionAlgorithm, cache.algorithm),
+              _detailRow(
+                l.tlsInspectionStorage,
+                cache.keyStorage == 'app-data-file'
+                    ? l.tlsInspectionStorageAppSandbox
+                    : cache.keyStorage,
+              ),
+              _detailRow(
+                l.tlsInspectionLeafCachePolicyDigest,
+                cache.policyDigest,
+              ),
+              if (cache.updatedAt != null)
+                _detailRow(
+                  l.tlsInspectionLeafCacheLastUpdated,
+                  cache.updatedAt!.toLocal().showFull,
+                ),
+            ] else
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.hourglass_empty_outlined),
+                title: Text(_leafCacheStateLabel(effectiveState)),
+                subtitle: Text(_leafCacheIssueLabel(cache.issue)),
+              ),
+            const SizedBox(height: 8),
+            Text(
+              l.tlsInspectionLeafCacheNoExport,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _riskCard(TlsInspectionState state) {
     final l = context.appLocalizations;
     return Card(
@@ -961,6 +1079,8 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
                   _authorityCard(state),
                   const SizedBox(height: 10),
                   _trustCard(state),
+                  const SizedBox(height: 10),
+                  _leafCacheCard(state),
                   const SizedBox(height: 10),
                   _riskCard(state),
                   const SizedBox(height: 10),

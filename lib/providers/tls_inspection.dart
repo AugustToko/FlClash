@@ -99,6 +99,7 @@ class TlsInspectionState {
   final TlsInspectionPolicy policy;
   final TlsInspectionAuthorityStatus authority;
   final CertificateTrustStatus platformTrust;
+  final TlsInspectionLeafCacheStatus leafCache;
   final bool requiresPlatformTrust;
   final bool rulesValidated;
   final String errorCode;
@@ -110,6 +111,7 @@ class TlsInspectionState {
     this.policy = const TlsInspectionPolicy(),
     this.authority = const TlsInspectionAuthorityStatus(),
     this.platformTrust = const CertificateTrustStatus(),
+    this.leafCache = const TlsInspectionLeafCacheStatus(),
     this.requiresPlatformTrust = false,
     this.rulesValidated = false,
     this.errorCode = '',
@@ -122,6 +124,7 @@ class TlsInspectionState {
     TlsInspectionPolicy? policy,
     TlsInspectionAuthorityStatus? authority,
     CertificateTrustStatus? platformTrust,
+    TlsInspectionLeafCacheStatus? leafCache,
     bool? requiresPlatformTrust,
     bool? rulesValidated,
     String? errorCode,
@@ -133,6 +136,7 @@ class TlsInspectionState {
       policy: policy ?? this.policy,
       authority: authority ?? this.authority,
       platformTrust: platformTrust ?? this.platformTrust,
+      leafCache: leafCache ?? this.leafCache,
       requiresPlatformTrust:
           requiresPlatformTrust ?? this.requiresPlatformTrust,
       rulesValidated: rulesValidated ?? this.rulesValidated,
@@ -157,7 +161,8 @@ class TlsInspectionState {
   bool get prepared =>
       policy.prepared &&
       rulesValidated &&
-      policy.canPrepareWith(authority, trustSatisfied: trustSatisfied);
+      policy.canPrepareWith(authority, trustSatisfied: trustSatisfied) &&
+      leafCache.matchesAuthority(authority);
 
   bool isAllowed(String host) => prepared && policy.matchesAllowlist(host);
 }
@@ -189,6 +194,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           state.platformTrust,
           'core-disconnected',
         ),
+        leafCache: _unavailableLeafCache('core-disconnected'),
         rulesValidated: false,
         revision: state.revision + 1,
       );
@@ -205,6 +211,10 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
               errorCode: 'not-checked',
             )
           : CertificateTrustStatus(platform: trustClient.platform),
+      leafCache: const TlsInspectionLeafCacheStatus(
+        state: 'unavailable',
+        issue: 'not-checked',
+      ),
     );
   }
 
@@ -294,6 +304,97 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       errorCode: errorCode,
       checkedAt: DateTime.now().toUtc(),
     );
+  }
+
+  TlsInspectionLeafCacheStatus _unavailableLeafCache(
+    String issue, {
+    TlsInspectionAuthorityStatus? authority,
+    String policyDigest = '',
+  }) {
+    final effectiveAuthority = authority ?? state.authority;
+    return TlsInspectionLeafCacheStatus(
+      state: 'unavailable',
+      generation: effectiveAuthority.generation,
+      authorityFingerprintSha256: effectiveAuthority.fingerprintSha256,
+      policyDigest: policyDigest.isEmpty
+          ? state.leafCache.policyDigest
+          : policyDigest,
+      issue: issue,
+    );
+  }
+
+  Future<TlsInspectionLeafCacheStatus> _configureLeafPolicy({
+    required TlsInspectionPolicy policy,
+    required TlsInspectionAuthorityStatus authority,
+    required bool trustSatisfied,
+    required bool rulesValidated,
+  }) async {
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return _unavailableLeafCache('core-disconnected', authority: authority);
+    }
+    final enabled =
+        policy.prepared &&
+        rulesValidated &&
+        policy.canPrepareWith(authority, trustSatisfied: trustSatisfied);
+    final result = await ref
+        .read(coreHandlerProvider)
+        .configureTlsInspectionLeafPolicy(
+          enabled: enabled,
+          policy: policy,
+          authority: authority,
+          trustSatisfied: trustSatisfied,
+        );
+    if (enabled && !result.matchesAuthority(authority)) {
+      throw const TlsInspectionPolicyException(
+        'leaf_cache_invalid',
+        'Core did not bind the leaf cache to the active authority.',
+      );
+    }
+    if (!enabled && result.ready) {
+      throw const TlsInspectionPolicyException(
+        'leaf_cache_invalid',
+        'Core retained leaf issuance after policy revocation.',
+      );
+    }
+    return result;
+  }
+
+  Future<TlsInspectionLeafCacheStatus> _disableLeafPolicy(
+    String issue, {
+    TlsInspectionAuthorityStatus? authority,
+    TlsInspectionPolicy? policy,
+  }) async {
+    final effectiveAuthority = authority ?? state.authority;
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return _unavailableLeafCache(issue, authority: effectiveAuthority);
+    }
+    try {
+      final result = await ref
+          .read(coreHandlerProvider)
+          .configureTlsInspectionLeafPolicy(
+            enabled: false,
+            policy: policy ?? state.policy,
+            authority: effectiveAuthority,
+            trustSatisfied: false,
+          );
+      if (result.ready) {
+        throw const TlsInspectionPolicyException(
+          'leaf_cache_invalid',
+          'Core retained leaf issuance after authorization revocation.',
+        );
+      }
+      return result;
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'TLS inspection leaf authorization revoke failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: coreFailureLogLevel(error),
+      );
+      return _unavailableLeafCache(
+        _errorCode(error),
+        authority: effectiveAuthority,
+      );
+    }
   }
 
   CertificateTrustStatus _trustAfterAuthorityUnavailable() {
@@ -525,6 +626,33 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           rulesValidated = false;
           await _serialize(() => _writePolicy(policy));
         }
+        var leafCache = _unavailableLeafCache(
+          authorityWasChecked ? 'not-configured' : 'core-disconnected',
+          authority: authority,
+        );
+        if (authorityWasChecked) {
+          try {
+            leafCache = await _configureLeafPolicy(
+              policy: policy,
+              authority: authority,
+              trustSatisfied: _trustSatisfied(policy, authority, platformTrust),
+              rulesValidated: rulesValidated,
+            );
+          } catch (error, stackTrace) {
+            validationErrorCode = validationErrorCode.isEmpty
+                ? _errorCode(error)
+                : validationErrorCode;
+            leafCache = _unavailableLeafCache(
+              _errorCode(error),
+              authority: authority,
+            );
+            commonPrint.log(
+              'TLS inspection leaf policy synchronization failed: '
+              '${compactError(error)}, $stackTrace',
+              logLevel: coreFailureLogLevel(error),
+            );
+          }
+        }
         if (!ref.mounted) {
           return;
         }
@@ -533,6 +661,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           policy: policy,
           authority: authority,
           platformTrust: platformTrust,
+          leafCache: leafCache,
           rulesValidated: rulesValidated,
           errorCode: validationErrorCode,
           revision: state.revision + 1,
@@ -543,6 +672,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           '${compactError(error)}, $stackTrace',
           logLevel: coreFailureLogLevel(error),
         );
+        final leafCache = await _disableLeafPolicy(_errorCode(error));
         if (!ref.mounted) {
           return;
         }
@@ -552,6 +682,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
             state.platformTrust,
             _errorCode(error),
           ),
+          leafCache: leafCache,
           errorCode: _errorCode(error),
           revision: state.revision + 1,
         );
@@ -680,15 +811,44 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       if (policyInvalidated) {
         await _serialize(() => _writePolicy(safePolicy!));
       }
+      final effectiveRulesValidated = policyInvalidated
+          ? false
+          : state.rulesValidated;
+      var leafCache = _unavailableLeafCache(
+        'not-configured',
+        authority: visibleAuthority,
+      );
+      var leafErrorCode = '';
+      try {
+        leafCache = await _configureLeafPolicy(
+          policy: safePolicy,
+          authority: authority,
+          trustSatisfied: _trustSatisfied(safePolicy, authority, platformTrust),
+          rulesValidated: effectiveRulesValidated,
+        );
+      } catch (error, stackTrace) {
+        leafErrorCode = _errorCode(error);
+        leafCache = _unavailableLeafCache(
+          leafErrorCode,
+          authority: visibleAuthority,
+        );
+        commonPrint.log(
+          'TLS inspection leaf policy synchronization failed after authority operation: '
+          '${compactError(error)}, $stackTrace',
+          logLevel: coreFailureLogLevel(error),
+        );
+      }
       if (!ref.mounted) {
         return;
       }
       state = state.copyWith(
         busy: false,
         authority: visibleAuthority,
+        platformTrust: platformTrust,
+        leafCache: leafCache,
         policy: safePolicy,
-        rulesValidated: policyInvalidated ? false : state.rulesValidated,
-        errorCode: '',
+        rulesValidated: effectiveRulesValidated,
+        errorCode: leafErrorCode,
         revision: state.revision + 1,
       );
       unawaited(
@@ -716,15 +876,23 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
         '${compactError(error)}, $stackTrace',
         logLevel: coreFailureLogLevel(error),
       );
+      final fallbackAuthority = visibleAuthority ?? state.authority;
+      final fallbackPolicy = safePolicy ?? state.policy;
+      final leafCache = await _disableLeafPolicy(
+        _errorCode(error),
+        authority: fallbackAuthority,
+        policy: fallbackPolicy,
+      );
       if (ref.mounted) {
         state = state.copyWith(
           busy: false,
-          authority: visibleAuthority ?? state.authority,
+          authority: fallbackAuthority,
           platformTrust: _unavailablePlatformTrust(
             state.platformTrust,
             _errorCode(error),
           ),
-          policy: safePolicy ?? state.policy,
+          leafCache: leafCache,
+          policy: fallbackPolicy,
           errorCode: _errorCode(error),
           revision: state.revision + 1,
         );
@@ -764,6 +932,13 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           revision: state.revision + 1,
         );
         try {
+          final leafCache = await _disableLeafPolicy('trust-refresh');
+          if (ref.mounted) {
+            state = state.copyWith(
+              leafCache: leafCache,
+              revision: state.revision + 1,
+            );
+          }
           final value = await _readPlatformTrust(state.authority);
           await _applyPlatformTrust(value);
           if (ref.mounted) {
@@ -775,6 +950,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           }
           return value;
         } catch (error) {
+          final leafCache = await _disableLeafPolicy(_errorCode(error));
           if (ref.mounted) {
             state = state.copyWith(
               busy: false,
@@ -782,6 +958,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
                 state.platformTrust,
                 _errorCode(error),
               ),
+              leafCache: leafCache,
               errorCode: _errorCode(error),
               revision: state.revision + 1,
             );
@@ -803,6 +980,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
         'tls.inspection.trust.install:${DateTime.now().microsecondsSinceEpoch}';
     state = state.copyWith(
       busy: true,
+      leafCache: await _disableLeafPolicy('trust-install'),
       errorCode: '',
       revision: state.revision + 1,
     );
@@ -882,6 +1060,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       );
       return effectiveResult;
     } catch (error) {
+      final leafCache = await _disableLeafPolicy(_errorCode(error));
       if (ref.mounted) {
         state = state.copyWith(
           busy: false,
@@ -889,6 +1068,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
             state.platformTrust,
             _errorCode(error),
           ),
+          leafCache: leafCache,
           errorCode: _errorCode(error),
           revision: state.revision + 1,
         );
@@ -931,19 +1111,102 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       );
       await _serialize(() => _writePolicy(policy));
     }
+    final rulesValidated = shouldDisable ? false : state.rulesValidated;
+    TlsInspectionLeafCacheStatus leafCache;
+    try {
+      leafCache = await _configureLeafPolicy(
+        policy: policy,
+        authority: state.authority,
+        trustSatisfied: _trustSatisfied(policy, state.authority, value),
+        rulesValidated: rulesValidated,
+      );
+    } catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(
+          policy: policy,
+          platformTrust: value,
+          leafCache: _unavailableLeafCache(_errorCode(error)),
+          rulesValidated: rulesValidated,
+          errorCode: _errorCode(error),
+          revision: state.revision + 1,
+        );
+      }
+      rethrow;
+    }
     if (!ref.mounted) {
       return;
     }
     state = state.copyWith(
       policy: policy,
       platformTrust: value,
-      rulesValidated: shouldDisable ? false : state.rulesValidated,
+      leafCache: leafCache,
+      rulesValidated: rulesValidated,
       revision: state.revision + 1,
     );
   }
 
   Future<TlsInspectionAuthorityExport> exportCertificate() =>
       _serializeStateOperation(() => _readAuthorityExport(state.authority));
+
+  Future<TlsInspectionLeafCertificateStatus> prepareLeafCertificate(
+    String host,
+  ) => _serializeStateOperation(() async {
+    if (state.busy || !state.prepared || !state.policy.matchesAllowlist(host)) {
+      throw const TlsInspectionPolicyException(
+        'domain_not_allowed',
+        'Leaf certificates are available only for the active allowlist.',
+      );
+    }
+    final expectedPolicyDigest = state.leafCache.policyDigest;
+    try {
+      final result = await ref
+          .read(coreHandlerProvider)
+          .prepareTlsInspectionLeafCertificate(
+            host: host,
+            authority: state.authority,
+            policyDigest: expectedPolicyDigest,
+          );
+      if (!result.validFor(
+        state.authority,
+        expectedPolicyDigest,
+        expectedHost: host,
+      )) {
+        throw const TlsInspectionPolicyException(
+          'leaf_result_invalid',
+          'Core returned an invalid leaf certificate status.',
+        );
+      }
+      final leafCache = await ref
+          .read(coreHandlerProvider)
+          .getTlsInspectionLeafCacheStatus();
+      if (!leafCache.matchesAuthority(state.authority) ||
+          leafCache.policyDigest != expectedPolicyDigest ||
+          leafCache.policyDigest != result.policyDigest) {
+        throw const TlsInspectionPolicyException(
+          'leaf_cache_invalid',
+          'Core leaf cache no longer matches the active authority and policy.',
+        );
+      }
+      if (ref.mounted) {
+        state = state.copyWith(
+          leafCache: leafCache,
+          errorCode: '',
+          revision: state.revision + 1,
+        );
+      }
+      return result;
+    } catch (error) {
+      final leafCache = await _disableLeafPolicy(_errorCode(error));
+      if (ref.mounted) {
+        state = state.copyWith(
+          leafCache: leafCache,
+          errorCode: _errorCode(error),
+          revision: state.revision + 1,
+        );
+      }
+      rethrow;
+    }
+  });
 
   Future<TlsInspectionDomainRule> normalizeRule({
     required String input,
@@ -1048,12 +1311,14 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
         final liveTrust = await _readPlatformTrust(state.authority);
         await _applyPlatformTrust(liveTrust);
       } catch (error) {
+        final leafCache = await _disableLeafPolicy(_errorCode(error));
         if (ref.mounted) {
           state = state.copyWith(
             platformTrust: _unavailablePlatformTrust(
               state.platformTrust,
               _errorCode(error),
             ),
+            leafCache: leafCache,
             errorCode: _errorCode(error),
             revision: state.revision + 1,
           );
@@ -1087,12 +1352,40 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
     final now = DateTime.now().toUtc();
     final updated = value.copyWith(updatedAt: now);
     await _serialize(() => _writePolicy(updated));
+    final effectiveRulesValidated = updated.prepared
+        ? rulesValidated ?? state.rulesValidated
+        : false;
+    TlsInspectionLeafCacheStatus leafCache;
+    try {
+      leafCache = await _configureLeafPolicy(
+        policy: updated,
+        authority: state.authority,
+        trustSatisfied: _trustSatisfied(
+          updated,
+          state.authority,
+          state.platformTrust,
+        ),
+        rulesValidated: effectiveRulesValidated,
+      );
+    } catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(
+          policy: updated,
+          leafCache: _unavailableLeafCache(_errorCode(error)),
+          rulesValidated: effectiveRulesValidated,
+          errorCode: _errorCode(error),
+          revision: state.revision + 1,
+        );
+      }
+      rethrow;
+    }
     if (!ref.mounted) {
       return;
     }
     state = state.copyWith(
       policy: updated,
-      rulesValidated: rulesValidated ?? state.rulesValidated,
+      leafCache: leafCache,
+      rulesValidated: effectiveRulesValidated,
       errorCode: '',
       revision: state.revision + 1,
     );

@@ -1,6 +1,9 @@
 const tlsInspectionRiskVersion = 1;
 const tlsInspectionPolicyFormatVersion = 1;
 const tlsInspectionMaxRulesPerList = 200;
+const tlsInspectionLeafCacheCapacity = 64;
+const tlsInspectionLeafMaxValidity = Duration(hours: 24);
+const tlsInspectionLeafRenewBefore = Duration(minutes: 10);
 
 enum TlsInspectionRuleScope { exact, subdomains }
 
@@ -240,7 +243,7 @@ class TlsInspectionAuthorityStatus {
 
     return TlsInspectionAuthorityStatus(
       state: string(json['state'], maxLength: 64),
-      ready: json['ready'] as bool? ?? false,
+      ready: json['ready'] is bool ? json['ready'] as bool : false,
       generation: string(json['generation'], maxLength: 64),
       fingerprintSha256: string(json['fingerprintSha256'], maxLength: 128),
       subject: string(json['subject']),
@@ -328,6 +331,307 @@ class TlsInspectionAuthorityExport {
       _tlsInspectionFingerprintPattern.hasMatch(fingerprintSha256);
 }
 
+class TlsInspectionLeafCacheStatus {
+  final String state;
+  final bool ready;
+  final String generation;
+  final String authorityFingerprintSha256;
+  final String policyDigest;
+  final int entryCount;
+  final int capacity;
+  final int leafValiditySeconds;
+  final String algorithm;
+  final String keyStorage;
+  final bool keyPermissionsRestricted;
+  final bool privateKeysExported;
+  final bool runtimeAuthorizationPresent;
+  final DateTime? updatedAt;
+  final String issue;
+  final bool contractValid;
+
+  const TlsInspectionLeafCacheStatus({
+    this.state = 'disabled',
+    this.ready = false,
+    this.generation = '',
+    this.authorityFingerprintSha256 = '',
+    this.policyDigest = '',
+    this.entryCount = 0,
+    this.capacity = tlsInspectionLeafCacheCapacity,
+    this.leafValiditySeconds = 0,
+    this.algorithm = '',
+    this.keyStorage = 'app-data-file',
+    this.keyPermissionsRestricted = false,
+    this.privateKeysExported = false,
+    this.runtimeAuthorizationPresent = false,
+    this.updatedAt,
+    this.issue = '',
+    this.contractValid = false,
+  });
+
+  factory TlsInspectionLeafCacheStatus.fromJson(Map<String, Object?> json) {
+    final rawUpdatedAtValue = json['updatedAt'];
+    final rawUpdatedAt = rawUpdatedAtValue is String
+        ? DateTime.tryParse(rawUpdatedAtValue)
+        : null;
+    final rawState = _strictTlsInspectionString(json['state'], maxLength: 64);
+    final rawGeneration = _strictTlsInspectionString(
+      json['generation'],
+      maxLength: 64,
+    );
+    final rawAuthorityFingerprint = _strictTlsInspectionString(
+      json['authorityFingerprintSha256'],
+      maxLength: 128,
+    ).toUpperCase();
+    final rawPolicyDigest = _strictTlsInspectionString(
+      json['policyDigest'],
+      maxLength: 64,
+    ).toLowerCase();
+    final rawAlgorithm = _strictTlsInspectionString(
+      json['algorithm'],
+      maxLength: 128,
+    );
+    final rawKeyStorage = _strictTlsInspectionString(
+      json['keyStorage'],
+      maxLength: 64,
+    );
+    final rawIssue = json['issue'] == null
+        ? ''
+        : _strictTlsInspectionString(json['issue'], maxLength: 128);
+    final contractValid =
+        rawState.isNotEmpty &&
+        json['ready'] is bool &&
+        _tlsInspectionGenerationPattern.hasMatch(rawGeneration) &&
+        _tlsInspectionFingerprintPattern.hasMatch(rawAuthorityFingerprint) &&
+        _tlsInspectionPolicyDigestPattern.hasMatch(rawPolicyDigest) &&
+        _isBoundedTlsInspectionInt(
+          json['entryCount'],
+          min: 0,
+          max: tlsInspectionLeafCacheCapacity,
+        ) &&
+        _isBoundedTlsInspectionInt(
+          json['capacity'],
+          min: 0,
+          max: tlsInspectionLeafCacheCapacity,
+        ) &&
+        _isBoundedTlsInspectionInt(
+          json['leafValiditySeconds'],
+          min: 0,
+          max: tlsInspectionLeafMaxValidity.inSeconds,
+        ) &&
+        rawAlgorithm == 'ECDSA P-256 / SHA-256' &&
+        rawKeyStorage == 'app-data-file' &&
+        json['keyPermissionsRestricted'] is bool &&
+        json['privateKeysExported'] is bool &&
+        json['runtimeAuthorizationPresent'] is bool &&
+        rawUpdatedAt != null &&
+        (json['issue'] == null ||
+            (json['issue'] is String &&
+                (json['issue'] as String).length <= 128));
+    return TlsInspectionLeafCacheStatus(
+      state: rawState,
+      ready: json['ready'] as bool? ?? false,
+      generation: rawGeneration,
+      authorityFingerprintSha256: rawAuthorityFingerprint,
+      policyDigest: rawPolicyDigest,
+      entryCount: _boundedTlsInspectionInt(
+        json['entryCount'],
+        min: 0,
+        max: tlsInspectionLeafCacheCapacity,
+      ),
+      capacity: _boundedTlsInspectionInt(
+        json['capacity'],
+        min: 0,
+        max: tlsInspectionLeafCacheCapacity,
+      ),
+      leafValiditySeconds: _boundedTlsInspectionInt(
+        json['leafValiditySeconds'],
+        min: 0,
+        max: tlsInspectionLeafMaxValidity.inSeconds,
+      ),
+      algorithm: rawAlgorithm,
+      keyStorage: rawKeyStorage,
+      keyPermissionsRestricted: json['keyPermissionsRestricted'] is bool
+          ? json['keyPermissionsRestricted'] as bool
+          : false,
+      privateKeysExported: json['privateKeysExported'] is bool
+          ? json['privateKeysExported'] as bool
+          : true,
+      runtimeAuthorizationPresent: json['runtimeAuthorizationPresent'] is bool
+          ? json['runtimeAuthorizationPresent'] as bool
+          : false,
+      updatedAt: rawUpdatedAt?.toUtc(),
+      issue: rawIssue,
+      contractValid: contractValid,
+    );
+  }
+
+  bool matchesAuthority(TlsInspectionAuthorityStatus authority) =>
+      contractValid &&
+      ready &&
+      state == 'ready' &&
+      authority.validNow &&
+      generation == authority.generation &&
+      authorityFingerprintSha256 == authority.fingerprintSha256 &&
+      _tlsInspectionPolicyDigestPattern.hasMatch(policyDigest) &&
+      capacity > 0 &&
+      capacity <= tlsInspectionLeafCacheCapacity &&
+      entryCount >= 0 &&
+      entryCount <= capacity &&
+      leafValiditySeconds > 0 &&
+      leafValiditySeconds <= tlsInspectionLeafMaxValidity.inSeconds &&
+      algorithm == 'ECDSA P-256 / SHA-256' &&
+      keyStorage == 'app-data-file' &&
+      keyPermissionsRestricted &&
+      !privateKeysExported &&
+      runtimeAuthorizationPresent &&
+      updatedAt != null &&
+      issue.isEmpty;
+}
+
+class TlsInspectionLeafCertificateStatus {
+  final String host;
+  final bool cacheHit;
+  final String generation;
+  final String authorityFingerprintSha256;
+  final String policyDigest;
+  final String fingerprintSha256;
+  final String serialNumber;
+  final DateTime? notBefore;
+  final DateTime? notAfter;
+  final String algorithm;
+  final String keyStorage;
+  final bool privateKeyExported;
+  final bool contractValid;
+
+  const TlsInspectionLeafCertificateStatus({
+    this.host = '',
+    this.cacheHit = false,
+    this.generation = '',
+    this.authorityFingerprintSha256 = '',
+    this.policyDigest = '',
+    this.fingerprintSha256 = '',
+    this.serialNumber = '',
+    this.notBefore,
+    this.notAfter,
+    this.algorithm = '',
+    this.keyStorage = 'app-data-file',
+    this.privateKeyExported = false,
+    this.contractValid = false,
+  });
+
+  factory TlsInspectionLeafCertificateStatus.fromJson(
+    Map<String, Object?> json,
+  ) {
+    DateTime? date(String key) {
+      final value = json[key];
+      return value is String ? DateTime.tryParse(value)?.toUtc() : null;
+    }
+
+    final rawHost = _strictTlsInspectionString(json['host'], maxLength: 253);
+    final normalizedHost = normalizeTlsInspectionHost(rawHost);
+    final rawGeneration = _strictTlsInspectionString(
+      json['generation'],
+      maxLength: 64,
+    );
+    final rawAuthorityFingerprint = _strictTlsInspectionString(
+      json['authorityFingerprintSha256'],
+      maxLength: 128,
+    ).toUpperCase();
+    final rawPolicyDigest = _strictTlsInspectionString(
+      json['policyDigest'],
+      maxLength: 64,
+    ).toLowerCase();
+    final rawFingerprint = _strictTlsInspectionString(
+      json['fingerprintSha256'],
+      maxLength: 128,
+    ).toUpperCase();
+    final rawSerial = _strictTlsInspectionString(
+      json['serialNumber'],
+      maxLength: 128,
+    );
+    final rawAlgorithm = _strictTlsInspectionString(
+      json['algorithm'],
+      maxLength: 128,
+    );
+    final rawKeyStorage = _strictTlsInspectionString(
+      json['keyStorage'],
+      maxLength: 64,
+    );
+    final contractValid =
+        rawHost.isNotEmpty &&
+        _isValidTlsInspectionHost(normalizedHost) &&
+        json['cacheHit'] is bool &&
+        _tlsInspectionGenerationPattern.hasMatch(rawGeneration) &&
+        _tlsInspectionFingerprintPattern.hasMatch(rawAuthorityFingerprint) &&
+        _tlsInspectionPolicyDigestPattern.hasMatch(rawPolicyDigest) &&
+        _tlsInspectionFingerprintPattern.hasMatch(rawFingerprint) &&
+        _tlsInspectionLeafSerialPattern.hasMatch(rawSerial) &&
+        date('notBefore') != null &&
+        date('notAfter') != null &&
+        rawAlgorithm == 'ECDSA P-256 / SHA-256' &&
+        rawKeyStorage == 'app-data-file' &&
+        json['privateKeyExported'] is bool;
+    return TlsInspectionLeafCertificateStatus(
+      host: normalizedHost,
+      cacheHit: json['cacheHit'] is bool ? json['cacheHit'] as bool : false,
+      generation: rawGeneration,
+      authorityFingerprintSha256: rawAuthorityFingerprint,
+      policyDigest: rawPolicyDigest,
+      fingerprintSha256: rawFingerprint,
+      serialNumber: rawSerial,
+      notBefore: date('notBefore'),
+      notAfter: date('notAfter'),
+      algorithm: rawAlgorithm,
+      keyStorage: rawKeyStorage,
+      privateKeyExported: json['privateKeyExported'] is bool
+          ? json['privateKeyExported'] as bool
+          : true,
+      contractValid: contractValid,
+    );
+  }
+
+  bool validFor(
+    TlsInspectionAuthorityStatus authority,
+    String expectedPolicyDigest, {
+    required String expectedHost,
+  }) {
+    final start = notBefore;
+    final expiry = notAfter;
+    final authorityStart = authority.notBefore;
+    final authorityExpiry = authority.notAfter;
+    final normalizedExpectedHost = normalizeTlsInspectionHost(expectedHost);
+    if (!_isValidTlsInspectionHost(host) ||
+        host != normalizedExpectedHost ||
+        !authority.validNow ||
+        generation != authority.generation ||
+        authorityFingerprintSha256 != authority.fingerprintSha256 ||
+        policyDigest != expectedPolicyDigest ||
+        !_tlsInspectionPolicyDigestPattern.hasMatch(policyDigest) ||
+        !_tlsInspectionFingerprintPattern.hasMatch(fingerprintSha256) ||
+        serialNumber.isEmpty ||
+        start == null ||
+        expiry == null ||
+        authorityStart == null ||
+        authorityExpiry == null ||
+        !expiry.isAfter(start) ||
+        start.isBefore(authorityStart) ||
+        expiry.isAfter(authorityExpiry) ||
+        expiry.difference(start) > tlsInspectionLeafMaxValidity ||
+        !_tlsInspectionLeafSerialPattern.hasMatch(serialNumber) ||
+        algorithm != 'ECDSA P-256 / SHA-256' ||
+        keyStorage != 'app-data-file' ||
+        privateKeyExported) {
+      return false;
+    }
+    final now = DateTime.now().toUtc();
+    return !now.isBefore(start) &&
+        expiry.isAfter(now.add(tlsInspectionLeafRenewBefore));
+  }
+}
+
+final _tlsInspectionLeafSerialPattern = RegExp(r'^[0-9A-Fa-f]{1,32}$');
+final _tlsInspectionPolicyDigestPattern = RegExp(r'^[0-9a-f]{64}$');
+
 bool _isPublicCertificatePem(String value) {
   final normalized = value.trim();
   const begin = '-----BEGIN CERTIFICATE-----';
@@ -360,6 +664,23 @@ bool _isValidTlsInspectionHost(String value) {
     }
   }
   return true;
+}
+
+String _strictTlsInspectionString(Object? value, {required int maxLength}) =>
+    value is String && value.length <= maxLength ? value : '';
+
+bool _isBoundedTlsInspectionInt(
+  Object? value, {
+  required int min,
+  required int max,
+}) {
+  final int? parsed = switch (value) {
+    final int number => number,
+    final num number when number.isFinite && number == number.truncate() =>
+      number.toInt(),
+    _ => null,
+  };
+  return parsed != null && parsed >= min && parsed <= max;
 }
 
 String _boundedTlsInspectionString(Object? value, {required int maxLength}) {

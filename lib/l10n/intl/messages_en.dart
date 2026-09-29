@@ -1597,6 +1597,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
       "IP addresses are not accepted; enter a registrable domain.",
     ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "The leaf certificate safety cache could not be prepared.",
+    ),
     "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
       "The domain-rule limit has been reached.",
     ),
@@ -1628,7 +1631,48 @@ class MessageLookup extends MessageLookupByLibrary {
       "SHA-256 fingerprint",
     ),
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
-      "Foundation only: no HTTPS decryption engine is connected yet.",
+      "Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Leaf certificate cache",
+    ),
+    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
+      "The local authority changed. Revalidate trust and prepare the policy again.",
+    ),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "Disabled",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "Cached certificates",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "Last updated",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "Leaf private keys remain inside Core app data and are never returned through IPC or export.",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "Leaf private-key storage permissions are not sufficiently restricted.",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "Policy digest",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage(
+      "Ready",
+    ),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "Maximum validity",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("Up to 24 hours"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "Waiting for a prepared and currently trusted policy.",
     ),
     "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
       "No automatic system trust changes",
@@ -1769,6 +1813,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
       "Valid local authority",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Leaf certificate cache bound to the current CA and policy",
     ),
     "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
       "Risk acknowledged",

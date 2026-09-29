@@ -6515,10 +6515,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Foundation only: no HTTPS decryption engine is connected yet.`
+  /// `Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.`
   String get tlsInspectionFoundationOnly {
     return Intl.message(
-      'Foundation only: no HTTPS decryption engine is connected yet.',
+      'Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.',
       name: 'tlsInspectionFoundationOnly',
       desc: '',
       args: [],
@@ -7050,6 +7050,166 @@ class AppLocalizations {
     return Intl.message(
       'At least one allowlist rule',
       name: 'tlsInspectionRequirementAllowlist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf certificate cache bound to the current CA and policy`
+  String get tlsInspectionRequirementLeafCache {
+    return Intl.message(
+      'Leaf certificate cache bound to the current CA and policy',
+      name: 'tlsInspectionRequirementLeafCache',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf certificate cache`
+  String get tlsInspectionLeafCache {
+    return Intl.message(
+      'Leaf certificate cache',
+      name: 'tlsInspectionLeafCache',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready`
+  String get tlsInspectionLeafCacheReady {
+    return Intl.message(
+      'Ready',
+      name: 'tlsInspectionLeafCacheReady',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disabled`
+  String get tlsInspectionLeafCacheDisabled {
+    return Intl.message(
+      'Disabled',
+      name: 'tlsInspectionLeafCacheDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable`
+  String get tlsInspectionLeafCacheUnavailable {
+    return Intl.message(
+      'Unavailable',
+      name: 'tlsInspectionLeafCacheUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.`
+  String get tlsInspectionLeafCacheDesc {
+    return Intl.message(
+      'Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.',
+      name: 'tlsInspectionLeafCacheDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Waiting for a prepared and currently trusted policy.`
+  String get tlsInspectionLeafCacheWaiting {
+    return Intl.message(
+      'Waiting for a prepared and currently trusted policy.',
+      name: 'tlsInspectionLeafCacheWaiting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The local authority changed. Revalidate trust and prepare the policy again.`
+  String get tlsInspectionLeafCacheAuthorityChanged {
+    return Intl.message(
+      'The local authority changed. Revalidate trust and prepare the policy again.',
+      name: 'tlsInspectionLeafCacheAuthorityChanged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf private-key storage permissions are not sufficiently restricted.`
+  String get tlsInspectionLeafCachePermissions {
+    return Intl.message(
+      'Leaf private-key storage permissions are not sufficiently restricted.',
+      name: 'tlsInspectionLeafCachePermissions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cached certificates`
+  String get tlsInspectionLeafCacheEntries {
+    return Intl.message(
+      'Cached certificates',
+      name: 'tlsInspectionLeafCacheEntries',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum validity`
+  String get tlsInspectionLeafCacheValidity {
+    return Intl.message(
+      'Maximum validity',
+      name: 'tlsInspectionLeafCacheValidity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Up to 24 hours`
+  String get tlsInspectionLeafCacheValidityOneDay {
+    return Intl.message(
+      'Up to 24 hours',
+      name: 'tlsInspectionLeafCacheValidityOneDay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Policy digest`
+  String get tlsInspectionLeafCachePolicyDigest {
+    return Intl.message(
+      'Policy digest',
+      name: 'tlsInspectionLeafCachePolicyDigest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last updated`
+  String get tlsInspectionLeafCacheLastUpdated {
+    return Intl.message(
+      'Last updated',
+      name: 'tlsInspectionLeafCacheLastUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf private keys remain inside Core app data and are never returned through IPC or export.`
+  String get tlsInspectionLeafCacheNoExport {
+    return Intl.message(
+      'Leaf private keys remain inside Core app data and are never returned through IPC or export.',
+      name: 'tlsInspectionLeafCacheNoExport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The leaf certificate safety cache could not be prepared.`
+  String get tlsInspectionErrorLeafCache {
+    return Intl.message(
+      'The leaf certificate safety cache could not be prepared.',
+      name: 'tlsInspectionErrorLeafCache',
       desc: '',
       args: [],
     );

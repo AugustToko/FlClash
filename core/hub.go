@@ -39,6 +39,10 @@ var (
 )
 
 func handleInitClash(params *InitParams) bool {
+	tlsInspectionAuthorityMu.Lock()
+	defer tlsInspectionAuthorityMu.Unlock()
+	resetTLSInspectionLeafPolicySession()
+
 	configMu.Lock()
 	defer configMu.Unlock()
 	sdkVersion.Store(int32(params.Version))
@@ -82,6 +86,9 @@ func handleForceGC() {
 func handleShutdown() bool {
 	handleStopLog()
 	disableHTTPObservation()
+	tlsInspectionAuthorityMu.Lock()
+	resetTLSInspectionLeafPolicySession()
+	tlsInspectionAuthorityMu.Unlock()
 
 	configMu.Lock()
 	isRunning.Store(false)
