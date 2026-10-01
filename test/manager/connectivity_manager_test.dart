@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/connectivity_manager.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/quick_routing.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,11 +32,31 @@ void main() {
     await Future<void>.value();
   }
 
+  void addNetworkQuickRule() {
+    container
+        .read(quickRoutingRulesProvider.notifier)
+        .put(
+          profileId: 1,
+          rule: const Rule(
+            id: 1,
+            ruleAction: RuleAction.DOMAIN,
+            content: 'example.com',
+            ruleTarget: 'DIRECT',
+          ),
+          lifetime: QuickRoutingLifetime.network,
+          sourceId: 'request',
+          sourceDesc: 'tcp://example.com:443',
+          previousRule: 'MATCH',
+          previousChains: const ['Proxy'],
+        );
+  }
+
   Future<void> pumpManager(
     WidgetTester tester, {
     required SsidReader readSsid,
     void Function(List<ConnectivityResult>)? onConnectivityChanged,
     List<String> excludeSSIDs = const ['Home'],
+    Duration ssidPollInterval = const Duration(seconds: 15),
   }) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -42,6 +65,7 @@ void main() {
           connectivityStream: connectivity.stream,
           readSsid: readSsid,
           onConnectivityChanged: onConnectivityChanged,
+          ssidPollInterval: ssidPollInterval,
           child: const SizedBox.shrink(),
         ),
       ),
@@ -104,6 +128,92 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(reads, 0);
+    expect(currentSsid(), isNull);
+  });
+
+  testWidgets('network quick rules read the SSID without exclusions', (
+    tester,
+  ) async {
+    addNetworkQuickRule();
+    await pumpManager(
+      tester,
+      excludeSSIDs: const [],
+      readSsid: () async => 'Home',
+    );
+
+    connectivity.add([ConnectivityResult.wifi]);
+    await tester.pumpAndSettle();
+
+    expect(currentSsid(), 'Home');
+  });
+
+  testWidgets('adding a network quick rule starts SSID tracking on Wi-Fi', (
+    tester,
+  ) async {
+    var reads = 0;
+    await pumpManager(
+      tester,
+      excludeSSIDs: const [],
+      readSsid: () async {
+        reads++;
+        return 'Home';
+      },
+    );
+
+    connectivity.add([ConnectivityResult.wifi]);
+    await tester.pumpAndSettle();
+    expect(reads, 0);
+
+    addNetworkQuickRule();
+    await tester.pumpAndSettle();
+
+    expect(reads, 1);
+    expect(currentSsid(), 'Home');
+  });
+
+  testWidgets('network quick rules poll for Wi-Fi-to-Wi-Fi changes', (
+    tester,
+  ) async {
+    addNetworkQuickRule();
+    var reads = 0;
+    await pumpManager(
+      tester,
+      excludeSSIDs: const [],
+      ssidPollInterval: const Duration(seconds: 1),
+      readSsid: () async {
+        reads++;
+        return reads == 1 ? 'Home' : 'Office';
+      },
+    );
+
+    connectivity.add([ConnectivityResult.wifi]);
+    await tester.pumpAndSettle();
+    expect(currentSsid(), 'Home');
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(reads, 2);
+    expect(currentSsid(), 'Office');
+  });
+
+  testWidgets('removing the last network quick rule drops SSID tracking', (
+    tester,
+  ) async {
+    addNetworkQuickRule();
+    await pumpManager(
+      tester,
+      excludeSSIDs: const [],
+      readSsid: () async => 'Home',
+    );
+
+    connectivity.add([ConnectivityResult.wifi]);
+    await tester.pumpAndSettle();
+    expect(currentSsid(), 'Home');
+
+    container.read(quickRoutingRulesProvider.notifier).clearAll();
+    await tester.pumpAndSettle();
+
     expect(currentSsid(), isNull);
   });
 

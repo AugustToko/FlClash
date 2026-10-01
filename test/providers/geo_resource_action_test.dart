@@ -5,9 +5,11 @@ import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +27,7 @@ Future<ProviderContainer> _pumpGeoResourceAction(
       coreHandlerProvider.overrideWithValue(
         CoreController.scoped(coreInterface),
       ),
+      logbookPersistenceEnabledProvider.overrideWithValue(false),
     ],
   );
   addTearDown(container.dispose);
@@ -70,6 +73,12 @@ void main() {
 
     expect(container.read(isUpdatingProvider(key)), isFalse);
     expect(find.text('background failure'), findsNothing);
+    final passiveEvent = container.read(logbookProvider).single;
+    expect(passiveEvent.eventType, 'provider.geo.update');
+    expect(passiveEvent.severity, LogbookSeverity.error);
+    expect(passiveEvent.details['status'], 'failed');
+    expect(passiveEvent.details['manual'], isFalse);
+    expect(passiveEvent.searchText, isNot(contains('background failure')));
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -95,6 +104,11 @@ void main() {
     );
     expect(find.byIcon(Icons.check_circle_outline), findsNothing);
     expect(find.byIcon(Icons.error_outline), findsNothing);
+    final skippedEvent = container.read(logbookProvider).single;
+    expect(skippedEvent.severity, LogbookSeverity.info);
+    expect(skippedEvent.details['status'], 'skipped');
+    expect(skippedEvent.details['manual'], isTrue);
+    expect(skippedEvent.details['resource'], 'MMDB');
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -120,6 +134,11 @@ void main() {
     );
 
     expect(container.read(isUpdatingProvider(key)), isFalse);
+    final failedEvent = container.read(logbookProvider).single;
+    expect(failedEvent.severity, LogbookSeverity.error);
+    expect(failedEvent.details['status'], 'failed');
+    expect(failedEvent.details['failureKind'], 'MessageException');
+    expect(failedEvent.searchText, isNot(contains('unknown geo resource')));
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -212,6 +231,12 @@ void main() {
 
     expect(find.text('download failed'), findsOneWidget);
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    final failedEvent = container.read(logbookProvider).single;
+    expect(failedEvent.severity, LogbookSeverity.error);
+    expect(failedEvent.details['status'], 'failed');
+    expect(failedEvent.details['manual'], isTrue);
+    expect(failedEvent.details['failureKind'], 'core-event');
+    expect(failedEvent.searchText, isNot(contains('download failed')));
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

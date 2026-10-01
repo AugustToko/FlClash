@@ -43,15 +43,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Skip native build hooks
+        run: |
+          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
+
       - name: Check format
         run: dart format --output=none --set-exit-if-changed lib test tool plugins setup.dart
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos
-
-      - name: Skip native build hooks
-        run: |
-          yq -i '.hooks.user_defines.setup.build_assets = false | .hooks.user_defines.rust_api.build_assets = false' pubspec.yaml
 
       - name: Verify changelog
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
@@ -96,6 +96,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Apply FlClash Core patches
+        run: bash tool/apply_core_patches.sh
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -118,6 +121,18 @@ jobs:
           go test -count=1 .
           go vet .
           GOOS=linux go vet ./platform
+
+      - name: Validate patched Mihomo observer
+        working-directory: core/Clash.Meta
+        env:
+          CGO_ENABLED: 0
+        run: |
+          test -z "$(gofmt -l component/observer constant/observation.go tunnel/observation_test.go tunnel/statistic tunnel/tunnel.go)" || {
+            gofmt -l component/observer constant/observation.go tunnel/observation_test.go tunnel/statistic tunnel/tunnel.go >&2
+            exit 1
+          }
+          go test -count=1 ./component/observer ./tunnel/statistic ./tunnel
+          go vet ./component/observer ./tunnel/statistic ./tunnel
 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1

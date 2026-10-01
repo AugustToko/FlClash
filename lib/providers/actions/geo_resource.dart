@@ -3,6 +3,8 @@ part of '../action.dart';
 @Riverpod(keepAlive: true)
 class GeoResourceAction extends _$GeoResourceAction {
   final _manualUpdates = <GeoResource>{};
+  final _manualStartedAt = <GeoResource, DateTime>{};
+  final _manualCorrelationIds = <GeoResource, String>{};
   final _operations = <GeoResource, int>{};
 
   CoreController get _core => ref.read(coreHandlerProvider);
@@ -12,6 +14,8 @@ class GeoResourceAction extends _$GeoResourceAction {
     ref.listen(coreStatusProvider, (_, next) {
       if (next != CoreStatus.connected) {
         _manualUpdates.clear();
+        _manualStartedAt.clear();
+        _manualCorrelationIds.clear();
         _operations.clear();
       }
     });
@@ -37,20 +41,77 @@ class GeoResourceAction extends _$GeoResourceAction {
         .stop(geoResource.updatingKey, current);
   }
 
+  void _recordGeoOperation({
+    required GeoResource geoResource,
+    required String status,
+    required DateTime startedAt,
+    required bool manual,
+    String correlationId = '',
+    String? failureKind,
+  }) {
+    final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
+    final severity = switch (status) {
+      'completed' => LogbookSeverity.success,
+      'failed' => LogbookSeverity.error,
+      _ => LogbookSeverity.info,
+    };
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            category: LogbookCategory.provider,
+            severity: severity,
+            eventType: 'provider.geo.update',
+            title: 'provider.geo.update',
+            message: '${geoResource.name} · $durationMs ms',
+            correlationId: correlationId,
+            details: {
+              'status': status,
+              'resource': geoResource.name,
+              'manual': manual,
+              'durationMs': durationMs,
+              'failureKind': ?failureKind,
+            },
+          ),
+    );
+  }
+
   /// Completes once the Core has accepted the update, not once it finishes.
   /// Completion arrives as a geo-update event through [handleCoreUpdate];
   /// callers that need it watch [isUpdatingProvider] for the key to clear.
   Future<void> updateGeoResource(GeoResource geoResource) async {
     _manualUpdates.add(geoResource);
+    final startedAt = _manualStartedAt.putIfAbsent(geoResource, DateTime.now);
+    final correlationId = _manualCorrelationIds.putIfAbsent(
+      geoResource,
+      () => '${geoResource.name}:${startedAt.microsecondsSinceEpoch}',
+    );
+    _recordGeoOperation(
+      geoResource: geoResource,
+      status: 'running',
+      startedAt: startedAt,
+      manual: true,
+      correlationId: correlationId,
+    );
     final operation = _startUpdating(geoResource);
     try {
       final message = await _core.updateGeoData(geoResource.name);
       if (message.isNotEmpty) {
         throw MessageException(message);
       }
-    } catch (_) {
+    } catch (error) {
       _manualUpdates.remove(geoResource);
+      _manualStartedAt.remove(geoResource);
+      _manualCorrelationIds.remove(geoResource);
       _stopUpdating(geoResource, operation);
+      _recordGeoOperation(
+        geoResource: geoResource,
+        status: 'failed',
+        startedAt: startedAt,
+        manual: true,
+        correlationId: correlationId,
+        failureKind: error.runtimeType.toString(),
+      );
       rethrow;
     }
   }
@@ -63,6 +124,22 @@ class GeoResourceAction extends _$GeoResourceAction {
   ) {
     final geoResource = GeoResource.fromJson(geoType.toLowerCase());
     final shouldNotify = !updating && _manualUpdates.remove(geoResource);
+    if (!updating) {
+      final startedAt = _manualStartedAt.remove(geoResource) ?? DateTime.now();
+      final correlationId = _manualCorrelationIds.remove(geoResource) ?? '';
+      _recordGeoOperation(
+        geoResource: geoResource,
+        status: error != null && error.isNotEmpty
+            ? 'failed'
+            : skipped
+            ? 'skipped'
+            : 'completed',
+        startedAt: startedAt,
+        manual: shouldNotify,
+        correlationId: correlationId,
+        failureKind: error != null && error.isNotEmpty ? 'core-event' : null,
+      );
+    }
     if (shouldNotify) {
       if (error == null || error.isEmpty) {
         final l10n = currentAppLocalizations;

@@ -11,6 +11,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
@@ -74,6 +75,7 @@ void main() {
         coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
         profilesProvider.overrideWith(() => TestProfiles([?profile])),
         currentProfileIdProvider.overrideWithBuild((_, _) => profile?.id),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
       ],
     );
     addTearDown(container.dispose);
@@ -532,6 +534,13 @@ void main() {
         expect(message, isEmpty);
         expect(container.read(providersProvider), [refreshed]);
         expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+        final event = container.read(logbookProvider).single;
+        expect(event.eventType, 'provider.external.update');
+        expect(event.severity, LogbookSeverity.success);
+        expect(event.details['status'], 'completed');
+        expect(event.details['provider'], 'geo');
+        expect(event.details['count'], 5);
+        expect(event.details.containsKey('path'), isFalse);
       },
     );
 
@@ -609,6 +618,11 @@ void main() {
       expect(message, 'update failed');
       expect(container.read(providersProvider), isEmpty);
       expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+      final event = container.read(logbookProvider).single;
+      expect(event.severity, LogbookSeverity.error);
+      expect(event.details['status'], 'failed');
+      expect(event.details['failureKind'], 'core-message');
+      expect(event.searchText, isNot(contains('update failed')));
       verifyNever(() => core.getExternalProvider(any()));
     });
 
@@ -624,6 +638,10 @@ void main() {
       );
 
       expect(container.read(isUpdatingProvider('provider_geo')), isFalse);
+      final event = container.read(logbookProvider).single;
+      expect(event.severity, LogbookSeverity.error);
+      expect(event.details['failureKind'], 'StateError');
+      expect(event.searchText, isNot(contains('boom')));
     });
   });
 
@@ -657,6 +675,12 @@ void main() {
       expect(message, isEmpty);
       expect(container.read(providersProvider), [refreshed]);
       expect(container.read(isUpdatingProvider('provider_rules')), isFalse);
+      final event = container.read(logbookProvider).single;
+      expect(event.eventType, 'provider.external.sideload');
+      expect(event.severity, LogbookSeverity.success);
+      expect(event.details['status'], 'completed');
+      expect(event.details['count'], 3);
+      expect(event.searchText, isNot(contains('payload')));
     });
 
     test('surfaces the core message and skips the refresh', () async {
@@ -670,6 +694,12 @@ void main() {
       ).sideLoadExternalProvider(_provider('rules'), 'bad');
 
       expect(message, 'invalid payload');
+      final event = container.read(logbookProvider).single;
+      expect(event.severity, LogbookSeverity.error);
+      expect(event.details['status'], 'failed');
+      expect(event.details['failureKind'], 'core-message');
+      expect(event.searchText, isNot(contains('invalid payload')));
+      expect(event.searchText, isNot(contains('bad')));
       verifyNever(() => core.getExternalProvider(any()));
     });
   });

@@ -83,6 +83,23 @@ void main() {
       }
       expect(list.list, [3, 4]);
     });
+
+    test('upsert replaces in place and advances the generation', () {
+      final first = FixedList<String>(3, list: ['a', 'b', 'c']);
+      final before = first.list;
+      final second = first.upsert('B', (item) => item.toLowerCase() == 'b');
+
+      expect(before, ['a', 'b', 'c']);
+      expect(second.list, ['a', 'B', 'c']);
+      expect(second.revision, first.revision + 1);
+    });
+
+    test('upsert appends and truncates when no element matches', () {
+      final first = FixedList<int>(2, list: [1, 2]);
+      final second = first.upsert(3, (item) => item == 3);
+
+      expect(second.list, [2, 3]);
+    });
   });
 
   group('retainTrimmedHead', () {

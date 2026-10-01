@@ -3,7 +3,9 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/http_capture.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/providers/tls_inspection.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/config/advanced.dart';
 import 'package:fl_clash/views/config/dns.dart';
@@ -44,9 +46,13 @@ void main() {
     'requests': const RequestsView(),
     'resources': const ResourcesView(),
     'logs': const LogsView(),
+    'logbook': const LogbookView(),
+    'http capture': const HttpCaptureView(),
+    'HTTPS inspection safety': const TlsInspectionView(),
     'tools': const ToolsView(),
     'basic config': const ConfigView(),
     'dns config': const Scaffold(body: DnsListView()),
+    'dns diagnostics': const DnsDiagnosticsView(),
     'network config': const Scaffold(body: NetworkListView()),
     'advanced config': const AdvancedConfigView(),
     'on demand config': const OnDemandView(),
@@ -72,6 +78,8 @@ void main() {
           profilesProvider.overrideWith(TestProfiles.new),
           scriptsProvider.overrideWith(TestScripts.new),
           globalRulesProvider.overrideWith(TestGlobalRules.new),
+          httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+          tlsInspectionPersistenceEnabledProvider.overrideWithValue(false),
         ],
       );
       addTearDown(container.dispose);
@@ -107,6 +115,9 @@ void main() {
     'Backup and restore': BackupAndRestore,
     'Basic configuration': ConfigView,
     'Advanced configuration': AdvancedConfigView,
+    'HTTP Capture': HttpCaptureView,
+    'HTTPS inspection safety': TlsInspectionView,
+    'DNS diagnostics': DnsDiagnosticsView,
     'Application': ApplicationSettingView,
   };
 
@@ -118,7 +129,11 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       final container = ProviderContainer(
-        overrides: [profilesProvider.overrideWith(TestProfiles.new)],
+        overrides: [
+          profilesProvider.overrideWith(TestProfiles.new),
+          httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+          tlsInspectionPersistenceEnabledProvider.overrideWithValue(false),
+        ],
       );
       addTearDown(container.dispose);
       globalState.container = container;

@@ -8,6 +8,7 @@ import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
+import 'package:fl_clash/providers/http_capture.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,14 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         ref.read(setupActionProvider.notifier).updateConfigDebounce();
       }
     });
+    ref.listenManual<CoreStatus>(coreStatusProvider, (_, status) {
+      final capture = ref.read(httpCaptureProvider.notifier);
+      if (status == CoreStatus.connected) {
+        unawaited(capture.syncCoreObservation());
+      } else {
+        capture.markCoreObserverUnavailable();
+      }
+    }, fireImmediately: true);
     ref.listenManual(appSettingProvider.select((state) => state.openLogs), (
       prev,
       next,
@@ -63,6 +72,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   void dispose() {
     coreEventManager.removeListener(this);
+    debouncer.cancel(FunctionTag.updateDelay);
+    debouncer.cancel(FunctionTag.loadedProvider);
+    throttler.cancel(FunctionTag.coreErrorNotifier);
     super.dispose();
   }
 
@@ -93,6 +105,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   @override
   void onRequest(TrackerInfo trackerInfo) async {
     ref.read(requestsProvider.notifier).addRequest(trackerInfo);
+    unawaited(ref.read(httpCaptureProvider.notifier).observe(trackerInfo));
     super.onRequest(trackerInfo);
   }
 

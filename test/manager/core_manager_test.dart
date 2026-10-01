@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -13,6 +14,8 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/http_capture.dart';
+import 'package:fl_clash/providers/logbook.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
@@ -75,6 +78,14 @@ _MockCoreHandlerInterface _coreInterface() {
   final coreInterface = _MockCoreHandlerInterface();
   when(() => coreInterface.startLog()).thenAnswer((_) {});
   when(() => coreInterface.stopLog()).thenAnswer((_) {});
+  when(
+    () => coreInterface.setHttpObservationEnabled(
+      any(),
+      sessionId: any(named: 'sessionId'),
+    ),
+  ).thenAnswer(
+    (invocation) async => invocation.positionalArguments.first as bool,
+  );
   return coreInterface;
 }
 
@@ -155,11 +166,216 @@ void main() {
     } catch (_) {}
   });
 
+  testWidgets('request events feed the opt-in HTTP capture pipeline', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [
+        currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    await container.read(httpCaptureProvider.notifier).start();
+    final captureSessionId = container.read(httpCaptureProvider).sessionId;
+    final tracker = TrackerInfo(
+      id: 'capture-request',
+      upload: 12,
+      download: 34,
+      start: DateTime.utc(2026, 9, 25, 10),
+      metadata: const Metadata(
+        uid: 10001,
+        network: 'tcp',
+        sourceIP: '10.0.0.2',
+        sourcePort: '52000',
+        destinationIP: '1.1.1.1',
+        destinationPort: '443',
+        host: 'api.example.com',
+        process: 'example.app',
+      ),
+      chains: const ['Proxy', 'HK-01'],
+      rule: 'Domain',
+      rulePayload: 'api.example.com',
+      observation: ProtocolObservation(
+        sessionId: captureSessionId,
+        kind: 'tls-client-hello',
+        observedBytes: 288,
+        tls: const TlsClientHelloObservation(
+          serverName: 'api.example.com',
+          alpn: ['h2', 'http/1.1'],
+          legacyVersion: 'TLS 1.2',
+          supportedVersions: ['TLS 1.3', 'TLS 1.2'],
+          clientHelloComplete: true,
+        ),
+      ),
+    );
+
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.request,
+        data: jsonDecode(jsonEncode(tracker)),
+      ),
+    );
+    await tester.pump();
+
+    expect(container.read(requestsProvider), hasLength(1));
+    final entries = container.read(httpCaptureProvider).entries;
+    expect(entries, hasLength(1));
+    expect(entries.single.connectionId, 'capture-request');
+    expect(entries.single.protocol, HttpCaptureProtocol.tls);
+    expect(entries.single.evidence, 'core-tls-client-hello');
+    expect(entries.single.tlsObservation?.alpn, ['h2', 'http/1.1']);
+    expect(entries.single.profileId, 7);
+  });
+
+  testWidgets('response updates replace the existing request and capture row', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [
+        currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    await container.read(httpCaptureProvider.notifier).start();
+    final sessionId = container.read(httpCaptureProvider).sessionId;
+    final startedAt = DateTime.utc(2026, 9, 26, 6);
+
+    TrackerInfo value({HttpResponseProtocolObservation? response}) {
+      return TrackerInfo(
+        id: 'response-update',
+        upload: 12,
+        download: response == null ? 0 : 48,
+        start: startedAt,
+        metadata: const Metadata(
+          uid: 10001,
+          network: 'tcp',
+          sourceIP: '10.0.0.2',
+          sourcePort: '52000',
+          destinationIP: '192.0.2.10',
+          destinationPort: '8080',
+          host: 'service.example',
+          process: 'example.app',
+        ),
+        chains: const ['DIRECT'],
+        rule: 'Domain',
+        rulePayload: 'service.example',
+        observation: ProtocolObservation(
+          sessionId: sessionId,
+          kind: 'http1',
+          observedBytes: 81,
+          http: const HttpProtocolObservation(
+            method: 'GET',
+            target: '/health',
+            version: 'HTTP/1.1',
+            host: 'service.example',
+            headerNames: ['host'],
+            headersComplete: true,
+          ),
+          httpResponse: response,
+        ),
+      );
+    }
+
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.request,
+        data: jsonDecode(jsonEncode(value())),
+      ),
+    );
+    await tester.pump();
+    final firstEntry = container.read(httpCaptureProvider).entries.single;
+
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.request,
+        data: jsonDecode(
+          jsonEncode(
+            value(
+              response: const HttpResponseProtocolObservation(
+                version: 'HTTP/1.1',
+                statusCode: 204,
+                informationalStatusCodes: [100],
+                headerNames: ['date', 'server'],
+                headersComplete: true,
+                observedBytes: 62,
+                observedAfterMilliseconds: 31,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final requests = container.read(requestsProvider).list;
+    expect(requests, hasLength(1));
+    expect(requests.single.observation?.httpResponse?.statusCode, 204);
+    expect(requests.single.download, 48);
+
+    final entries = container.read(httpCaptureProvider).entries;
+    expect(entries, hasLength(1));
+    expect(entries.single.id, firstEntry.id);
+    expect(entries.single.observedAt, firstEntry.observedAt);
+    expect(entries.single.httpResponseObservation?.statusCode, 204);
+    expect(entries.single.httpResponseObservation?.headerNames, [
+      'date',
+      'server',
+    ]);
+  });
+
+  testWidgets('an active capture follows Core reconnect and disconnect', (
+    tester,
+  ) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(
+      tester,
+      coreInterface,
+      overrides: [
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    final capture = container.read(httpCaptureProvider.notifier);
+    await capture.start();
+    expect(container.read(httpCaptureProvider).coreObserverActive, isFalse);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
+    await tester.pump();
+    expect(container.read(httpCaptureProvider).coreObserverActive, isTrue);
+    verify(
+      () => coreInterface.setHttpObservationEnabled(
+        true,
+        sessionId: any(named: 'sessionId'),
+      ),
+    ).called(1);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+    expect(container.read(httpCaptureProvider).coreObserverActive, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('duplicate crash events disconnect the core only once', (
     tester,
   ) async {
     final coreInterface = _MockCoreHandlerInterface();
     when(() => coreInterface.stopLog()).thenAnswer((_) {});
+    when(
+      () => coreInterface.setHttpObservationEnabled(
+        any(),
+        sessionId: any(named: 'sessionId'),
+      ),
+    ).thenAnswer(
+      (invocation) async => invocation.positionalArguments.first as bool,
+    );
     final container = ProviderContainer(
       overrides: [
         coreHandlerProvider.overrideWithValue(

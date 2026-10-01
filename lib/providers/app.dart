@@ -59,7 +59,7 @@ class Requests extends _$Requests with AutoDisposeNotifierMixin {
     if (!ref.mounted) {
       return;
     }
-    this.value = state.append(value);
+    this.value = state.upsert(value, (item) => item.id == value.id);
   }
 }
 

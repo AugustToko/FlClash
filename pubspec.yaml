@@ -41,6 +41,8 @@ dependencies:
     path: plugins/tray
   wifi_ssid:
     path: plugins/wifi_ssid
+  certificate_trust:
+    path: plugins/certificate_trust
   collection: ^1.19.1
   animations: ^3.0.0
   package_info_plus: ^10.2.1

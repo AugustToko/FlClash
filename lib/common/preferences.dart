@@ -151,6 +151,25 @@ class Preferences {
     await sharedPreferencesIns?.setString(bootRecordKey, json.encode(record));
   }
 
+  Future<String?> getTlsInspectionPolicy() async {
+    final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+    return sharedPreferencesIns?.getString(tlsInspectionPolicyKey);
+  }
+
+  Future<bool> saveTlsInspectionPolicy(String value) async {
+    final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+    return await sharedPreferencesIns?.setString(
+          tlsInspectionPolicyKey,
+          value,
+        ) ??
+        false;
+  }
+
+  Future<void> clearTlsInspectionPolicy() async {
+    final sharedPreferencesIns = await sharedPreferencesCompleter.future;
+    await sharedPreferencesIns?.remove(tlsInspectionPolicyKey);
+  }
+
   Future<void> clearPreferences() async {
     final sharedPreferencesIns = await sharedPreferencesCompleter.future;
     await sharedPreferencesIns?.clear();

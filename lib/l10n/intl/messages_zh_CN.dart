@@ -196,6 +196,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkUpdate": MessageLookupByLibrary.simpleMessage("检查更新"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("当前应用已经是最新版了"),
     "clearData": MessageLookupByLibrary.simpleMessage("清除数据"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("清空事件日志"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage("确定清空所有已保存的事件日志吗？"),
     "clearSearch": MessageLookupByLibrary.simpleMessage("清除搜索"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("导出剪贴板"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("剪贴板导入"),
@@ -285,9 +287,32 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "disconnected": MessageLookupByLibrary.simpleMessage("已断开"),
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage("发现新版本"),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("附加记录"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("应答记录"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("权威记录"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("更新DNS相关设置"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS 诊断"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "通过当前 Core 查询并检查 DNS 记录",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS劫持"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS模式"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("未返回记录"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 查询失败"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("域名或 IP 地址"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS 响应"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("记录类型"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("解析器"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage("当前 Core 解析器"),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage("直连出口 DNS"),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage("代理服务器 DNS"),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("系统 DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("响应标志"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("开始查询"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage("当前 Core 解析器不可用，已改用系统 DNS"),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage("响应中没有应答记录"),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage("响应已被截断"),
     "domain": MessageLookupByLibrary.simpleMessage("域名"),
     "download": MessageLookupByLibrary.simpleMessage("下载"),
     "edit": MessageLookupByLibrary.simpleMessage("编辑"),
@@ -370,6 +395,133 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("小时"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP 捕获"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage("全部配置"),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello 是否完整",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完整"),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "连接元数据回退",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core 被动观察器",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core 观察器仍在停止中",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "被动观察运行中 Core 的首个 HTTP/1 请求与响应、TLS ClientHello 元数据及连接级回退信息",
+    ),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage("暂无 HTTP 观察记录"),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("观察到的端点"),
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core 已观察到 HTTP/1 请求前缀",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core 已观察到 TLS ClientHello"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "已观察到主机，协议未知",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "常见 HTTP 端口",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "常见 QUIC 端口",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "常见 TLS 端口",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Core 报告的协议方案",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "仅有传输层元数据",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "导出 HAR 兼容观察记录",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP 观察记录已导出",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR 导出仍仅表示观察结果。对于已观察到的明文 HTTP/1，可包含请求方法、已净化目标和请求头名称，以及首个响应的状态码、版本和响应头名称。Reason Phrase、所有请求头/响应头值、正文、Keep-Alive 后续消息、解密后的 TLS 数据与详细时序仍保持未知。",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("请求头名称"),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "请求头名称列表已截断",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "请求头是否完整",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host 已截断",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage("HTTP 版本"),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完整"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "信息性状态码",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage("信息性状态码列表已截断"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未观察到"),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "仅在主动开启时被动观察。Core 可检查有界的首个 HTTP/1 请求及首个明文响应头，或 TLS ClientHello 元数据；不会保存查询参数、Reason Phrase、请求头/响应头值、正文、证书、解密后的 TLS 数据及 Keep-Alive 后续消息。仅适用于开启后新建的连接；记录只保存在本机并从备份中排除。",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage("已观察前缀"),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("存在"),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("进程路径"),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage("未知协议"),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage("请求方法"),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage("已净化目标"),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("已观察响应"),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "响应头名称",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage("响应头名称列表已截断"),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "响应头是否完整",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "响应 HTTP 版本",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "响应观察延迟",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "已观察响应前缀",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage("响应状态码"),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "响应观察是否截断",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("正在捕获"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("已停止"),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "请求目标已截断",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage("加密 ClientHello"),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "旧版 TLS 版本字段",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS 服务器名称",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "支持的 TLS 版本",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("观察是否截断"),
     "icon": MessageLookupByLibrary.simpleMessage("图片"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("图标记录"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("图标样式"),
@@ -450,6 +602,121 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "log": MessageLookupByLibrary.simpleMessage("日志"),
     "logLevel": MessageLookupByLibrary.simpleMessage("日志等级"),
+    "logbook": MessageLookupByLibrary.simpleMessage("事件日志"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("全部"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage("备份已取消"),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage("备份已完成"),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage("备份失败"),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage("正在创建备份"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "网络连接发生变化",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("核心"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "已请求核心诊断崩溃",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage("核心重启失败"),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "核心已重启，但配置应用异常",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage("核心已重启"),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage("核心启动失败"),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "核心启动请求已被替代",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("核心已启动"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage("持久记录网络、配置与运行事件的时间线"),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS 查询完成",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 查询失败"),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage("正在查询 DNS"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage("暂未记录任何事件"),
+    "logbookError": MessageLookupByLibrary.simpleMessage("错误"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo 数据已是最新"),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo 数据更新失败",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在更新 Geo 数据",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo 数据已更新"),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已停止",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已中断",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP 捕获已开始",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("信息"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage("仅保存在当前设备"),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("网络"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("配置"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage("配置已应用"),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "配置应用出现异常",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage("配置应用失败"),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("资源提供器"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "资源提供器数据导入失败",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "正在导入资源提供器数据",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "资源提供器数据已导入",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "资源提供器更新失败",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在更新资源提供器",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage("资源提供器已更新"),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "快速分流为近似验证",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "快速分流结果不匹配",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "快速分流暂时无法验证",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "快速分流已验证",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage("恢复已完成"),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage("恢复失败"),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage("正在恢复备份"),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("分流"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("脚本"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "配置脚本执行失败",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "正在执行配置脚本",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage("配置脚本执行完成"),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("系统"),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "CA 安装已取消",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage("CA 安装失败"),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "正在安装检查 CA",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "检查 CA 已安装",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "已打开证书设置",
+    ),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("日志捕获"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("禁用将会隐藏日志入口"),
     "logs": MessageLookupByLibrary.simpleMessage("日志"),
@@ -816,6 +1083,306 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("时间"),
     "timeout": MessageLookupByLibrary.simpleMessage("超时"),
     "tip": MessageLookupByLibrary.simpleMessage("提示"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage("HTTPS 检查安全"),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "确认风险",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage("添加域名"),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("算法"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage("检查白名单"),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "后续阶段中，只有这些精确域名或域名树才可能进入检查范围。",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "仅显式白名单",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage("本地证书机构"),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage(
+      "已损坏",
+    ),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "已过期",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "尚未创建",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "尚未生效",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage("私钥权限需要处理"),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage("可用"),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "旧私钥材料需要清理",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "不可用",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "本阶段只准备证书和策略控制，不会解密、拦截或改写 HTTPS 流量。",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage("安全边界"),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage("清除确认"),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "我已核对系统信任",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "创建本地证书机构",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "删除证书机构",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "这会删除本地私钥与证书文件，并停用已准备的策略；已安装到系统信任库的旧证书仍需另行移除。",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "准备本地证书机构与显式域名策略，但不启用解密",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "默认关闭",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "域名及其子域",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "请先创建有效的本地证书机构。",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "域名范围过宽，请输入 example.com 这类可注册域名。",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "请先连接 Core，再管理本地证书机构。",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "操作未能完成。",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "不接受 IP 地址，请输入可注册域名。",
+    ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "无法准备叶证书安全缓存。",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "域名规则数量已达到上限。",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "已保存策略包含不再安全的域名范围，请删除后重新添加可注册域名。",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "请先完成证书、信任、风险和白名单要求。",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage("仅精确域名"),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "即使更宽的白名单命中，排除规则仍然优先。",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage("强制排除"),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "排除规则始终优先于白名单。",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "导出公用证书",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "公用证书已导出",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 指纹",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "当前仅为证书签发与缓存安全底座，尚未连接 HTTPS 解密引擎。",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage("叶证书缓存"),
+    "tlsInspectionLeafCacheAuthorityChanged":
+        MessageLookupByLibrary.simpleMessage("本地 CA 已变化，请重新验证信任并准备策略。"),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core 仅为当前白名单中的域名生成短期独立证书；本阶段仍不会拦截或解密 HTTPS 流量。",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "已停用",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "已缓存证书",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "最近更新",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "叶证书私钥始终保留在 Core 应用数据中，不会通过 IPC 返回，也不会被导出。",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "叶证书私钥存储权限限制不足。",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "策略摘要",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage("已就绪"),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "不可用",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "最长有效期",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("最长 24 小时"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "正在等待策略完成准备并满足当前信任要求。",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "不自动修改系统信任",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "不保存头值和正文",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage("尚未配置域名"),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "完成全部前置条件后才能准备策略。",
+    ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage("证书固定仍可能阻止检查。"),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage("Android 11 及以上版本需要在安全设置中手动完成安装。"),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage("应用必须显式选择信任用户安装的 CA。"),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage("Android 会要求用户明确确认后才安装。"),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "信任安装被阻止",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("重新检查"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage("Android 无法在证书存储中验证当前 CA。"),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "已刷新系统信任状态",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("平台限制"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash 会核对当前 CA 的精确指纹是否真实存在于 Android 证书存储中；人工确认不能替代系统结果。",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage("导出 CA 并打开设置"),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage("验证结果与当前 CA 指纹绑定。"),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage("Android 返回的信任结果与当前 CA 指纹不匹配。"),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "交给 Android 安装 CA",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage("Android 无法启动证书安装流程"),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android 已确认 CA 安装完成",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("最近检查"),
+    "tlsInspectionPlatformTrustLimitations":
+        MessageLookupByLibrary.simpleMessage(
+          "Android 应用若未显式接受用户 CA，仍可能拒绝该证书；证书固定也仍会阻止检查。",
+        ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "未安装到 Android 信任库",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage("尚未检查平台信任状态。"),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("打开安全设置"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "证书已导出；请在 Android 安全设置中完成安装，然后返回 FlClash",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "证书存储",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Android 用户与系统证书存储",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "未找到",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Android 系统证书存储"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage("存在于未识别的存储中"),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Android 用户证书存储",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage("暂时无法读取 Android 信任状态"),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage("无法自动验证系统信任"),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "已存在于 Android CA 存储",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage("必须通过系统信任验证"),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Android API 级别",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "FlClash 的本地与 WebDAV 备份包不会包含证书材料和域名策略；操作系统级备份行为取决于平台设置。",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage("安全策略已准备"),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "所有前置条件均已满足；后续仍需独立引擎与显式启用才会进行检查。",
+    ),
+    "tlsInspectionPrivateKeyNeverExported":
+        MessageLookupByLibrary.simpleMessage(
+          "私钥以文件形式保存在应用数据目录中，不是硬件密钥，FlClash 不会导出私钥；只能导出公用证书。",
+        ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage("准备状态"),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "至少一条白名单规则",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "有效的本地证书机构",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "叶证书缓存已绑定当前 CA 与策略",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "已确认风险",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "系统已信任当前 CA，或已完成手动核对",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage("风险确认"),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "风险已确认",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS 检查可能暴露账号凭据和私密内容。应使用尽可能小的白名单；除非确有必要，不要检查账号、银行、医疗等敏感服务。",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "轮换证书机构",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "轮换后，旧指纹的信任确认会失效；系统中的旧证书需要手动替换。",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage("域名范围"),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage("序列号"),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage("私钥存储"),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "应用数据目录（文件存储）",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("主题"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage("系统信任"),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "已为当前指纹手动确认",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "当前尚未接入系统信任库自动校验。请导出公用证书并手动安装，在系统设置中核对指纹后再于下方确认。",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "部分应用可能忽略用户安装的证书机构；证书固定（Pinning）也不会被绕过。",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "尚未确认当前指纹",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage("有效期"),
     "toggle": MessageLookupByLibrary.simpleMessage("切换"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("切换标签"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("调性点缀"),
