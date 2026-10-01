@@ -241,4 +241,147 @@ void main() {
       isFalse,
     );
   });
+
+  test('leaf cache status fails closed on malformed Core contracts', () {
+    final authority = _validAuthority();
+    final now = DateTime.now().toUtc().toIso8601String();
+    final validPayload = <String, Object?>{
+      'state': 'ready',
+      'ready': true,
+      'generation': _generationA,
+      'authorityFingerprintSha256': _fingerprintA.toLowerCase(),
+      'policyDigest':
+          'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+      'entryCount': 2,
+      'capacity': tlsInspectionLeafCacheCapacity,
+      'leafValiditySeconds': tlsInspectionLeafMaxValidity.inSeconds,
+      'algorithm': 'ECDSA P-256 / SHA-256',
+      'keyStorage': 'app-data-file',
+      'keyPermissionsRestricted': true,
+      'privateKeysExported': false,
+      'runtimeAuthorizationPresent': true,
+      'updatedAt': now,
+    };
+    final valid = TlsInspectionLeafCacheStatus.fromJson(validPayload);
+    expect(valid.contractValid, isTrue);
+    expect(valid.matchesAuthority(authority), isTrue);
+
+    for (final payload in [
+      {...validPayload, 'entryCount': 999},
+      {...validPayload, 'capacity': 999},
+      {...validPayload, 'leafValiditySeconds': 999999},
+      {...validPayload, 'policyDigest': '${validPayload['policyDigest']}0'},
+      {...validPayload}..remove('privateKeysExported'),
+      {...validPayload, 'entryCount': 1.5},
+    ]) {
+      final value = TlsInspectionLeafCacheStatus.fromJson(payload);
+      expect(value.contractValid, isFalse, reason: payload.toString());
+      expect(
+        value.matchesAuthority(authority),
+        isFalse,
+        reason: payload.toString(),
+      );
+    }
+
+    expect(
+      TlsInspectionLeafCacheStatus(
+        state: valid.state,
+        ready: valid.ready,
+        generation: valid.generation,
+        authorityFingerprintSha256: valid.authorityFingerprintSha256,
+        policyDigest: valid.policyDigest,
+        entryCount: valid.entryCount,
+        capacity: valid.capacity,
+        leafValiditySeconds: valid.leafValiditySeconds,
+        algorithm: valid.algorithm,
+        keyStorage: valid.keyStorage,
+        keyPermissionsRestricted: true,
+        privateKeysExported: true,
+        runtimeAuthorizationPresent: true,
+        updatedAt: valid.updatedAt,
+      ).matchesAuthority(authority),
+      isFalse,
+    );
+  });
+
+  test('leaf certificate metadata never substitutes for private material', () {
+    final authority = _validAuthority();
+    const digest =
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    final now = DateTime.now().toUtc();
+    final validPayload = <String, Object?>{
+      'host': 'API.Example.COM.',
+      'cacheHit': true,
+      'generation': _generationA,
+      'authorityFingerprintSha256': _fingerprintA,
+      'policyDigest': digest,
+      'fingerprintSha256': _fingerprintB,
+      'serialNumber': '01',
+      'notBefore': now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'notAfter': now.add(const Duration(hours: 23)).toIso8601String(),
+      'algorithm': 'ECDSA P-256 / SHA-256',
+      'keyStorage': 'app-data-file',
+      'privateKeyExported': false,
+    };
+    final value = TlsInspectionLeafCertificateStatus.fromJson(validPayload);
+
+    expect(value.contractValid, isTrue);
+    expect(value.host, 'api.example.com');
+    expect(value.cacheHit, isTrue);
+    expect(
+      value.validFor(authority, digest, expectedHost: 'api.example.com'),
+      isTrue,
+    );
+    expect(
+      value.validFor(authority, digest, expectedHost: 'other.example.com'),
+      isFalse,
+    );
+
+    for (final payload in [
+      {...validPayload, 'policyDigest': '${digest}0'},
+      {...validPayload, 'host': '${'a' * 254}.example.com'},
+      {...validPayload}..remove('privateKeyExported'),
+      {...validPayload, 'privateKeyExported': 'false'},
+    ]) {
+      final malformed = TlsInspectionLeafCertificateStatus.fromJson(payload);
+      expect(malformed.contractValid, isFalse, reason: payload.toString());
+      expect(
+        malformed.validFor(authority, digest, expectedHost: 'api.example.com'),
+        isFalse,
+        reason: payload.toString(),
+      );
+    }
+
+    expect(
+      TlsInspectionLeafCertificateStatus(
+        host: value.host,
+        generation: value.generation,
+        authorityFingerprintSha256: value.authorityFingerprintSha256,
+        policyDigest: value.policyDigest,
+        fingerprintSha256: value.fingerprintSha256,
+        serialNumber: value.serialNumber,
+        notBefore: now.subtract(const Duration(minutes: 1)),
+        notAfter: now.add(const Duration(minutes: 5)),
+        algorithm: value.algorithm,
+        keyStorage: value.keyStorage,
+      ).validFor(authority, digest, expectedHost: 'api.example.com'),
+      isFalse,
+    );
+    expect(
+      TlsInspectionLeafCertificateStatus(
+        host: value.host,
+        generation: value.generation,
+        authorityFingerprintSha256: value.authorityFingerprintSha256,
+        policyDigest: value.policyDigest,
+        fingerprintSha256: value.fingerprintSha256,
+        serialNumber: value.serialNumber,
+        notBefore: value.notBefore,
+        notAfter: value.notAfter,
+        algorithm: value.algorithm,
+        keyStorage: value.keyStorage,
+        privateKeyExported: true,
+      ).validFor(authority, digest, expectedHost: 'api.example.com'),
+      isFalse,
+    );
+  });
 }

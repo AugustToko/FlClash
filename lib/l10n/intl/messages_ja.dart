@@ -1346,6 +1346,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
       "IP アドレスは使用できません。登録可能なドメインを入力してください。",
     ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "リーフ証明書の安全キャッシュを準備できませんでした。",
+    ),
     "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
       "ドメインルールの上限に達しました。",
     ),
@@ -1373,7 +1376,47 @@ class MessageLookup extends MessageLookupByLibrary {
       "SHA-256 フィンガープリント",
     ),
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
-      "安全基盤のみです。HTTPS 復号エンジンはまだ接続されていません。",
+      "証明書発行とキャッシュの安全基盤のみです。HTTPS 復号エンジンはまだ接続されていません。",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
+      "リーフ証明書キャッシュ",
+    ),
+    "tlsInspectionLeafCacheAuthorityChanged":
+        MessageLookupByLibrary.simpleMessage(
+          "ローカル CA が変更されました。信頼を再検証し、ポリシーを再準備してください。",
+        ),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core は現在の許可リストに含まれるドメインだけに短期間の個別証明書を生成します。この段階でも HTTPS 通信の傍受や復号は行いません。",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "無効",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "キャッシュ済み証明書",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "最終更新",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "リーフ秘密鍵は Core のアプリデータ内にのみ保存され、IPC やエクスポートでは返されません。",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "リーフ秘密鍵の保存権限が十分に制限されていません。",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "ポリシーダイジェスト",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage("準備完了"),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "利用不可",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "最大有効期間",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("最大 24 時間"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "準備済みで現在も信頼されているポリシーを待っています。",
     ),
     "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
       "システム信頼を自動変更しない",
@@ -1491,6 +1534,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
       "有効なローカル認証局",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "現在の CA とポリシーに結び付いたリーフ証明書キャッシュ",
     ),
     "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
       "リスク確認済み",

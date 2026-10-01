@@ -24,12 +24,33 @@ const _fingerprint =
     '8A:47:35:D9:0C:B1:5E:27:72:2F:99:18:C4:A2:70:11:'
     '84:FE:51:33:90:C8:6A:60:5B:D3:EA:79:B6:1F:42:CD';
 
+const _generation = 'a1b2c3d4e5f607182736455463728190';
+const _policyDigest =
+    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
 TlsInspectionState _notReadyState() => const TlsInspectionState(
   authority: TlsInspectionAuthorityStatus(state: 'missing'),
 );
 
 TlsInspectionState _preparedState() => TlsInspectionState(
   rulesValidated: true,
+  leafCache: TlsInspectionLeafCacheStatus(
+    state: 'ready',
+    ready: true,
+    generation: _generation,
+    authorityFingerprintSha256: _fingerprint,
+    policyDigest: _policyDigest,
+    entryCount: 12,
+    capacity: tlsInspectionLeafCacheCapacity,
+    leafValiditySeconds: tlsInspectionLeafMaxValidity.inSeconds,
+    algorithm: 'ECDSA P-256 / SHA-256',
+    keyStorage: 'app-data-file',
+    keyPermissionsRestricted: true,
+    privateKeysExported: false,
+    runtimeAuthorizationPresent: true,
+    updatedAt: DateTime.utc(2026, 9, 27, 1, 32),
+    contractValid: true,
+  ),
   platformTrust: const CertificateTrustStatus(
     platform: 'android',
     state: CertificateTrustState.trusted,
@@ -47,7 +68,7 @@ TlsInspectionState _preparedState() => TlsInspectionState(
   authority: TlsInspectionAuthorityStatus(
     state: 'ready',
     ready: true,
-    generation: 'a1b2c3d4e5f607182736455463728190',
+    generation: _generation,
     fingerprintSha256: _fingerprint,
     subject: 'CN=FlClash Local Inspection CA,O=FlClash',
     serialNumber: '79A4D1E27C13B002',
@@ -94,6 +115,10 @@ TlsInspectionState _platformNotTrustedState() {
   final prepared = _preparedState();
   return prepared.copyWith(
     rulesValidated: false,
+    leafCache: const TlsInspectionLeafCacheStatus(
+      state: 'disabled',
+      issue: 'policy-disabled',
+    ),
     policy: prepared.policy.copyWith(prepared: false, clearManualTrust: true),
     platformTrust: const CertificateTrustStatus(
       platform: 'android',
@@ -208,6 +233,29 @@ void main() {
     await expectLater(
       find.byType(TlsInspectionView),
       matchesGoldenFile('../goldens/tls_inspection_mobile_preview.png'),
+    );
+  });
+
+  testWidgets('TLS inspection leaf certificate cache preview', (tester) async {
+    await _pumpPreview(
+      tester,
+      size: const Size(430, 932),
+      state: _preparedState(),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('叶证书缓存'),
+      460,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('叶证书缓存'), findsOneWidget);
+    expect(find.text('12 / 64'), findsOneWidget);
+    expect(find.text('最长 24 小时'), findsOneWidget);
+    await expectLater(
+      find.byType(TlsInspectionView),
+      matchesGoldenFile('../goldens/tls_inspection_leaf_cache_preview.png'),
     );
   });
 

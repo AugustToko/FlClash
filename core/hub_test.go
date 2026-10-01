@@ -439,9 +439,32 @@ func TestLookupProxyFollowsAProviderUpdate(t *testing.T) {
 	}
 }
 
+func TestHandleInitClashRevokesLeafSigningAuthorization(t *testing.T) {
+	previousHome := constant.Path.HomeDir()
+	t.Cleanup(func() {
+		constant.SetHomeDir(previousHome)
+		isInit.Store(false)
+	})
+	tlsInspectionAuthorityMu.Lock()
+	tlsInspectionLeafSession = &tlsInspectionLeafPolicy{Digest: strings.Repeat("a", 64)}
+	tlsInspectionAuthorityMu.Unlock()
+
+	handleInitClash(&InitParams{HomeDir: t.TempDir(), Version: 35})
+
+	tlsInspectionAuthorityMu.Lock()
+	leafSession := tlsInspectionLeafSession
+	tlsInspectionAuthorityMu.Unlock()
+	if leafSession != nil {
+		t.Error("initialization retained TLS inspection authorization from a previous app home")
+	}
+}
+
 func TestHandleShutdownTearsDownBackgroundWork(t *testing.T) {
 	withCurrentConfig(t, &config.Config{General: &config.General{}, Controller: &config.Controller{}})
 	isInit.Store(true)
+	tlsInspectionAuthorityMu.Lock()
+	tlsInspectionLeafSession = &tlsInspectionLeafPolicy{Digest: strings.Repeat("a", 64)}
+	tlsInspectionAuthorityMu.Unlock()
 
 	cancelled := false
 	logMu.Lock()
@@ -456,6 +479,12 @@ func TestHandleShutdownTearsDownBackgroundWork(t *testing.T) {
 	}
 	if isInit.Load() {
 		t.Error("isInit stayed true after shutdown")
+	}
+	tlsInspectionAuthorityMu.Lock()
+	leafSession := tlsInspectionLeafSession
+	tlsInspectionAuthorityMu.Unlock()
+	if leafSession != nil {
+		t.Error("shutdown retained TLS inspection leaf-signing authorization")
 	}
 
 	logMu.Lock()

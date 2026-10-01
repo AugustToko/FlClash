@@ -308,6 +308,7 @@ func createTLSInspectionAuthority() (*TLSInspectionAuthorityStatus, error) {
 	if err := writeTLSInspectionFile(filepath.Join(root, tlsInspectionActiveFile), activeData, 0o600); err != nil {
 		return nil, fmt.Errorf("activate authority: %w", err)
 	}
+	resetTLSInspectionLeafPolicySession()
 	cleanupGeneration = false
 	status, _, err := readTLSInspectionAuthority()
 	return status, err
@@ -578,6 +579,7 @@ func deleteTLSInspectionAuthority(confirm bool) *MethodError {
 	if err != nil {
 		return &MethodError{Code: "authority_unavailable", Message: err.Error()}
 	}
+	resetTLSInspectionLeafPolicySession()
 	if err := os.RemoveAll(root); err != nil {
 		return &MethodError{Code: "authority_delete_failed", Message: err.Error()}
 	}

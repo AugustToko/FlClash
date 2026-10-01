@@ -19,6 +19,10 @@ const _fingerprintA =
     'AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA:AA';
 const _fingerprintB =
     'BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB';
+const _leafFingerprint =
+    'CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC';
+const _leafPolicyDigest =
+    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 class _MemoryPolicyStore implements TlsInspectionPolicyStore {
   TlsInspectionPolicy value;
@@ -115,6 +119,12 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
   String notBefore = '2026-09-27T00:00:00Z';
   String notAfter = '2029-09-26T00:00:00Z';
   Completer<void>? authorityGate;
+  bool leafEnabled = false;
+  int leafEntries = 0;
+  int leafConfigureCalls = 0;
+  int leafPrepareCalls = 0;
+  Exception? leafStatusReadError;
+  Map<String, Object?>? lastLeafPolicyArguments;
 
   Map<String, Object?> get authority => {
     'state': 'ready',
@@ -134,6 +144,64 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
     'trustCapability': 'manual-only',
     'certificateFileName': 'flclash-local-inspection-ca.crt',
   };
+
+  Map<String, Object?> get leafCacheStatus => {
+    'state': leafEnabled ? 'ready' : 'disabled',
+    'ready': leafEnabled,
+    'generation': authority['generation'],
+    'authorityFingerprintSha256': fingerprint,
+    'policyDigest': leafEnabled ? _leafPolicyDigest : '',
+    'entryCount': leafEntries,
+    'capacity': tlsInspectionLeafCacheCapacity,
+    'leafValiditySeconds': tlsInspectionLeafMaxValidity.inSeconds,
+    'algorithm': 'ECDSA P-256 / SHA-256',
+    'keyStorage': 'app-data-file',
+    'keyPermissionsRestricted': true,
+    'privateKeysExported': false,
+    'runtimeAuthorizationPresent': leafEnabled,
+    'updatedAt': DateTime.now().toUtc().toIso8601String(),
+    'issue': leafEnabled ? '' : 'policy-disabled',
+  };
+
+  Map<String, Object?> _readLeafStatus() {
+    final error = leafStatusReadError;
+    if (error != null) {
+      throw error;
+    }
+    return leafCacheStatus;
+  }
+
+  Map<String, Object?> _configureLeaf(Object? arguments) {
+    final value = Map<String, Object?>.from(arguments! as Map);
+    leafConfigureCalls++;
+    lastLeafPolicyArguments = value;
+    leafEnabled = value['enabled'] as bool? ?? false;
+    if (!leafEnabled) {
+      leafEntries = 0;
+    }
+    return leafCacheStatus;
+  }
+
+  Map<String, Object?> _prepareLeaf(Object? arguments) {
+    final value = Map<String, Object?>.from(arguments! as Map);
+    leafPrepareCalls++;
+    leafEntries = 1;
+    final now = DateTime.now().toUtc();
+    return {
+      'host': value['host'],
+      'cacheHit': leafPrepareCalls > 1,
+      'generation': authority['generation'],
+      'authorityFingerprintSha256': fingerprint,
+      'policyDigest': _leafPolicyDigest,
+      'fingerprintSha256': _leafFingerprint,
+      'serialNumber': '01',
+      'notBefore': now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'notAfter': now.add(const Duration(hours: 23)).toIso8601String(),
+      'algorithm': 'ECDSA P-256 / SHA-256',
+      'keyStorage': 'app-data-file',
+      'privateKeyExported': false,
+    };
+  }
 
   @override
   Future<CoreLifecycleResult> start() async => const CoreLifecycleResult(
@@ -173,6 +241,9 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
         'pem': exportedPem,
         'fingerprintSha256': exportedFingerprint ?? fingerprint,
       },
+      CoreMethod.getTlsInspectionLeafCacheStatus => _readLeafStatus(),
+      CoreMethod.configureTlsInspectionLeafPolicy => _configureLeaf(arguments),
+      CoreMethod.prepareTlsInspectionLeafCertificate => _prepareLeaf(arguments),
       CoreMethod.analyzeDomain => _analyze(arguments),
       _ => throw StateError('unexpected method: $method'),
     };
@@ -688,11 +759,8 @@ void main() {
           errorCode: 'store-busy',
         ),
       );
-      final scope = container(
-        store: store,
-        core: _FoundationCoreHandler(),
-        trustClient: trust,
-      );
+      final core = _FoundationCoreHandler();
+      final scope = container(store: store, core: core, trustClient: trust);
 
       await scope.read(tlsInspectionProvider.notifier).reload();
 
@@ -700,6 +768,9 @@ void main() {
       expect(state.policy.prepared, isTrue);
       expect(state.prepared, isFalse);
       expect(state.platformTrust.state, CertificateTrustState.unavailable);
+      expect(state.leafCache.ready, isFalse);
+      expect(core.leafEnabled, isFalse);
+      expect(core.lastLeafPolicyArguments?['enabled'], isFalse);
       expect(store.writes, 0);
     },
   );
@@ -1199,6 +1270,8 @@ void main() {
       final disconnected = scope.read(tlsInspectionProvider);
       expect(disconnected.authority.issue, 'core-disconnected');
       expect(disconnected.rulesValidated, isFalse);
+      expect(disconnected.leafCache.ready, isFalse);
+      expect(disconnected.leafCache.issue, 'core-disconnected');
       expect(disconnected.prepared, isFalse);
       expect(disconnected.policy.prepared, isTrue);
       expect(store.value.prepared, isTrue);
@@ -1231,9 +1304,179 @@ void main() {
     expect(state.authority.issue, 'core-disconnected');
     expect(state.policy.prepared, isTrue);
     expect(state.policy.manuallyTrustedFingerprint, _fingerprintA);
+    expect(state.leafCache.ready, isFalse);
+    expect(state.leafCache.issue, 'core-disconnected');
     expect(state.prepared, isFalse);
     expect(store.writes, 0);
   });
+
+  test(
+    'platform trust refresh revokes leaf authorization before a failed check',
+    () async {
+      const policy = TlsInspectionPolicy(
+        prepared: true,
+        acknowledgedRiskVersion: tlsInspectionRiskVersion,
+        allowlist: [
+          TlsInspectionDomainRule(
+            host: 'example.com',
+            scope: TlsInspectionRuleScope.subdomains,
+          ),
+        ],
+      );
+      final core = _FoundationCoreHandler();
+      final trust = _FakeTrustClient(
+        status: const CertificateTrustStatus(
+          platform: 'android',
+          state: CertificateTrustState.trusted,
+          store: CertificateTrustStore.user,
+          installMode: CertificateInstallMode.settings,
+          verificationSupported: true,
+          fingerprintSha256: _fingerprintA,
+          platformVersion: 35,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(policy),
+        core: core,
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+      expect(scope.read(tlsInspectionProvider).prepared, isTrue);
+      expect(core.leafEnabled, isTrue);
+
+      trust.checkError = PlatformException(code: 'trust-store-busy');
+      await expectLater(
+        notifier.refreshPlatformTrust(),
+        throwsA(
+          isA<PlatformException>().having(
+            (error) => error.code,
+            'code',
+            'trust-store-busy',
+          ),
+        ),
+      );
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(core.leafEnabled, isFalse);
+      expect(core.lastLeafPolicyArguments?['enabled'], isFalse);
+      expect(state.leafCache.ready, isFalse);
+      expect(state.prepared, isFalse);
+      expect(state.policy.prepared, isTrue);
+      expect(state.platformTrust.state, CertificateTrustState.unavailable);
+      expect(state.errorCode, 'trust-store-busy');
+    },
+  );
+
+  test(
+    'prepared policy provisions the Core leaf cache and issues metadata only',
+    () async {
+      final core = _FoundationCoreHandler();
+      final trust = _FakeTrustClient(
+        verificationSupported: false,
+        status: const CertificateTrustStatus(
+          platform: 'linux',
+          state: CertificateTrustState.unsupported,
+          verificationSupported: false,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: core,
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+
+      await notifier.reload();
+      await notifier.addRule(
+        exclusion: false,
+        input: 'example.com',
+        scope: TlsInspectionRuleScope.subdomains,
+      );
+      await notifier.acknowledgeRisk();
+      await notifier.confirmManualTrust();
+      await notifier.setPrepared(true);
+
+      final prepared = scope.read(tlsInspectionProvider);
+      expect(prepared.prepared, isTrue);
+      expect(prepared.leafCache.matchesAuthority(prepared.authority), isTrue);
+      expect(core.leafEnabled, isTrue);
+      expect(core.lastLeafPolicyArguments?['enabled'], isTrue);
+      expect(core.lastLeafPolicyArguments?['trustSatisfied'], isTrue);
+      expect(core.lastLeafPolicyArguments?['allowlist'], [
+        {'host': 'example.com', 'scope': 'subdomains'},
+      ]);
+
+      final leaf = await notifier.prepareLeafCertificate('api.example.com');
+      expect(leaf.host, 'api.example.com');
+      expect(leaf.privateKeyExported, isFalse);
+      expect(leaf.policyDigest, _leafPolicyDigest);
+      expect(core.leafPrepareCalls, 1);
+      expect(scope.read(tlsInspectionProvider).leafCache.entryCount, 1);
+
+      await expectLater(
+        notifier.prepareLeafCertificate('outside.example.net'),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'domain_not_allowed',
+          ),
+        ),
+      );
+      expect(core.leafPrepareCalls, 1);
+    },
+  );
+
+  test(
+    'leaf status confirmation failure revokes effective preparation',
+    () async {
+      final core = _FoundationCoreHandler();
+      final trust = _FakeTrustClient(
+        verificationSupported: false,
+        status: const CertificateTrustStatus(
+          platform: 'linux',
+          state: CertificateTrustState.unsupported,
+          verificationSupported: false,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: core,
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+      await notifier.addRule(
+        exclusion: false,
+        input: 'example.com',
+        scope: TlsInspectionRuleScope.subdomains,
+      );
+      await notifier.acknowledgeRisk();
+      await notifier.confirmManualTrust();
+      await notifier.setPrepared(true);
+      expect(scope.read(tlsInspectionProvider).prepared, isTrue);
+
+      core.leafStatusReadError = PlatformException(code: 'leaf-status-busy');
+      await expectLater(
+        notifier.prepareLeafCertificate('api.example.com'),
+        throwsA(
+          isA<PlatformException>().having(
+            (error) => error.code,
+            'code',
+            'leaf-status-busy',
+          ),
+        ),
+      );
+
+      final state = scope.read(tlsInspectionProvider);
+      expect(core.leafEnabled, isFalse);
+      expect(state.leafCache.ready, isFalse);
+      expect(state.prepared, isFalse);
+      expect(state.policy.prepared, isTrue);
+      expect(state.errorCode, 'leaf-status-busy');
+    },
+  );
 
   test(
     'certificate export must match the current verified authority',

@@ -49,6 +49,73 @@ extension CoreControllerTlsInspectionExt on CoreController {
     return TlsInspectionAuthorityExport.fromJson(data);
   }
 
+  Future<TlsInspectionLeafCacheStatus> getTlsInspectionLeafCacheStatus() async {
+    final data = await _interface.invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.getTlsInspectionLeafCacheStatus,
+      timeout: const Duration(seconds: 5),
+    );
+    if (data == null) {
+      throw const CoreMethodException(
+        code: 'empty_result',
+        message: 'Core returned an empty leaf cache status',
+      );
+    }
+    return TlsInspectionLeafCacheStatus.fromJson(data);
+  }
+
+  Future<TlsInspectionLeafCacheStatus> configureTlsInspectionLeafPolicy({
+    required bool enabled,
+    required TlsInspectionPolicy policy,
+    required TlsInspectionAuthorityStatus authority,
+    required bool trustSatisfied,
+  }) async {
+    final data = await _interface.invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.configureTlsInspectionLeafPolicy,
+      arguments: {
+        'enabled': enabled,
+        'authorityGeneration': authority.generation,
+        'authorityFingerprintSha256': authority.fingerprintSha256,
+        'riskVersion': tlsInspectionRiskVersion,
+        'trustSatisfied': trustSatisfied,
+        'allowlist': policy.allowlist.map((rule) => rule.toJson()).toList(),
+        'exclusions': policy.exclusions.map((rule) => rule.toJson()).toList(),
+      },
+      timeout: const Duration(seconds: 15),
+    );
+    if (data == null) {
+      throw const CoreMethodException(
+        code: 'empty_result',
+        message: 'Core returned an empty leaf policy result',
+      );
+    }
+    return TlsInspectionLeafCacheStatus.fromJson(data);
+  }
+
+  Future<TlsInspectionLeafCertificateStatus>
+  prepareTlsInspectionLeafCertificate({
+    required String host,
+    required TlsInspectionAuthorityStatus authority,
+    required String policyDigest,
+  }) async {
+    final data = await _interface.invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.prepareTlsInspectionLeafCertificate,
+      arguments: {
+        'host': host,
+        'authorityGeneration': authority.generation,
+        'authorityFingerprintSha256': authority.fingerprintSha256,
+        'policyDigest': policyDigest,
+      },
+      timeout: const Duration(seconds: 15),
+    );
+    if (data == null) {
+      throw const CoreMethodException(
+        code: 'empty_result',
+        message: 'Core returned an empty leaf certificate result',
+      );
+    }
+    return TlsInspectionLeafCertificateStatus.fromJson(data);
+  }
+
   Future<TlsInspectionAuthorityStatus> _authorityMutation(
     CoreMethod method, {
     Object? arguments,

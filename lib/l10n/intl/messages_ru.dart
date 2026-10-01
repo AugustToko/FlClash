@@ -1659,6 +1659,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
       "IP-адреса не принимаются; укажите регистрируемый домен.",
     ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Не удалось подготовить безопасный кэш конечных сертификатов.",
+    ),
     "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
       "Достигнут предел правил доменов.",
     ),
@@ -1690,7 +1693,48 @@ class MessageLookup extends MessageLookupByLibrary {
       "Отпечаток SHA-256",
     ),
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
-      "Только безопасная основа: движок расшифровки HTTPS ещё не подключён.",
+      "Только безопасная основа выпуска и кэширования сертификатов: движок расшифровки HTTPS ещё не подключён.",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Кэш конечных сертификатов",
+    ),
+    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
+      "Локальный CA изменился. Повторно проверьте доверие и подготовьте политику.",
+    ),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core создаёт отдельные краткоживущие сертификаты только для активного списка разрешений. На этом этапе HTTPS-трафик по-прежнему не перехватывается и не расшифровывается.",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "Отключён",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "Сертификаты в кэше",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "Последнее обновление",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "Секретные ключи конечных сертификатов остаются в данных Core и никогда не возвращаются через IPC и не экспортируются.",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "Права хранения секретных ключей конечных сертификатов ограничены недостаточно.",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "Хэш политики",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage(
+      "Готов",
+    ),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "Максимальный срок",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("До 24 часов"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "Ожидание подготовленной и в данный момент доверенной политики.",
     ),
     "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
       "Без автоматического изменения доверия ОС",
@@ -1831,6 +1875,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
       "Действующий локальный центр",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Кэш конечных сертификатов привязан к текущему CA и политике",
     ),
     "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
       "Риск подтверждён",
