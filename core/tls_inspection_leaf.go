@@ -136,6 +136,7 @@ type tlsInspectionLeafEntry struct {
 var tlsInspectionLeafSession *tlsInspectionLeafPolicy
 
 func resetTLSInspectionLeafPolicySession() {
+	stopTLSInspectionRuntimeLocked()
 	tlsInspectionLeafSession = nil
 }
 
@@ -1027,6 +1028,10 @@ func configureTLSInspectionLeafPolicy(params *TLSInspectionLeafPolicyParams) (*T
 func prepareTLSInspectionLeafCertificate(params *TLSInspectionLeafPrepareParams) (*TLSInspectionLeafCertificateStatus, *MethodError) {
 	tlsInspectionAuthorityMu.Lock()
 	defer tlsInspectionAuthorityMu.Unlock()
+	return prepareTLSInspectionLeafCertificateLocked(params)
+}
+
+func prepareTLSInspectionLeafCertificateLocked(params *TLSInspectionLeafPrepareParams) (*TLSInspectionLeafCertificateStatus, *MethodError) {
 	policy := tlsInspectionLeafSession
 	if policy == nil {
 		return nil, &MethodError{Code: "leaf_policy_not_configured", Message: "leaf issuance requires current runtime authorization"}

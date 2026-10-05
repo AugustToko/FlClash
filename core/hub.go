@@ -62,6 +62,9 @@ func handleStartListener() bool {
 }
 
 func handleStopListener() bool {
+	tlsInspectionAuthorityMu.Lock()
+	stopTLSInspectionRuntimeLocked()
+	tlsInspectionAuthorityMu.Unlock()
 	configMu.Lock()
 	defer configMu.Unlock()
 	isRunning.Store(false)
