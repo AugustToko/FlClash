@@ -781,9 +781,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -1695,12 +1696,58 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
       "Только безопасная основа выпуска и кэширования сертификатов: движок расшифровки HTTPS ещё не подключён.",
     ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Успех не подтверждает доверие ОС или приложений. Соединение с сервером, закрепление сертификата и расшифровка реального HTTPS не проверяются.",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "Проверка TLS 1.2, TLS 1.3 и обмена зашифрованными данными с сертификатом разрешённого домена внутри памяти Core. Без подключения к сайту, изменения системного прокси или расшифровки реального HTTPS.",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "Разрешённый домен",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "Введите допустимый домен из активного списка, не попадающий под исключения.",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "Проверка локального TLS не удалась. Проверьте CA и список доменов.",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 проверенного сертификата",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "Самопроверка пройдена",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала подготовьте CA, доверие и список разрешённых доменов.",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "Проверить TLS",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "Идёт проверка",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage(
+      "Область проверки",
+    ),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Канал в памяти Core · только тестовые данные",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "Результат больше не соответствует текущему CA или правилам. Повторите проверку.",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "Самопроверка TLS",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core не подтвердил реальные рукопожатия TLS 1.2 и TLS 1.3. Обновите Core.",
+    ),
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "Кэш конечных сертификатов",
     ),
-    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
-      "Локальный CA изменился. Повторно проверьте доверие и подготовьте политику.",
-    ),
+    "tlsInspectionLeafCacheAuthorityChanged":
+        MessageLookupByLibrary.simpleMessage(
+          "Локальный CA изменился. Повторно проверьте доверие и подготовьте политику.",
+        ),
     "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
       "Core создаёт отдельные краткоживущие сертификаты только для активного списка разрешений. На этом этапе HTTPS-трафик по-прежнему не перехватывается и не расшифровывается.",
     ),
@@ -1805,9 +1852,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionPlatformTrustLastChecked":
         MessageLookupByLibrary.simpleMessage("Последняя проверка"),
-    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
-      "Приложения Android могут отвергать пользовательские CA без явного разрешения, а закрепление сертификатов по-прежнему блокирует инспекцию.",
-    ),
+    "tlsInspectionPlatformTrustLimitations":
+        MessageLookupByLibrary.simpleMessage(
+          "Приложения Android могут отвергать пользовательские CA без явного разрешения, а закрепление сертификатов по-прежнему блокирует инспекцию.",
+        ),
     "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
       "Не установлен в хранилище Android",
     ),
@@ -1864,9 +1912,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "Все условия выполнены. Для реальной инспекции всё ещё нужны отдельный движок и явное включение.",
     ),
-    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
-      "Секретный ключ хранится файлом в каталоге данных приложения и не защищён аппаратно. FlClash не экспортирует секретный ключ; экспортируется только публичный сертификат.",
-    ),
+    "tlsInspectionPrivateKeyNeverExported":
+        MessageLookupByLibrary.simpleMessage(
+          "Секретный ключ хранится файлом в каталоге данных приложения и не защищён аппаратно. FlClash не экспортирует секретный ключ; экспортируется только публичный сертификат.",
+        ),
     "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
       "Готовность",
     ),

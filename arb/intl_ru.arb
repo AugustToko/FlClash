@@ -883,5 +883,20 @@
   "logbookTlsTrustFailed": "Не удалось установить CA",
   "tlsInspectionPlatformTrustNotChecked": "Доверие платформы ещё не проверено.",
   "tlsInspectionPlatformTrustFingerprintMismatch": "Результат доверия Android относится к другому отпечатку CA.",
-  "tlsInspectionPlatformTrustCheckFailed": "Android не удалось проверить этот CA в хранилище сертификатов."
+  "tlsInspectionPlatformTrustCheckFailed": "Android не удалось проверить этот CA в хранилище сертификатов.",
+  "tlsInspectionHandshakeTitle": "Самопроверка TLS",
+  "tlsInspectionHandshakeDescription": "Проверка TLS 1.2, TLS 1.3 и обмена зашифрованными данными с сертификатом разрешённого домена внутри памяти Core. Без подключения к сайту, изменения системного прокси или расшифровки реального HTTPS.",
+  "tlsInspectionHandshakeDomain": "Разрешённый домен",
+  "tlsInspectionHandshakeRun": "Проверить TLS",
+  "tlsInspectionHandshakeRunning": "Идёт проверка",
+  "tlsInspectionHandshakePassed": "Самопроверка пройдена",
+  "tlsInspectionHandshakeScope": "Область проверки",
+  "tlsInspectionHandshakeScopeValue": "Канал в памяти Core · только тестовые данные",
+  "tlsInspectionHandshakeFingerprint": "SHA-256 проверенного сертификата",
+  "tlsInspectionHandshakeRequirements": "Сначала подготовьте CA, доверие и список разрешённых доменов.",
+  "tlsInspectionHandshakeBoundary": "Успех не подтверждает доверие ОС или приложений. Соединение с сервером, закрепление сертификата и расшифровка реального HTTPS не проверяются.",
+  "tlsInspectionHandshakeError": "Проверка локального TLS не удалась. Проверьте CA и список доменов.",
+  "tlsInspectionHandshakeUnsupported": "Core не подтвердил реальные рукопожатия TLS 1.2 и TLS 1.3. Обновите Core.",
+  "tlsInspectionHandshakeDomainError": "Введите допустимый домен из активного списка, не попадающий под исключения.",
+  "tlsInspectionHandshakeStale": "Результат больше не соответствует текущему CA или правилам. Повторите проверку."
 }

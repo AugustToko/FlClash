@@ -759,9 +759,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1633,12 +1634,58 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
       "Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.",
     ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "Allowlisted domain",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid domain within the active allowlist and outside exclusions.",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "Local TLS verification failed. Check the CA and allowlist, then retry.",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "Verified leaf certificate SHA-256",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "This handshake test passed",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Complete CA, trust and allowlist preparation first.",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "Verify handshake",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "Verifying handshake",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage(
+      "Verification scope",
+    ),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Core memory channel · synthetic test data only",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "This result no longer matches the current CA or policy. Verify again.",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "TLS handshake self-test",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.",
+    ),
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "Leaf certificate cache",
     ),
-    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
-      "The local authority changed. Revalidate trust and prepare the policy again.",
-    ),
+    "tlsInspectionLeafCacheAuthorityChanged":
+        MessageLookupByLibrary.simpleMessage(
+          "The local authority changed. Revalidate trust and prepare the policy again.",
+        ),
     "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
       "Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.",
     ),
@@ -1741,9 +1788,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionPlatformTrustLastChecked":
         MessageLookupByLibrary.simpleMessage("Last checked"),
-    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
-      "Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.",
-    ),
+    "tlsInspectionPlatformTrustLimitations":
+        MessageLookupByLibrary.simpleMessage(
+          "Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.",
+        ),
     "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
       "Not installed in Android trust store",
     ),
@@ -1802,9 +1850,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.",
     ),
-    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
-      "The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.",
-    ),
+    "tlsInspectionPrivateKeyNeverExported":
+        MessageLookupByLibrary.simpleMessage(
+          "The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.",
+        ),
     "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
       "Readiness checklist",
     ),

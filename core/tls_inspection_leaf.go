@@ -56,6 +56,7 @@ type TLSInspectionLeafPolicyParams struct {
 }
 
 type TLSInspectionLeafPrepareParams struct {
+	VerifyHandshake            bool   `json:"verifyHandshake"`
 	Host                       string `json:"host"`
 	AuthorityGeneration        string `json:"authorityGeneration"`
 	AuthorityFingerprintSHA256 string `json:"authorityFingerprintSha256"`
@@ -81,6 +82,11 @@ type TLSInspectionLeafCacheStatus struct {
 }
 
 type TLSInspectionLeafCertificateStatus struct {
+	HandshakeVerified          bool      `json:"handshakeVerified,omitempty"`
+	HandshakeVersions          []string  `json:"handshakeVersions,omitempty"`
+	HandshakeALPN              string    `json:"handshakeAlpn,omitempty"`
+	HandshakeScope             string    `json:"handshakeScope,omitempty"`
+	HandshakeDurationMs        int64     `json:"handshakeDurationMs,omitempty"`
 	Host                       string    `json:"host"`
 	CacheHit                   bool      `json:"cacheHit"`
 	Generation                 string    `json:"generation"`
@@ -1076,7 +1082,7 @@ func prepareTLSInspectionLeafCertificate(params *TLSInspectionLeafPrepareParams)
 			resetTLSInspectionLeafPolicySession()
 			return nil, &MethodError{Code: "leaf_issue_failed", Message: err.Error()}
 		}
-		return tlsInspectionLeafCertificateStatus(entry, true), nil
+		return completeTLSInspectionLeafPreparation(entry, true, authority, params.VerifyHandshake)
 	}
 	if _, err := pruneTLSInspectionLeafEntries(entries, tlsInspectionLeafMaxEntries-1); err != nil {
 		resetTLSInspectionLeafPolicySession()
@@ -1087,7 +1093,7 @@ func prepareTLSInspectionLeafCertificate(params *TLSInspectionLeafPrepareParams)
 		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{Code: "leaf_issue_failed", Message: err.Error()}
 	}
-	return tlsInspectionLeafCertificateStatus(entry, false), nil
+	return completeTLSInspectionLeafPreparation(entry, false, authority, params.VerifyHandshake)
 }
 
 func init() {

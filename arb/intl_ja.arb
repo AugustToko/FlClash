@@ -883,5 +883,20 @@
   "logbookTlsTrustFailed": "CA のインストールに失敗しました",
   "tlsInspectionPlatformTrustNotChecked": "プラットフォームの信頼状態はまだ確認されていません。",
   "tlsInspectionPlatformTrustFingerprintMismatch": "Android が返した信頼結果は現在の CA フィンガープリントと一致しません。",
-  "tlsInspectionPlatformTrustCheckFailed": "Android の証明書ストアで現在の CA を確認できませんでした。"
+  "tlsInspectionPlatformTrustCheckFailed": "Android の証明書ストアで現在の CA を確認できませんでした。",
+  "tlsInspectionHandshakeTitle": "TLS ハンドシェイクの自己テスト",
+  "tlsInspectionHandshakeDescription": "許可リストのリーフ証明書を使い、Core のメモリ内で TLS 1.2・TLS 1.3 と暗号化データの往復を検証します。接続先への通信、システムプロキシの変更、実際の HTTPS 復号は行いません。",
+  "tlsInspectionHandshakeDomain": "許可リストのドメイン",
+  "tlsInspectionHandshakeRun": "ハンドシェイクを検証",
+  "tlsInspectionHandshakeRunning": "検証中",
+  "tlsInspectionHandshakePassed": "今回の自己テストに成功",
+  "tlsInspectionHandshakeScope": "検証範囲",
+  "tlsInspectionHandshakeScopeValue": "Core のメモリ内 · 合成テストデータのみ",
+  "tlsInspectionHandshakeFingerprint": "検証済みリーフ証明書の SHA-256",
+  "tlsInspectionHandshakeRequirements": "先に CA・信頼・許可リストの準備を完了してください。",
+  "tlsInspectionHandshakeBoundary": "成功しても、OS や対象アプリが CA を信頼する証明にはなりません。上流接続・証明書ピンニング・実際の HTTPS 復号は未検証です。",
+  "tlsInspectionHandshakeError": "ローカル TLS の検証に失敗しました。CA と許可リストを確認して再試行してください。",
+  "tlsInspectionHandshakeUnsupported": "Core が TLS 1.2 と TLS 1.3 の実際のハンドシェイクを確認していません。Core を更新してください。",
+  "tlsInspectionHandshakeDomainError": "有効な許可ドメインを入力してください。除外ルールに一致するドメインは使えません。",
+  "tlsInspectionHandshakeStale": "この結果は現在の CA またはポリシーと一致しません。再検証してください。"
 }

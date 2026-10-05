@@ -7694,6 +7694,156 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `TLS handshake self-test`
+  String get tlsInspectionHandshakeTitle {
+    return Intl.message(
+      'TLS handshake self-test',
+      name: 'tlsInspectionHandshakeTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.`
+  String get tlsInspectionHandshakeDescription {
+    return Intl.message(
+      'Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.',
+      name: 'tlsInspectionHandshakeDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allowlisted domain`
+  String get tlsInspectionHandshakeDomain {
+    return Intl.message(
+      'Allowlisted domain',
+      name: 'tlsInspectionHandshakeDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify handshake`
+  String get tlsInspectionHandshakeRun {
+    return Intl.message(
+      'Verify handshake',
+      name: 'tlsInspectionHandshakeRun',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verifying handshake`
+  String get tlsInspectionHandshakeRunning {
+    return Intl.message(
+      'Verifying handshake',
+      name: 'tlsInspectionHandshakeRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This handshake test passed`
+  String get tlsInspectionHandshakePassed {
+    return Intl.message(
+      'This handshake test passed',
+      name: 'tlsInspectionHandshakePassed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verification scope`
+  String get tlsInspectionHandshakeScope {
+    return Intl.message(
+      'Verification scope',
+      name: 'tlsInspectionHandshakeScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core memory channel · synthetic test data only`
+  String get tlsInspectionHandshakeScopeValue {
+    return Intl.message(
+      'Core memory channel · synthetic test data only',
+      name: 'tlsInspectionHandshakeScopeValue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verified leaf certificate SHA-256`
+  String get tlsInspectionHandshakeFingerprint {
+    return Intl.message(
+      'Verified leaf certificate SHA-256',
+      name: 'tlsInspectionHandshakeFingerprint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete CA, trust and allowlist preparation first.`
+  String get tlsInspectionHandshakeRequirements {
+    return Intl.message(
+      'Complete CA, trust and allowlist preparation first.',
+      name: 'tlsInspectionHandshakeRequirements',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.`
+  String get tlsInspectionHandshakeBoundary {
+    return Intl.message(
+      'Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.',
+      name: 'tlsInspectionHandshakeBoundary',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local TLS verification failed. Check the CA and allowlist, then retry.`
+  String get tlsInspectionHandshakeError {
+    return Intl.message(
+      'Local TLS verification failed. Check the CA and allowlist, then retry.',
+      name: 'tlsInspectionHandshakeError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.`
+  String get tlsInspectionHandshakeUnsupported {
+    return Intl.message(
+      'Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.',
+      name: 'tlsInspectionHandshakeUnsupported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a valid domain within the active allowlist and outside exclusions.`
+  String get tlsInspectionHandshakeDomainError {
+    return Intl.message(
+      'Enter a valid domain within the active allowlist and outside exclusions.',
+      name: 'tlsInspectionHandshakeDomainError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This result no longer matches the current CA or policy. Verify again.`
+  String get tlsInspectionHandshakeStale {
+    return Intl.message(
+      'This result no longer matches the current CA or policy. Verify again.',
+      name: 'tlsInspectionHandshakeStale',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

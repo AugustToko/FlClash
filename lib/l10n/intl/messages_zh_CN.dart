@@ -1194,6 +1194,47 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
       "当前仅为证书签发与缓存安全底座，尚未连接 HTTPS 解密引擎。",
     ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "本地自检通过不等于系统或目标 App 信任该 CA；上游连接、证书固定与真实 HTTPS 解密仍未验证。",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "使用白名单叶证书，在 Core 内存通道中验证 TLS 1.2、TLS 1.3 与加密数据往返。不连接目标服务器，不改变系统代理，也不解密真实 HTTPS 流量。",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "白名单域名",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "请输入有效的白名单域名，且不能命中排除规则。",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "本地 TLS 握手验证失败，请检查 CA 和白名单后重试。",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "已验证叶证书 SHA-256",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "本次握手自检通过",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "请先完成 CA、信任验证和域名白名单准备。",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage("验证握手"),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "正在验证握手",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage("验证范围"),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Core 内存通道 · 仅合成测试数据",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "该结果不再对应当前 CA 或策略，请重新验证。",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "TLS 握手自检",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "当前 Core 未确认 TLS 1.2 和 TLS 1.3 的实际握手结果，请更新 Core 后重试。",
+    ),
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage("叶证书缓存"),
     "tlsInspectionLeafCacheAuthorityChanged":
         MessageLookupByLibrary.simpleMessage("本地 CA 已变化，请重新验证信任并准备策略。"),

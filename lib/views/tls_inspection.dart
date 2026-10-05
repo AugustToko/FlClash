@@ -7,6 +7,7 @@ import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/views/tls_handshake_card.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1081,6 +1082,8 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
                   _trustCard(state),
                   const SizedBox(height: 10),
                   _leafCacheCard(state),
+                  const SizedBox(height: 16),
+                  const TlsHandshakeCard(),
                   const SizedBox(height: 10),
                   _riskCard(state),
                   const SizedBox(height: 10),

@@ -1149,8 +1149,9 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       _serializeStateOperation(() => _readAuthorityExport(state.authority));
 
   Future<TlsInspectionLeafCertificateStatus> prepareLeafCertificate(
-    String host,
-  ) => _serializeStateOperation(() async {
+    String host, {
+    bool verifyHandshake = false,
+  }) => _serializeStateOperation(() async {
     if (state.busy || !state.prepared || !state.policy.matchesAllowlist(host)) {
       throw const TlsInspectionPolicyException(
         'domain_not_allowed',
@@ -1165,6 +1166,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
             host: host,
             authority: state.authority,
             policyDigest: expectedPolicyDigest,
+            verifyHandshake: verifyHandshake,
           );
       if (!result.validFor(
         state.authority,
