@@ -759,10 +759,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1682,10 +1681,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "Leaf certificate cache",
     ),
-    "tlsInspectionLeafCacheAuthorityChanged":
-        MessageLookupByLibrary.simpleMessage(
-          "The local authority changed. Revalidate trust and prepare the policy again.",
-        ),
+    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
+      "The local authority changed. Revalidate trust and prepare the policy again.",
+    ),
     "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
       "Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.",
     ),
@@ -1788,10 +1786,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionPlatformTrustLastChecked":
         MessageLookupByLibrary.simpleMessage("Last checked"),
-    "tlsInspectionPlatformTrustLimitations":
-        MessageLookupByLibrary.simpleMessage(
-          "Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.",
-        ),
+    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.",
+    ),
     "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
       "Not installed in Android trust store",
     ),
@@ -1850,10 +1847,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.",
     ),
-    "tlsInspectionPrivateKeyNeverExported":
-        MessageLookupByLibrary.simpleMessage(
-          "The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.",
-        ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.",
+    ),
     "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
       "Readiness checklist",
     ),

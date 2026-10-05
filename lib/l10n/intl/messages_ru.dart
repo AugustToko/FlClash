@@ -781,10 +781,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Введите содержимое правила",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "Разрешение на список приложений отклонено, поэтому установленные приложения недоступны. Предоставьте его вручную в системных настройках.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "Эта система не выдаёт список установленных приложений без разрешения. Предоставьте его, чтобы настроить прокси для отдельных приложений.",
     ),
@@ -1744,10 +1743,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "Кэш конечных сертификатов",
     ),
-    "tlsInspectionLeafCacheAuthorityChanged":
-        MessageLookupByLibrary.simpleMessage(
-          "Локальный CA изменился. Повторно проверьте доверие и подготовьте политику.",
-        ),
+    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
+      "Локальный CA изменился. Повторно проверьте доверие и подготовьте политику.",
+    ),
     "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
       "Core создаёт отдельные краткоживущие сертификаты только для активного списка разрешений. На этом этапе HTTPS-трафик по-прежнему не перехватывается и не расшифровывается.",
     ),
@@ -1852,10 +1850,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionPlatformTrustLastChecked":
         MessageLookupByLibrary.simpleMessage("Последняя проверка"),
-    "tlsInspectionPlatformTrustLimitations":
-        MessageLookupByLibrary.simpleMessage(
-          "Приложения Android могут отвергать пользовательские CA без явного разрешения, а закрепление сертификатов по-прежнему блокирует инспекцию.",
-        ),
+    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Приложения Android могут отвергать пользовательские CA без явного разрешения, а закрепление сертификатов по-прежнему блокирует инспекцию.",
+    ),
     "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
       "Не установлен в хранилище Android",
     ),
@@ -1912,10 +1909,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "Все условия выполнены. Для реальной инспекции всё ещё нужны отдельный движок и явное включение.",
     ),
-    "tlsInspectionPrivateKeyNeverExported":
-        MessageLookupByLibrary.simpleMessage(
-          "Секретный ключ хранится файлом в каталоге данных приложения и не защищён аппаратно. FlClash не экспортирует секретный ключ; экспортируется только публичный сертификат.",
-        ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "Секретный ключ хранится файлом в каталоге данных приложения и не защищён аппаратно. FlClash не экспортирует секретный ключ; экспортируется только публичный сертификат.",
+    ),
     "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
       "Готовность",
     ),

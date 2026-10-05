@@ -17,6 +17,8 @@ class _TlsHandshakeCardState extends ConsumerState<TlsHandshakeCard> {
   TlsInspectionLeafCertificateStatus? _result;
   bool _running = false;
   String _errorCode = '';
+  int _authorizationEpoch = 0;
+  int _proofEpoch = -1;
 
   @override
   void dispose() {
@@ -36,6 +38,7 @@ class _TlsHandshakeCardState extends ConsumerState<TlsHandshakeCard> {
     }
     setState(() {
       _running = true;
+      _proofEpoch = _authorizationEpoch;
       _result = null;
       _errorCode = '';
     });
@@ -78,10 +81,22 @@ class _TlsHandshakeCardState extends ConsumerState<TlsHandshakeCard> {
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
+    ref.listen(tlsInspectionProvider, (previous, next) {
+      if (!next.prepared ||
+          (previous != null &&
+              (previous.authority.generation != next.authority.generation ||
+                  previous.authority.fingerprintSha256 !=
+                      next.authority.fingerprintSha256 ||
+                  previous.leafCache.policyDigest !=
+                      next.leafCache.policyDigest))) {
+        _authorizationEpoch++;
+      }
+    });
     final state = ref.watch(tlsInspectionProvider);
     final result = _result;
     final currentResult =
         result != null &&
+        _proofEpoch == _authorizationEpoch &&
         result.contractValid &&
         state.isAllowed(result.host) &&
         result.validFor(

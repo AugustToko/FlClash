@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/code_preview.dart';
 
 const _generation = '0123456789abcdef0123456789abcdef';
 const _digest =
@@ -107,6 +108,10 @@ class _HandshakeNotifier extends TlsInspectionNotifier {
     return gate == null ? _leafResult(host) : gate!.future;
   }
 
+  void restore() {
+    state = initial;
+  }
+
   void revoke() {
     state = state.copyWith(policy: state.policy.copyWith(prepared: false));
   }
@@ -132,6 +137,7 @@ Future<_HandshakeNotifier> _pump(
       container: container,
       child: TestApp(
         locale: const Locale('zh', 'CN'),
+        theme: codePreviewTheme,
         child: Scaffold(
           appBar: AppBar(title: const Text('HTTPS 检查安全')),
           body: SingleChildScrollView(
@@ -161,6 +167,7 @@ Future<void> _run(WidgetTester tester) async {
 }
 
 void main() {
+  setUpAll(loadCodePreviewFonts);
   testWidgets('self-test remains disabled until safety preparation completes', (
     tester,
   ) async {
@@ -270,6 +277,44 @@ void main() {
     expect(find.text('TLS 1.3'), findsNothing);
   });
 
+  testWidgets('restoring readiness never resurrects a revoked proof', (
+    tester,
+  ) async {
+    final notifier = await _pump(tester);
+    await _run(tester);
+    notifier.revoke();
+    await tester.pumpAndSettle();
+    notifier.restore();
+    await tester.pumpAndSettle();
+    expect(find.text('本次握手自检通过'), findsNothing);
+    expect(find.text('该结果不再对应当前 CA 或策略，请重新验证。'), findsOneWidget);
+    await _run(tester);
+    expect(find.text('本次握手自检通过'), findsOneWidget);
+  });
+
+  testWidgets(
+    'revocation while running invalidates a late restored-session result',
+    (tester) async {
+      final gate = Completer<TlsInspectionLeafCertificateStatus>();
+      final notifier = _HandshakeNotifier()..gate = gate;
+      await _pump(tester, notifier: notifier);
+      await tester.enterText(
+        find.byKey(const Key('tls-handshake-domain')),
+        'api.example.com',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      notifier.revoke();
+      await tester.pump();
+      notifier.restore();
+      await tester.pump();
+      gate.complete(_leafResult('api.example.com'));
+      await tester.pumpAndSettle();
+      expect(find.text('本次握手自检通过'), findsNothing);
+      expect(find.text('该结果不再对应当前 CA 或策略，请重新验证。'), findsOneWidget);
+    },
+  );
+
   testWidgets('editing the domain clears a previous result', (tester) async {
     await _pump(tester);
     await _run(tester);
@@ -309,7 +354,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(Scaffold),
-      matchesGoldenFile('../goldens/tls_handshake_ready_preview.png'),
+      matchesCodePreview('../goldens/tls_handshake_ready_preview.png'),
     );
   });
 
@@ -320,7 +365,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(Scaffold),
-      matchesGoldenFile('../goldens/tls_handshake_verified_preview.png'),
+      matchesCodePreview('../goldens/tls_handshake_verified_preview.png'),
     );
   });
 
@@ -336,7 +381,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(Scaffold),
-      matchesGoldenFile('../goldens/tls_handshake_failed_preview.png'),
+      matchesCodePreview('../goldens/tls_handshake_failed_preview.png'),
     );
   });
 
@@ -347,7 +392,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(Scaffold),
-      matchesGoldenFile('../goldens/tls_handshake_desktop_preview.png'),
+      matchesCodePreview('../goldens/tls_handshake_desktop_preview.png'),
     );
   });
 }

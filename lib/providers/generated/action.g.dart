@@ -91,7 +91,7 @@ final class SetupActionProvider extends $NotifierProvider<SetupAction, void> {
   }
 }
 
-String _$setupActionHash() => r'1ad2b0edb6bb505c638c6982020932351e8fd53c';
+String _$setupActionHash() => r'b92bf12df63fbc9bd593a26ae0d5bc0d84fb0656';
 
 abstract class _$SetupAction extends $Notifier<void> {
   void build();
@@ -142,7 +142,7 @@ final class BackupActionProvider extends $NotifierProvider<BackupAction, void> {
   }
 }
 
-String _$backupActionHash() => r'ffca3a6f1f1b96c61561412e99b2410c7660311f';
+String _$backupActionHash() => r'af2c8015be973ce8bf60303ec1327f7eb7bcd8cf';
 
 abstract class _$BackupAction extends $Notifier<void> {
   void build();
@@ -193,7 +193,7 @@ final class CoreActionProvider extends $NotifierProvider<CoreAction, void> {
   }
 }
 
-String _$coreActionHash() => r'8af16ddd3fd82648d49b6f91d7ec30198f10ddc5';
+String _$coreActionHash() => r'd9eda5275dd63b5bef395ac91a06cab8133e75b9';
 
 abstract class _$CoreAction extends $Notifier<void> {
   void build();
@@ -244,7 +244,7 @@ final class SystemActionProvider extends $NotifierProvider<SystemAction, void> {
   }
 }
 
-String _$systemActionHash() => r'89be5d3bd8143e3e34f04c4811053bce16e590e7';
+String _$systemActionHash() => r'3f57a4326e7728b1f95acc8b31a36b5c73fd2594';
 
 abstract class _$SystemAction extends $Notifier<void> {
   void build();
@@ -295,7 +295,7 @@ final class StoreActionProvider extends $NotifierProvider<StoreAction, void> {
   }
 }
 
-String _$storeActionHash() => r'09116828bb7abbb75d54e0d3f8d842104b8d5790';
+String _$storeActionHash() => r'36d5557cdd664110e8ea3d679c7daeb0630d9359';
 
 abstract class _$StoreAction extends $Notifier<void> {
   void build();
@@ -398,7 +398,7 @@ final class ProxiesActionProvider
   }
 }
 
-String _$proxiesActionHash() => r'd25f2cc46754b67fb1f224b42625be36c9818edb';
+String _$proxiesActionHash() => r'4e2e1df85f3cf8fd49aac9749486fabc0fbefa67';
 
 abstract class _$ProxiesAction extends $Notifier<void> {
   void build();
@@ -502,7 +502,7 @@ final class GeoResourceActionProvider
   }
 }
 
-String _$geoResourceActionHash() => r'f83bb6968d44102ed056d850d0dd7a46a63293d8';
+String _$geoResourceActionHash() => r'4a71f437c1b355765d13afe7b44cd10f41d59b6c';
 
 abstract class _$GeoResourceAction extends $Notifier<void> {
   void build();

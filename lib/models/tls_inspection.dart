@@ -600,7 +600,8 @@ class TlsInspectionLeafCertificateStatus {
     final authorityStart = authority.notBefore;
     final authorityExpiry = authority.notAfter;
     final normalizedExpectedHost = normalizeTlsInspectionHost(expectedHost);
-    if (!_isValidTlsInspectionHost(host) ||
+    if (!contractValid ||
+        !_isValidTlsInspectionHost(host) ||
         host != normalizedExpectedHost ||
         !authority.validNow ||
         generation != authority.generation ||

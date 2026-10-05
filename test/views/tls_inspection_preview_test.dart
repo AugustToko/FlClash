@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../helpers/test_app.dart';
+import '../helpers/code_preview.dart';
 
 late TlsInspectionState _previewState;
 
@@ -161,9 +162,10 @@ Future<void> _pumpPreview(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const TestApp(
-        locale: Locale('zh', 'CN'),
-        child: TlsInspectionView(),
+      child: TestApp(
+        locale: const Locale('zh', 'CN'),
+        theme: codePreviewTheme,
+        child: const TlsInspectionView(),
       ),
     ),
   );
@@ -171,6 +173,7 @@ Future<void> _pumpPreview(
 }
 
 void main() {
+  setUpAll(loadCodePreviewFonts);
   testWidgets(
     'TLS inspection foundation declares the non-decryption boundary',
     (tester) async {
@@ -194,7 +197,7 @@ void main() {
 
     await expectLater(
       find.byType(TlsInspectionView),
-      matchesGoldenFile('../goldens/tls_inspection_not_ready_preview.png'),
+      matchesCodePreview('../goldens/tls_inspection_not_ready_preview.png'),
     );
   });
 
@@ -219,7 +222,9 @@ void main() {
     expect(find.textContaining('证书固定仍可能阻止检查。'), findsOneWidget);
     await expectLater(
       find.byType(TlsInspectionView),
-      matchesGoldenFile('../goldens/tls_inspection_platform_trust_preview.png'),
+      matchesCodePreview(
+        '../goldens/tls_inspection_platform_trust_preview.png',
+      ),
     );
   });
 
@@ -232,7 +237,7 @@ void main() {
 
     await expectLater(
       find.byType(TlsInspectionView),
-      matchesGoldenFile('../goldens/tls_inspection_mobile_preview.png'),
+      matchesCodePreview('../goldens/tls_inspection_mobile_preview.png'),
     );
   });
 
@@ -255,7 +260,7 @@ void main() {
     expect(find.text('最长 24 小时'), findsOneWidget);
     await expectLater(
       find.byType(TlsInspectionView),
-      matchesGoldenFile('../goldens/tls_inspection_leaf_cache_preview.png'),
+      matchesCodePreview('../goldens/tls_inspection_leaf_cache_preview.png'),
     );
   });
 
@@ -277,7 +282,49 @@ void main() {
     expect(find.text('accounts.example.com'), findsOneWidget);
     await expectLater(
       find.byType(TlsInspectionView),
-      matchesGoldenFile('../goldens/tls_inspection_policy_preview.png'),
+      matchesCodePreview('../goldens/tls_inspection_policy_preview.png'),
+    );
+  });
+
+  testWidgets('self-test is reachable in the full safety workspace', (
+    tester,
+  ) async {
+    await _pumpPreview(
+      tester,
+      size: const Size(360, 800),
+      state: _preparedState(),
+    );
+    await tester.scrollUntilVisible(
+      find.text('TLS 握手自检'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('TLS 握手自检').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('TLS handshake integrated safety workspace preview', (
+    tester,
+  ) async {
+    await _pumpPreview(
+      tester,
+      size: const Size(430, 932),
+      state: _preparedState(),
+    );
+    await tester.scrollUntilVisible(
+      find.text('TLS 握手自检'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.byKey(const Key('tls-handshake-domain')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byType(TlsInspectionView),
+      matchesCodePreview(
+        '../goldens/tls_inspection_handshake_integrated_preview.png',
+      ),
     );
   });
 
@@ -290,7 +337,7 @@ void main() {
 
     await expectLater(
       find.byType(TlsInspectionView),
-      matchesGoldenFile('../goldens/tls_inspection_desktop_preview.png'),
+      matchesCodePreview('../goldens/tls_inspection_desktop_preview.png'),
     );
   });
 }

@@ -1568,10 +1568,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
       "前提条件は完了しています。実際の検査には別のエンジンと明示的な有効化が必要です。",
     ),
-    "tlsInspectionPrivateKeyNeverExported":
-        MessageLookupByLibrary.simpleMessage(
-          "秘密鍵はアプリのデータディレクトリにファイルとして保存され、ハードウェア保護ではありません。FlClash は秘密鍵をエクスポートせず、公開証明書だけをエクスポートできます。",
-        ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "秘密鍵はアプリのデータディレクトリにファイルとして保存され、ハードウェア保護ではありません。FlClash は秘密鍵をエクスポートせず、公開証明書だけをエクスポートできます。",
+    ),
     "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage("準備状況"),
     "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
       "1 件以上の許可ルール",
