@@ -341,6 +341,8 @@ void main() {
       {...validPayload, 'policyDigest': '${digest}0'},
       {...validPayload, 'host': '${'a' * 254}.example.com'},
       {...validPayload}..remove('privateKeyExported'),
+      {...validPayload}..remove('cacheHit'),
+      {...validPayload, 'cacheHit': 'true'},
       {...validPayload, 'privateKeyExported': 'false'},
     ]) {
       final malformed = TlsInspectionLeafCertificateStatus.fromJson(payload);
