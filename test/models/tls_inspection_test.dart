@@ -6,6 +6,7 @@ const _fingerprintA =
 const _fingerprintB =
     'BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB:BB';
 const _generationA = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const _runtimeProof = 'fedcba9876543210fedcba9876543210';
 
 TlsInspectionAuthorityStatus _validAuthority({
   String fingerprint = _fingerprintA,
@@ -260,6 +261,7 @@ void main() {
       'keyPermissionsRestricted': true,
       'privateKeysExported': false,
       'runtimeAuthorizationPresent': true,
+      'runtimeProofId': _runtimeProof,
       'updatedAt': now,
     };
     final valid = TlsInspectionLeafCacheStatus.fromJson(validPayload);
@@ -273,6 +275,9 @@ void main() {
       {...validPayload, 'policyDigest': '${validPayload['policyDigest']}0'},
       {...validPayload}..remove('privateKeysExported'),
       {...validPayload, 'entryCount': 1.5},
+      {...validPayload}..remove('runtimeProofId'),
+      {...validPayload, 'runtimeProofId': 'abc'},
+      {...validPayload, 'runtimeProofId': 'z' * 32},
     ]) {
       final value = TlsInspectionLeafCacheStatus.fromJson(payload);
       expect(value.contractValid, isFalse, reason: payload.toString());
@@ -298,6 +303,7 @@ void main() {
         keyPermissionsRestricted: true,
         privateKeysExported: true,
         runtimeAuthorizationPresent: true,
+        runtimeProofId: valid.runtimeProofId,
         updatedAt: valid.updatedAt,
       ).matchesAuthority(authority),
       isFalse,
@@ -385,5 +391,73 @@ void main() {
       ).validFor(authority, digest, expectedHost: 'api.example.com'),
       isFalse,
     );
+  });
+
+  test('handshake proof is bound to one validated Core runtime', () {
+    final authority = _validAuthority();
+    const digest =
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    final now = DateTime.now().toUtc();
+    final payload = <String, Object?>{
+      'host': 'api.example.com',
+      'cacheHit': true,
+      'generation': _generationA,
+      'authorityFingerprintSha256': _fingerprintA,
+      'policyDigest': digest,
+      'fingerprintSha256': _fingerprintB,
+      'serialNumber': '01',
+      'notBefore': now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'notAfter': now.add(const Duration(hours: 23)).toIso8601String(),
+      'algorithm': 'ECDSA P-256 / SHA-256',
+      'keyStorage': 'app-data-file',
+      'privateKeyExported': false,
+      'handshakeVerified': true,
+      'handshakeVersions': ['TLS 1.2', 'TLS 1.3'],
+      'handshakeAlpn': 'http/1.1',
+      'handshakeScope': 'in-memory-only',
+      'handshakeDurationMs': 9,
+      'runtimeProofId': _runtimeProof,
+    };
+
+    final proof = TlsInspectionLeafCertificateStatus.fromJson(payload);
+    expect(proof.handshakeContractValid, isTrue);
+    expect(
+      proof.validFor(
+        authority,
+        digest,
+        expectedHost: 'api.example.com',
+        expectedRuntimeProofId: _runtimeProof,
+      ),
+      isTrue,
+    );
+    expect(
+      proof.validFor(
+        authority,
+        digest,
+        expectedHost: 'api.example.com',
+        expectedRuntimeProofId: '0123456789abcdef0123456789abcdef',
+      ),
+      isFalse,
+    );
+
+    for (final invalid in [
+      {...payload}..remove('runtimeProofId'),
+      {...payload, 'runtimeProofId': 'abc'},
+      {
+        ...payload,
+        'handshakeVersions': ['TLS 1.3', 'TLS 1.2'],
+      },
+      {...payload, 'handshakeAlpn': 'h2'},
+      {...payload, 'handshakeScope': 'external'},
+      {...payload, 'handshakeDurationMs': 5001},
+    ]) {
+      expect(
+        TlsInspectionLeafCertificateStatus.fromJson(
+          invalid,
+        ).handshakeContractValid,
+        isFalse,
+        reason: invalid.toString(),
+      );
+    }
   });
 }

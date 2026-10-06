@@ -345,6 +345,7 @@ class TlsInspectionLeafCacheStatus {
   final bool keyPermissionsRestricted;
   final bool privateKeysExported;
   final bool runtimeAuthorizationPresent;
+  final String runtimeProofId;
   final DateTime? updatedAt;
   final String issue;
   final bool contractValid;
@@ -363,6 +364,7 @@ class TlsInspectionLeafCacheStatus {
     this.keyPermissionsRestricted = false,
     this.privateKeysExported = false,
     this.runtimeAuthorizationPresent = false,
+    this.runtimeProofId = '',
     this.updatedAt,
     this.issue = '',
     this.contractValid = false,
@@ -394,6 +396,10 @@ class TlsInspectionLeafCacheStatus {
       json['keyStorage'],
       maxLength: 64,
     );
+    final rawRuntimeProofId = _strictTlsInspectionString(
+      json['runtimeProofId'],
+      maxLength: 32,
+    ).toLowerCase();
     final rawIssue = json['issue'] == null
         ? ''
         : _strictTlsInspectionString(json['issue'], maxLength: 128);
@@ -423,6 +429,7 @@ class TlsInspectionLeafCacheStatus {
         json['keyPermissionsRestricted'] is bool &&
         json['privateKeysExported'] is bool &&
         json['runtimeAuthorizationPresent'] is bool &&
+        _tlsInspectionRuntimeProofPattern.hasMatch(rawRuntimeProofId) &&
         rawUpdatedAt != null &&
         (json['issue'] == null ||
             (json['issue'] is String &&
@@ -459,6 +466,7 @@ class TlsInspectionLeafCacheStatus {
       runtimeAuthorizationPresent: json['runtimeAuthorizationPresent'] is bool
           ? json['runtimeAuthorizationPresent'] as bool
           : false,
+      runtimeProofId: rawRuntimeProofId,
       updatedAt: rawUpdatedAt?.toUtc(),
       issue: rawIssue,
       contractValid: contractValid,
@@ -484,11 +492,18 @@ class TlsInspectionLeafCacheStatus {
       keyPermissionsRestricted &&
       !privateKeysExported &&
       runtimeAuthorizationPresent &&
+      _tlsInspectionRuntimeProofPattern.hasMatch(runtimeProofId) &&
       updatedAt != null &&
       issue.isEmpty;
 }
 
 class TlsInspectionLeafCertificateStatus {
+  final bool handshakeVerified;
+  final List<String> handshakeVersions;
+  final String handshakeAlpn;
+  final String handshakeScope;
+  final int handshakeDurationMs;
+  final String runtimeProofId;
   final String host;
   final bool cacheHit;
   final String generation;
@@ -504,6 +519,12 @@ class TlsInspectionLeafCertificateStatus {
   final bool contractValid;
 
   const TlsInspectionLeafCertificateStatus({
+    this.handshakeVerified = false,
+    this.handshakeVersions = const [],
+    this.handshakeAlpn = '',
+    this.handshakeScope = '',
+    this.handshakeDurationMs = -1,
+    this.runtimeProofId = '',
     this.host = '',
     this.cacheHit = false,
     this.generation = '',
@@ -527,6 +548,32 @@ class TlsInspectionLeafCertificateStatus {
       return value is String ? DateTime.tryParse(value)?.toUtc() : null;
     }
 
+    final rawHandshakeVersions = json['handshakeVersions'];
+    final handshakeVersions =
+        rawHandshakeVersions is List &&
+            rawHandshakeVersions.length <= 4 &&
+            rawHandshakeVersions.every(
+              (value) => value is String && value.length <= 16,
+            )
+        ? List<String>.unmodifiable(rawHandshakeVersions.cast<String>())
+        : const <String>[];
+    final rawHandshakeAlpn = _strictTlsInspectionString(
+      json['handshakeAlpn'],
+      maxLength: 32,
+    );
+    final rawHandshakeScope = _strictTlsInspectionString(
+      json['handshakeScope'],
+      maxLength: 32,
+    );
+    final rawRuntimeProofId = _strictTlsInspectionString(
+      json['runtimeProofId'],
+      maxLength: 32,
+    ).toLowerCase();
+    final rawHandshakeDuration = json['handshakeDurationMs'];
+    final handshakeDurationMs =
+        _isBoundedTlsInspectionInt(rawHandshakeDuration, min: 0, max: 5000)
+        ? (rawHandshakeDuration as num).toInt()
+        : -1;
     final rawHost = _strictTlsInspectionString(json['host'], maxLength: 253);
     final normalizedHost = normalizeTlsInspectionHost(rawHost);
     final rawGeneration = _strictTlsInspectionString(
@@ -570,8 +617,24 @@ class TlsInspectionLeafCertificateStatus {
         date('notAfter') != null &&
         rawAlgorithm == 'ECDSA P-256 / SHA-256' &&
         rawKeyStorage == 'app-data-file' &&
-        json['privateKeyExported'] is bool;
+        json['privateKeyExported'] is bool &&
+        (json['handshakeVerified'] == null ||
+            json['handshakeVerified'] is bool) &&
+        (json['handshakeVersions'] == null ||
+            (rawHandshakeVersions is List &&
+                handshakeVersions.length == rawHandshakeVersions.length)) &&
+        (rawHandshakeDuration == null || handshakeDurationMs >= 0) &&
+        (rawRuntimeProofId.isEmpty ||
+            _tlsInspectionRuntimeProofPattern.hasMatch(rawRuntimeProofId));
     return TlsInspectionLeafCertificateStatus(
+      handshakeVerified: json['handshakeVerified'] is bool
+          ? json['handshakeVerified'] as bool
+          : false,
+      handshakeVersions: handshakeVersions,
+      handshakeAlpn: rawHandshakeAlpn,
+      handshakeScope: rawHandshakeScope,
+      handshakeDurationMs: handshakeDurationMs,
+      runtimeProofId: rawRuntimeProofId,
       host: normalizedHost,
       cacheHit: json['cacheHit'] is bool ? json['cacheHit'] as bool : false,
       generation: rawGeneration,
@@ -590,10 +653,23 @@ class TlsInspectionLeafCertificateStatus {
     );
   }
 
+  bool get handshakeContractValid =>
+      contractValid &&
+      handshakeVerified &&
+      handshakeVersions.length == 2 &&
+      handshakeVersions[0] == 'TLS 1.2' &&
+      handshakeVersions[1] == 'TLS 1.3' &&
+      handshakeAlpn == 'http/1.1' &&
+      handshakeScope == 'in-memory-only' &&
+      handshakeDurationMs >= 0 &&
+      handshakeDurationMs <= 5000 &&
+      _tlsInspectionRuntimeProofPattern.hasMatch(runtimeProofId);
+
   bool validFor(
     TlsInspectionAuthorityStatus authority,
     String expectedPolicyDigest, {
     required String expectedHost,
+    String expectedRuntimeProofId = '',
   }) {
     final start = notBefore;
     final expiry = notAfter;
@@ -607,6 +683,8 @@ class TlsInspectionLeafCertificateStatus {
         generation != authority.generation ||
         authorityFingerprintSha256 != authority.fingerprintSha256 ||
         policyDigest != expectedPolicyDigest ||
+        (expectedRuntimeProofId.isNotEmpty &&
+            runtimeProofId != expectedRuntimeProofId) ||
         !_tlsInspectionPolicyDigestPattern.hasMatch(policyDigest) ||
         !_tlsInspectionFingerprintPattern.hasMatch(fingerprintSha256) ||
         serialNumber.isEmpty ||
@@ -632,6 +710,7 @@ class TlsInspectionLeafCertificateStatus {
 
 final _tlsInspectionLeafSerialPattern = RegExp(r'^[0-9A-Fa-f]{1,32}$');
 final _tlsInspectionPolicyDigestPattern = RegExp(r'^[0-9a-f]{64}$');
+final _tlsInspectionRuntimeProofPattern = RegExp(r'^[0-9a-f]{32}$');
 
 bool _isPublicCertificatePem(String value) {
   final normalized = value.trim();

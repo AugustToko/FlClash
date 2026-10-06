@@ -63,8 +63,12 @@ func TestTLSInspectionHandshakePreparation(t *testing.T) {
 	if failure != nil {
 		t.Fatal(failure.Code)
 	}
-	if !first.HandshakeVerified || first.CacheHit || first.HandshakeScope != "in-memory-only" || first.HandshakeALPN != "http/1.1" || !reflect.DeepEqual(first.HandshakeVersions, []string{"TLS 1.2", "TLS 1.3"}) {
+	if !first.HandshakeVerified || first.CacheHit || first.HandshakeScope != "in-memory-only" || first.HandshakeALPN != "http/1.1" || !reflect.DeepEqual(first.HandshakeVersions, []string{"TLS 1.2", "TLS 1.3"}) || !validTLSInspectionGeneration(first.RuntimeProofID) {
 		t.Fatalf("unexpected local handshake result: %+v", first)
+	}
+	cache := getTLSInspectionLeafCacheStatus()
+	if !cache.Ready || cache.RuntimeProofID != first.RuntimeProofID {
+		t.Fatalf("handshake proof was not bound to the ready process cache: result=%+v cache=%+v", first, cache)
 	}
 	if first.HandshakeDurationMs < 0 || first.HandshakeDurationMs > 5000 {
 		t.Fatalf("unbounded handshake duration: %d", first.HandshakeDurationMs)
@@ -91,8 +95,16 @@ func TestTLSInspectionHandshakeIsExplicit(t *testing.T) {
 	if failure != nil {
 		t.Fatal(failure.Code)
 	}
-	if result.HandshakeVerified || result.HandshakeVersions != nil || result.HandshakeScope != "" || result.HandshakeALPN != "" {
+	if result.HandshakeVerified || result.HandshakeVersions != nil || result.HandshakeScope != "" || result.HandshakeALPN != "" || result.RuntimeProofID != "" {
 		t.Fatal("ordinary leaf issuance must not claim handshake verification")
+	}
+}
+
+func TestTLSInspectionRuntimeProofStableWithinProcess(t *testing.T) {
+	first := currentTLSInspectionRuntimeProofID()
+	second := currentTLSInspectionRuntimeProofID()
+	if !validTLSInspectionGeneration(first) || second != first {
+		t.Fatalf("runtime proof is not a stable process-local identifier: first=%q second=%q", first, second)
 	}
 }
 

@@ -14,6 +14,7 @@ const _leafFingerprint =
 const _generation = '0123456789abcdef0123456789abcdef';
 const _policyDigest =
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const _runtimeProof = 'fedcba9876543210fedcba9876543210';
 
 class _TlsInspectionCoreHandler extends CoreHandlerInterface {
   final calls = <CoreMethodCall>[];
@@ -80,6 +81,7 @@ class _TlsInspectionCoreHandler extends CoreHandlerInterface {
         'keyPermissionsRestricted': true,
         'privateKeysExported': false,
         'runtimeAuthorizationPresent': true,
+        'runtimeProofId': _runtimeProof,
         'updatedAt': '2026-09-28T00:00:00Z',
       },
       CoreMethod.prepareTlsInspectionLeafCertificate => <String, Object?>{

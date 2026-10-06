@@ -115,20 +115,14 @@ extension CoreControllerTlsInspectionExt on CoreController {
         message: 'Core returned an empty leaf certificate result',
       );
     }
-    if (verifyHandshake &&
-        (data['handshakeVerified'] != true ||
-            data['handshakeScope'] != 'in-memory-only' ||
-            data['handshakeAlpn'] != 'http/1.1' ||
-            data['handshakeVersions'] is! List ||
-            (data['handshakeVersions'] as List).length != 2 ||
-            (data['handshakeVersions'] as List)[0] != 'TLS 1.2' ||
-            (data['handshakeVersions'] as List)[1] != 'TLS 1.3')) {
+    final result = TlsInspectionLeafCertificateStatus.fromJson(data);
+    if (verifyHandshake && !result.handshakeContractValid) {
       throw const CoreMethodException(
         code: 'leaf_handshake_unverified',
-        message: 'Core did not confirm both local TLS handshake versions',
+        message: 'Core did not confirm the local TLS handshake contract',
       );
     }
-    return TlsInspectionLeafCertificateStatus.fromJson(data);
+    return result;
   }
 
   Future<TlsInspectionAuthorityStatus> _authorityMutation(
