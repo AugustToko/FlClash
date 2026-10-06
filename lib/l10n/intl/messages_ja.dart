@@ -1378,6 +1378,49 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
       "証明書発行とキャッシュの安全基盤のみです。HTTPS 復号エンジンはまだ接続されていません。",
     ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "成功しても、OS や対象アプリが CA を信頼する証明にはなりません。上流接続・証明書ピンニング・実際の HTTPS 復号は未検証です。",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "許可リストのリーフ証明書を使い、Core のメモリ内で TLS 1.2・TLS 1.3 と暗号化データの往復を検証します。接続先への通信、システムプロキシの変更、実際の HTTPS 復号は行いません。",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "許可リストのドメイン",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "有効な許可ドメインを入力してください。除外ルールに一致するドメインは使えません。",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "ローカル TLS の検証に失敗しました。CA と許可リストを確認して再試行してください。",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "検証済みリーフ証明書の SHA-256",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "今回の自己テストに成功",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "先に CA・信頼・許可リストの準備を完了してください。",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "ハンドシェイクを検証",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "検証中",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage("検証範囲"),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Core のメモリ内 · 合成テストデータのみ",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "この結果は現在の CA またはポリシーと一致しません。再検証してください。",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "TLS ハンドシェイクの自己テスト",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core が TLS 1.2 と TLS 1.3 の実際のハンドシェイクを確認していません。Core を更新してください。",
+    ),
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "リーフ証明書キャッシュ",
     ),

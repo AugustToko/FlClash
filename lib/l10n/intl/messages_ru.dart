@@ -1695,6 +1695,51 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
       "Только безопасная основа выпуска и кэширования сертификатов: движок расшифровки HTTPS ещё не подключён.",
     ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Успех не подтверждает доверие ОС или приложений. Соединение с сервером, закрепление сертификата и расшифровка реального HTTPS не проверяются.",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "Проверка TLS 1.2, TLS 1.3 и обмена зашифрованными данными с сертификатом разрешённого домена внутри памяти Core. Без подключения к сайту, изменения системного прокси или расшифровки реального HTTPS.",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "Разрешённый домен",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "Введите допустимый домен из активного списка, не попадающий под исключения.",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "Проверка локального TLS не удалась. Проверьте CA и список доменов.",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 проверенного сертификата",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "Самопроверка пройдена",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала подготовьте CA, доверие и список разрешённых доменов.",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "Проверить TLS",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "Идёт проверка",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage(
+      "Область проверки",
+    ),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Канал в памяти Core · только тестовые данные",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "Результат больше не соответствует текущему CA или правилам. Повторите проверку.",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "Самопроверка TLS",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core не подтвердил реальные рукопожатия TLS 1.2 и TLS 1.3. Обновите Core.",
+    ),
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "Кэш конечных сертификатов",
     ),

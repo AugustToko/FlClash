@@ -1633,6 +1633,51 @@ class MessageLookup extends MessageLookupByLibrary {
     "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
       "Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.",
     ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "Allowlisted domain",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid domain within the active allowlist and outside exclusions.",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "Local TLS verification failed. Check the CA and allowlist, then retry.",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "Verified leaf certificate SHA-256",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "This handshake test passed",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Complete CA, trust and allowlist preparation first.",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "Verify handshake",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "Verifying handshake",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage(
+      "Verification scope",
+    ),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Core memory channel · synthetic test data only",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "This result no longer matches the current CA or policy. Verify again.",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "TLS handshake self-test",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.",
+    ),
     "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
       "Leaf certificate cache",
     ),

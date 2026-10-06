@@ -96,6 +96,7 @@ extension CoreControllerTlsInspectionExt on CoreController {
     required String host,
     required TlsInspectionAuthorityStatus authority,
     required String policyDigest,
+    bool verifyHandshake = false,
   }) async {
     final data = await _interface.invokeMethod<Map<String, dynamic>>(
       method: CoreMethod.prepareTlsInspectionLeafCertificate,
@@ -104,6 +105,7 @@ extension CoreControllerTlsInspectionExt on CoreController {
         'authorityGeneration': authority.generation,
         'authorityFingerprintSha256': authority.fingerprintSha256,
         'policyDigest': policyDigest,
+        if (verifyHandshake) 'verifyHandshake': true,
       },
       timeout: const Duration(seconds: 15),
     );
@@ -113,7 +115,14 @@ extension CoreControllerTlsInspectionExt on CoreController {
         message: 'Core returned an empty leaf certificate result',
       );
     }
-    return TlsInspectionLeafCertificateStatus.fromJson(data);
+    final result = TlsInspectionLeafCertificateStatus.fromJson(data);
+    if (verifyHandshake && !result.handshakeContractValid) {
+      throw const CoreMethodException(
+        code: 'leaf_handshake_unverified',
+        message: 'Core did not confirm the local TLS handshake contract',
+      );
+    }
+    return result;
   }
 
   Future<TlsInspectionAuthorityStatus> _authorityMutation(

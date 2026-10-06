@@ -7,6 +7,7 @@ import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/views/tls_handshake_card.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -666,19 +667,39 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.admin_panel_settings_outlined),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l.tlsInspectionTrust,
-                    style: context.textTheme.titleMedium?.toSoftBold,
-                  ),
-                ),
-                if (usesPlatformVerification)
-                  Chip(label: Text(_platformTrustStateLabel(trust.state))),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final title = Row(
+                  children: [
+                    const Icon(Icons.admin_panel_settings_outlined),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l.tlsInspectionTrust,
+                        style: context.textTheme.titleMedium?.toSoftBold,
+                      ),
+                    ),
+                  ],
+                );
+                if (!usesPlatformVerification) {
+                  return title;
+                }
+                final badge = Chip(
+                  label: Text(_platformTrustStateLabel(trust.state)),
+                );
+                if (constraints.maxWidth < 400) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [title, const SizedBox(height: 8), badge],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: title),
+                    badge,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 8),
             Text(
@@ -1081,6 +1102,8 @@ class _TlsInspectionViewState extends ConsumerState<TlsInspectionView>
                   _trustCard(state),
                   const SizedBox(height: 10),
                   _leafCacheCard(state),
+                  const SizedBox(height: 16),
+                  const TlsHandshakeCard(),
                   const SizedBox(height: 10),
                   _riskCard(state),
                   const SizedBox(height: 10),

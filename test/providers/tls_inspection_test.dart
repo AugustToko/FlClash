@@ -23,6 +23,8 @@ const _leafFingerprint =
     'CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC:CC';
 const _leafPolicyDigest =
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const _runtimeProof = 'fedcba9876543210fedcba9876543210';
+const _runtimeProofB = '0123456789abcdef0123456789abcdef';
 
 class _MemoryPolicyStore implements TlsInspectionPolicyStore {
   TlsInspectionPolicy value;
@@ -123,6 +125,9 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
   int leafEntries = 0;
   int leafConfigureCalls = 0;
   int leafPrepareCalls = 0;
+  String runtimeProof = _runtimeProof;
+  String? leafResultRuntimeProof;
+  bool rotateRuntimeProofAfterPrepare = false;
   Exception? leafStatusReadError;
   Map<String, Object?>? lastLeafPolicyArguments;
 
@@ -159,6 +164,7 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
     'keyPermissionsRestricted': true,
     'privateKeysExported': false,
     'runtimeAuthorizationPresent': leafEnabled,
+    if (leafEnabled) 'runtimeProofId': runtimeProof,
     'updatedAt': DateTime.now().toUtc().toIso8601String(),
     'issue': leafEnabled ? '' : 'policy-disabled',
   };
@@ -187,7 +193,8 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
     leafPrepareCalls++;
     leafEntries = 1;
     final now = DateTime.now().toUtc();
-    return {
+    final proof = leafResultRuntimeProof ?? runtimeProof;
+    final result = <String, Object?>{
       'host': value['host'],
       'cacheHit': leafPrepareCalls > 1,
       'generation': authority['generation'],
@@ -201,6 +208,20 @@ class _FoundationCoreHandler extends CoreHandlerInterface {
       'keyStorage': 'app-data-file',
       'privateKeyExported': false,
     };
+    if (value['verifyHandshake'] == true) {
+      result.addAll({
+        'handshakeVerified': true,
+        'handshakeVersions': ['TLS 1.2', 'TLS 1.3'],
+        'handshakeScope': 'in-memory-only',
+        'handshakeAlpn': 'http/1.1',
+        'handshakeDurationMs': 5,
+        'runtimeProofId': proof,
+      });
+    }
+    if (rotateRuntimeProofAfterPrepare) {
+      runtimeProof = _runtimeProofB;
+    }
+    return result;
   }
 
   @override
@@ -1425,6 +1446,135 @@ void main() {
         ),
       );
       expect(core.leafPrepareCalls, 1);
+    },
+  );
+
+  test('handshake proof must match the ready Core runtime', () async {
+    final core = _FoundationCoreHandler();
+    final trust = _FakeTrustClient(
+      verificationSupported: false,
+      status: const CertificateTrustStatus(
+        platform: 'linux',
+        state: CertificateTrustState.unsupported,
+        verificationSupported: false,
+      ),
+    );
+    final scope = container(
+      store: _MemoryPolicyStore(),
+      core: core,
+      trustClient: trust,
+    );
+    final notifier = scope.read(tlsInspectionProvider.notifier);
+    await notifier.reload();
+    await notifier.addRule(
+      exclusion: false,
+      input: 'example.com',
+      scope: TlsInspectionRuleScope.subdomains,
+    );
+    await notifier.acknowledgeRisk();
+    await notifier.confirmManualTrust();
+    await notifier.setPrepared(true);
+
+    final proof = await notifier.prepareLeafCertificate(
+      'api.example.com',
+      verifyHandshake: true,
+    );
+    expect(proof.handshakeContractValid, isTrue);
+    expect(proof.runtimeProofId, _runtimeProof);
+    expect(scope.read(tlsInspectionProvider).prepared, isTrue);
+  });
+
+  test(
+    'a leaf proof from another Core runtime is rejected and revoked',
+    () async {
+      final core = _FoundationCoreHandler()
+        ..leafResultRuntimeProof = _runtimeProofB;
+      final trust = _FakeTrustClient(
+        verificationSupported: false,
+        status: const CertificateTrustStatus(
+          platform: 'linux',
+          state: CertificateTrustState.unsupported,
+          verificationSupported: false,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: core,
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+      await notifier.addRule(
+        exclusion: false,
+        input: 'example.com',
+        scope: TlsInspectionRuleScope.subdomains,
+      );
+      await notifier.acknowledgeRisk();
+      await notifier.confirmManualTrust();
+      await notifier.setPrepared(true);
+
+      await expectLater(
+        notifier.prepareLeafCertificate(
+          'api.example.com',
+          verifyHandshake: true,
+        ),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'leaf_result_invalid',
+          ),
+        ),
+      );
+      expect(core.leafEnabled, isFalse);
+      expect(scope.read(tlsInspectionProvider).prepared, isFalse);
+    },
+  );
+
+  test(
+    'a Core restart between handshake and status confirmation is rejected',
+    () async {
+      final core = _FoundationCoreHandler()
+        ..rotateRuntimeProofAfterPrepare = true;
+      final trust = _FakeTrustClient(
+        verificationSupported: false,
+        status: const CertificateTrustStatus(
+          platform: 'linux',
+          state: CertificateTrustState.unsupported,
+          verificationSupported: false,
+        ),
+      );
+      final scope = container(
+        store: _MemoryPolicyStore(),
+        core: core,
+        trustClient: trust,
+      );
+      final notifier = scope.read(tlsInspectionProvider.notifier);
+      await notifier.reload();
+      await notifier.addRule(
+        exclusion: false,
+        input: 'example.com',
+        scope: TlsInspectionRuleScope.subdomains,
+      );
+      await notifier.acknowledgeRisk();
+      await notifier.confirmManualTrust();
+      await notifier.setPrepared(true);
+
+      await expectLater(
+        notifier.prepareLeafCertificate(
+          'api.example.com',
+          verifyHandshake: true,
+        ),
+        throwsA(
+          isA<TlsInspectionPolicyException>().having(
+            (error) => error.code,
+            'code',
+            'leaf_cache_invalid',
+          ),
+        ),
+      );
+      expect(core.leafEnabled, isFalse);
+      expect(scope.read(tlsInspectionProvider).prepared, isFalse);
     },
   );
 
