@@ -97,12 +97,14 @@ class _TlsHandshakeCardState extends ConsumerState<TlsHandshakeCard> {
     final currentResult =
         result != null &&
         _proofEpoch == _authorizationEpoch &&
-        result.contractValid &&
+        result.handshakeContractValid &&
+        result.runtimeProofId == state.leafCache.runtimeProofId &&
         state.isAllowed(result.host) &&
         result.validFor(
           state.authority,
           state.leafCache.policyDigest,
           expectedHost: result.host,
+          expectedRuntimeProofId: state.leafCache.runtimeProofId,
         );
     final enabled =
         state.prepared && !state.busy && !state.loading && !_running;

@@ -28,6 +28,7 @@ const _fingerprint =
 const _generation = 'a1b2c3d4e5f607182736455463728190';
 const _policyDigest =
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const _runtimeProof = 'fedcba9876543210fedcba9876543210';
 
 TlsInspectionState _notReadyState() => const TlsInspectionState(
   authority: TlsInspectionAuthorityStatus(state: 'missing'),
@@ -49,6 +50,7 @@ TlsInspectionState _preparedState() => TlsInspectionState(
     keyPermissionsRestricted: true,
     privateKeysExported: false,
     runtimeAuthorizationPresent: true,
+    runtimeProofId: _runtimeProof,
     updatedAt: DateTime.utc(2026, 9, 27, 1, 32),
     contractValid: true,
   ),

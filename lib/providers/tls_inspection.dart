@@ -1159,6 +1159,7 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
       );
     }
     final expectedPolicyDigest = state.leafCache.policyDigest;
+    final expectedRuntimeProofId = state.leafCache.runtimeProofId;
     try {
       final result = await ref
           .read(coreHandlerProvider)
@@ -1168,11 +1169,15 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
             policyDigest: expectedPolicyDigest,
             verifyHandshake: verifyHandshake,
           );
-      if (!result.validFor(
-        state.authority,
-        expectedPolicyDigest,
-        expectedHost: host,
-      )) {
+      if ((verifyHandshake && !result.handshakeContractValid) ||
+          !result.validFor(
+            state.authority,
+            expectedPolicyDigest,
+            expectedHost: host,
+            expectedRuntimeProofId: verifyHandshake
+                ? expectedRuntimeProofId
+                : '',
+          )) {
         throw const TlsInspectionPolicyException(
           'leaf_result_invalid',
           'Core returned an invalid leaf certificate status.',
@@ -1183,7 +1188,11 @@ class TlsInspectionNotifier extends Notifier<TlsInspectionState> {
           .getTlsInspectionLeafCacheStatus();
       if (!leafCache.matchesAuthority(state.authority) ||
           leafCache.policyDigest != expectedPolicyDigest ||
-          leafCache.policyDigest != result.policyDigest) {
+          leafCache.policyDigest != result.policyDigest ||
+          (verifyHandshake &&
+              (expectedRuntimeProofId.isEmpty ||
+                  leafCache.runtimeProofId != expectedRuntimeProofId ||
+                  result.runtimeProofId != expectedRuntimeProofId))) {
         throw const TlsInspectionPolicyException(
           'leaf_cache_invalid',
           'Core leaf cache no longer matches the active authority and policy.',

@@ -54,7 +54,7 @@ func configureTLSInspectionLeafTestPolicy(
 	if failure != nil {
 		t.Fatalf("configure leaf policy: %#v", failure)
 	}
-	if !status.Ready || status.State != "ready" || status.PolicyDigest == "" {
+	if !status.Ready || status.State != "ready" || status.PolicyDigest == "" || !validTLSInspectionGeneration(status.RuntimeProofID) {
 		t.Fatalf("leaf cache status = %#v", status)
 	}
 	return status

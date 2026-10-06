@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 const _generation = '0123456789abcdef0123456789abcdef';
 const _digest =
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const _runtimeProof = 'fedcba9876543210fedcba9876543210';
 final _fingerprint = List.filled(32, 'AA').join(':');
 
 Map<String, dynamic> _verifiedResult() => {
@@ -34,6 +35,7 @@ Map<String, dynamic> _verifiedResult() => {
   'handshakeScope': 'in-memory-only',
   'handshakeAlpn': 'http/1.1',
   'handshakeDurationMs': 5,
+  'runtimeProofId': _runtimeProof,
 };
 
 class _HandshakeCore extends CoreHandlerInterface {
@@ -101,6 +103,8 @@ void main() {
         'verifyHandshake': true,
       });
       expect(result.contractValid, isTrue);
+      expect(result.handshakeContractValid, isTrue);
+      expect(result.runtimeProofId, _runtimeProof);
       expect(result.privateKeyExported, isFalse);
     },
   );
@@ -146,6 +150,14 @@ void main() {
     'missing scope': {'handshakeScope': null},
     'wrong ALPN': {'handshakeAlpn': 'h2'},
     'missing ALPN': {'handshakeAlpn': null},
+    'missing duration': {'handshakeDurationMs': null},
+    'string duration': {'handshakeDurationMs': '5'},
+    'unbounded duration': {'handshakeDurationMs': 5001},
+    'missing runtime proof': {'runtimeProofId': null},
+    'short runtime proof': {'runtimeProofId': 'abc'},
+    'non-hex runtime proof': {
+      'runtimeProofId': 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz',
+    },
   };
   for (final entry in malformed.entries) {
     test('self-test rejects ${entry.key}', () async {

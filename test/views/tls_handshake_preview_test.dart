@@ -15,6 +15,7 @@ import '../helpers/code_preview.dart';
 const _generation = '0123456789abcdef0123456789abcdef';
 const _digest =
     '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const _runtimeProof = 'fedcba9876543210fedcba9876543210';
 final _fingerprint = List.filled(32, 'AA').join(':');
 final _leafFingerprint = List.filled(32, 'BB').join(':');
 
@@ -62,6 +63,7 @@ TlsInspectionState _readyState() => TlsInspectionState(
     keyPermissionsRestricted: true,
     privateKeysExported: false,
     runtimeAuthorizationPresent: true,
+    runtimeProofId: _runtimeProof,
     updatedAt: DateTime.utc(2026, 10, 5),
     contractValid: true,
   ),
@@ -70,6 +72,12 @@ TlsInspectionState _readyState() => TlsInspectionState(
 TlsInspectionLeafCertificateStatus _leafResult(String host) {
   final now = DateTime.now().toUtc();
   return TlsInspectionLeafCertificateStatus(
+    handshakeVerified: true,
+    handshakeVersions: const ['TLS 1.2', 'TLS 1.3'],
+    handshakeAlpn: 'http/1.1',
+    handshakeScope: 'in-memory-only',
+    handshakeDurationMs: 7,
+    runtimeProofId: _runtimeProof,
     host: host,
     generation: _generation,
     authorityFingerprintSha256: _fingerprint,
@@ -114,6 +122,31 @@ class _HandshakeNotifier extends TlsInspectionNotifier {
 
   void revoke() {
     state = state.copyWith(policy: state.policy.copyWith(prepared: false));
+  }
+
+  void replaceRuntimeProof(String value) {
+    final cache = state.leafCache;
+    state = state.copyWith(
+      leafCache: TlsInspectionLeafCacheStatus(
+        state: cache.state,
+        ready: cache.ready,
+        generation: cache.generation,
+        authorityFingerprintSha256: cache.authorityFingerprintSha256,
+        policyDigest: cache.policyDigest,
+        entryCount: cache.entryCount,
+        capacity: cache.capacity,
+        leafValiditySeconds: cache.leafValiditySeconds,
+        algorithm: cache.algorithm,
+        keyStorage: cache.keyStorage,
+        keyPermissionsRestricted: cache.keyPermissionsRestricted,
+        privateKeysExported: cache.privateKeysExported,
+        runtimeAuthorizationPresent: cache.runtimeAuthorizationPresent,
+        runtimeProofId: value,
+        updatedAt: cache.updatedAt,
+        issue: cache.issue,
+        contractValid: cache.contractValid,
+      ),
+    );
   }
 }
 
@@ -290,6 +323,18 @@ void main() {
     expect(find.text('该结果不再对应当前 CA 或策略，请重新验证。'), findsOneWidget);
     await _run(tester);
     expect(find.text('本次握手自检通过'), findsOneWidget);
+  });
+
+  testWidgets('a new Core runtime invalidates the displayed proof', (
+    tester,
+  ) async {
+    final notifier = await _pump(tester);
+    await _run(tester);
+    notifier.replaceRuntimeProof('0123456789abcdef0123456789abcdef');
+    await tester.pumpAndSettle();
+    expect(find.text('本次握手自检通过'), findsNothing);
+    expect(find.text('该结果不再对应当前 CA 或策略，请重新验证。'), findsOneWidget);
+    expect(find.text('TLS 1.3'), findsNothing);
   });
 
   testWidgets(

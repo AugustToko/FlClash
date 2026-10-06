@@ -77,6 +77,7 @@ type TLSInspectionLeafCacheStatus struct {
 	KeyPermissionsRestricted    bool      `json:"keyPermissionsRestricted"`
 	PrivateKeysExported         bool      `json:"privateKeysExported"`
 	RuntimeAuthorizationPresent bool      `json:"runtimeAuthorizationPresent"`
+	RuntimeProofID              string    `json:"runtimeProofId,omitempty"`
 	UpdatedAt                   time.Time `json:"updatedAt,omitempty"`
 	Issue                       string    `json:"issue,omitempty"`
 }
@@ -87,6 +88,7 @@ type TLSInspectionLeafCertificateStatus struct {
 	HandshakeALPN              string    `json:"handshakeAlpn,omitempty"`
 	HandshakeScope             string    `json:"handshakeScope,omitempty"`
 	HandshakeDurationMs        int64     `json:"handshakeDurationMs,omitempty"`
+	RuntimeProofID             string    `json:"runtimeProofId,omitempty"`
 	Host                       string    `json:"host"`
 	CacheHit                   bool      `json:"cacheHit"`
 	Generation                 string    `json:"generation"`
@@ -906,6 +908,7 @@ func readyTLSInspectionLeafCacheStatus(root string, policy *tlsInspectionLeafPol
 		KeyPermissionsRestricted:    tlsInspectionLeafCachePermissionsRestricted(root, policy.Generation),
 		PrivateKeysExported:         false,
 		RuntimeAuthorizationPresent: true,
+		RuntimeProofID:              currentTLSInspectionRuntimeProofID(),
 		UpdatedAt:                   updatedAt,
 	}
 }
@@ -947,11 +950,18 @@ func getTLSInspectionLeafCacheStatusLocked() *TLSInspectionLeafCacheStatus {
 		return unavailableTLSInspectionLeafCacheStatus(policy, "leaf-cache-prune-failed", false)
 	}
 	result := readyTLSInspectionLeafCacheStatus(root, policy, entries)
-	if !result.KeyPermissionsRestricted {
+	if result.RuntimeProofID == "" {
 		resetTLSInspectionLeafPolicySession()
 		result.State = "unavailable"
 		result.Ready = false
 		result.RuntimeAuthorizationPresent = false
+		result.Issue = "leaf-runtime-proof-unavailable"
+	} else if !result.KeyPermissionsRestricted {
+		resetTLSInspectionLeafPolicySession()
+		result.State = "unavailable"
+		result.Ready = false
+		result.RuntimeAuthorizationPresent = false
+		result.RuntimeProofID = ""
 		result.Issue = "leaf-key-permissions"
 	}
 	return result
@@ -1018,6 +1028,10 @@ func configureTLSInspectionLeafPolicy(params *TLSInspectionLeafPolicyParams) (*T
 		return nil, &MethodError{Code: "leaf_cache_unavailable", Message: err.Error()}
 	}
 	result := readyTLSInspectionLeafCacheStatus(root, policy, entries)
+	if result.RuntimeProofID == "" {
+		resetTLSInspectionLeafPolicySession()
+		return nil, &MethodError{Code: "leaf_runtime_proof_unavailable", Message: "leaf runtime proof is unavailable"}
+	}
 	if !result.KeyPermissionsRestricted {
 		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{Code: "leaf_key_permissions", Message: "leaf cache permissions are not restricted"}

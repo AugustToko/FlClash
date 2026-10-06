@@ -9,10 +9,26 @@ import (
 	"errors"
 	"io"
 	"net"
+	"sync"
 	"time"
 )
 
 const tlsInspectionHandshakeTimeout = 3 * time.Second
+
+var (
+	tlsInspectionRuntimeProofOnce  sync.Once
+	tlsInspectionRuntimeProofValue string
+)
+
+func currentTLSInspectionRuntimeProofID() string {
+	tlsInspectionRuntimeProofOnce.Do(func() {
+		value, err := tlsInspectionRandomID()
+		if err == nil {
+			tlsInspectionRuntimeProofValue = value
+		}
+	})
+	return tlsInspectionRuntimeProofValue
+}
 
 func verifyTLSInspectionLeafHandshake(ctx context.Context, entry *tlsInspectionLeafEntry, authority *x509.Certificate) error {
 	if entry == nil || entry.Certificate == nil || entry.PrivateKey == nil || authority == nil {
@@ -134,6 +150,14 @@ func completeTLSInspectionLeafPreparation(entry *tlsInspectionLeafEntry, cacheHi
 	if !verifyHandshake {
 		return result, nil
 	}
+	runtimeProofID := currentTLSInspectionRuntimeProofID()
+	if runtimeProofID == "" {
+		resetTLSInspectionLeafPolicySession()
+		return nil, &MethodError{
+			Code:    "leaf_runtime_proof_unavailable",
+			Message: "The local TLS runtime proof is unavailable; inspection authorization was revoked",
+		}
+	}
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), tlsInspectionHandshakeTimeout)
 	defer cancel()
@@ -149,5 +173,6 @@ func completeTLSInspectionLeafPreparation(entry *tlsInspectionLeafEntry, cacheHi
 	result.HandshakeALPN = "http/1.1"
 	result.HandshakeScope = "in-memory-only"
 	result.HandshakeDurationMs = time.Since(started).Milliseconds()
+	result.RuntimeProofID = runtimeProofID
 	return result, nil
 }
