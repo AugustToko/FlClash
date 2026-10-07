@@ -138,6 +138,16 @@ String _logbookEventTitle(BuildContext context, LogbookEvent event) {
       'unsupported' || 'failed' => l.logbookTlsTrustFailed,
       _ => event.title,
     },
+    'tls.inspection.runtime' => switch (event.details['status']) {
+      'starting' => l.logbookTlsRuntimeStarting,
+      'running' => l.logbookTlsRuntimeRunning,
+      'stopped' => l.logbookTlsRuntimeStopped,
+      'expired' => l.logbookTlsRuntimeExpired,
+      'revoked' => l.logbookTlsRuntimeRevoked,
+      'stop-unconfirmed' => l.logbookTlsRuntimeStopUnconfirmed,
+      'failed' => l.logbookTlsRuntimeFailed,
+      _ => event.title,
+    },
     _ => event.title,
   };
 }

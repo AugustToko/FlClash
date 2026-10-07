@@ -2,6 +2,7 @@ import 'package:certificate_trust/certificate_trust.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/tls_inspection.dart';
+import 'package:fl_clash/providers/tls_inspection_runtime.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/tls_inspection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,14 @@ class _PreviewTlsInspection extends TlsInspectionNotifier {
 
   @override
   Future<void> reload() async {}
+}
+
+class _PreviewTlsInspectionRuntime extends TlsInspectionRuntimeNotifier {
+  @override
+  TlsInspectionRuntimeState build() => const TlsInspectionRuntimeState();
+
+  @override
+  Future<void> reconcile() async {}
 }
 
 const _fingerprint =
@@ -154,6 +163,9 @@ Future<void> _pumpPreview(
   final container = ProviderContainer(
     overrides: [
       tlsInspectionProvider.overrideWith(_PreviewTlsInspection.new),
+      tlsInspectionRuntimeProvider.overrideWith(
+        _PreviewTlsInspectionRuntime.new,
+      ),
       tlsInspectionPersistenceEnabledProvider.overrideWithValue(false),
       viewSizeProvider.overrideWithBuild((_, _) => size),
     ],

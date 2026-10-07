@@ -38,7 +38,7 @@ HttpCaptureEntry _entry({
   return HttpCaptureEntry(
     id: id,
     connectionId: 'connection-$id',
-    sessionId: 'preview-session',
+    sessionId: 'http-capture:preview-session',
     profileId: profileId,
     startedAt: observedAt.subtract(const Duration(milliseconds: 42)),
     observedAt: observedAt,
@@ -68,6 +68,33 @@ HttpCaptureEntry _entry({
   );
 }
 
+HttpCaptureEntry _runtimeEntry() {
+  final startedAt = DateTime(2026, 9, 25, 18, 28);
+  final observation = TlsInspectionRuntimeObservation.fromJson({
+    'sessionId': 'http-capture:preview-session',
+    'connectionId': '0123456789abcdef0123456789abcdef',
+    'runtimeId': 'abcdef0123456789abcdef0123456789',
+    'host': 'secure.example.com',
+    'state': 'completed',
+    'startedAt': startedAt.toUtc().toIso8601String(),
+    'completedAt': startedAt
+        .add(const Duration(seconds: 3))
+        .toUtc()
+        .toIso8601String(),
+    'downstreamTlsVersion': 'TLS 1.3',
+    'upstreamTlsVersion': 'TLS 1.2',
+    'alpn': 'http/1.1',
+    'uploaded': 2048,
+    'downloaded': 8192,
+  });
+  return HttpCaptureEntry.fromInspectionRuntime(
+    id: 5,
+    observation: observation,
+    profileId: 7,
+    observedAt: startedAt,
+  );
+}
+
 List<HttpCaptureEntry> _previewEntries() => [
   _entry(
     id: 1,
@@ -94,6 +121,7 @@ List<HttpCaptureEntry> _previewEntries() => [
       ),
     ),
   ),
+  _runtimeEntry(),
   _entry(
     id: 2,
     protocol: HttpCaptureProtocol.quic,
@@ -173,10 +201,10 @@ class _HttpCaptureLogbook extends LogbookNotifier {
         eventType: 'http.capture.session',
         title: 'http.capture.session',
         message: '3 个条目 · 42000 ms',
-        correlationId: 'preview-session',
+        correlationId: 'http-capture:preview-session',
         details: const {
           'status': 'completed',
-          'observationOnly': true,
+          'metadataOnly': true,
           'count': 3,
           'durationMs': 42000,
         },
@@ -195,7 +223,7 @@ class _PreviewHttpCapture extends HttpCaptureNotifier {
     return HttpCaptureState(
       enabled: true,
       sessionStartedAt: DateTime(2026, 9, 25, 18),
-      sessionId: 'preview-session',
+      sessionId: 'http-capture:preview-session',
       coreObserverActive: true,
       entries: entries,
     );
@@ -209,7 +237,7 @@ class _PreviewHttpCapture extends HttpCaptureNotifier {
     state = state.copyWith(
       enabled: true,
       sessionStartedAt: DateTime(2026, 9, 25, 18),
-      sessionId: 'preview-session',
+      sessionId: 'http-capture:preview-session',
       coreObserverActive: true,
       revision: state.revision + 1,
     );
@@ -278,11 +306,11 @@ void main() {
     await _pumpCapture(tester, size: const Size(430, 932));
 
     expect(find.text('HTTP 捕获'), findsWidgets);
-    expect(find.textContaining('仅在主动开启时被动观察'), findsOneWidget);
+    expect(find.textContaining('主动开启后'), findsOneWidget);
     expect(find.text('https://api.openai.com'), findsOneWidget);
     expect(find.textContaining('Core 已观察到 TLS ClientHello'), findsOneWidget);
     expect(find.textContaining('UNKNOWN'), findsNothing);
-    expect(find.textContaining('首个明文响应头'), findsOneWidget);
+    expect(find.textContaining('中继载荷只在内存中转发'), findsOneWidget);
   });
 
   testWidgets('a pending Core disable remains visible', (tester) async {
@@ -361,6 +389,51 @@ void main() {
       findsOneWidget,
     );
     expect(find.byIcon(Icons.alt_route, skipOffstage: false), findsWidgets);
+  });
+
+  testWidgets('inspected runtime source filter and details stay explicit', (
+    tester,
+  ) async {
+    await _pumpCapture(tester, size: const Size(430, 932));
+
+    final sourceFilter = find.text('本地检查中继');
+    await tester.ensureVisible(sourceFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(sourceFilter);
+    await tester.pumpAndSettle();
+    expect(find.text('https://secure.example.com'), findsOneWidget);
+    expect(find.text('https://api.openai.com'), findsNothing);
+    expect(find.textContaining('TLS 1.3 · TLS 1.2 · http/1.1'), findsOneWidget);
+
+    final target = find.text('https://secure.example.com');
+    await tester.ensureVisible(target);
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('显式授权的回环 HTTPS 中继'), findsOneWidget);
+    expect(find.text('本地检查中继'), findsWidgets);
+    expect(find.text('TLS 1.3', skipOffstage: false), findsOneWidget);
+    expect(find.text('TLS 1.2', skipOffstage: false), findsOneWidget);
+    expect(find.text('http/1.1', skipOffstage: false), findsOneWidget);
+    expect(find.text('abcdef0123456789abcdef0123456789'), findsOneWidget);
+  });
+
+  testWidgets('HTTP capture inspected-runtime detail preview', (tester) async {
+    await _pumpCapture(tester, size: const Size(430, 932));
+    final sourceFilter = find.text('本地检查中继');
+    await tester.ensureVisible(sourceFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(sourceFilter);
+    await tester.pumpAndSettle();
+    final target = find.text('https://secure.example.com');
+    await tester.ensureVisible(target);
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(Overlay).first,
+      matchesGoldenFile('../goldens/http_capture_runtime_detail_preview.png'),
+    );
   });
 
   testWidgets('HTTP capture Logbook event reopens the source page', (

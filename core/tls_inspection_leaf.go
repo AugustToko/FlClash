@@ -112,6 +112,7 @@ type tlsInspectionLeafPolicy struct {
 	Exclusions                 []TLSInspectionLeafRule `json:"exclusions"`
 	Digest                     string                  `json:"digest"`
 	UpdatedAt                  time.Time               `json:"updatedAt"`
+	RuntimeProofID             string                  `json:"-"`
 }
 
 type tlsInspectionLeafMetadata struct {
@@ -138,6 +139,7 @@ type tlsInspectionLeafEntry struct {
 var tlsInspectionLeafSession *tlsInspectionLeafPolicy
 
 func resetTLSInspectionLeafPolicySession() {
+	stopTLSInspectionRuntimeLocked()
 	tlsInspectionLeafSession = nil
 }
 
@@ -907,7 +909,7 @@ func readyTLSInspectionLeafCacheStatus(root string, policy *tlsInspectionLeafPol
 		KeyPermissionsRestricted:    tlsInspectionLeafCachePermissionsRestricted(root, policy.Generation),
 		PrivateKeysExported:         false,
 		RuntimeAuthorizationPresent: true,
-		RuntimeProofID:              currentTLSInspectionRuntimeProofID(),
+		RuntimeProofID:              policy.RuntimeProofID,
 		UpdatedAt:                   updatedAt,
 	}
 }
@@ -981,7 +983,13 @@ func configureTLSInspectionLeafPolicy(params *TLSInspectionLeafPolicyParams) (*T
 		}
 		return disabledTLSInspectionLeafCacheStatus("policy-disabled"), nil
 	}
-	resetTLSInspectionLeafPolicySession()
+	previous := tlsInspectionLeafSession
+	configured := false
+	defer func() {
+		if !configured {
+			resetTLSInspectionLeafPolicySession()
+		}
+	}()
 	status, authority, _, err := readTLSInspectionAuthoritySigningMaterialLocked()
 	if err != nil {
 		return nil, &MethodError{Code: "authority_not_ready", Message: err.Error()}
@@ -989,6 +997,21 @@ func configureTLSInspectionLeafPolicy(params *TLSInspectionLeafPolicyParams) (*T
 	policy, err := newTLSInspectionLeafPolicy(params, status)
 	if err != nil {
 		return nil, &MethodError{Code: "leaf_policy_invalid", Message: err.Error()}
+	}
+	sameAuthorization := previous != nil &&
+		previous.Generation == policy.Generation &&
+		previous.AuthorityFingerprintSHA256 == policy.AuthorityFingerprintSHA256 &&
+		previous.RiskVersion == policy.RiskVersion &&
+		previous.Digest == policy.Digest &&
+		validTLSInspectionGeneration(previous.RuntimeProofID)
+	if sameAuthorization {
+		policy.RuntimeProofID = previous.RuntimeProofID
+	} else {
+		resetTLSInspectionLeafPolicySession()
+		policy.RuntimeProofID, err = tlsInspectionRandomID()
+		if err != nil || !validTLSInspectionGeneration(policy.RuntimeProofID) {
+			return nil, &MethodError{Code: "leaf_runtime_proof_unavailable", Message: "leaf runtime proof is unavailable"}
+		}
 	}
 	root, err := tlsInspectionRoot()
 	if err != nil {
@@ -1018,29 +1041,30 @@ func configureTLSInspectionLeafPolicy(params *TLSInspectionLeafPolicyParams) (*T
 	tlsInspectionLeafSession = policy
 	entries, err := scanTLSInspectionLeafEntries(root, policy, authority)
 	if err != nil {
-		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{Code: "leaf_cache_unavailable", Message: err.Error()}
 	}
 	entries, err = pruneTLSInspectionLeafEntries(entries, tlsInspectionLeafMaxEntries)
 	if err != nil {
-		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{Code: "leaf_cache_unavailable", Message: err.Error()}
 	}
 	result := readyTLSInspectionLeafCacheStatus(root, policy, entries)
 	if result.RuntimeProofID == "" {
-		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{Code: "leaf_runtime_proof_unavailable", Message: "leaf runtime proof is unavailable"}
 	}
 	if !result.KeyPermissionsRestricted {
-		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{Code: "leaf_key_permissions", Message: "leaf cache permissions are not restricted"}
 	}
+	configured = true
 	return result, nil
 }
 
 func prepareTLSInspectionLeafCertificate(params *TLSInspectionLeafPrepareParams) (*TLSInspectionLeafCertificateStatus, *MethodError) {
 	tlsInspectionAuthorityMu.Lock()
 	defer tlsInspectionAuthorityMu.Unlock()
+	return prepareTLSInspectionLeafCertificateLocked(params)
+}
+
+func prepareTLSInspectionLeafCertificateLocked(params *TLSInspectionLeafPrepareParams) (*TLSInspectionLeafCertificateStatus, *MethodError) {
 	policy := tlsInspectionLeafSession
 	if policy == nil {
 		return nil, &MethodError{Code: "leaf_policy_not_configured", Message: "leaf issuance requires current runtime authorization"}

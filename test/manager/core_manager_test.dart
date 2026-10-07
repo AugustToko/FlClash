@@ -230,6 +230,69 @@ void main() {
     expect(entries.single.profileId, 7);
   });
 
+  testWidgets('inspection runtime events feed the active capture session', (
+    tester,
+  ) async {
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [
+        currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        logbookPersistenceEnabledProvider.overrideWithValue(false),
+      ],
+    );
+    await container.read(httpCaptureProvider.notifier).start();
+    final sessionId = container.read(httpCaptureProvider).sessionId;
+    final startedAt = DateTime.utc(2026, 10, 7, 2);
+    final running = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': sessionId,
+      'connectionId': '0123456789abcdef0123456789abcdef',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': startedAt.toIso8601String(),
+      'downstreamTlsVersion': '',
+      'upstreamTlsVersion': '',
+      'alpn': '',
+      'uploaded': 0,
+      'downloaded': 0,
+    });
+    coreEventManager.sendEvent(
+      CoreEvent(type: CoreEventType.inspectionRuntime, data: running.toJson()),
+    );
+    await tester.pump();
+
+    final completed = TlsInspectionRuntimeObservation.fromJson({
+      ...running.toJson(),
+      'state': 'completed',
+      'completedAt': startedAt
+          .add(const Duration(seconds: 2))
+          .toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.2',
+      'alpn': 'http/1.1',
+      'uploaded': 120,
+      'downloaded': 340,
+    });
+    coreEventManager.sendEvent(
+      CoreEvent(
+        type: CoreEventType.inspectionRuntime,
+        data: completed.toJson(),
+      ),
+    );
+    await tester.pump();
+
+    final entries = container.read(httpCaptureProvider).entries;
+    expect(entries, hasLength(1));
+    expect(entries.single.source, HttpCaptureSource.inspectedRuntime);
+    expect(entries.single.inspectionRuntime?.state, 'completed');
+    expect(entries.single.upload, 120);
+    expect(entries.single.download, 340);
+    expect(entries.single.profileId, 7);
+    expect(container.read(requestsProvider).length, 0);
+  });
+
   testWidgets('response updates replace the existing request and capture row', (
     tester,
   ) async {

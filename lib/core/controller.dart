@@ -14,6 +14,7 @@ part 'domain_analysis.dart';
 part 'dns_diagnostic.dart';
 part 'rule_match.dart';
 part 'tls_inspection.dart';
+part 'tls_inspection_runtime.dart';
 
 @visibleForTesting
 Map<String, String> extractProxyGroupFixedStates(ProxiesData data) {

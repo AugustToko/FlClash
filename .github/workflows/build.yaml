@@ -114,12 +114,13 @@ jobs:
             echo 'No Go tests found in core/; the test step would pass vacuously.' >&2
             exit 1
           fi
-          test -z "$(gofmt -l ./*.go ./platform ./tun)" || {
-            gofmt -l ./*.go ./platform ./tun >&2
+          test -z "$(gofmt -l ./*.go ./platform ./tun ./inspectionruntime)" || {
+            gofmt -l ./*.go ./platform ./tun ./inspectionruntime >&2
             exit 1
           }
-          go test -count=1 .
-          go vet .
+          go test -count=1 . ./inspectionruntime
+          CGO_ENABLED=1 go test -race -count=1 ./inspectionruntime
+          go vet . ./inspectionruntime
           GOOS=linux go vet ./platform
 
       - name: Validate patched Mihomo observer

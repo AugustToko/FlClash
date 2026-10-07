@@ -598,7 +598,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Текущий профиль",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Пассивное наблюдение первого запроса и ответа HTTP/1, метаданных TLS ClientHello и резервных метаданных соединения из работающего Core",
+      "Единая локальная рабочая область для пассивных метаданных Core и TLS-метаданных явно запущенного проверочного ретранслятора",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "Наблюдений HTTP пока нет",
@@ -613,6 +613,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage("Core наблюдал TLS ClientHello"),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "Хост наблюдается, протокол неизвестен",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Метаданные авторизованного HTTPS-ретранслятора",
     ),
     "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
       "Типичный порт HTTP",
@@ -663,6 +666,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Список информационных кодов усечён",
         ),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "Эта запись создана явно авторизованным loopback HTTPS-ретранслятором и содержит только имя хоста, версии TLS, ALPN, жизненный цикл и счётчики байтов. Идентификатор исходного приложения, HTTP-метод/путь, значения заголовков и тела не сохраняются.",
+    ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Не наблюдается",
     ),
@@ -670,7 +676,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Задержка наблюдения",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Пассивное наблюдение включается явно. Core может проверить ограниченный первый запрос HTTP/1 и заголовки первого открытого ответа либо метаданные TLS ClientHello. Query-параметры, Reason Phrase, значения заголовков, тела, сертификаты, расшифрованные данные TLS и последующие сообщения Keep-Alive не сохраняются. Учитываются только новые соединения; локальные записи исключены из резервных копий.",
+      "После явного запуска записываются ограниченные пассивные наблюдения Core и грубые метаданные явно запущенного локального HTTPS-ретранслятора. Query-параметры, Reason Phrase, значения заголовков, тела, сертификаты и последующие сообщения Keep-Alive не сохраняются. Данные ретранслятора проходят через память, но не сохраняются. Учитываются только новые соединения; записи исключены из резервных копий.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый префикс",
@@ -725,6 +731,63 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
       "Захват выполняется",
+    ),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "Завершение ретрансляции",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "TLS на стороне клиента",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage(
+      "Тип сбоя ретранслятора",
+    ),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage("Разрешение на проверку отозвано"),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage(
+          "Предыдущий захват был неожиданно прерван",
+        ),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage(
+          "Захват остановлен до завершения ретрансляции",
+        ),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Не удалось выполнить TLS-рукопожатие с клиентом",
+        ),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "Сертификат сайта недоступен",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "Зашифрованный ретранслятор завершился с ошибкой",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage(
+          "Не удалось подключиться к серверу",
+        ),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Не удалось проверить TLS сервера",
+        ),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage(
+      "Сеанс ретранслятора",
+    ),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage(
+      "Состояние ретранслятора",
+    ),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "TLS к вышестоящему серверу",
+    ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("Кандидат соединения"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Локальный проверочный ретранслятор",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Пассивный наблюдатель Core",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage(
+      "Источник наблюдения",
     ),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Остановлено"),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
@@ -1000,6 +1063,27 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("Успешно"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("Система"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "Срок ретранслятора истёк",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка локального HTTPS-ретранслятора",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор отозван",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор работает",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Запуск локального HTTPS-ретранслятора",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Остановка ретранслятора не подтверждена",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор остановлен",
+    ),
     "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
       "Установка CA отменена",
     ),
@@ -1947,6 +2031,123 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage(
       "Область домена",
+    ),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор",
+    ),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage(
+      "Принято",
+    ),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage(
+      "Активные подключения",
+    ),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage(
+      "Адрес прокси",
+    ),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Он не меняет системный прокси, не сохраняет источник приложения или данные, не поддерживает HTTP/2 и не обходит закрепление сертификатов.",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage(
+      "Завершено",
+    ),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "Копировать адрес прокси",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "Не удалось скопировать настройки прокси.",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "Копировать временный пароль",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "Копировать настройки прокси",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "Настройки прокси скопированы и будут очищены через одну минуту.",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "Копировать имя пользователя",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning": MessageLookupByLibrary.simpleMessage(
+      "Учётные данные не сохраняются и не записываются в Logbook. Неизменённая копия очищается через минуту; после подтверждённой остановки или перезапуска Core данные исчезают.",
+    ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "Явный аутентифицированный CONNECT-прокси на loopback для проверки разрешённого HTTPS-трафика через активный маршрут Core.",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "Передано вниз",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "Не удалось запустить или проверить локальный HTTPS-ретранслятор.",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage(
+      "Истекает",
+    ),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "С ошибкой",
+    ),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "Скрыть пароль",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "Осиротевший или устаревший ретранслятор отозван.",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "Временный пароль",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage(
+      "Обновить состояние",
+    ),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала подготовьте CA, доверие платформы, список разрешений и кэш конечных сертификатов.",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Работает",
+    ),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "Показать пароль",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage(
+      "Запустить ретранслятор",
+    ),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "Запустить локальный HTTPS-ретранслятор?",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "На 127.0.0.1 будет запущен аутентифицированный прокси максимум на 10 минут. Его смогут использовать только настроенные вручную клиенты. Временный пароль хранится только в памяти и показывается для этого запуска.",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор запущен.",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Запускается",
+    ),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage(
+      "Остановить ретранслятор",
+    ),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core не подтвердил остановку ретранслятора. Оставьте эту страницу открытой и повторите попытку.",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Остановка не подтверждена",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Остановлен",
+    ),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор остановлен.",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage(
+      "Останавливается",
+    ),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "Передано вверх",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage(
+      "Имя пользователя",
     ),
     "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage(
       "Серийный номер",

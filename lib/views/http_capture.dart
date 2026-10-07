@@ -38,6 +38,24 @@ extension on HttpCaptureProtocol {
   };
 }
 
+extension on HttpCaptureSource {
+  String label(BuildContext context) {
+    final l = context.appLocalizations;
+    return switch (this) {
+      HttpCaptureSource.connectionCandidate =>
+        l.httpCaptureSourceConnectionCandidate,
+      HttpCaptureSource.passiveCore => l.httpCaptureSourcePassiveCore,
+      HttpCaptureSource.inspectedRuntime => l.httpCaptureSourceInspectedRuntime,
+    };
+  }
+
+  IconData get icon => switch (this) {
+    HttpCaptureSource.connectionCandidate => Icons.hub_outlined,
+    HttpCaptureSource.passiveCore => Icons.memory_outlined,
+    HttpCaptureSource.inspectedRuntime => Icons.security_outlined,
+  };
+}
+
 class HttpCaptureView extends ConsumerStatefulWidget {
   const HttpCaptureView({super.key});
 
@@ -48,6 +66,7 @@ class HttpCaptureView extends ConsumerStatefulWidget {
 class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
   String _query = '';
   HttpCaptureProtocol? _protocol;
+  HttpCaptureSource? _source;
   bool _currentProfileOnly = true;
 
   @override
@@ -61,6 +80,7 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
     return switch (evidence) {
       'core-http1' => l.httpCaptureEvidenceCoreHttp1,
       'core-tls-client-hello' => l.httpCaptureEvidenceCoreTlsClientHello,
+      'inspected-runtime' => l.httpCaptureEvidenceInspectedRuntime,
       'remote-scheme' => l.httpCaptureEvidenceRemoteScheme,
       'known-http-port' => l.httpCaptureEvidenceKnownHttpPort,
       'known-tls-port' => l.httpCaptureEvidenceKnownTlsPort,
@@ -68,6 +88,22 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
       'host-observed' => l.httpCaptureEvidenceHostObserved,
       'transport-only' => l.httpCaptureEvidenceTransportOnly,
       _ => evidence,
+    };
+  }
+
+  String _runtimeFailureLabel(String value) {
+    final l = context.appLocalizations;
+    return switch (value) {
+      'upstream-dial' => l.httpCaptureRuntimeFailureUpstreamDial,
+      'upstream-tls' => l.httpCaptureRuntimeFailureUpstreamTls,
+      'leaf' => l.httpCaptureRuntimeFailureLeaf,
+      'downstream-tls' => l.httpCaptureRuntimeFailureDownstreamTls,
+      'authorization-revoked' =>
+        l.httpCaptureRuntimeFailureAuthorizationRevoked,
+      'relay' => l.httpCaptureRuntimeFailureRelay,
+      'capture-stopped' => l.httpCaptureRuntimeFailureCaptureStopped,
+      'capture-interrupted' => l.httpCaptureRuntimeFailureCaptureInterrupted,
+      _ => l.tlsInspectionRuntimeFailed,
     };
   }
 
@@ -90,6 +126,9 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
             return false;
           }
           if (_protocol != null && entry.protocol != _protocol) {
+            return false;
+          }
+          if (_source != null && entry.source != _source) {
             return false;
           }
           return terms.isEmpty || terms.every(entry.searchText.contains);
@@ -199,6 +238,7 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
           final http = entry.httpObservation;
           final response = entry.httpResponseObservation;
           final tls = entry.tlsObservation;
+          final inspected = entry.inspectionRuntime;
           String completeness(bool value) =>
               value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
           String presence(bool value) =>
@@ -240,7 +280,13 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                           color: sheetContext.colorScheme.primary,
                         ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(l.httpCaptureHarWarning)),
+                        Expanded(
+                          child: Text(
+                            inspected == null
+                                ? l.httpCaptureHarWarning
+                                : l.httpCaptureInspectedBoundary,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -249,6 +295,10 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureEndpoint,
                   value: entry.origin,
+                ),
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureSourceType,
+                  value: entry.source.label(sheetContext),
                 ),
                 if (http != null) ...[
                   if (http.method.isNotEmpty)
@@ -375,6 +425,46 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                     value: completeness(tls.clientHelloComplete),
                   ),
                 ],
+                if (inspected != null) ...[
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureRuntimeState,
+                    value: switch (inspected.state) {
+                      'running' => l.tlsInspectionRuntimeRunning,
+                      'completed' => l.httpCaptureComplete,
+                      'interrupted' => l.logbookHttpCaptureInterrupted,
+                      _ => l.tlsInspectionRuntimeFailed,
+                    },
+                  ),
+                  _HttpCaptureDetailRow(
+                    label: l.httpCaptureRuntimeId,
+                    value: inspected.runtimeId,
+                  ),
+                  if (inspected.downstreamTlsVersion.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureRuntimeDownstreamTls,
+                      value: inspected.downstreamTlsVersion,
+                    ),
+                  if (inspected.upstreamTlsVersion.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureRuntimeUpstreamTls,
+                      value: inspected.upstreamTlsVersion,
+                    ),
+                  if (inspected.alpn.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureTlsAlpn,
+                      value: inspected.alpn,
+                    ),
+                  if (inspected.completedAt != null)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureRuntimeCompletedAt,
+                      value: inspected.completedAt!.toLocal().showFull,
+                    ),
+                  if (inspected.failureKind.isNotEmpty)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureRuntimeFailure,
+                      value: _runtimeFailureLabel(inspected.failureKind),
+                    ),
+                ],
                 if (observation != null) ...[
                   _HttpCaptureDetailRow(
                     label: l.httpCaptureObservedBytes,
@@ -393,12 +483,13 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   label: l.network,
                   value: entry.network.toUpperCase(),
                 ),
-                _HttpCaptureDetailRow(
-                  label: l.source,
-                  value: entry.sourcePort == 0
-                      ? entry.sourceIP
-                      : '${entry.sourceIP}:${entry.sourcePort}',
-                ),
+                if (entry.sourceIP.isNotEmpty)
+                  _HttpCaptureDetailRow(
+                    label: l.source,
+                    value: entry.sourcePort == 0
+                        ? entry.sourceIP
+                        : '${entry.sourceIP}:${entry.sourcePort}',
+                  ),
                 if (entry.process.isNotEmpty)
                   _HttpCaptureDetailRow(
                     label: l.process,
@@ -606,6 +697,29 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
             ],
           ),
         ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              FilterChip(
+                selected: _source == null,
+                label: Text(l.logbookAll),
+                onSelected: (_) => setState(() => _source = null),
+              ),
+              const SizedBox(width: 8),
+              for (final source in HttpCaptureSource.values) ...[
+                FilterChip(
+                  avatar: Icon(source.icon, size: 18),
+                  selected: _source == source,
+                  label: Text(source.label(context)),
+                  onSelected: (_) => setState(() => _source = source),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ),
         if (profileId != null) ...[
           const SizedBox(height: 8),
           FilterChip(
@@ -685,6 +799,34 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                       [
                         if (tls.serverName.isNotEmpty) tls.serverName,
                         if (tls.alpn.isNotEmpty) tls.alpn.join(', '),
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.toSoftBold,
+                    ),
+                  ] else if (entry.inspectionRuntime case final inspected?) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      [
+                        switch (inspected.state) {
+                          'running' =>
+                            context
+                                .appLocalizations
+                                .tlsInspectionRuntimeRunning,
+                          'completed' =>
+                            context.appLocalizations.httpCaptureComplete,
+                          'interrupted' =>
+                            context
+                                .appLocalizations
+                                .logbookHttpCaptureInterrupted,
+                          _ =>
+                            context.appLocalizations.tlsInspectionRuntimeFailed,
+                        },
+                        if (inspected.downstreamTlsVersion.isNotEmpty)
+                          inspected.downstreamTlsVersion,
+                        if (inspected.upstreamTlsVersion.isNotEmpty)
+                          inspected.upstreamTlsVersion,
+                        if (inspected.alpn.isNotEmpty) inspected.alpn,
                       ].join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -863,7 +1005,7 @@ class _HttpCaptureDetailHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    protocol.label(context),
+                    '${protocol.label(context)} · ${entry.source.label(context)}',
                     style: context.textTheme.bodySmall?.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
                     ),

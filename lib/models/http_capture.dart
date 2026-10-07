@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'common.dart';
+import 'tls_inspection_runtime.dart';
 
 enum HttpCaptureProtocol {
   http,
@@ -23,8 +24,18 @@ enum HttpCaptureProtocol {
   };
 }
 
+enum HttpCaptureSource {
+  connectionCandidate('connection-candidate'),
+  passiveCore('passive-core'),
+  inspectedRuntime('inspected-runtime');
+
+  final String wireName;
+
+  const HttpCaptureSource(this.wireName);
+}
+
 class HttpCaptureEntry {
-  static const formatVersion = 3;
+  static const formatVersion = 4;
 
   final int id;
   final String connectionId;
@@ -33,6 +44,7 @@ class HttpCaptureEntry {
   final DateTime startedAt;
   final DateTime observedAt;
   final HttpCaptureProtocol protocol;
+  final HttpCaptureSource source;
   final String evidence;
   final String network;
   final String host;
@@ -50,6 +62,7 @@ class HttpCaptureEntry {
   final int download;
   final String remoteDestination;
   final ProtocolObservation? observation;
+  final TlsInspectionRuntimeObservation? inspectionRuntime;
 
   const HttpCaptureEntry({
     required this.id,
@@ -59,6 +72,7 @@ class HttpCaptureEntry {
     required this.startedAt,
     required this.observedAt,
     required this.protocol,
+    this.source = HttpCaptureSource.connectionCandidate,
     required this.evidence,
     required this.network,
     required this.host,
@@ -76,6 +90,7 @@ class HttpCaptureEntry {
     required this.download,
     required this.remoteDestination,
     this.observation,
+    this.inspectionRuntime,
   });
 
   factory HttpCaptureEntry.fromTracker({
@@ -111,6 +126,9 @@ class HttpCaptureEntry {
       startedAt: tracker.start,
       observedAt: observedAt ?? DateTime.now(),
       protocol: classification.protocol,
+      source: observation == null
+          ? HttpCaptureSource.connectionCandidate
+          : HttpCaptureSource.passiveCore,
       evidence: classification.evidence,
       network: metadata.network.toLowerCase(),
       host: observedHost.trim().toLowerCase(),
@@ -131,6 +149,41 @@ class HttpCaptureEntry {
     );
   }
 
+  factory HttpCaptureEntry.fromInspectionRuntime({
+    required int id,
+    required TlsInspectionRuntimeObservation observation,
+    required int? profileId,
+    DateTime? observedAt,
+  }) {
+    return HttpCaptureEntry(
+      id: id,
+      connectionId: observation.connectionId,
+      sessionId: observation.sessionId,
+      profileId: profileId,
+      startedAt: observation.startedAt,
+      observedAt: observedAt ?? observation.startedAt,
+      protocol: HttpCaptureProtocol.tls,
+      source: HttpCaptureSource.inspectedRuntime,
+      evidence: 'inspected-runtime',
+      network: 'tcp',
+      host: observation.host,
+      destinationIP: '',
+      destinationPort: 443,
+      sourceIP: '',
+      sourcePort: 0,
+      process: '',
+      processPath: '',
+      uid: 0,
+      rule: '',
+      rulePayload: '',
+      chains: const [],
+      upload: observation.uploaded,
+      download: observation.downloaded,
+      remoteDestination: 'https://${observation.host}:443',
+      inspectionRuntime: observation,
+    );
+  }
+
   factory HttpCaptureEntry.fromJson(Map<String, Object?> json) {
     List<String> strings(Object? value) => value is List
         ? List.unmodifiable(value.whereType<String>())
@@ -144,6 +197,22 @@ class HttpCaptureEntry {
       _ => int.tryParse(value?.toString() ?? '') ?? 0,
     };
     final rawObservation = json['observation'];
+    final observation = rawObservation is Map
+        ? ProtocolObservation.fromJson(
+            Map<String, Object?>.from(rawObservation),
+          )
+        : null;
+    final rawInspectionRuntime = json['inspectionRuntime'];
+    final inspectionRuntime = rawInspectionRuntime is Map
+        ? TlsInspectionRuntimeObservation.fromJson(
+            Map<String, Object?>.from(rawInspectionRuntime),
+          )
+        : null;
+    final source = inspectionRuntime != null
+        ? HttpCaptureSource.inspectedRuntime
+        : observation != null
+        ? HttpCaptureSource.passiveCore
+        : HttpCaptureSource.connectionCandidate;
 
     return HttpCaptureEntry(
       id: integer(json['id']),
@@ -153,6 +222,7 @@ class HttpCaptureEntry {
       startedAt: date(json['startedAt']),
       observedAt: date(json['observedAt']),
       protocol: HttpCaptureProtocol.fromName(json['protocol']),
+      source: source,
       evidence: json['evidence'] as String? ?? 'unknown',
       network: json['network'] as String? ?? '',
       host: json['host'] as String? ?? '',
@@ -169,11 +239,8 @@ class HttpCaptureEntry {
       upload: integer(json['upload']),
       download: integer(json['download']),
       remoteDestination: json['remoteDestination'] as String? ?? '',
-      observation: rawObservation is Map
-          ? ProtocolObservation.fromJson(
-              Map<String, Object?>.from(rawObservation),
-            )
-          : null,
+      observation: observation,
+      inspectionRuntime: inspectionRuntime,
     );
   }
 
@@ -186,6 +253,7 @@ class HttpCaptureEntry {
     'startedAt': startedAt.toUtc().toIso8601String(),
     'observedAt': observedAt.toUtc().toIso8601String(),
     'protocol': protocol.name,
+    'source': source.wireName,
     'evidence': evidence,
     'network': network,
     'host': host,
@@ -203,6 +271,8 @@ class HttpCaptureEntry {
     'download': download,
     'remoteDestination': remoteDestination,
     if (observation != null) 'observation': observation!.toJson(),
+    if (inspectionRuntime != null)
+      'inspectionRuntime': inspectionRuntime!.toJson(),
   };
 
   String encodePayload() => jsonEncode(toJson());
@@ -224,6 +294,7 @@ class HttpCaptureEntry {
     DateTime? startedAt,
     DateTime? observedAt,
     HttpCaptureProtocol? protocol,
+    HttpCaptureSource? source,
     String? evidence,
     String? network,
     String? host,
@@ -242,6 +313,8 @@ class HttpCaptureEntry {
     String? remoteDestination,
     ProtocolObservation? observation,
     bool clearObservation = false,
+    TlsInspectionRuntimeObservation? inspectionRuntime,
+    bool clearInspectionRuntime = false,
   }) {
     return HttpCaptureEntry(
       id: id ?? this.id,
@@ -251,6 +324,7 @@ class HttpCaptureEntry {
       startedAt: startedAt ?? this.startedAt,
       observedAt: observedAt ?? this.observedAt,
       protocol: protocol ?? this.protocol,
+      source: source ?? this.source,
       evidence: evidence ?? this.evidence,
       network: network ?? this.network,
       host: host ?? this.host,
@@ -268,6 +342,9 @@ class HttpCaptureEntry {
       download: download ?? this.download,
       remoteDestination: remoteDestination ?? this.remoteDestination,
       observation: clearObservation ? null : observation ?? this.observation,
+      inspectionRuntime: clearInspectionRuntime
+          ? null
+          : inspectionRuntime ?? this.inspectionRuntime,
     );
   }
 
@@ -276,13 +353,17 @@ class HttpCaptureEntry {
   String get endpointHost => host.isNotEmpty ? host : destinationIP;
 
   bool get isHttpCandidate =>
+      inspectionRuntime != null ||
       observation != null ||
       protocol != HttpCaptureProtocol.unknown ||
       (network == 'tcp' && host.isNotEmpty);
 
-  bool get harObservationOnly => true;
+  bool get harObservationOnly => !isInspectedRuntime;
 
-  bool get isCoreObserved => observation != null;
+  bool get isCoreObserved => source == HttpCaptureSource.passiveCore;
+
+  bool get isInspectedRuntime =>
+      source == HttpCaptureSource.inspectedRuntime && inspectionRuntime != null;
 
   HttpProtocolObservation? get httpObservation => observation?.http;
 
@@ -363,6 +444,7 @@ class HttpCaptureEntry {
     return [
       sessionId,
       protocol.name,
+      source.wireName,
       evidence,
       network,
       host,
@@ -394,6 +476,12 @@ class HttpCaptureEntry {
       tls?.legacyVersion ?? '',
       tls?.supportedVersions.join(' ') ?? '',
       if (tls?.encryptedClientHello == true) 'ech',
+      inspectionRuntime?.runtimeId ?? '',
+      inspectionRuntime?.state ?? '',
+      inspectionRuntime?.downstreamTlsVersion ?? '',
+      inspectionRuntime?.upstreamTlsVersion ?? '',
+      inspectionRuntime?.alpn ?? '',
+      inspectionRuntime?.failureKind ?? '',
     ].join('\n').toLowerCase();
   }
 
@@ -489,7 +577,7 @@ bool shouldCaptureHttpObservation(TrackerInfo tracker) {
 Map<String, Object?> buildHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'passive-3',
+  String creatorVersion = 'capture-4',
 }) {
   final ordered = entries.toList(growable: false)
     ..sort((a, b) {
@@ -497,6 +585,9 @@ Map<String, Object?> buildHttpCaptureHar({
       return time != 0 ? time : a.id.compareTo(b.id);
     });
   final timestamp = (exportedAt ?? DateTime.now()).toUtc();
+  final includesInspectedRuntime = ordered.any(
+    (entry) => entry.isInspectedRuntime,
+  );
   return {
     'log': {
       'version': '1.2',
@@ -504,9 +595,11 @@ Map<String, Object?> buildHttpCaptureHar({
       'pages': const <Object?>[],
       'entries': [for (final entry in ordered) _httpCaptureHarEntry(entry)],
       '_flclash': {
-        'format': 'flclash-passive-http-observation',
-        'version': 3,
-        'observationOnly': true,
+        'format': 'flclash-http-observation',
+        'version': 4,
+        'observationOnly': !includesInspectedRuntime,
+        'metadataOnly': true,
+        'includesInspectedRuntime': includesInspectedRuntime,
         'exportedAt': timestamp.toIso8601String(),
         'limitations': const [
           'initial-client-prefix-only',
@@ -522,7 +615,9 @@ Map<String, Object?> buildHttpCaptureHar({
           'response-header-values-not-captured',
           'response-body-not-captured',
           'timings-not-captured',
-          'tls-not-decrypted',
+          'tls-not-decrypted-for-passive-sources',
+          'inspected-runtime-connection-metadata-only',
+          'inspected-runtime-payload-not-retained',
         ],
       },
     },
@@ -532,7 +627,7 @@ Map<String, Object?> buildHttpCaptureHar({
 String encodeHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'passive-3',
+  String creatorVersion = 'capture-4',
 }) {
   return const JsonEncoder.withIndent('  ').convert(
     buildHttpCaptureHar(
@@ -587,9 +682,11 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
     'serverIPAddress': entry.destinationIP,
     'connection': entry.connectionId,
     '_flclash': {
-      'observationOnly': true,
+      'observationOnly': !entry.isInspectedRuntime,
+      'metadataOnly': true,
       'sessionId': entry.sessionId,
       'protocol': entry.protocol.name,
+      'source': entry.source.wireName,
       'evidence': entry.evidence,
       'network': entry.network,
       'observationDelayMs': entry.observationDelayMs,
@@ -601,6 +698,8 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
       'downloadAtObservation': entry.download,
       if (entry.observation != null)
         'coreObservation': entry.observation!.toJson(),
+      if (entry.inspectionRuntime != null)
+        'inspectionRuntime': entry.inspectionRuntime!.toJson(),
       if (http != null) ...{
         'headerNames': http.headerNames,
         'headersComplete': http.headersComplete,

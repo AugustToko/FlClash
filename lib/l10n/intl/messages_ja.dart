@@ -474,7 +474,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "現在のプロファイル",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "実行中の Core から最初の HTTP/1 リクエストとレスポンス、TLS ClientHello メタデータ、接続レベルのフォールバックを受動観測します",
+      "Core の受動メタデータと明示的な検査リレーの TLS 接続メタデータを 1 つのローカル画面で確認します",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "HTTP 観測データはありません",
@@ -487,6 +487,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage("Core が TLS ClientHello を観測"),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "ホストを観測、プロトコルは不明",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "認可済み HTTPS リレーのメタデータ",
     ),
     "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
       "一般的な HTTP ポート",
@@ -531,10 +534,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureInformationalStatusCodesTruncated":
         MessageLookupByLibrary.simpleMessage("情報ステータス一覧を切り詰めました"),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "この記録は明示的に認可されたループバック HTTPS リレーから生成され、ホスト名、TLS バージョン、ALPN、ライフサイクル、バイト数だけを保持します。送信元アプリの識別情報、HTTP メソッド/パス、ヘッダー値、本文は保持しません。",
+    ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "明示的に開始した場合のみ受動観測します。Core は上限付きの最初の HTTP/1 リクエストと最初の平文レスポンスヘッダー、または TLS ClientHello メタデータを調べます。クエリ、Reason Phrase、ヘッダー値、本文、証明書、復号済み TLS、Keep-Alive の後続メッセージは保存しません。開始後の新規接続のみが対象で、記録は端末内に保存されバックアップから除外されます。",
+      "明示的に開始すると、上限付きの Core 受動観測と、明示的に起動したローカル HTTPS リレーの粗粒度メタデータを記録します。クエリ、Reason Phrase、ヘッダー値、本文、証明書、Keep-Alive の後続メッセージは保存しません。リレーペイロードはメモリ内を通過しますが保持されません。開始後の新規接続のみが対象で、記録はバックアップから除外されます。",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "観測した先頭部分",
@@ -582,6 +588,47 @@ class MessageLookup extends MessageLookupByLibrary {
       "レスポンス観測の切り詰め",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "リレー完了時刻",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "クライアント側 TLS",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage(
+      "リレー失敗種別",
+    ),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage("検査の承認が取り消されました"),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage("前回のキャプチャが予期せず中断されました"),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage("リレー完了前にキャプチャが停止しました"),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage("クライアント側 TLS ハンドシェイクに失敗"),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "リーフ証明書を利用できません",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "暗号化リレーがエラーで終了しました",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage("アップストリーム接続に失敗"),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage("アップストリーム TLS 検証に失敗"),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage("リレーセッション"),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage("リレー状態"),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "上流 TLS",
+    ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("接続候補"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "ローカル検査リレー",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Core 受動オブザーバー",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage("観測ソース"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "リクエストターゲットを切り詰めました",
@@ -825,6 +872,27 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("システム"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー期限切れ",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー失敗",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー失効",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー実行中",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを起動中",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "リレー停止未確認",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー停止済み",
+    ),
     "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
       "CA のインストールをキャンセルしました",
     ),
@@ -1601,6 +1669,105 @@ class MessageLookup extends MessageLookupByLibrary {
       "更新すると以前の信頼確認は無効になります。システム内の古い証明書を手動で置き換えてください。",
     ),
     "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage("ドメイン範囲"),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー",
+    ),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage(
+      "受け付け済み",
+    ),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage(
+      "アクティブ接続",
+    ),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage(
+      "プロキシアドレス",
+    ),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "システムプロキシの変更、送信元アプリ識別の保持、ペイロード保存、HTTP/2、証明書ピンニング回避は行いません。",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage("完了"),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "プロキシアドレスをコピー",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "プロキシ設定をコピーできませんでした。",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "一時パスワードをコピー",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "プロキシ設定をコピー",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "プロキシ設定をコピーしました。1 分後に自動消去されます。",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "ユーザー名をコピー",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning": MessageLookupByLibrary.simpleMessage(
+      "認証情報は保存も Logbook への記録もされません。コピー内容が置き換えられていなければ 1 分後に消去され、停止確認または Core 再起動後に認証情報は失われます。",
+    ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "許可リスト内の HTTPS 通信を現在の Core ルートでテストする、明示的に認証されたループバック CONNECT プロキシです。",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "リレー下り",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを開始または検証できませんでした。",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage("有効期限"),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage("失敗"),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "パスワードを隠す",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "所有者不明または古いリレーを失効させました。",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "一時パスワード",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage(
+      "状態を更新",
+    ),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "CA、プラットフォーム信頼、許可リスト、リーフ証明書キャッシュを先に準備してください。",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage("実行中"),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "パスワードを表示",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage("リレーを開始"),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを開始しますか？",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "127.0.0.1 上で最長 10 分間の認証付きプロキシを開始します。手動設定したクライアントだけが利用できます。一時パスワードはメモリ内だけに保持され、この実行でのみ表示されます。",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを開始しました。",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage("起動中"),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage("リレーを停止"),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core がリレー停止を確認していません。この画面を開いたまま再試行してください。",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "停止未確認",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage("停止済み"),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを停止しました。",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage("停止中"),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "利用不可",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "リレー上り",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage(
+      "ユーザー名",
+    ),
     "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage("シリアル番号"),
     "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage("秘密鍵の保存先"),
     "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(

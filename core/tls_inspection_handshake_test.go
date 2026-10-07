@@ -100,11 +100,44 @@ func TestTLSInspectionHandshakeIsExplicit(t *testing.T) {
 	}
 }
 
-func TestTLSInspectionRuntimeProofStableWithinProcess(t *testing.T) {
-	first := currentTLSInspectionRuntimeProofID()
-	second := currentTLSInspectionRuntimeProofID()
-	if !validTLSInspectionGeneration(first) || second != first {
-		t.Fatalf("runtime proof is not a stable process-local identifier: first=%q second=%q", first, second)
+func TestTLSInspectionRuntimeProofTracksAuthorizationEpoch(t *testing.T) {
+	params := handshakeTestPolicy(t)
+	first := getTLSInspectionLeafCacheStatus()
+	if !first.Ready || !validTLSInspectionGeneration(first.RuntimeProofID) {
+		t.Fatalf("first runtime proof is unavailable: %+v", first)
+	}
+	same, failure := configureTLSInspectionLeafPolicy(&TLSInspectionLeafPolicyParams{
+		Enabled:                    true,
+		AuthorityGeneration:        params.AuthorityGeneration,
+		AuthorityFingerprintSHA256: params.AuthorityFingerprintSHA256,
+		RiskVersion:                tlsInspectionLeafRiskVersion,
+		TrustSatisfied:             true,
+		Allowlist:                  []TLSInspectionLeafRule{{Host: "example.com", Scope: "subdomains"}},
+		Exclusions:                 []TLSInspectionLeafRule{{Host: "accounts.example.com", Scope: "exact"}},
+	})
+	if failure != nil {
+		t.Fatal(failure.Code)
+	}
+	if same.RuntimeProofID != first.RuntimeProofID {
+		t.Fatalf("idempotent authorization changed its runtime proof: first=%q same=%q", first.RuntimeProofID, same.RuntimeProofID)
+	}
+	if _, failure := configureTLSInspectionLeafPolicy(&TLSInspectionLeafPolicyParams{Enabled: false}); failure != nil {
+		t.Fatal(failure.Code)
+	}
+	second, failure := configureTLSInspectionLeafPolicy(&TLSInspectionLeafPolicyParams{
+		Enabled:                    true,
+		AuthorityGeneration:        params.AuthorityGeneration,
+		AuthorityFingerprintSHA256: params.AuthorityFingerprintSHA256,
+		RiskVersion:                tlsInspectionLeafRiskVersion,
+		TrustSatisfied:             true,
+		Allowlist:                  []TLSInspectionLeafRule{{Host: "example.com", Scope: "subdomains"}},
+		Exclusions:                 []TLSInspectionLeafRule{{Host: "accounts.example.com", Scope: "exact"}},
+	})
+	if failure != nil {
+		t.Fatal(failure.Code)
+	}
+	if !second.Ready || !validTLSInspectionGeneration(second.RuntimeProofID) || second.RuntimeProofID == first.RuntimeProofID {
+		t.Fatalf("new authorization epoch reused its runtime proof: first=%q second=%q", first.RuntimeProofID, second.RuntimeProofID)
 	}
 }
 
