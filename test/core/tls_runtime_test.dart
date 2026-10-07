@@ -9,6 +9,7 @@ const _id = '0123456789abcdef0123456789abcdef';
 const _generation = 'abcdef0123456789abcdef0123456789';
 final _fingerprint = List.filled(32, 'AA').join(':');
 final _digest = List.filled(64, 'a').join();
+const _runtimeProofId = 'fedcba9876543210fedcba9876543210';
 final _password = List.filled(64, 'b').join();
 
 Map<String, Object?> _status() => {
@@ -30,6 +31,7 @@ Map<String, Object?> _status() => {
   'generation': _generation,
   'authorityFingerprintSha256': _fingerprint,
   'policyDigest': _digest,
+  'runtimeProofId': _runtimeProofId,
   'mode': 'loopback-connect-http1',
   'capacity': 16,
   'connectionLifetimeSeconds': 120,
@@ -68,6 +70,7 @@ TlsInspectionLeafCacheStatus _cache() => TlsInspectionLeafCacheStatus(
   keyPermissionsRestricted: true,
   privateKeysExported: false,
   runtimeAuthorizationPresent: true,
+  runtimeProofId: _runtimeProofId,
   updatedAt: DateTime.now().toUtc(),
   contractValid: true,
 );
@@ -137,6 +140,7 @@ void main() {
     'changesSystemProxy': true,
     'generation': '${_generation}00',
     'policyDigest': 'wrong',
+    'runtimeProofId': 'wrong',
     'authorityFingerprintSha256': 'bad',
   }.entries) {
     test('runtime status rejects malformed ${entry.key}', () {
@@ -211,6 +215,7 @@ void main() {
         'authorityGeneration': _generation,
         'authorityFingerprintSha256': _fingerprint,
         'policyDigest': _digest,
+        'runtimeProofId': _runtimeProofId,
       });
       expect(await core.stopTlsInspectionRuntime(_id), isTrue);
       expect(handler.calls.last.arguments, {'id': _id});
@@ -288,4 +293,101 @@ void main() {
       ]);
     },
   );
+
+  test('runtime observations enforce the privacy-safe capture contract', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final value = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:123',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'completed',
+      'startedAt': started.toIso8601String(),
+      'completedAt': started.add(const Duration(seconds: 1)).toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.2',
+      'alpn': 'http/1.1',
+      'uploaded': 100,
+      'downloaded': 200,
+    });
+    expect(value.completed, isTrue);
+    expect(value.host, 'api.example.com');
+    expect(value.toJson(), isNot(containsPair('failureKind', anything)));
+    expect(
+      TlsInspectionRuntimeObservation.fromJson(value.toJson()).toJson(),
+      value.toJson(),
+    );
+  });
+
+  test('capture interruption is terminal and retains only coarse metadata', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final running = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:123',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': started.toIso8601String(),
+      'downstreamTlsVersion': '',
+      'upstreamTlsVersion': '',
+      'alpn': '',
+      'uploaded': 0,
+      'downloaded': 0,
+    });
+    final interrupted = running.interrupt(
+      completedAt: started.add(const Duration(seconds: 2)),
+      failureKind: 'capture-stopped',
+    );
+    expect(interrupted.completed, isTrue);
+    expect(interrupted.state, 'interrupted');
+    expect(interrupted.failureKind, 'capture-stopped');
+    expect(
+      TlsInspectionRuntimeObservation.fromJson(interrupted.toJson()).toJson(),
+      interrupted.toJson(),
+    );
+    expect(
+      running.interrupt(completedAt: started, failureKind: 'upstream-tls'),
+      same(running),
+    );
+  });
+
+  for (final mutation in <String, Object?>{
+    'sessionId': 'wrong-session',
+    'connectionId': 'bad',
+    'runtimeId': 'bad',
+    'host': 'https://api.example.com',
+    'state': 'unknown',
+    'startedAt': 'bad',
+    'completedAt': '2020-01-01T00:00:00Z',
+    'downstreamTlsVersion': 'TLS 1.1',
+    'upstreamTlsVersion': 'TLS 1.4',
+    'alpn': 'h2',
+    'uploaded': -1,
+    'downloaded': '200',
+    'failureKind': 'raw error text',
+  }.entries) {
+    test('runtime observation rejects malformed ${mutation.key}', () {
+      final started = DateTime.utc(2026, 10, 7, 2);
+      expect(
+        () => TlsInspectionRuntimeObservation.fromJson({
+          'sessionId': 'http-capture:123',
+          'connectionId': _id,
+          'runtimeId': _generation,
+          'host': 'api.example.com',
+          'state': 'completed',
+          'startedAt': started.toIso8601String(),
+          'completedAt': started
+              .add(const Duration(seconds: 1))
+              .toIso8601String(),
+          'downstreamTlsVersion': 'TLS 1.3',
+          'upstreamTlsVersion': 'TLS 1.2',
+          'alpn': 'http/1.1',
+          'uploaded': 100,
+          'downloaded': 200,
+          mutation.key: mutation.value,
+        }),
+        throwsFormatException,
+      );
+    });
+  }
 }

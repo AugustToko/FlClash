@@ -42,6 +42,7 @@ func handleInitClash(params *InitParams) bool {
 	tlsInspectionAuthorityMu.Lock()
 	defer tlsInspectionAuthorityMu.Unlock()
 	resetTLSInspectionLeafPolicySession()
+	resetTLSInspectionRuntimeCancellationsLocked()
 
 	configMu.Lock()
 	defer configMu.Unlock()
@@ -91,6 +92,7 @@ func handleShutdown() bool {
 	disableHTTPObservation()
 	tlsInspectionAuthorityMu.Lock()
 	resetTLSInspectionLeafPolicySession()
+	resetTLSInspectionRuntimeCancellationsLocked()
 	tlsInspectionAuthorityMu.Unlock()
 
 	configMu.Lock()

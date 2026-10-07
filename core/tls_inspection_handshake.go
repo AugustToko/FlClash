@@ -9,26 +9,10 @@ import (
 	"errors"
 	"io"
 	"net"
-	"sync"
 	"time"
 )
 
 const tlsInspectionHandshakeTimeout = 3 * time.Second
-
-var (
-	tlsInspectionRuntimeProofOnce  sync.Once
-	tlsInspectionRuntimeProofValue string
-)
-
-func currentTLSInspectionRuntimeProofID() string {
-	tlsInspectionRuntimeProofOnce.Do(func() {
-		value, err := tlsInspectionRandomID()
-		if err == nil {
-			tlsInspectionRuntimeProofValue = value
-		}
-	})
-	return tlsInspectionRuntimeProofValue
-}
 
 func verifyTLSInspectionLeafHandshake(ctx context.Context, entry *tlsInspectionLeafEntry, authority *x509.Certificate) error {
 	if entry == nil || entry.Certificate == nil || entry.PrivateKey == nil || authority == nil {
@@ -150,8 +134,11 @@ func completeTLSInspectionLeafPreparation(entry *tlsInspectionLeafEntry, cacheHi
 	if !verifyHandshake {
 		return result, nil
 	}
-	runtimeProofID := currentTLSInspectionRuntimeProofID()
-	if runtimeProofID == "" {
+	runtimeProofID := ""
+	if tlsInspectionLeafSession != nil {
+		runtimeProofID = tlsInspectionLeafSession.RuntimeProofID
+	}
+	if !validTLSInspectionGeneration(runtimeProofID) {
 		resetTLSInspectionLeafPolicySession()
 		return nil, &MethodError{
 			Code:    "leaf_runtime_proof_unavailable",

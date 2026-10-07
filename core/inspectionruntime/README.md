@@ -1,4 +1,4 @@
-# Experimental local HTTPS relay core
+# Authenticated loopback HTTPS relay core
 
 This package is an explicit, authenticated, loopback-only CONNECT TLS relay. It is the next backend stage after the local in-memory handshake self-test. It is not enabled by preparing a CA, opening the safety page, restoring preferences, restarting Core, or starting passive HTTP Capture.
 
@@ -23,21 +23,24 @@ The production upstream adapter submits an INNER TCP connection through the Miho
 
 CA rotation/deletion, leaf-policy reset, Core init/shutdown and stopping listeners revoke the runtime. Windows remains unavailable while the existing CA/private-key DACL contract is unavailable.
 
+## App ownership and observability
+
+The HTTPS inspection safety workspace owns explicit start, stop, refresh and temporary credential presentation. A runtime is never restored or auto-started from persisted policy. The App keeps the password in memory only, hides it by default, clears copied settings after a bounded interval when the clipboard still contains the same value, and reports an unconfirmed stop without discarding the runtime identity needed for recovery.
+
+When HTTP Capture is active, Core emits a separate inspected-runtime metadata event. Capture stores the runtime/connection identity, target host, TLS versions, ALPN, lifecycle state and aggregate byte counts. It does not retain CONNECT authorization, HTTP headers, URLs, cookies or bodies. Passive observations, inspected-runtime metadata and connection candidates remain explicitly distinguishable in the UI and export format.
+
 ## Verification
 
 The package tests use a loopback TLS origin, an independent origin CA and a separate inspection CA. They verify actual HTTPS request/response transfer through two TLS sessions, both downstream TLS 1.2 and TLS 1.3, authentication before dial, excluded/invalid targets, upstream trust/hostname rejection before HTTP payload release, client SNI/ALPN rejection, bounded idle clients and cancellation.
 
+Parent-Core tests additionally run the production Mihomo Tunnel handler with live rules and test proxies. They prove that an active route change takes effect for the next runtime connection, a `REJECT` rule blocks the route, and INNER runtime traffic does not invent an external application's UID, process or source address.
+
+Provider, model and widget tests cover explicit confirmation, secure identity failure, start/stop races, unconfirmed-stop recovery, Core and authorization loss, no auto-start, credential redaction and clipboard cleanup, Capture terminal-state merging, source filtering and responsive previews.
+
 Injected private roots and a local dial callback are test seams in the Go package; neither is accepted over production Core IPC.
 
-## Remaining release work
+## Remaining scope
 
-This backend is intentionally kept in a draft stage until the following are complete:
+This relay is an explicit per-session local proxy. It does not change the system proxy, transparently redirect TUN/mixed-port traffic, preserve the original application's process identity, bypass certificate pinning or claim that every Android application trusts the user CA. Device validation must therefore separately cover platform CA installation and an opted-in test client.
 
-- App start/stop controls, explicit interception consent and temporary credential presentation.
-- Provider lifecycle ownership, failed-stop feedback, no auto-start, platform trust loss and resume tests.
-- Full production routed-dial integration tests with isolated Mihomo profiles, including reject/route changes and original-process metadata limitations.
-- Integration into HTTP Capture with an explicit inspected-versus-passive discriminator and honest metadata boundaries.
-- Full Flutter, coverage and relevant native platform gates for the combined branch.
-- Device validation. No local test installs a system trust root, changes the system proxy or intercepts the user's traffic.
-
-HTTP/2, HTTP/3, request/response body capture, Rewrite, Map Local and request/response scripts remain separate later stages.
+HTTP/2, HTTP/3, persistent header/body capture, Rewrite, Map Local and request/response scripts remain separate later stages.

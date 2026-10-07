@@ -28,6 +28,8 @@ abstract mixin class CoreEventListener {
 
   void onRequest(TrackerInfo connection) {}
 
+  void onInspectionRuntime(TlsInspectionRuntimeObservation observation) {}
+
   void onLoaded(String providerName) {}
 
   void onCrash(String message) {}
@@ -56,6 +58,13 @@ class CoreEventManager {
               break;
             case CoreEventType.request:
               listener.onRequest(TrackerInfo.fromJson(event.data));
+              break;
+            case CoreEventType.inspectionRuntime:
+              listener.onInspectionRuntime(
+                TlsInspectionRuntimeObservation.fromJson(
+                  Map<String, Object?>.from(event.data as Map),
+                ),
+              );
               break;
             case CoreEventType.loaded:
               listener.onLoaded(event.data);

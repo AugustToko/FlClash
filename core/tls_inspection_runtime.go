@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"core/inspectionruntime"
+	"github.com/metacubex/mihomo/component/observer"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/tunnel"
 )
@@ -20,6 +21,7 @@ type TLSInspectionRuntimeStartParams struct {
 	AuthorityGeneration        string `json:"authorityGeneration"`
 	AuthorityFingerprintSHA256 string `json:"authorityFingerprintSha256"`
 	PolicyDigest               string `json:"policyDigest"`
+	RuntimeProofID             string `json:"runtimeProofId"`
 }
 
 type TLSInspectionRuntimeStopParams struct {
@@ -31,6 +33,7 @@ type TLSInspectionRuntimeStatus struct {
 	Generation                 string                   `json:"generation"`
 	AuthorityFingerprintSHA256 string                   `json:"authorityFingerprintSha256"`
 	PolicyDigest               string                   `json:"policyDigest"`
+	RuntimeProofID             string                   `json:"runtimeProofId,omitempty"`
 	Mode                       string                   `json:"mode"`
 	Capacity                   int                      `json:"capacity"`
 	ConnectionLifetimeSeconds  int64                    `json:"connectionLifetimeSeconds"`
@@ -46,8 +49,40 @@ type TLSInspectionRuntimeStartResult struct {
 
 var tlsInspectionRuntime *inspectionruntime.Runtime
 var tlsInspectionRuntimeBinding TLSInspectionRuntimeStartParams
+
+const tlsInspectionRuntimeCancellationLimit = 128
+
 var tlsInspectionRuntimeCancelled = make(map[string]time.Time)
 var tlsInspectionRuntimeDialSlots = make(chan struct{}, inspectionruntime.MaxClients)
+var tlsInspectionRuntimeHandleTCPConn = tunnel.Tunnel.HandleTCPConn
+
+func pruneTLSInspectionRuntimeCancellationsLocked(now time.Time) {
+	for id, expiry := range tlsInspectionRuntimeCancelled {
+		if !expiry.After(now) {
+			delete(tlsInspectionRuntimeCancelled, id)
+		}
+	}
+}
+
+func rememberTLSInspectionRuntimeCancellationLocked(id string, now time.Time) {
+	pruneTLSInspectionRuntimeCancellationsLocked(now)
+	if len(tlsInspectionRuntimeCancelled) >= tlsInspectionRuntimeCancellationLimit {
+		var oldestID string
+		var oldestExpiry time.Time
+		for candidate, expiry := range tlsInspectionRuntimeCancelled {
+			if oldestID == "" || expiry.Before(oldestExpiry) {
+				oldestID = candidate
+				oldestExpiry = expiry
+			}
+		}
+		delete(tlsInspectionRuntimeCancelled, oldestID)
+	}
+	tlsInspectionRuntimeCancelled[id] = now.Add(inspectionruntime.SessionLifetime)
+}
+
+func resetTLSInspectionRuntimeCancellationsLocked() {
+	tlsInspectionRuntimeCancelled = make(map[string]time.Time)
+}
 
 func stopTLSInspectionRuntimeLocked() {
 	if tlsInspectionRuntime != nil {
@@ -68,6 +103,7 @@ func tlsInspectionRuntimeStatusLocked() TLSInspectionRuntimeStatus {
 		result.Generation = tlsInspectionRuntimeBinding.AuthorityGeneration
 		result.AuthorityFingerprintSHA256 = tlsInspectionRuntimeBinding.AuthorityFingerprintSHA256
 		result.PolicyDigest = tlsInspectionRuntimeBinding.PolicyDigest
+		result.RuntimeProofID = tlsInspectionRuntimeBinding.RuntimeProofID
 	}
 	return result
 }
@@ -87,19 +123,15 @@ func startTLSInspectionRuntime(params *TLSInspectionRuntimeStartParams) (*TLSIns
 	if params == nil || !params.Confirm || !validTLSInspectionGeneration(params.ID) || strings.ToLower(params.ID) != params.ID {
 		return nil, &MethodError{Code: "runtime_confirmation_required", Message: "runtime requires an explicit confirmed identity"}
 	}
-	for id, expiry := range tlsInspectionRuntimeCancelled {
-		if time.Now().After(expiry) {
-			delete(tlsInspectionRuntimeCancelled, id)
-		}
-	}
-	if _, cancelled := tlsInspectionRuntimeCancelled[params.ID]; cancelled || len(tlsInspectionRuntimeCancelled) >= 128 {
+	pruneTLSInspectionRuntimeCancellationsLocked(time.Now())
+	if _, cancelled := tlsInspectionRuntimeCancelled[params.ID]; cancelled {
 		return nil, &MethodError{Code: "runtime_start_cancelled", Message: "runtime start was cancelled"}
 	}
 	if !isRunning.Load() {
 		return nil, &MethodError{Code: "runtime_core_not_running", Message: "start the configured Core before inspection"}
 	}
 	status := getTLSInspectionLeafCacheStatusLocked()
-	if !status.Ready || params.AuthorityGeneration != status.Generation || params.AuthorityFingerprintSHA256 != status.AuthorityFingerprintSHA256 || params.PolicyDigest != status.PolicyDigest {
+	if !status.Ready || params.AuthorityGeneration != status.Generation || params.AuthorityFingerprintSHA256 != status.AuthorityFingerprintSHA256 || params.PolicyDigest != status.PolicyDigest || params.RuntimeProofID != status.RuntimeProofID {
 		return nil, &MethodError{Code: "runtime_not_authorized", Message: "current authority, trust and allowlist preparation are required"}
 	}
 	if tlsInspectionRuntime != nil && tlsInspectionRuntime.Status().State == "running" {
@@ -120,6 +152,15 @@ func startTLSInspectionRuntime(params *TLSInspectionRuntimeStartParams) (*TLSIns
 			return loadTLSInspectionRuntimeLeaf(ctx, active, host)
 		},
 		Dial: dialTLSInspectionRuntime,
+		CaptureSession: func() string {
+			if !observer.Enabled() {
+				return ""
+			}
+			return observer.SessionID()
+		},
+		Observe: func(value inspectionruntime.Observation) {
+			sendMessage(Message{Type: InspectionRuntimeMessage, Data: value})
+		},
 	})
 	if err != nil {
 		return nil, &MethodError{Code: "runtime_start_failed", Message: "local inspection listener could not start"}
@@ -135,9 +176,7 @@ func stopTLSInspectionRuntime(params *TLSInspectionRuntimeStopParams) (bool, *Me
 	if params == nil || !validTLSInspectionGeneration(params.ID) || strings.ToLower(params.ID) != params.ID {
 		return false, &MethodError{Code: "runtime_identity_required", Message: "runtime stop requires the requested identity"}
 	}
-	if len(tlsInspectionRuntimeCancelled) < 128 {
-		tlsInspectionRuntimeCancelled[params.ID] = time.Now().Add(inspectionruntime.SessionLifetime)
-	}
+	rememberTLSInspectionRuntimeCancellationLocked(params.ID, time.Now())
 	if tlsInspectionRuntime != nil && tlsInspectionRuntime.Status().ID == params.ID {
 		stopTLSInspectionRuntimeLocked()
 	}
@@ -158,7 +197,7 @@ func authorizeTLSInspectionRuntimeLocked(ctx context.Context, active *inspection
 		return errors.New("inspection runtime target not allowed")
 	}
 	status := getTLSInspectionLeafCacheStatusLocked()
-	if !status.Ready || status.Generation != binding.AuthorityGeneration || status.PolicyDigest != binding.PolicyDigest || status.AuthorityFingerprintSHA256 != binding.AuthorityFingerprintSHA256 {
+	if !status.Ready || status.Generation != binding.AuthorityGeneration || status.PolicyDigest != binding.PolicyDigest || status.AuthorityFingerprintSHA256 != binding.AuthorityFingerprintSHA256 || status.RuntimeProofID != binding.RuntimeProofID {
 		return errors.New("inspection runtime authority unavailable")
 	}
 	return nil
@@ -199,6 +238,11 @@ func dialTLSInspectionRuntime(ctx context.Context, network, address string) (net
 	if network != "tcp" {
 		return nil, errors.New("inspection runtime requires TCP")
 	}
+	host, port, err := net.SplitHostPort(address)
+	if err != nil || port != "443" || host != strings.ToLower(host) ||
+		net.ParseIP(host) != nil || !strings.Contains(host, ".") {
+		return nil, errors.New("inspection runtime requires a normalized DNS host on port 443")
+	}
 	select {
 	case tlsInspectionRuntimeDialSlots <- struct{}{}:
 	case <-ctx.Done():
@@ -215,7 +259,7 @@ func dialTLSInspectionRuntime(ctx context.Context, network, address string) (net
 	stop := context.AfterFunc(ctx, func() { _ = client.Close(); _ = inbound.Close() })
 	safeGoDetached("inspection-runtime-route", func() {
 		defer func() { stop(); _ = client.Close(); _ = inbound.Close(); <-tlsInspectionRuntimeDialSlots }()
-		tunnel.Tunnel.HandleTCPConn(inbound, metadata)
+		tlsInspectionRuntimeHandleTCPConn(inbound, metadata)
 	})
 	return client, nil
 }

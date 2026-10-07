@@ -30,11 +30,29 @@ const (
 )
 
 type Config struct {
-	ID        string
-	Authorize func(context.Context, string) error
-	Leaf      func(context.Context, string) (*tls.Certificate, error)
-	Dial      func(context.Context, string, string) (net.Conn, error)
-	Roots     *x509.CertPool
+	ID             string
+	Authorize      func(context.Context, string) error
+	Leaf           func(context.Context, string) (*tls.Certificate, error)
+	Dial           func(context.Context, string, string) (net.Conn, error)
+	CaptureSession func() string
+	Observe        func(Observation)
+	Roots          *x509.CertPool
+}
+
+type Observation struct {
+	SessionID            string     `json:"sessionId"`
+	ConnectionID         string     `json:"connectionId"`
+	RuntimeID            string     `json:"runtimeId"`
+	Host                 string     `json:"host"`
+	State                string     `json:"state"`
+	StartedAt            time.Time  `json:"startedAt"`
+	CompletedAt          *time.Time `json:"completedAt,omitempty"`
+	DownstreamTLSVersion string     `json:"downstreamTlsVersion,omitempty"`
+	UpstreamTLSVersion   string     `json:"upstreamTlsVersion,omitempty"`
+	ALPN                 string     `json:"alpn,omitempty"`
+	Uploaded             uint64     `json:"uploaded"`
+	Downloaded           uint64     `json:"downloaded"`
+	FailureKind          string     `json:"failureKind,omitempty"`
 }
 
 type Status struct {
@@ -51,24 +69,25 @@ type Status struct {
 }
 
 type Runtime struct {
-	config     Config
-	id         string
-	address    string
-	expiresAt  time.Time
-	authHash   [32]byte
-	ctx        context.Context
-	cancel     context.CancelFunc
-	listener   net.Listener
-	mu         sync.Mutex
-	clients    map[net.Conn]context.CancelFunc
-	accepted   uint64
-	completed  uint64
-	failed     uint64
-	uploaded   uint64
-	downloaded uint64
-	done       chan struct{}
-	workers    sync.WaitGroup
-	stopOnce   sync.Once
+	config              Config
+	id                  string
+	address             string
+	expiresAt           time.Time
+	authHash            [32]byte
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	listener            net.Listener
+	mu                  sync.Mutex
+	clients             map[net.Conn]context.CancelFunc
+	accepted            uint64
+	completed           uint64
+	failed              uint64
+	uploaded            uint64
+	downloaded          uint64
+	observationSequence uint64
+	done                chan struct{}
+	workers             sync.WaitGroup
+	stopOnce            sync.Once
 }
 
 func Start(config Config) (*Runtime, string, error) {
@@ -281,34 +300,114 @@ type bufferedConn struct {
 
 func (c *bufferedConn) Read(p []byte) (int, error) { return c.reader.Read(p) }
 
-func (r *Runtime) exchange(ctx context.Context, conn net.Conn) error {
+func tlsVersionName(version uint16) string {
+	switch version {
+	case tls.VersionTLS12:
+		return "TLS 1.2"
+	case tls.VersionTLS13:
+		return "TLS 1.3"
+	default:
+		return ""
+	}
+}
+
+func (r *Runtime) captureSession() (session string) {
+	if r.config.CaptureSession == nil || r.config.Observe == nil {
+		return ""
+	}
+	defer func() {
+		if recover() != nil {
+			session = ""
+		}
+	}()
+	session = strings.TrimSpace(r.config.CaptureSession())
+	if len(session) > 128 || !strings.HasPrefix(session, "http-capture:") {
+		return ""
+	}
+	return session
+}
+
+func (r *Runtime) publishObservation(value Observation) {
+	if r.config.Observe == nil {
+		return
+	}
+	defer func() { _ = recover() }()
+	r.config.Observe(value)
+}
+
+func (r *Runtime) beginObservation(host string) *Observation {
+	session := r.captureSession()
+	if session == "" {
+		return nil
+	}
+	r.mu.Lock()
+	r.observationSequence++
+	sequence := r.observationSequence
+	r.mu.Unlock()
+	digest := sha256.Sum256([]byte(fmt.Sprintf("%s:%d", r.id, sequence)))
+	value := &Observation{
+		SessionID: session, ConnectionID: hex.EncodeToString(digest[:16]),
+		RuntimeID: r.id, Host: host, State: "running", StartedAt: time.Now().UTC(),
+	}
+	r.publishObservation(*value)
+	return value
+}
+
+func (r *Runtime) finishObservation(value *Observation, failure error, failureKind string) {
+	if value == nil {
+		return
+	}
+	completed := *value
+	completedAt := time.Now().UTC()
+	completed.CompletedAt = &completedAt
+	if failure == nil {
+		completed.State = "completed"
+	} else {
+		completed.State = "failed"
+		completed.FailureKind = failureKind
+	}
+	r.publishObservation(completed)
+}
+
+func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
+	var observation *Observation
+	failureKind := ""
+	defer func() { r.finishObservation(observation, failure, failureKind) }()
 	stopClose := context.AfterFunc(ctx, func() { _ = conn.Close() })
 	defer stopClose()
 	_ = conn.SetDeadline(time.Now().Add(HandshakeTimeout))
 	reader := bufio.NewReaderSize(conn, MaxConnectHeader)
 	request, err := readConnect(reader)
 	if err != nil {
-		return reject(conn, http.StatusBadRequest)
+		failure = reject(conn, http.StatusBadRequest)
+		return failure
 	}
 	defer request.Body.Close()
 	values := request.Header.Values("Proxy-Authorization")
 	if len(values) != 1 || len(values[0]) > 256 {
-		return reject(conn, http.StatusProxyAuthRequired)
+		failure = reject(conn, http.StatusProxyAuthRequired)
+		return failure
 	}
 	provided := sha256.Sum256([]byte(values[0]))
 	if subtle.ConstantTimeCompare(provided[:], r.authHash[:]) != 1 {
-		return reject(conn, http.StatusProxyAuthRequired)
+		failure = reject(conn, http.StatusProxyAuthRequired)
+		return failure
 	}
 	host, err := connectHost(request)
 	if err != nil {
-		return reject(conn, http.StatusBadRequest)
+		failure = reject(conn, http.StatusBadRequest)
+		return failure
 	}
 	if err := r.config.Authorize(ctx, host); err != nil || ctx.Err() != nil {
-		return reject(conn, http.StatusForbidden)
+		failure = reject(conn, http.StatusForbidden)
+		return failure
 	}
+	observation = r.beginObservation(host)
+	failureKind = "upstream-dial"
 	rawUpstream, err := r.config.Dial(ctx, "tcp", net.JoinHostPort(host, "443"))
 	if err != nil {
-		return reject(conn, http.StatusBadGateway)
+		failure = reject(conn, http.StatusBadGateway)
+		return failure
 	}
 	defer rawUpstream.Close()
 	stopUpstream := context.AfterFunc(ctx, func() { _ = rawUpstream.Close() })
@@ -317,23 +416,35 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) error {
 		ServerName: host, RootCAs: r.config.Roots, MinVersion: tls.VersionTLS12,
 		NextProtos: []string{"http/1.1"}, SessionTicketsDisabled: true,
 	})
+	failureKind = "upstream-tls"
+	_ = rawUpstream.SetDeadline(time.Now().Add(HandshakeTimeout))
 	handshakeCtx, cancelHandshake := context.WithTimeout(ctx, HandshakeTimeout)
 	err = upstream.HandshakeContext(handshakeCtx)
 	cancelHandshake()
+	_ = rawUpstream.SetDeadline(time.Time{})
 	if err != nil {
-		return reject(conn, http.StatusBadGateway)
+		failure = reject(conn, http.StatusBadGateway)
+		return failure
 	}
 	peer := upstream.ConnectionState()
 	if len(peer.VerifiedChains) == 0 || (peer.NegotiatedProtocol != "" && peer.NegotiatedProtocol != "http/1.1") {
-		return reject(conn, http.StatusBadGateway)
+		failure = reject(conn, http.StatusBadGateway)
+		return failure
 	}
+	if observation != nil {
+		observation.UpstreamTLSVersion = tlsVersionName(peer.Version)
+		observation.ALPN = peer.NegotiatedProtocol
+	}
+	failureKind = "leaf"
 	leaf, err := r.config.Leaf(ctx, host)
 	if err != nil || leaf == nil || ctx.Err() != nil {
-		return reject(conn, http.StatusForbidden)
+		failure = reject(conn, http.StatusForbidden)
+		return failure
 	}
 	_ = conn.SetDeadline(time.Now().Add(HandshakeTimeout))
 	if _, err := io.WriteString(conn, "HTTP/1.1 200 Connection Established\r\n\r\n"); err != nil {
-		return err
+		failure = err
+		return failure
 	}
 	downstream := tls.Server(&bufferedConn{Conn: conn, reader: reader}, &tls.Config{
 		Certificates: []tls.Certificate{*leaf}, MinVersion: tls.VersionTLS12,
@@ -354,22 +465,40 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) error {
 			return nil, r.config.Authorize(ctx, host)
 		},
 	})
+	failureKind = "downstream-tls"
 	handshakeCtx, cancelHandshake = context.WithTimeout(ctx, HandshakeTimeout)
 	err = downstream.HandshakeContext(handshakeCtx)
 	cancelHandshake()
 	if err != nil {
-		return errors.New("inspection client handshake failed")
+		failure = errors.New("inspection client handshake failed")
+		return failure
 	}
+	downstreamState := downstream.ConnectionState()
+	if observation != nil {
+		observation.DownstreamTLSVersion = tlsVersionName(downstreamState.Version)
+		if observation.ALPN == "" {
+			observation.ALPN = downstreamState.NegotiatedProtocol
+		}
+	}
+	failureKind = "authorization-revoked"
 	if err := r.config.Authorize(ctx, host); err != nil || ctx.Err() != nil {
-		return errors.New("inspection authorization revoked")
+		failure = errors.New("inspection authorization revoked")
+		return failure
 	}
 	deadline, _ := ctx.Deadline()
 	_ = conn.SetDeadline(deadline)
 	_ = rawUpstream.SetDeadline(deadline)
-	return r.relay(ctx, downstream, upstream, conn, rawUpstream)
+	failureKind = "relay"
+	uploaded, downloaded, relayErr := r.relay(ctx, downstream, upstream, conn, rawUpstream)
+	if observation != nil {
+		observation.Uploaded = uploaded
+		observation.Downloaded = downloaded
+	}
+	failure = relayErr
+	return failure
 }
 
-func (r *Runtime) relay(ctx context.Context, client, upstream *tls.Conn, rawClient, rawUpstream net.Conn) error {
+func (r *Runtime) relay(ctx context.Context, client, upstream *tls.Conn, rawClient, rawUpstream net.Conn) (uint64, uint64, error) {
 	type copied struct {
 		upload bool
 		n      int64
@@ -400,17 +529,27 @@ func (r *Runtime) relay(ctx context.Context, client, upstream *tls.Conn, rawClie
 		_ = rawUpstream.Close()
 		second = <-results
 	}
-	r.mu.Lock()
+	var uploaded uint64
+	var downloaded uint64
 	for _, result := range []copied{first, second} {
 		if result.upload {
-			r.uploaded += uint64(result.n)
+			uploaded += uint64(result.n)
 		} else {
-			r.downloaded += uint64(result.n)
+			downloaded += uint64(result.n)
 		}
 	}
+	r.mu.Lock()
+	r.uploaded += uploaded
+	r.downloaded += downloaded
 	r.mu.Unlock()
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return uploaded, downloaded, ctx.Err()
 	}
-	return first.err
+	if first.err != nil && !errors.Is(first.err, net.ErrClosed) {
+		return uploaded, downloaded, first.err
+	}
+	if second.err != nil && !errors.Is(second.err, net.ErrClosed) {
+		return uploaded, downloaded, second.err
+	}
+	return uploaded, downloaded, nil
 }

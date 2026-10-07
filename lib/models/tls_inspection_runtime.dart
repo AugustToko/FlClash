@@ -7,6 +7,7 @@ class TlsInspectionRuntimeStatus {
   final String generation;
   final String authorityFingerprint;
   final String policyDigest;
+  final String runtimeProofId;
   final DateTime? expiresAt;
   final int active;
   final int accepted;
@@ -22,6 +23,7 @@ class TlsInspectionRuntimeStatus {
     required this.generation,
     required this.authorityFingerprint,
     required this.policyDigest,
+    required this.runtimeProofId,
     required this.expiresAt,
     required this.active,
     required this.accepted,
@@ -50,6 +52,9 @@ class TlsInspectionRuntimeStatus {
     final generation = _string(json['generation'], 32);
     final fingerprint = _string(json['authorityFingerprintSha256'], 95);
     final digest = _string(json['policyDigest'], 64);
+    final runtimeProofId = json['runtimeProofId'] == null
+        ? ''
+        : _string(json['runtimeProofId'], 32);
     final date = _string(raw['expiresAt'], 64);
     final expiry = DateTime.tryParse(date)?.toUtc();
     if (state == 'running') {
@@ -60,6 +65,7 @@ class TlsInspectionRuntimeStatus {
           !_id.hasMatch(generation) ||
           !_fingerprint.hasMatch(fingerprint) ||
           !_digest.hasMatch(digest) ||
+          !_id.hasMatch(runtimeProofId) ||
           endpoint == null ||
           int.parse(endpoint.group(1)!) > 65535 ||
           expiry == null ||
@@ -68,7 +74,8 @@ class TlsInspectionRuntimeStatus {
           )) {
         throw const FormatException('Invalid runtime identity');
       }
-    } else if (id.isNotEmpty && !_id.hasMatch(id)) {
+    } else if ((id.isNotEmpty && !_id.hasMatch(id)) ||
+        (runtimeProofId.isNotEmpty && !_id.hasMatch(runtimeProofId))) {
       throw const FormatException('Invalid stopped runtime identity');
     }
     final active = _integer(raw['active'], 16);
@@ -85,6 +92,7 @@ class TlsInspectionRuntimeStatus {
       generation: generation,
       authorityFingerprint: fingerprint,
       policyDigest: digest,
+      runtimeProofId: runtimeProofId,
       expiresAt: expiry,
       active: active,
       accepted: accepted,
@@ -110,7 +118,8 @@ class TlsInspectionRuntimeStatus {
       cache.matchesAuthority(authority) &&
       generation == authority.generation &&
       authorityFingerprint == authority.fingerprintSha256 &&
-      policyDigest == cache.policyDigest;
+      policyDigest == cache.policyDigest &&
+      runtimeProofId == cache.runtimeProofId;
 
   static final _id = RegExp(r'^[0-9a-f]{32}$');
   static final _fingerprint = RegExp(r'^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$');
@@ -160,4 +169,179 @@ class TlsInspectionRuntimeStart {
 
   @override
   String toString() => 'TlsInspectionRuntimeStart(credentials redacted)';
+}
+
+class TlsInspectionRuntimeObservation {
+  final String sessionId;
+  final String connectionId;
+  final String runtimeId;
+  final String host;
+  final String state;
+  final DateTime startedAt;
+  final DateTime? completedAt;
+  final String downstreamTlsVersion;
+  final String upstreamTlsVersion;
+  final String alpn;
+  final int uploaded;
+  final int downloaded;
+  final String failureKind;
+
+  const TlsInspectionRuntimeObservation({
+    required this.sessionId,
+    required this.connectionId,
+    required this.runtimeId,
+    required this.host,
+    required this.state,
+    required this.startedAt,
+    required this.completedAt,
+    required this.downstreamTlsVersion,
+    required this.upstreamTlsVersion,
+    required this.alpn,
+    required this.uploaded,
+    required this.downloaded,
+    required this.failureKind,
+  });
+
+  factory TlsInspectionRuntimeObservation.fromJson(Map<String, Object?> json) {
+    String string(String key, int maximum) {
+      final value = json[key];
+      if (value is! String || value.length > maximum) {
+        throw FormatException('Invalid runtime observation $key');
+      }
+      return value;
+    }
+
+    int integer(String key) {
+      final value = json[key];
+      if (value is! int || value < 0 || value > 0x1fffffffffffff) {
+        throw FormatException('Invalid runtime observation $key');
+      }
+      return value;
+    }
+
+    final sessionId = string('sessionId', 128);
+    final connectionId = string('connectionId', 32);
+    final runtimeId = string('runtimeId', 32);
+    final rawHost = string('host', 253);
+    final host = normalizeTlsInspectionHost(rawHost);
+    final state = string('state', 16);
+    final startedAt = DateTime.tryParse(string('startedAt', 64))?.toUtc();
+    final rawCompletedAt = json['completedAt'];
+    final completedAt = rawCompletedAt == null
+        ? null
+        : DateTime.tryParse(string('completedAt', 64))?.toUtc();
+    final downstream = string('downstreamTlsVersion', 16);
+    final upstream = string('upstreamTlsVersion', 16);
+    final alpn = string('alpn', 16);
+    final failure = json['failureKind'] == null
+        ? ''
+        : string('failureKind', 32);
+    final validHost =
+        rawHost == host &&
+        host.contains('.') &&
+        host
+            .split('.')
+            .every(
+              (label) =>
+                  label.isNotEmpty &&
+                  label.length <= 63 &&
+                  RegExp(r'^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$').hasMatch(label),
+            );
+    const versions = {'', 'TLS 1.2', 'TLS 1.3'};
+    const failures = {
+      '',
+      'upstream-dial',
+      'upstream-tls',
+      'leaf',
+      'downstream-tls',
+      'authorization-revoked',
+      'relay',
+      'capture-stopped',
+      'capture-interrupted',
+    };
+    if (!sessionId.startsWith('http-capture:') ||
+        !TlsInspectionRuntimeStatus._id.hasMatch(connectionId) ||
+        !TlsInspectionRuntimeStatus._id.hasMatch(runtimeId) ||
+        !validHost ||
+        !const {
+          'running',
+          'completed',
+          'failed',
+          'interrupted',
+        }.contains(state) ||
+        startedAt == null ||
+        (state == 'running' && completedAt != null) ||
+        (state != 'running' &&
+            (completedAt == null || completedAt.isBefore(startedAt))) ||
+        !versions.contains(downstream) ||
+        !versions.contains(upstream) ||
+        (alpn.isNotEmpty && alpn != 'http/1.1') ||
+        !failures.contains(failure) ||
+        ((state == 'failed' || state == 'interrupted') != failure.isNotEmpty)) {
+      throw const FormatException('Invalid runtime observation contract');
+    }
+    return TlsInspectionRuntimeObservation(
+      sessionId: sessionId,
+      connectionId: connectionId,
+      runtimeId: runtimeId,
+      host: host,
+      state: state,
+      startedAt: startedAt,
+      completedAt: completedAt,
+      downstreamTlsVersion: downstream,
+      upstreamTlsVersion: upstream,
+      alpn: alpn,
+      uploaded: integer('uploaded'),
+      downloaded: integer('downloaded'),
+      failureKind: failure,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'sessionId': sessionId,
+    'connectionId': connectionId,
+    'runtimeId': runtimeId,
+    'host': host,
+    'state': state,
+    'startedAt': startedAt.toUtc().toIso8601String(),
+    if (completedAt != null)
+      'completedAt': completedAt!.toUtc().toIso8601String(),
+    'downstreamTlsVersion': downstreamTlsVersion,
+    'upstreamTlsVersion': upstreamTlsVersion,
+    'alpn': alpn,
+    'uploaded': uploaded,
+    'downloaded': downloaded,
+    if (failureKind.isNotEmpty) 'failureKind': failureKind,
+  };
+
+  bool get completed =>
+      state == 'completed' || state == 'failed' || state == 'interrupted';
+
+  TlsInspectionRuntimeObservation interrupt({
+    required DateTime completedAt,
+    required String failureKind,
+  }) {
+    if (state != 'running' ||
+        !const {
+          'capture-stopped',
+          'capture-interrupted',
+        }.contains(failureKind)) {
+      return this;
+    }
+    return TlsInspectionRuntimeObservation(
+      sessionId: sessionId,
+      connectionId: connectionId,
+      runtimeId: runtimeId,
+      host: host,
+      state: 'interrupted',
+      startedAt: startedAt,
+      completedAt: completedAt.toUtc(),
+      downstreamTlsVersion: downstreamTlsVersion,
+      upstreamTlsVersion: upstreamTlsVersion,
+      alpn: alpn,
+      uploaded: uploaded,
+      downloaded: downloaded,
+      failureKind: failureKind,
+    );
+  }
 }

@@ -97,7 +97,9 @@ void main() {
     expect(event.profileId, isNull);
     expect(event.details['status'], 'completed');
     expect(event.details['count'], 1);
-    expect(event.details['observationOnly'], isTrue);
+    expect(event.details['metadataOnly'], isTrue);
+    expect(event.details['passiveOnly'], isTrue);
+    expect(event.details['inspectedRuntimeCount'], 0);
   });
 
   test(
@@ -475,7 +477,7 @@ void main() {
     expect(event.eventType, 'http.capture.session');
     expect(event.severity, LogbookSeverity.warning);
     expect(event.details['status'], 'interrupted');
-    expect(event.details['observationOnly'], isTrue);
+    expect(event.details['metadataOnly'], isTrue);
     expect(event.details['durationMs'], isA<int>());
   });
 
@@ -567,6 +569,84 @@ void main() {
         everyElement(isTrue),
         reason:
             'persistence must not roll a response snapshot back to request-only',
+      );
+    },
+  );
+
+  test(
+    'an older runtime row cannot roll a zero-byte terminal observation back',
+    () async {
+      final originalDatabase = database;
+      final testDatabase = Database(NativeDatabase.memory());
+      database = testDatabase;
+      addTearDown(() async {
+        database = originalDatabase;
+        await testDatabase.close();
+      });
+      await testDatabase.profilesDao.putAll([
+        const Profile(
+          id: 1,
+          label: 'Capture profile',
+          autoUpdateDuration: Duration.zero,
+        ).toCompanion(),
+      ]);
+
+      final scope = container(persistence: true);
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final startedAt = DateTime.utc(2026, 10, 7, 3);
+      final initial = TlsInspectionRuntimeObservation.fromJson({
+        'sessionId': sessionId,
+        'connectionId': '0123456789abcdef0123456789abcdef',
+        'runtimeId': 'abcdef0123456789abcdef0123456789',
+        'host': 'api.example.com',
+        'state': 'running',
+        'startedAt': startedAt.toIso8601String(),
+        'downstreamTlsVersion': '',
+        'upstreamTlsVersion': '',
+        'alpn': '',
+        'uploaded': 0,
+        'downloaded': 0,
+      });
+      final failed = TlsInspectionRuntimeObservation.fromJson({
+        ...initial.toJson(),
+        'state': 'failed',
+        'completedAt': startedAt
+            .add(const Duration(milliseconds: 20))
+            .toIso8601String(),
+        'failureKind': 'upstream-tls',
+      });
+      final observedStates = <String>[];
+      final subscription = scope.listen<HttpCaptureState>(httpCaptureProvider, (
+        _,
+        next,
+      ) {
+        if (next.entries case [final entry]) {
+          final runtime = entry.inspectionRuntime;
+          if (runtime != null) {
+            observedStates.add(runtime.state);
+          }
+        }
+      });
+      addTearDown(subscription.close);
+
+      final initialFuture = notifier.observeInspectionRuntime(initial);
+      final failedFuture = notifier.observeInspectionRuntime(failed);
+      await Future.wait([initialFuture, failedFuture]);
+
+      final entry = scope.read(httpCaptureProvider).entries.single;
+      expect(entry.inspectionRuntime?.state, 'failed');
+      expect(entry.inspectionRuntime?.failureKind, 'upstream-tls');
+      final firstTerminal = observedStates.indexWhere(
+        (value) => value != 'running',
+      );
+      expect(firstTerminal, isNonNegative);
+      expect(
+        observedStates.skip(firstTerminal),
+        everyElement(isNot('running')),
+        reason: 'persistence must not roll a terminal runtime row back',
       );
     },
   );
@@ -880,4 +960,97 @@ void main() {
     expect(captured?.httpObservation?.target, '/health');
     expect(captured?.httpResponseObservation?.statusCode, 200);
   });
+
+  test('capture stop finalizes an active inspected runtime row', () async {
+    final scope = container();
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+    await notifier.start();
+    final sessionId = scope.read(httpCaptureProvider).sessionId;
+    final startedAt = DateTime.utc(2026, 10, 7, 2);
+    final running = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': sessionId,
+      'connectionId': '0123456789abcdef0123456789abcdef',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': startedAt.toIso8601String(),
+      'downstreamTlsVersion': '',
+      'upstreamTlsVersion': '',
+      'alpn': '',
+      'uploaded': 0,
+      'downloaded': 0,
+    });
+    await notifier.observeInspectionRuntime(running);
+
+    await notifier.stop();
+
+    final entry = scope.read(httpCaptureProvider).entries.single;
+    expect(entry.inspectionRuntime?.state, 'interrupted');
+    expect(entry.inspectionRuntime?.failureKind, 'capture-stopped');
+    expect(entry.inspectionRuntime?.completedAt, isNotNull);
+    expect(entry.inspectionRuntime?.completed, isTrue);
+    final event = scope.read(logbookProvider).single;
+    expect(event.details['passiveOnly'], isFalse);
+    expect(event.details['inspectedRuntimeCount'], 1);
+  });
+
+  test(
+    'inspected runtime updates one capture row and keeps its original Profile',
+    () async {
+      final scope = container();
+      addTearDown(scope.dispose);
+      final notifier = scope.read(httpCaptureProvider.notifier);
+      await notifier.start();
+      final sessionId = scope.read(httpCaptureProvider).sessionId;
+      final startedAt = DateTime.utc(2026, 10, 7, 2);
+      final initial = TlsInspectionRuntimeObservation.fromJson({
+        'sessionId': sessionId,
+        'connectionId': '0123456789abcdef0123456789abcdef',
+        'runtimeId': 'abcdef0123456789abcdef0123456789',
+        'host': 'api.example.com',
+        'state': 'running',
+        'startedAt': startedAt.toIso8601String(),
+        'downstreamTlsVersion': '',
+        'upstreamTlsVersion': '',
+        'alpn': '',
+        'uploaded': 0,
+        'downloaded': 0,
+      });
+      final first = await notifier.observeInspectionRuntime(initial);
+      expect(first?.source, HttpCaptureSource.inspectedRuntime);
+      expect(first?.profileId, 1);
+      final firstObservedAt = first!.observedAt;
+
+      scope.read(currentProfileIdProvider.notifier).value = 2;
+      final completed = TlsInspectionRuntimeObservation.fromJson({
+        ...initial.toJson(),
+        'state': 'completed',
+        'completedAt': startedAt
+            .add(const Duration(seconds: 2))
+            .toIso8601String(),
+        'downstreamTlsVersion': 'TLS 1.3',
+        'upstreamTlsVersion': 'TLS 1.2',
+        'alpn': 'http/1.1',
+        'uploaded': 123,
+        'downloaded': 456,
+      });
+      final updated = await notifier.observeInspectionRuntime(completed);
+      final entries = scope.read(httpCaptureProvider).entries;
+      expect(entries, hasLength(1));
+      expect(updated?.id, first.id);
+      expect(updated?.observedAt, firstObservedAt);
+      expect(updated?.profileId, 1);
+      expect(updated?.upload, 123);
+      expect(updated?.download, 456);
+      expect(updated?.inspectionRuntime?.state, 'completed');
+
+      final wrongSession = TlsInspectionRuntimeObservation.fromJson({
+        ...completed.toJson(),
+        'sessionId': 'http-capture:other',
+      });
+      expect(await notifier.observeInspectionRuntime(wrongSession), isNull);
+      expect(scope.read(httpCaptureProvider).entries, hasLength(1));
+    },
+  );
 }

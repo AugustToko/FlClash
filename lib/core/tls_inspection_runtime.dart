@@ -39,6 +39,7 @@ extension CoreControllerTlsRuntimeExt on CoreController {
           'authorityGeneration': authority.generation,
           'authorityFingerprintSha256': authority.fingerprintSha256,
           'policyDigest': cache.policyDigest,
+          'runtimeProofId': cache.runtimeProofId,
         },
         timeout: const Duration(seconds: 15),
       );

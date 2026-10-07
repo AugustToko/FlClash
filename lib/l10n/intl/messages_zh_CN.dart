@@ -412,7 +412,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage("当前配置"),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "被动观察运行中 Core 的首个 HTTP/1 请求与响应、TLS ClientHello 元数据及连接级回退信息",
+      "在同一本地工作台中查看 Core 被动元数据与显式检查中继的 TLS 连接元数据",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage("暂无 HTTP 观察记录"),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("观察到的端点"),
@@ -423,6 +423,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage("Core 已观察到 TLS ClientHello"),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "已观察到主机，协议未知",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "已授权 HTTPS 中继元数据",
     ),
     "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
       "常见 HTTP 端口",
@@ -465,10 +468,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureInformationalStatusCodesTruncated":
         MessageLookupByLibrary.simpleMessage("信息性状态码列表已截断"),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "此记录来自显式授权的回环 HTTPS 中继，仅包含域名、TLS 版本、ALPN、生命周期和字节计数；不会保留来源应用身份、HTTP 方法/路径、请求头/响应头值或正文。",
+    ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未观察到"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "仅在主动开启时被动观察。Core 可检查有界的首个 HTTP/1 请求及首个明文响应头，或 TLS ClientHello 元数据；不会保存查询参数、Reason Phrase、请求头/响应头值、正文、证书、解密后的 TLS 数据及 Keep-Alive 后续消息。仅适用于开启后新建的连接；记录只保存在本机并从备份中排除。",
+      "主动开启后，会同时记录有界的 Core 被动观察结果，以及显式启动的本地 HTTPS 中继所产生的粗粒度元数据。不会保存查询参数、Reason Phrase、请求头/响应头值、正文、证书及 Keep-Alive 后续消息；中继载荷只在内存中转发，不会留存。仅适用于开启后新建的连接，记录只保存在本机并从备份中排除。",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage("已观察前缀"),
     "httpCapturePresent": MessageLookupByLibrary.simpleMessage("存在"),
@@ -506,6 +512,45 @@ class MessageLookup extends MessageLookupByLibrary {
       "响应观察是否截断",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("正在捕获"),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "中继完成时间",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "客户端侧 TLS",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage("中继失败类型"),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage("检查授权已撤销"),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage("上次捕获意外中断"),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage("捕获停止时中继尚未完成"),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage("客户端 TLS 握手失败"),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "叶证书不可用",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "加密中继异常结束",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage("上游连接失败"),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage("上游 TLS 验证失败"),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage("中继会话"),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage("中继状态"),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "上游 TLS",
+    ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("连接候选"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "本地检查中继",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Core 被动观察器",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage("观察来源"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("已停止"),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "请求目标已截断",
@@ -703,6 +748,27 @@ class MessageLookup extends MessageLookupByLibrary {
     "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage("配置脚本执行完成"),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("系统"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继已到期",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继失败",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继已撤销",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继运行中",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "正在启动本地 HTTPS 中继",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "中继停止尚未确认",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继已停止",
+    ),
     "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
       "CA 安装已取消",
     ),
@@ -1404,6 +1470,100 @@ class MessageLookup extends MessageLookupByLibrary {
       "轮换后，旧指纹的信任确认会失效；系统中的旧证书需要手动替换。",
     ),
     "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage("域名范围"),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage("本地 HTTPS 中继"),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage("已接受"),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage("活动连接"),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage("代理地址"),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "它不会修改系统代理，不保留来源应用身份，不保存载荷，不支持 HTTP/2，也不会绕过证书固定。",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage(
+      "已完成",
+    ),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "复制代理地址",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "无法复制代理设置。",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "复制临时密码",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "复制代理设置",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "代理设置已复制，将在一分钟后自动清理。",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "复制用户名",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning":
+        MessageLookupByLibrary.simpleMessage(
+          "凭据不会持久化，也不会写入 Logbook；复制内容若未被替换会在一分钟后清空，确认停止或 Core 重启后凭据即消失。",
+        ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "显式认证的回环 CONNECT 代理，用于通过当前 Core 路由测试白名单内的 HTTPS 流量。",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "中继下行",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继启动或验证失败。",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage("到期时间"),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage("失败"),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "隐藏密码",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "已撤销无主或过期的中继。",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "临时密码",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage("刷新状态"),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "请先完成 CA、平台信任、白名单和叶证书缓存准备。",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage("运行中"),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "显示密码",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage("启动中继"),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "启动本地 HTTPS 中继？",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "这会在 127.0.0.1 上启动一个最长 10 分钟的认证代理。只有你手动配置的客户端才能使用它；临时密码仅保存在内存中，并只用于本次运行。",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继已启动。",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "正在启动",
+    ),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage("停止中继"),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core 尚未确认中继已停止。请保持此页面打开并重试。",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "尚未确认停止",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage("已停止"),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "本地 HTTPS 中继已停止。",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage(
+      "正在停止",
+    ),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "不可用",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "中继上行",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage("用户名"),
     "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage("序列号"),
     "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage("私钥存储"),
     "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(

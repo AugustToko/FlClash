@@ -110,6 +110,16 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   }
 
   @override
+  void onInspectionRuntime(TlsInspectionRuntimeObservation observation) {
+    unawaited(
+      ref
+          .read(httpCaptureProvider.notifier)
+          .observeInspectionRuntime(observation),
+    );
+    super.onInspectionRuntime(observation);
+  }
+
+  @override
   Future<void> onLoaded(String providerName) async {
     final provider = await _core.getExternalProvider(providerName);
     if (!mounted) {

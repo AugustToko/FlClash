@@ -447,4 +447,116 @@ void main() {
       isTrue,
     );
   });
+
+  test('inspected runtime entries round-trip with an explicit source', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final observation = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:456',
+      'connectionId': '0123456789abcdef0123456789abcdef',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'api.example.com',
+      'state': 'completed',
+      'startedAt': started.toIso8601String(),
+      'completedAt': started.add(const Duration(seconds: 2)).toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 123,
+      'downloaded': 456,
+    });
+    final entry = HttpCaptureEntry.fromInspectionRuntime(
+      id: 99,
+      observation: observation,
+      profileId: 7,
+    );
+    expect(entry.source, HttpCaptureSource.inspectedRuntime);
+    expect(entry.isInspectedRuntime, isTrue);
+    expect(entry.isCoreObserved, isFalse);
+    expect(entry.protocol, HttpCaptureProtocol.tls);
+    expect(entry.host, 'api.example.com');
+    expect(entry.searchText, contains('inspected-runtime'));
+    final roundTrip = HttpCaptureEntry.decodePayload(entry.encodePayload());
+    expect(roundTrip.source, HttpCaptureSource.inspectedRuntime);
+    expect(roundTrip.inspectionRuntime?.state, 'completed');
+    final har = buildHttpCaptureHar(entries: [entry]);
+    final log = har['log']! as Map<String, Object?>;
+    final exported =
+        (log['entries']! as List<Object?>).single! as Map<String, Object?>;
+    final extension = exported['_flclash']! as Map<String, Object?>;
+    expect(extension['source'], 'inspected-runtime');
+    expect(extension['observationOnly'], isFalse);
+    expect(extension['metadataOnly'], isTrue);
+    expect(extension['inspectionRuntime'], observation.toJson());
+    expect(
+      (log['_flclash']! as Map<String, Object?>)['observationOnly'],
+      isFalse,
+    );
+    expect(
+      (log['_flclash']! as Map<String, Object?>)['includesInspectedRuntime'],
+      isTrue,
+    );
+    final request = exported['request']! as Map<String, Object?>;
+    final response = exported['response']! as Map<String, Object?>;
+    expect(request['method'], 'UNKNOWN');
+    expect(response['status'], 0);
+    expect(jsonEncode(har), isNot(contains('Authorization')));
+  });
+
+  test('capture source is derived from verified payload content', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final runtime = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:source',
+      'connectionId': '0123456789abcdef0123456789abcdef',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'api.example.com',
+      'state': 'interrupted',
+      'startedAt': started.toIso8601String(),
+      'completedAt': started.add(const Duration(seconds: 1)).toIso8601String(),
+      'downstreamTlsVersion': '',
+      'upstreamTlsVersion': '',
+      'alpn': '',
+      'uploaded': 0,
+      'downloaded': 0,
+      'failureKind': 'capture-interrupted',
+    });
+    final entry = HttpCaptureEntry.fromInspectionRuntime(
+      id: 101,
+      observation: runtime,
+      profileId: null,
+    );
+    final tampered = Map<String, Object?>.from(entry.toJson())
+      ..['source'] = 'passive-core';
+    final decoded = HttpCaptureEntry.fromJson(tampered);
+    expect(decoded.source, HttpCaptureSource.inspectedRuntime);
+    expect(decoded.inspectionRuntime?.state, 'interrupted');
+
+    final candidate = HttpCaptureEntry.fromTracker(
+      id: 102,
+      tracker: tracker(host: 'example.com', destinationPort: '443'),
+      sessionId: 'source-session',
+      profileId: null,
+    );
+    final mislabeled = Map<String, Object?>.from(candidate.toJson())
+      ..['source'] = 'inspected-runtime';
+    expect(
+      HttpCaptureEntry.fromJson(mislabeled).source,
+      HttpCaptureSource.connectionCandidate,
+    );
+  });
+
+  test('legacy capture payloads derive their source without migration', () {
+    final trackerEntry = HttpCaptureEntry.fromTracker(
+      id: 100,
+      tracker: tracker(host: 'example.com', destinationPort: '443'),
+      sessionId: 'legacy-session',
+      profileId: null,
+    );
+    final legacy = Map<String, Object?>.from(trackerEntry.toJson())
+      ..remove('source')
+      ..['version'] = 3;
+    expect(
+      HttpCaptureEntry.fromJson(legacy).source,
+      HttpCaptureSource.connectionCandidate,
+    );
+  });
 }

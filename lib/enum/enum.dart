@@ -177,7 +177,15 @@ enum ResultType {
   error,
 }
 
-enum CoreEventType { log, delay, request, loaded, crash, geoUpdate }
+enum CoreEventType {
+  log,
+  delay,
+  request,
+  inspectionRuntime,
+  loaded,
+  crash,
+  geoUpdate,
+}
 
 enum InvokeMessageType { protect, process }
 

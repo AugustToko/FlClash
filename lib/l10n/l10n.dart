@@ -5820,20 +5820,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Passively observe initial HTTP/1 requests and responses, TLS ClientHello metadata, and connection-level fallbacks from the running Core`
+  /// `Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace`
   String get httpCaptureDesc {
     return Intl.message(
-      'Passively observe initial HTTP/1 requests and responses, TLS ClientHello metadata, and connection-level fallbacks from the running Core',
+      'Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace',
       name: 'httpCaptureDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `Opt-in passive observation. Core may inspect a bounded initial HTTP/1 request and its first cleartext response headers, or TLS ClientHello metadata. It never stores query strings, reason phrases, header values, bodies, certificates, decrypted TLS data, or later keep-alive messages. New connections only; local records are excluded from backups.`
+  /// `Opt-in capture combines bounded passive Core observations with coarse metadata from the explicitly started local HTTPS relay. It never stores query strings, reason phrases, header values, bodies, certificates, or later keep-alive messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.`
   String get httpCaptureObservationOnly {
     return Intl.message(
-      'Opt-in passive observation. Core may inspect a bounded initial HTTP/1 request and its first cleartext response headers, or TLS ClientHello metadata. It never stores query strings, reason phrases, header values, bodies, certificates, decrypted TLS data, or later keep-alive messages. New connections only; local records are excluded from backups.',
+      'Opt-in capture combines bounded passive Core observations with coarse metadata from the explicitly started local HTTPS relay. It never stores query strings, reason phrases, header values, bodies, certificates, or later keep-alive messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.',
       name: 'httpCaptureObservationOnly',
       desc: '',
       args: [],
@@ -6095,6 +6095,206 @@ class AppLocalizations {
     return Intl.message(
       'TLS ClientHello observed by Core',
       name: 'httpCaptureEvidenceCoreTlsClientHello',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authorized HTTPS relay metadata`
+  String get httpCaptureEvidenceInspectedRuntime {
+    return Intl.message(
+      'Authorized HTTPS relay metadata',
+      name: 'httpCaptureEvidenceInspectedRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observation source`
+  String get httpCaptureSourceType {
+    return Intl.message(
+      'Observation source',
+      name: 'httpCaptureSourceType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection candidate`
+  String get httpCaptureSourceConnectionCandidate {
+    return Intl.message(
+      'Connection candidate',
+      name: 'httpCaptureSourceConnectionCandidate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Passive Core observer`
+  String get httpCaptureSourcePassiveCore {
+    return Intl.message(
+      'Passive Core observer',
+      name: 'httpCaptureSourcePassiveCore',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspected local relay`
+  String get httpCaptureSourceInspectedRuntime {
+    return Intl.message(
+      'Inspected local relay',
+      name: 'httpCaptureSourceInspectedRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay state`
+  String get httpCaptureRuntimeState {
+    return Intl.message(
+      'Relay state',
+      name: 'httpCaptureRuntimeState',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay session`
+  String get httpCaptureRuntimeId {
+    return Intl.message(
+      'Relay session',
+      name: 'httpCaptureRuntimeId',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client-side TLS`
+  String get httpCaptureRuntimeDownstreamTls {
+    return Intl.message(
+      'Client-side TLS',
+      name: 'httpCaptureRuntimeDownstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream TLS`
+  String get httpCaptureRuntimeUpstreamTls {
+    return Intl.message(
+      'Upstream TLS',
+      name: 'httpCaptureRuntimeUpstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay completed`
+  String get httpCaptureRuntimeCompletedAt {
+    return Intl.message(
+      'Relay completed',
+      name: 'httpCaptureRuntimeCompletedAt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay failure kind`
+  String get httpCaptureRuntimeFailure {
+    return Intl.message(
+      'Relay failure kind',
+      name: 'httpCaptureRuntimeFailure',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream connection failed`
+  String get httpCaptureRuntimeFailureUpstreamDial {
+    return Intl.message(
+      'Upstream connection failed',
+      name: 'httpCaptureRuntimeFailureUpstreamDial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream TLS verification failed`
+  String get httpCaptureRuntimeFailureUpstreamTls {
+    return Intl.message(
+      'Upstream TLS verification failed',
+      name: 'httpCaptureRuntimeFailureUpstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf certificate unavailable`
+  String get httpCaptureRuntimeFailureLeaf {
+    return Intl.message(
+      'Leaf certificate unavailable',
+      name: 'httpCaptureRuntimeFailureLeaf',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client-side TLS handshake failed`
+  String get httpCaptureRuntimeFailureDownstreamTls {
+    return Intl.message(
+      'Client-side TLS handshake failed',
+      name: 'httpCaptureRuntimeFailureDownstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspection authorization was revoked`
+  String get httpCaptureRuntimeFailureAuthorizationRevoked {
+    return Intl.message(
+      'Inspection authorization was revoked',
+      name: 'httpCaptureRuntimeFailureAuthorizationRevoked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Encrypted relay ended with an error`
+  String get httpCaptureRuntimeFailureRelay {
+    return Intl.message(
+      'Encrypted relay ended with an error',
+      name: 'httpCaptureRuntimeFailureRelay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture stopped before the relay completed`
+  String get httpCaptureRuntimeFailureCaptureStopped {
+    return Intl.message(
+      'Capture stopped before the relay completed',
+      name: 'httpCaptureRuntimeFailureCaptureStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Previous capture ended unexpectedly`
+  String get httpCaptureRuntimeFailureCaptureInterrupted {
+    return Intl.message(
+      'Previous capture ended unexpectedly',
+      name: 'httpCaptureRuntimeFailureCaptureInterrupted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This entry came from the explicitly authorized loopback HTTPS relay. It records only the host, TLS versions, ALPN, lifecycle and byte totals. Source-app identity, HTTP method/path, header values and bodies are not retained.`
+  String get httpCaptureInspectedBoundary {
+    return Intl.message(
+      'This entry came from the explicitly authorized loopback HTTPS relay. It records only the host, TLS versions, ALPN, lifecycle and byte totals. Source-app identity, HTTP method/path, header values and bodies are not retained.',
+      name: 'httpCaptureInspectedBoundary',
       desc: '',
       args: [],
     );
@@ -7840,6 +8040,466 @@ class AppLocalizations {
     return Intl.message(
       'This result no longer matches the current CA or policy. Verify again.',
       name: 'tlsInspectionHandshakeStale',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay`
+  String get tlsInspectionRuntime {
+    return Intl.message(
+      'Local HTTPS relay',
+      name: 'tlsInspectionRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An explicit, authenticated loopback CONNECT proxy for testing allowlisted HTTPS traffic through the active Core route.`
+  String get tlsInspectionRuntimeDesc {
+    return Intl.message(
+      'An explicit, authenticated loopback CONNECT proxy for testing allowlisted HTTPS traffic through the active Core route.',
+      name: 'tlsInspectionRuntimeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `It does not change the system proxy, preserve the source app identity, retain payloads, support HTTP/2, or bypass certificate pinning.`
+  String get tlsInspectionRuntimeBoundary {
+    return Intl.message(
+      'It does not change the system proxy, preserve the source app identity, retain payloads, support HTTP/2, or bypass certificate pinning.',
+      name: 'tlsInspectionRuntimeBoundary',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopped`
+  String get tlsInspectionRuntimeStopped {
+    return Intl.message(
+      'Stopped',
+      name: 'tlsInspectionRuntimeStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Starting`
+  String get tlsInspectionRuntimeStarting {
+    return Intl.message(
+      'Starting',
+      name: 'tlsInspectionRuntimeStarting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running`
+  String get tlsInspectionRuntimeRunning {
+    return Intl.message(
+      'Running',
+      name: 'tlsInspectionRuntimeRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopping`
+  String get tlsInspectionRuntimeStopping {
+    return Intl.message(
+      'Stopping',
+      name: 'tlsInspectionRuntimeStopping',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop not confirmed`
+  String get tlsInspectionRuntimeStopUnconfirmed {
+    return Intl.message(
+      'Stop not confirmed',
+      name: 'tlsInspectionRuntimeStopUnconfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable`
+  String get tlsInspectionRuntimeUnavailable {
+    return Intl.message(
+      'Unavailable',
+      name: 'tlsInspectionRuntimeUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start relay`
+  String get tlsInspectionRuntimeStart {
+    return Intl.message(
+      'Start relay',
+      name: 'tlsInspectionRuntimeStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop relay`
+  String get tlsInspectionRuntimeStop {
+    return Intl.message(
+      'Stop relay',
+      name: 'tlsInspectionRuntimeStop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Refresh status`
+  String get tlsInspectionRuntimeRefresh {
+    return Intl.message(
+      'Refresh status',
+      name: 'tlsInspectionRuntimeRefresh',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start local HTTPS relay?`
+  String get tlsInspectionRuntimeStartTitle {
+    return Intl.message(
+      'Start local HTTPS relay?',
+      name: 'tlsInspectionRuntimeStartTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This starts a 10-minute authenticated proxy on 127.0.0.1. Only clients you configure manually can use it. The temporary password is held in memory and shown only for this run.`
+  String get tlsInspectionRuntimeStartWarning {
+    return Intl.message(
+      'This starts a 10-minute authenticated proxy on 127.0.0.1. Only clients you configure manually can use it. The temporary password is held in memory and shown only for this run.',
+      name: 'tlsInspectionRuntimeStartWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay started.`
+  String get tlsInspectionRuntimeStarted {
+    return Intl.message(
+      'Local HTTPS relay started.',
+      name: 'tlsInspectionRuntimeStarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay stopped.`
+  String get tlsInspectionRuntimeStoppedNotice {
+    return Intl.message(
+      'Local HTTPS relay stopped.',
+      name: 'tlsInspectionRuntimeStoppedNotice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy address`
+  String get tlsInspectionRuntimeAddress {
+    return Intl.message(
+      'Proxy address',
+      name: 'tlsInspectionRuntimeAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username`
+  String get tlsInspectionRuntimeUsername {
+    return Intl.message(
+      'Username',
+      name: 'tlsInspectionRuntimeUsername',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Temporary password`
+  String get tlsInspectionRuntimePassword {
+    return Intl.message(
+      'Temporary password',
+      name: 'tlsInspectionRuntimePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show password`
+  String get tlsInspectionRuntimeShowPassword {
+    return Intl.message(
+      'Show password',
+      name: 'tlsInspectionRuntimeShowPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide password`
+  String get tlsInspectionRuntimeHidePassword {
+    return Intl.message(
+      'Hide password',
+      name: 'tlsInspectionRuntimeHidePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy proxy address`
+  String get tlsInspectionRuntimeCopyAddress {
+    return Intl.message(
+      'Copy proxy address',
+      name: 'tlsInspectionRuntimeCopyAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy username`
+  String get tlsInspectionRuntimeCopyUsername {
+    return Intl.message(
+      'Copy username',
+      name: 'tlsInspectionRuntimeCopyUsername',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy temporary password`
+  String get tlsInspectionRuntimeCopyPassword {
+    return Intl.message(
+      'Copy temporary password',
+      name: 'tlsInspectionRuntimeCopyPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy proxy settings`
+  String get tlsInspectionRuntimeCopySettings {
+    return Intl.message(
+      'Copy proxy settings',
+      name: 'tlsInspectionRuntimeCopySettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy settings copied and scheduled to clear after one minute.`
+  String get tlsInspectionRuntimeCopySuccess {
+    return Intl.message(
+      'Proxy settings copied and scheduled to clear after one minute.',
+      name: 'tlsInspectionRuntimeCopySuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy settings could not be copied.`
+  String get tlsInspectionRuntimeCopyError {
+    return Intl.message(
+      'Proxy settings could not be copied.',
+      name: 'tlsInspectionRuntimeCopyError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expires`
+  String get tlsInspectionRuntimeExpires {
+    return Intl.message(
+      'Expires',
+      name: 'tlsInspectionRuntimeExpires',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Active connections`
+  String get tlsInspectionRuntimeActive {
+    return Intl.message(
+      'Active connections',
+      name: 'tlsInspectionRuntimeActive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accepted`
+  String get tlsInspectionRuntimeAccepted {
+    return Intl.message(
+      'Accepted',
+      name: 'tlsInspectionRuntimeAccepted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Completed`
+  String get tlsInspectionRuntimeCompleted {
+    return Intl.message(
+      'Completed',
+      name: 'tlsInspectionRuntimeCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed`
+  String get tlsInspectionRuntimeFailed {
+    return Intl.message(
+      'Failed',
+      name: 'tlsInspectionRuntimeFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relayed upload`
+  String get tlsInspectionRuntimeUploaded {
+    return Intl.message(
+      'Relayed upload',
+      name: 'tlsInspectionRuntimeUploaded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relayed download`
+  String get tlsInspectionRuntimeDownloaded {
+    return Intl.message(
+      'Relayed download',
+      name: 'tlsInspectionRuntimeDownloaded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Credentials are never persisted or written to Logbook. Copied settings are cleared after one minute when still unchanged; credentials disappear after a confirmed stop or Core restart.`
+  String get tlsInspectionRuntimeCredentialsWarning {
+    return Intl.message(
+      'Credentials are never persisted or written to Logbook. Copied settings are cleared after one minute when still unchanged; credentials disappear after a confirmed stop or Core restart.',
+      name: 'tlsInspectionRuntimeCredentialsWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Prepare the CA, platform trust, allowlist and leaf cache before starting the relay.`
+  String get tlsInspectionRuntimeRequirements {
+    return Intl.message(
+      'Prepare the CA, platform trust, allowlist and leaf cache before starting the relay.',
+      name: 'tlsInspectionRuntimeRequirements',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The local HTTPS relay could not be started or verified.`
+  String get tlsInspectionRuntimeError {
+    return Intl.message(
+      'The local HTTPS relay could not be started or verified.',
+      name: 'tlsInspectionRuntimeError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core did not confirm that the relay stopped. Keep this page open and retry.`
+  String get tlsInspectionRuntimeStopError {
+    return Intl.message(
+      'Core did not confirm that the relay stopped. Keep this page open and retry.',
+      name: 'tlsInspectionRuntimeStopError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An unowned or stale relay was revoked.`
+  String get tlsInspectionRuntimeOrphaned {
+    return Intl.message(
+      'An unowned or stale relay was revoked.',
+      name: 'tlsInspectionRuntimeOrphaned',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Starting local HTTPS relay`
+  String get logbookTlsRuntimeStarting {
+    return Intl.message(
+      'Starting local HTTPS relay',
+      name: 'logbookTlsRuntimeStarting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay running`
+  String get logbookTlsRuntimeRunning {
+    return Intl.message(
+      'Local HTTPS relay running',
+      name: 'logbookTlsRuntimeRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay stopped`
+  String get logbookTlsRuntimeStopped {
+    return Intl.message(
+      'Local HTTPS relay stopped',
+      name: 'logbookTlsRuntimeStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay expired`
+  String get logbookTlsRuntimeExpired {
+    return Intl.message(
+      'Local HTTPS relay expired',
+      name: 'logbookTlsRuntimeExpired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay revoked`
+  String get logbookTlsRuntimeRevoked {
+    return Intl.message(
+      'Local HTTPS relay revoked',
+      name: 'logbookTlsRuntimeRevoked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay stop not confirmed`
+  String get logbookTlsRuntimeStopUnconfirmed {
+    return Intl.message(
+      'Relay stop not confirmed',
+      name: 'logbookTlsRuntimeStopUnconfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay failed`
+  String get logbookTlsRuntimeFailed {
+    return Intl.message(
+      'Local HTTPS relay failed',
+      name: 'logbookTlsRuntimeFailed',
       desc: '',
       args: [],
     );

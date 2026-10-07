@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -68,16 +69,25 @@ func testCertificate(t *testing.T, host string) (tls.Certificate, *x509.CertPool
 }
 
 type fixture struct {
-	runtime  *Runtime
-	password string
-	roots    *x509.CertPool
-	dials    atomic.Int32
-	requests atomic.Int32
+	runtime        *Runtime
+	password       string
+	roots          *x509.CertPool
+	dials          atomic.Int32
+	requests       atomic.Int32
+	observationMu  sync.Mutex
+	observations   []Observation
+	captureSession string
+}
+
+func (f *fixture) observationSnapshot() []Observation {
+	f.observationMu.Lock()
+	defer f.observationMu.Unlock()
+	return append([]Observation(nil), f.observations...)
 }
 
 func newFixture(t *testing.T, originHost string, trustOrigin bool) *fixture {
 	t.Helper()
-	f := &fixture{}
+	f := &fixture{captureSession: "http-capture:fixture"}
 	upstreamCert, upstreamRoots := testCertificate(t, originHost)
 	downstreamCert, downstreamRoots := testCertificate(t, "api.example.com")
 	origin := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -119,6 +129,12 @@ func newFixture(t *testing.T, originHost string, trustOrigin bool) *fixture {
 			}
 			var dialer net.Dialer
 			return dialer.DialContext(ctx, "tcp", origin.Listener.Addr().String())
+		},
+		CaptureSession: func() string { return f.captureSession },
+		Observe: func(value Observation) {
+			f.observationMu.Lock()
+			f.observations = append(f.observations, value)
+			f.observationMu.Unlock()
 		},
 		Roots: upstreamRoots,
 	}
@@ -405,5 +421,87 @@ func TestRuntimeKeepsResponseReadableAfterClientTLSHalfClose(t *testing.T) {
 	body, err := io.ReadAll(result.Body)
 	if err != nil || string(body) != "private-response-body" {
 		t.Fatal("client half-close truncated response")
+	}
+}
+
+func TestRuntimePublishesCaptureMetadataWithoutPayloads(t *testing.T) {
+	f := newFixture(t, "api.example.com", true)
+	conn, reader, response := f.connect(t, "api.example.com:443", f.auth(), "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatal("CONNECT failed")
+	}
+	client := tls.Client(&bufferedConn{Conn: conn, reader: reader}, &tls.Config{
+		RootCAs: f.roots, ServerName: "api.example.com", MinVersion: tls.VersionTLS12,
+		NextProtos: []string{"http/1.1"},
+	})
+	if err := client.Handshake(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.WriteString(client, "GET /private?token=secret HTTP/1.1\r\nHost: api.example.com\r\nAuthorization: Bearer secret\r\nConnection: close\r\n\r\n"); err != nil {
+		t.Fatal(err)
+	}
+	result, err := http.ReadResponse(bufio.NewReader(client), &http.Request{Method: http.MethodGet})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.ReadAll(result.Body); err != nil {
+		t.Fatal(err)
+	}
+	_ = result.Body.Close()
+	deadline := time.Now().Add(time.Second)
+	for len(f.observationSnapshot()) < 2 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	observations := f.observationSnapshot()
+	if len(observations) != 2 {
+		t.Fatalf("observation count = %d, want 2", len(observations))
+	}
+	started, completed := observations[0], observations[1]
+	if started.State != "running" || completed.State != "completed" ||
+		started.SessionID != "http-capture:fixture" ||
+		started.ConnectionID == "" || started.ConnectionID != completed.ConnectionID ||
+		started.RuntimeID != f.runtime.id || started.Host != "api.example.com" ||
+		(completed.DownstreamTLSVersion != "TLS 1.2" && completed.DownstreamTLSVersion != "TLS 1.3") ||
+		completed.UpstreamTLSVersion == "" || completed.ALPN != "http/1.1" ||
+		completed.Uploaded == 0 || completed.Downloaded == 0 ||
+		completed.CompletedAt == nil || completed.CompletedAt.Before(completed.StartedAt) {
+		t.Fatalf("unexpected observations: %#v", observations)
+	}
+	encoded, err := json.Marshal(observations)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"/private", "token=secret", "Bearer secret", "private-response-body", "private-test-cookie", f.password} {
+		if strings.Contains(string(encoded), secret) {
+			t.Fatalf("capture metadata retained %q", secret)
+		}
+	}
+}
+
+func TestRuntimeCaptureSessionIsSnapshottedAndOptional(t *testing.T) {
+	f := newFixture(t, "api.example.com", false)
+	f.captureSession = ""
+	_, _, response := f.connect(t, "api.example.com:443", f.auth(), "")
+	if response.StatusCode != http.StatusBadGateway {
+		t.Fatalf("status = %d, want 502", response.StatusCode)
+	}
+	if len(f.observationSnapshot()) != 0 {
+		t.Fatal("runtime emitted capture metadata without an active session")
+	}
+
+	f.captureSession = "http-capture:session-a"
+	_, _, response = f.connect(t, "api.example.com:443", f.auth(), "")
+	if response.StatusCode != http.StatusBadGateway {
+		t.Fatalf("status = %d, want 502", response.StatusCode)
+	}
+	deadline := time.Now().Add(time.Second)
+	for len(f.observationSnapshot()) < 2 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	observations := f.observationSnapshot()
+	if len(observations) != 2 || observations[0].SessionID != "http-capture:session-a" ||
+		observations[1].SessionID != "http-capture:session-a" ||
+		observations[1].State != "failed" || observations[1].FailureKind != "upstream-tls" {
+		t.Fatalf("unexpected failed observations: %#v", observations)
 	}
 }

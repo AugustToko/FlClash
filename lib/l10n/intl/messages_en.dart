@@ -578,7 +578,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Current profile",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Passively observe initial HTTP/1 requests and responses, TLS ClientHello metadata, and connection-level fallbacks from the running Core",
+      "Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace",
     ),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "No HTTP observations yet",
@@ -595,6 +595,9 @@ class MessageLookup extends MessageLookupByLibrary {
         ),
     "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
       "Host observed; protocol unknown",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Authorized HTTPS relay metadata",
     ),
     "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
       "Common HTTP port",
@@ -643,6 +646,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Informational status list truncated",
         ),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "This entry came from the explicitly authorized loopback HTTPS relay. It records only the host, TLS versions, ALPN, lifecycle and byte totals. Source-app identity, HTTP method/path, header values and bodies are not retained.",
+    ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Not observed",
     ),
@@ -650,7 +656,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Observation delay",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Opt-in passive observation. Core may inspect a bounded initial HTTP/1 request and its first cleartext response headers, or TLS ClientHello metadata. It never stores query strings, reason phrases, header values, bodies, certificates, decrypted TLS data, or later keep-alive messages. New connections only; local records are excluded from backups.",
+      "Opt-in capture combines bounded passive Core observations with coarse metadata from the explicitly started local HTTPS relay. It never stores query strings, reason phrases, header values, bodies, certificates, or later keep-alive messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Observed prefix",
@@ -704,6 +710,63 @@ class MessageLookup extends MessageLookupByLibrary {
       "Response observation truncated",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "Relay completed",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "Client-side TLS",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage(
+      "Relay failure kind",
+    ),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage(
+          "Inspection authorization was revoked",
+        ),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage(
+          "Previous capture ended unexpectedly",
+        ),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage(
+          "Capture stopped before the relay completed",
+        ),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Client-side TLS handshake failed",
+        ),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "Leaf certificate unavailable",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "Encrypted relay ended with an error",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage("Upstream connection failed"),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Upstream TLS verification failed",
+        ),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage(
+      "Relay session",
+    ),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage(
+      "Relay state",
+    ),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "Upstream TLS",
+    ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("Connection candidate"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Inspected local relay",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Passive Core observer",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage(
+      "Observation source",
+    ),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "Request target truncated",
@@ -980,6 +1043,27 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "logbookSuccess": MessageLookupByLibrary.simpleMessage("Success"),
     "logbookSystem": MessageLookupByLibrary.simpleMessage("System"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay expired",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay failed",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay revoked",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay running",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Starting local HTTPS relay",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Relay stop not confirmed",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay stopped",
+    ),
     "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
       "CA installation cancelled",
     ),
@@ -1885,6 +1969,123 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage(
       "Domain scope",
+    ),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay",
+    ),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage(
+      "Accepted",
+    ),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage(
+      "Active connections",
+    ),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage(
+      "Proxy address",
+    ),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "It does not change the system proxy, preserve the source app identity, retain payloads, support HTTP/2, or bypass certificate pinning.",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage(
+      "Completed",
+    ),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "Copy proxy address",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "Proxy settings could not be copied.",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "Copy temporary password",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "Copy proxy settings",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "Proxy settings copied and scheduled to clear after one minute.",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "Copy username",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning": MessageLookupByLibrary.simpleMessage(
+      "Credentials are never persisted or written to Logbook. Copied settings are cleared after one minute when still unchanged; credentials disappear after a confirmed stop or Core restart.",
+    ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "An explicit, authenticated loopback CONNECT proxy for testing allowlisted HTTPS traffic through the active Core route.",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "Relayed download",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "The local HTTPS relay could not be started or verified.",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage(
+      "Expires",
+    ),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "Failed",
+    ),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "Hide password",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "An unowned or stale relay was revoked.",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "Temporary password",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage(
+      "Refresh status",
+    ),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Prepare the CA, platform trust, allowlist and leaf cache before starting the relay.",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Running",
+    ),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "Show password",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage(
+      "Start relay",
+    ),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "Start local HTTPS relay?",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "This starts a 10-minute authenticated proxy on 127.0.0.1. Only clients you configure manually can use it. The temporary password is held in memory and shown only for this run.",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay started.",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Starting",
+    ),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage(
+      "Stop relay",
+    ),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core did not confirm that the relay stopped. Keep this page open and retry.",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Stop not confirmed",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Stopped",
+    ),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay stopped.",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage(
+      "Stopping",
+    ),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "Relayed upload",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage(
+      "Username",
     ),
     "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage(
       "Serial number",

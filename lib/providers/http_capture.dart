@@ -152,8 +152,27 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     }
     final currentResponse = current.httpResponseObservation;
     final canonicalResponse = canonical.httpResponseObservation;
+    final currentRuntime = current.inspectionRuntime;
+    final canonicalRuntime = canonical.inspectionRuntime;
+    int runtimeRank(TlsInspectionRuntimeObservation? value) =>
+        switch (value?.state) {
+          'completed' || 'failed' => 2,
+          'interrupted' => 1,
+          'running' => 0,
+          _ => -1,
+        };
+    final currentRuntimeIsRicher =
+        currentRuntime != null &&
+        (canonicalRuntime == null ||
+            runtimeRank(currentRuntime) > runtimeRank(canonicalRuntime) ||
+            (runtimeRank(currentRuntime) == runtimeRank(canonicalRuntime) &&
+                ((currentRuntime.completedAt != null &&
+                        canonicalRuntime.completedAt == null) ||
+                    (currentRuntime.failureKind.isNotEmpty &&
+                        canonicalRuntime.failureKind.isEmpty))));
     final currentIsRicher =
         (currentResponse != null && canonicalResponse == null) ||
+        currentRuntimeIsRicher ||
         current.upload > canonical.upload ||
         current.download > canonical.download;
     return currentIsRicher ? current.copyWith(id: canonical.id) : canonical;
@@ -209,12 +228,70 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     return completer.future;
   }
 
+  Future<void> _finalizeInspectedRuntimeEntries({
+    required bool Function(HttpCaptureEntry entry) matches,
+    required String failureKind,
+  }) async {
+    final completedAt = DateTime.now().toUtc();
+    final replacements = <HttpCaptureEntry>[];
+    for (final entry in state.entries) {
+      final observation = entry.inspectionRuntime;
+      if (observation == null ||
+          observation.state != 'running' ||
+          !matches(entry)) {
+        continue;
+      }
+      final interrupted = observation.interrupt(
+        completedAt: completedAt,
+        failureKind: failureKind,
+      );
+      replacements.add(
+        entry.copyWith(
+          inspectionRuntime: interrupted,
+          upload: interrupted.uploaded,
+          download: interrupted.downloaded,
+        ),
+      );
+    }
+    for (final replacement in replacements) {
+      _upsertMemory(replacement);
+    }
+    if (replacements.isEmpty ||
+        !ref.read(httpCapturePersistenceEnabledProvider)) {
+      return;
+    }
+    for (final replacement in replacements) {
+      try {
+        final canonical = await _serialize(
+          () => database.upsertHttpCaptureEntry(
+            replacement,
+            maxEntriesPerScope: maxEntriesPerScope,
+          ),
+        );
+        if (ref.mounted &&
+            !_suppressedIdentities.contains(_entryIdentity(canonical))) {
+          _upsertMemory(_mergeCanonicalWithMemory(canonical));
+        }
+      } catch (error, stackTrace) {
+        commonPrint.log(
+          'Interrupted inspected runtime persistence failed: '
+          '${compactError(error)}, $stackTrace',
+          logLevel: LogLevel.warning,
+        );
+      }
+    }
+  }
+
   Future<void> _reconcileInterruptedSessions() async {
+    final activeSessionId = state.enabled ? state.sessionId : '';
+    await _finalizeInspectedRuntimeEntries(
+      matches: (entry) => entry.sessionId != activeSessionId,
+      failureKind: 'capture-interrupted',
+    );
     await ref.read(logbookProvider.notifier).reload();
     if (!ref.mounted) {
       return;
     }
-    final activeSessionId = state.enabled ? state.sessionId : '';
     final stale = ref
         .read(logbookProvider)
         .where(
@@ -445,7 +522,7 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           title: 'http.capture.session',
           message: 'capture-started',
           correlationId: sessionId,
-          details: const {'status': 'running', 'observationOnly': true},
+          details: const {'status': 'running', 'metadataOnly': true},
         );
     // Enable the Core observer before waiting for local history persistence so
     // connections created immediately after the user taps Start are eligible.
@@ -460,12 +537,21 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     final startedAt = state.sessionStartedAt;
     final sessionId = state.sessionId;
     final count = state.sessionEntryCount;
+    final inspectedRuntimeCount = state.entries
+        .where(
+          (entry) => entry.sessionId == sessionId && entry.isInspectedRuntime,
+        )
+        .length;
     final coreObserverActive = state.coreObserverActive;
     state = state.copyWith(
       enabled: false,
       clearSessionStartedAt: true,
       sessionId: '',
       revision: state.revision + 1,
+    );
+    await _finalizeInspectedRuntimeEntries(
+      matches: (entry) => entry.sessionId == sessionId,
+      failureKind: 'capture-stopped',
     );
     await syncCoreObservation();
     if (sessionId.isEmpty) {
@@ -485,7 +571,9 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           correlationId: sessionId,
           details: {
             'status': 'completed',
-            'observationOnly': true,
+            'metadataOnly': true,
+            'passiveOnly': inspectedRuntimeCount == 0,
+            'inspectedRuntimeCount': inspectedRuntimeCount,
             'coreObserverActive': coreObserverActive,
             'count': count,
             'durationMs': durationMs,
@@ -558,6 +646,65 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     } catch (error, stackTrace) {
       commonPrint.log(
         'HTTP capture persistence failed: ${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+      return entry;
+    }
+  }
+
+  Future<HttpCaptureEntry?> observeInspectionRuntime(
+    TlsInspectionRuntimeObservation observation,
+  ) async {
+    if (!state.enabled || observation.sessionId != state.sessionId) {
+      return null;
+    }
+    if (_suppressedConnections.contains(
+      _connectionIdentity(
+        sessionId: observation.sessionId,
+        connectionId: observation.connectionId,
+      ),
+    )) {
+      return null;
+    }
+    HttpCaptureEntry? previous;
+    for (final current in state.entries) {
+      if (current.sessionId == observation.sessionId &&
+          current.connectionId == observation.connectionId) {
+        previous = current;
+        break;
+      }
+    }
+    final entry = HttpCaptureEntry.fromInspectionRuntime(
+      id: previous?.id ?? snowflake.id,
+      observation: observation,
+      profileId: previous?.profileId ?? ref.read(currentProfileIdProvider),
+      observedAt: previous?.observedAt,
+    );
+    if (_suppressedIdentities.contains(_entryIdentity(entry))) {
+      return null;
+    }
+    _upsertMemory(entry);
+    if (!ref.read(httpCapturePersistenceEnabledProvider)) {
+      return entry;
+    }
+    try {
+      final canonical = await _serialize(
+        () => database.upsertHttpCaptureEntry(
+          entry,
+          maxEntriesPerScope: maxEntriesPerScope,
+        ),
+      );
+      if (ref.mounted &&
+          !_suppressedIdentities.contains(_entryIdentity(canonical))) {
+        final resolved = _mergeCanonicalWithMemory(canonical);
+        _upsertMemory(resolved);
+        return resolved;
+      }
+      return canonical;
+    } catch (error, stackTrace) {
+      commonPrint.log(
+        'Inspected runtime capture persistence failed: '
+        '${compactError(error)}, $stackTrace',
         logLevel: LogLevel.warning,
       );
       return entry;
