@@ -449,7 +449,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 观察记录已导出",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR 导出仍仅表示观察结果。对于已观察到的明文 HTTP/1，可包含请求方法、已净化目标和请求头名称，以及首个响应的状态码、版本和响应头名称。Reason Phrase、所有请求头/响应头值、正文、Keep-Alive 后续消息、解密后的 TLS 数据与详细时序仍保持未知。",
+      "HAR 导出仍仅包含元数据。对于首个已观察到的 HTTP/1 事务——无论来自被动明文观察还是显式授权的检查中继——可包含请求方法、去除查询参数后的目标与 Header 名称，以及首个最终响应的状态码、版本与 Header 名称。Reason Phrase、所有 Header 值、Cookie、正文、后续 Keep-Alive 事务、原始载荷和浏览器式详细时序仍保持未知。",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("请求头名称"),
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
@@ -469,7 +469,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureInformationalStatusCodesTruncated":
         MessageLookupByLibrary.simpleMessage("信息性状态码列表已截断"),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "此记录来自显式授权的回环 HTTPS 中继，仅包含域名、TLS 版本、ALPN、生命周期和字节计数；不会保留来源应用身份、HTTP 方法/路径、请求头/响应头值或正文。",
+      "此记录来自显式授权的回环 HTTPS 中继。仅保留首个解密 HTTP/1 请求的方法、去除查询参数后的路径与 Header 名称，以及首个最终响应的状态码、版本与 Header 名称，同时保留 TLS 版本、生命周期和字节总量。绝不保留 Header 值、Cookie、正文、后续 Keep-Alive 事务或原始载荷。",
     ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未观察到"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("观察延迟"),

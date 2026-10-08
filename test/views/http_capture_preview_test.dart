@@ -86,6 +86,22 @@ HttpCaptureEntry _runtimeEntry() {
     'alpn': 'http/1.1',
     'uploaded': 2048,
     'downloaded': 8192,
+    'httpRequest': {
+      'method': 'GET',
+      'target': '/items',
+      'version': 'HTTP/1.1',
+      'host': 'secure.example.com',
+      'headerNames': ['host', 'authorization', 'accept'],
+      'headersComplete': true,
+    },
+    'httpResponse': {
+      'version': 'HTTP/1.1',
+      'statusCode': 200,
+      'headerNames': ['content-type', 'set-cookie'],
+      'headersComplete': true,
+      'observedBytes': 112,
+      'observedAfterMilliseconds': 36,
+    },
   });
   return HttpCaptureEntry.fromInspectionRuntime(
     id: 5,
@@ -377,7 +393,7 @@ void main() {
     await tester.tap(target);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('HAR 导出仍仅表示观察结果'), findsOneWidget);
+    expect(find.textContaining('HAR 导出仍仅包含元数据'), findsOneWidget);
     expect(find.text('api.openai.com'), findsWidgets);
     expect(find.text('h2, http/1.1'), findsOneWidget);
     expect(
@@ -403,7 +419,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('https://secure.example.com'), findsOneWidget);
     expect(find.text('https://api.openai.com'), findsNothing);
-    expect(find.textContaining('TLS 1.3 · TLS 1.2 · http/1.1'), findsOneWidget);
+    expect(find.textContaining('GET'), findsWidgets);
+    expect(find.textContaining('200'), findsWidgets);
 
     final target = find.text('https://secure.example.com');
     await tester.ensureVisible(target);
@@ -414,8 +431,24 @@ void main() {
     expect(find.text('本地检查中继'), findsWidgets);
     expect(find.text('TLS 1.3', skipOffstage: false), findsOneWidget);
     expect(find.text('TLS 1.2', skipOffstage: false), findsOneWidget);
-    expect(find.text('http/1.1', skipOffstage: false), findsOneWidget);
-    expect(find.text('abcdef0123456789abcdef0123456789'), findsOneWidget);
+    expect(find.text('http/1.1', skipOffstage: false), findsWidgets);
+    expect(find.text('GET', skipOffstage: false), findsWidgets);
+    expect(find.text('/items', skipOffstage: false), findsOneWidget);
+    expect(find.text('200', skipOffstage: false), findsWidgets);
+  });
+
+  testWidgets('HTTP capture inspected-runtime list preview', (tester) async {
+    await _pumpCapture(tester, size: const Size(430, 932));
+    final sourceFilter = find.text('本地检查中继');
+    await tester.ensureVisible(sourceFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(sourceFilter);
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(HttpCaptureView),
+      matchesGoldenFile('../goldens/http_capture_runtime_list_preview.png'),
+    );
   });
 
   testWidgets('HTTP capture inspected-runtime detail preview', (tester) async {
@@ -499,11 +532,14 @@ void main() {
 
   testWidgets('HTTP capture HTTP/1 detail preview', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
-    await tester.tap(find.text('HTTP').last);
+    await tester.tap(find.widgetWithText(FilterChip, 'HTTP'));
     await tester.pumpAndSettle();
     final target = find.text('http://router.home');
-    await tester.ensureVisible(target);
-    await tester.pumpAndSettle();
+    for (var index = 0; index < 6 && target.evaluate().isEmpty; index++) {
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -260));
+      await tester.pumpAndSettle();
+    }
+    expect(target, findsOneWidget);
     await tester.tap(target);
     await tester.pumpAndSettle();
 

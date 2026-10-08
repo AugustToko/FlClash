@@ -18,6 +18,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -76,7 +77,16 @@ type fixture struct {
 	requests       atomic.Int32
 	observationMu  sync.Mutex
 	observations   []Observation
-	captureSession string
+	captureSession atomic.Value
+}
+
+func (f *fixture) setCaptureSession(value string) {
+	f.captureSession.Store(value)
+}
+
+func (f *fixture) getCaptureSession() string {
+	value, _ := f.captureSession.Load().(string)
+	return value
 }
 
 func (f *fixture) observationSnapshot() []Observation {
@@ -87,7 +97,8 @@ func (f *fixture) observationSnapshot() []Observation {
 
 func newFixture(t *testing.T, originHost string, trustOrigin bool) *fixture {
 	t.Helper()
-	f := &fixture{captureSession: "http-capture:fixture"}
+	f := &fixture{}
+	f.setCaptureSession("http-capture:fixture")
 	upstreamCert, upstreamRoots := testCertificate(t, originHost)
 	downstreamCert, downstreamRoots := testCertificate(t, "api.example.com")
 	origin := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +141,7 @@ func newFixture(t *testing.T, originHost string, trustOrigin bool) *fixture {
 			var dialer net.Dialer
 			return dialer.DialContext(ctx, "tcp", origin.Listener.Addr().String())
 		},
-		CaptureSession: func() string { return f.captureSession },
+		CaptureSession: f.getCaptureSession,
 		Observe: func(value Observation) {
 			f.observationMu.Lock()
 			f.observations = append(f.observations, value)
@@ -449,18 +460,41 @@ func TestRuntimePublishesCaptureMetadataWithoutPayloads(t *testing.T) {
 	}
 	_ = result.Body.Close()
 	deadline := time.Now().Add(time.Second)
-	for len(f.observationSnapshot()) < 2 && time.Now().Before(deadline) {
+	var observations []Observation
+	for time.Now().Before(deadline) {
+		observations = f.observationSnapshot()
+		if len(observations) != 0 && observations[len(observations)-1].State != "running" {
+			break
+		}
 		time.Sleep(time.Millisecond)
 	}
-	observations := f.observationSnapshot()
-	if len(observations) != 2 {
-		t.Fatalf("observation count = %d, want 2", len(observations))
+	if len(observations) < 4 {
+		t.Fatalf("observation count = %d, want incremental and terminal events", len(observations))
 	}
-	started, completed := observations[0], observations[1]
+	started, completed := observations[0], observations[len(observations)-1]
+	requestIndex := -1
+	responseIndex := -1
+	for index, observation := range observations {
+		if observation.SessionID != "http-capture:fixture" ||
+			observation.ConnectionID == "" || observation.ConnectionID != started.ConnectionID ||
+			observation.RuntimeID != f.runtime.id || observation.Host != "api.example.com" {
+			t.Fatalf("observation identity changed at %d: %#v", index, observation)
+		}
+		if observation.HTTPRequest != nil && requestIndex == -1 {
+			requestIndex = index
+		}
+		if observation.HTTPResponse != nil && responseIndex == -1 {
+			responseIndex = index
+		}
+	}
 	if started.State != "running" || completed.State != "completed" ||
-		started.SessionID != "http-capture:fixture" ||
-		started.ConnectionID == "" || started.ConnectionID != completed.ConnectionID ||
-		started.RuntimeID != f.runtime.id || started.Host != "api.example.com" ||
+		requestIndex <= 0 || responseIndex <= requestIndex ||
+		completed.HTTPRequest == nil || completed.HTTPResponse == nil ||
+		completed.HTTPRequest.Method != "GET" || completed.HTTPRequest.Target != "/private" ||
+		completed.HTTPRequest.Host != "api.example.com" ||
+		!slices.Contains(completed.HTTPRequest.HeaderNames, "authorization") ||
+		completed.HTTPResponse.StatusCode != http.StatusCreated ||
+		!slices.Contains(completed.HTTPResponse.HeaderNames, "set-cookie") ||
 		(completed.DownstreamTLSVersion != "TLS 1.2" && completed.DownstreamTLSVersion != "TLS 1.3") ||
 		completed.UpstreamTLSVersion == "" || completed.ALPN != "http/1.1" ||
 		completed.Uploaded == 0 || completed.Downloaded == 0 ||
@@ -471,16 +505,60 @@ func TestRuntimePublishesCaptureMetadataWithoutPayloads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, secret := range []string{"/private", "token=secret", "Bearer secret", "private-response-body", "private-test-cookie", f.password} {
+	for _, secret := range []string{"token=secret", "Bearer secret", "private-response-body", "private-test-cookie", f.password} {
 		if strings.Contains(string(encoded), secret) {
 			t.Fatalf("capture metadata retained %q", secret)
 		}
 	}
 }
 
+func TestRuntimeStopsHTTPMetadataWhenCaptureSessionChanges(t *testing.T) {
+	f := newFixture(t, "api.example.com", true)
+	conn, reader, response := f.connect(t, "api.example.com:443", f.auth(), "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatal("CONNECT failed")
+	}
+	client := tls.Client(&bufferedConn{Conn: conn, reader: reader}, &tls.Config{
+		RootCAs: f.roots, ServerName: "api.example.com", MinVersion: tls.VersionTLS12,
+		NextProtos: []string{"http/1.1"},
+	})
+	if err := client.Handshake(); err != nil {
+		t.Fatal(err)
+	}
+	f.setCaptureSession("http-capture:new-session")
+	if _, err := io.WriteString(client, "GET /private?token=secret HTTP/1.1\r\nHost: api.example.com\r\nAuthorization: Bearer secret\r\nConnection: close\r\n\r\n"); err != nil {
+		t.Fatal(err)
+	}
+	result, err := http.ReadResponse(bufio.NewReader(client), &http.Request{Method: http.MethodGet})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.ReadAll(result.Body); err != nil {
+		t.Fatal(err)
+	}
+	_ = result.Body.Close()
+	deadline := time.Now().Add(time.Second)
+	var observations []Observation
+	for time.Now().Before(deadline) {
+		observations = f.observationSnapshot()
+		if len(observations) != 0 && observations[len(observations)-1].State != "running" {
+			break
+		}
+		time.Sleep(time.Millisecond)
+	}
+	if len(observations) < 2 || observations[0].SessionID != "http-capture:fixture" {
+		t.Fatalf("missing original lifecycle observations: %#v", observations)
+	}
+	for _, observation := range observations {
+		if observation.HTTPRequest != nil || observation.HTTPResponse != nil {
+			t.Fatalf("stale capture session retained HTTP metadata: %#v", observation)
+		}
+	}
+}
+
 func TestRuntimeCaptureSessionIsSnapshottedAndOptional(t *testing.T) {
 	f := newFixture(t, "api.example.com", false)
-	f.captureSession = ""
+	f.setCaptureSession("")
 	_, _, response := f.connect(t, "api.example.com:443", f.auth(), "")
 	if response.StatusCode != http.StatusBadGateway {
 		t.Fatalf("status = %d, want 502", response.StatusCode)
@@ -489,7 +567,7 @@ func TestRuntimeCaptureSessionIsSnapshottedAndOptional(t *testing.T) {
 		t.Fatal("runtime emitted capture metadata without an active session")
 	}
 
-	f.captureSession = "http-capture:session-a"
+	f.setCaptureSession("http-capture:session-a")
 	_, _, response = f.connect(t, "api.example.com:443", f.auth(), "")
 	if response.StatusCode != http.StatusBadGateway {
 		t.Fatalf("status = %d, want 502", response.StatusCode)

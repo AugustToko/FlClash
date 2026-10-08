@@ -35,7 +35,7 @@ enum HttpCaptureSource {
 }
 
 class HttpCaptureEntry {
-  static const formatVersion = 4;
+  static const formatVersion = 5;
 
   final int id;
   final String connectionId;
@@ -162,7 +162,9 @@ class HttpCaptureEntry {
       profileId: profileId,
       startedAt: observation.startedAt,
       observedAt: observedAt ?? observation.startedAt,
-      protocol: HttpCaptureProtocol.tls,
+      protocol: observation.httpRequest == null
+          ? HttpCaptureProtocol.tls
+          : HttpCaptureProtocol.http,
       source: HttpCaptureSource.inspectedRuntime,
       evidence: 'inspected-runtime',
       network: 'tcp',
@@ -221,7 +223,9 @@ class HttpCaptureEntry {
       profileId: json['profileId'] == null ? null : integer(json['profileId']),
       startedAt: date(json['startedAt']),
       observedAt: date(json['observedAt']),
-      protocol: HttpCaptureProtocol.fromName(json['protocol']),
+      protocol: inspectionRuntime?.httpRequest == null
+          ? HttpCaptureProtocol.fromName(json['protocol'])
+          : HttpCaptureProtocol.http,
       source: source,
       evidence: json['evidence'] as String? ?? 'unknown',
       network: json['network'] as String? ?? '',
@@ -365,10 +369,12 @@ class HttpCaptureEntry {
   bool get isInspectedRuntime =>
       source == HttpCaptureSource.inspectedRuntime && inspectionRuntime != null;
 
-  HttpProtocolObservation? get httpObservation => observation?.http;
+  HttpProtocolObservation? get httpObservation =>
+      inspectionRuntime?.httpRequest ?? observation?.http;
 
   HttpResponseProtocolObservation? get httpResponseObservation =>
-      observation?.kind == 'http1' ? observation?.httpResponse : null;
+      inspectionRuntime?.httpResponse ??
+      (observation?.kind == 'http1' ? observation?.httpResponse : null);
 
   TlsClientHelloObservation? get tlsObservation => observation?.tls;
 
@@ -388,11 +394,13 @@ class HttpCaptureEntry {
     if (destinationPort <= 0) {
       return formatted;
     }
-    final defaultPort = switch (protocol.scheme) {
-      'http' => 80,
-      'https' => 443,
-      _ => -1,
-    };
+    final defaultPort = isInspectedRuntime
+        ? 443
+        : switch (protocol.scheme) {
+            'http' => 80,
+            'https' => 443,
+            _ => -1,
+          };
     return destinationPort == defaultPort
         ? formatted
         : '$formatted:$destinationPort';
@@ -403,7 +411,7 @@ class HttpCaptureEntry {
     if (value.isEmpty) {
       return '';
     }
-    final scheme = protocol.scheme;
+    final scheme = isInspectedRuntime ? 'https' : protocol.scheme;
     if (scheme.isNotEmpty) {
       return '$scheme://$value';
     }
@@ -577,7 +585,7 @@ bool shouldCaptureHttpObservation(TrackerInfo tracker) {
 Map<String, Object?> buildHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'capture-4',
+  String creatorVersion = 'capture-5',
 }) {
   final ordered = entries.toList(growable: false)
     ..sort((a, b) {
@@ -596,7 +604,7 @@ Map<String, Object?> buildHttpCaptureHar({
       'entries': [for (final entry in ordered) _httpCaptureHarEntry(entry)],
       '_flclash': {
         'format': 'flclash-http-observation',
-        'version': 4,
+        'version': 5,
         'observationOnly': !includesInspectedRuntime,
         'metadataOnly': true,
         'includesInspectedRuntime': includesInspectedRuntime,
@@ -616,7 +624,8 @@ Map<String, Object?> buildHttpCaptureHar({
           'response-body-not-captured',
           'timings-not-captured',
           'tls-not-decrypted-for-passive-sources',
-          'inspected-runtime-connection-metadata-only',
+          'inspected-runtime-first-http1-transaction-only',
+          'inspected-runtime-header-values-not-retained',
           'inspected-runtime-payload-not-retained',
         ],
       },
@@ -627,7 +636,7 @@ Map<String, Object?> buildHttpCaptureHar({
 String encodeHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'capture-4',
+  String creatorVersion = 'capture-5',
 }) {
   return const JsonEncoder.withIndent('  ').convert(
     buildHttpCaptureHar(

@@ -40,19 +40,21 @@ type Config struct {
 }
 
 type Observation struct {
-	SessionID            string     `json:"sessionId"`
-	ConnectionID         string     `json:"connectionId"`
-	RuntimeID            string     `json:"runtimeId"`
-	Host                 string     `json:"host"`
-	State                string     `json:"state"`
-	StartedAt            time.Time  `json:"startedAt"`
-	CompletedAt          *time.Time `json:"completedAt,omitempty"`
-	DownstreamTLSVersion string     `json:"downstreamTlsVersion,omitempty"`
-	UpstreamTLSVersion   string     `json:"upstreamTlsVersion,omitempty"`
-	ALPN                 string     `json:"alpn,omitempty"`
-	Uploaded             uint64     `json:"uploaded"`
-	Downloaded           uint64     `json:"downloaded"`
-	FailureKind          string     `json:"failureKind,omitempty"`
+	SessionID            string                   `json:"sessionId"`
+	ConnectionID         string                   `json:"connectionId"`
+	RuntimeID            string                   `json:"runtimeId"`
+	Host                 string                   `json:"host"`
+	State                string                   `json:"state"`
+	StartedAt            time.Time                `json:"startedAt"`
+	CompletedAt          *time.Time               `json:"completedAt,omitempty"`
+	DownstreamTLSVersion string                   `json:"downstreamTlsVersion,omitempty"`
+	UpstreamTLSVersion   string                   `json:"upstreamTlsVersion,omitempty"`
+	ALPN                 string                   `json:"alpn,omitempty"`
+	Uploaded             uint64                   `json:"uploaded"`
+	Downloaded           uint64                   `json:"downloaded"`
+	FailureKind          string                   `json:"failureKind,omitempty"`
+	HTTPRequest          *HTTPRequestObservation  `json:"httpRequest,omitempty"`
+	HTTPResponse         *HTTPResponseObservation `json:"httpResponse,omitempty"`
 }
 
 type Status struct {
@@ -335,7 +337,40 @@ func (r *Runtime) publishObservation(value Observation) {
 	r.config.Observe(value)
 }
 
-func (r *Runtime) beginObservation(host string) *Observation {
+type runtimeObservation struct {
+	mu              sync.Mutex
+	publishMu       sync.Mutex
+	value           Observation
+	pendingResponse *HTTPResponseObservation
+	finished        bool
+}
+
+func cloneHTTPRequestObservation(value *HTTPRequestObservation) *HTTPRequestObservation {
+	if value == nil {
+		return nil
+	}
+	result := *value
+	result.HeaderNames = append([]string(nil), value.HeaderNames...)
+	return &result
+}
+
+func cloneHTTPResponseObservation(value *HTTPResponseObservation) *HTTPResponseObservation {
+	if value == nil {
+		return nil
+	}
+	result := *value
+	result.InformationalStatusCodes = append([]int(nil), value.InformationalStatusCodes...)
+	result.HeaderNames = append([]string(nil), value.HeaderNames...)
+	return &result
+}
+
+func cloneObservation(value Observation) Observation {
+	value.HTTPRequest = cloneHTTPRequestObservation(value.HTTPRequest)
+	value.HTTPResponse = cloneHTTPResponseObservation(value.HTTPResponse)
+	return value
+}
+
+func (r *Runtime) beginObservation(host string) *runtimeObservation {
 	session := r.captureSession()
 	if session == "" {
 		return nil
@@ -345,34 +380,154 @@ func (r *Runtime) beginObservation(host string) *Observation {
 	sequence := r.observationSequence
 	r.mu.Unlock()
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s:%d", r.id, sequence)))
-	value := &Observation{
+	value := Observation{
 		SessionID: session, ConnectionID: hex.EncodeToString(digest[:16]),
 		RuntimeID: r.id, Host: host, State: "running", StartedAt: time.Now().UTC(),
 	}
-	r.publishObservation(*value)
-	return value
+	observation := &runtimeObservation{value: value}
+	r.publishObservation(cloneObservation(value))
+	return observation
 }
 
-func (r *Runtime) finishObservation(value *Observation, failure error, failureKind string) {
-	if value == nil {
+func (r *Runtime) updateObservation(observation *runtimeObservation, update func(*Observation)) {
+	if observation == nil || update == nil {
 		return
 	}
-	completed := *value
-	completedAt := time.Now().UTC()
-	completed.CompletedAt = &completedAt
-	if failure == nil {
-		completed.State = "completed"
-	} else {
-		completed.State = "failed"
-		completed.FailureKind = failureKind
+	activeSession := r.captureSession()
+	observation.mu.Lock()
+	if observation.finished || observation.value.SessionID != activeSession {
+		observation.mu.Unlock()
+		return
 	}
-	r.publishObservation(completed)
+	update(&observation.value)
+	snapshot := cloneObservation(observation.value)
+	observation.publishMu.Lock()
+	observation.mu.Unlock()
+	r.publishObservation(snapshot)
+	observation.publishMu.Unlock()
+}
+
+func (r *Runtime) publishHTTPRequest(
+	observation *runtimeObservation,
+	request *HTTPRequestObservation,
+) {
+	if observation == nil || request == nil {
+		return
+	}
+	activeSession := r.captureSession()
+	observation.mu.Lock()
+	if observation.finished ||
+		observation.value.SessionID != activeSession ||
+		observation.value.HTTPRequest != nil {
+		observation.mu.Unlock()
+		return
+	}
+	observation.value.HTTPRequest = cloneHTTPRequestObservation(request)
+	requestSnapshot := cloneObservation(observation.value)
+	pending := cloneHTTPResponseObservation(observation.pendingResponse)
+	observation.pendingResponse = nil
+	var responseSnapshot Observation
+	if pending != nil {
+		observation.value.HTTPResponse = pending
+		responseSnapshot = cloneObservation(observation.value)
+	}
+	observation.publishMu.Lock()
+	observation.mu.Unlock()
+	r.publishObservation(requestSnapshot)
+	if pending != nil {
+		r.publishObservation(responseSnapshot)
+	}
+	observation.publishMu.Unlock()
+}
+
+func (r *Runtime) publishHTTPResponse(
+	observation *runtimeObservation,
+	response *HTTPResponseObservation,
+) {
+	if observation == nil || response == nil {
+		return
+	}
+	activeSession := r.captureSession()
+	observation.mu.Lock()
+	if observation.finished ||
+		observation.value.SessionID != activeSession ||
+		observation.value.HTTPResponse != nil {
+		observation.mu.Unlock()
+		return
+	}
+	if observation.value.HTTPRequest == nil {
+		observation.pendingResponse = cloneHTTPResponseObservation(response)
+		observation.mu.Unlock()
+		return
+	}
+	observation.value.HTTPResponse = cloneHTTPResponseObservation(response)
+	snapshot := cloneObservation(observation.value)
+	observation.publishMu.Lock()
+	observation.mu.Unlock()
+	r.publishObservation(snapshot)
+	observation.publishMu.Unlock()
+}
+
+func (r *Runtime) finishObservation(
+	observation *runtimeObservation,
+	failure error,
+	failureKind string,
+	uploaded uint64,
+	downloaded uint64,
+) {
+	if observation == nil {
+		return
+	}
+	observation.mu.Lock()
+	if observation.finished {
+		observation.mu.Unlock()
+		return
+	}
+	observation.finished = true
+	observation.pendingResponse = nil
+	completedAt := time.Now().UTC()
+	observation.value.CompletedAt = &completedAt
+	observation.value.Uploaded = uploaded
+	observation.value.Downloaded = downloaded
+	if failure == nil {
+		observation.value.State = "completed"
+	} else {
+		observation.value.State = "failed"
+		observation.value.FailureKind = failureKind
+	}
+	snapshot := cloneObservation(observation.value)
+	observation.publishMu.Lock()
+	observation.mu.Unlock()
+	r.publishObservation(snapshot)
+	observation.publishMu.Unlock()
+}
+
+func (observation *runtimeObservation) startedAt() time.Time {
+	if observation == nil {
+		return time.Time{}
+	}
+	observation.mu.Lock()
+	defer observation.mu.Unlock()
+	return observation.value.StartedAt
+}
+
+func (observation *runtimeObservation) activeFor(sessionID string) bool {
+	if observation == nil || sessionID == "" {
+		return false
+	}
+	observation.mu.Lock()
+	defer observation.mu.Unlock()
+	return !observation.finished && observation.value.SessionID == sessionID
 }
 
 func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
-	var observation *Observation
+	var observation *runtimeObservation
+	var uploaded uint64
+	var downloaded uint64
 	failureKind := ""
-	defer func() { r.finishObservation(observation, failure, failureKind) }()
+	defer func() {
+		r.finishObservation(observation, failure, failureKind, uploaded, downloaded)
+	}()
 	stopClose := context.AfterFunc(ctx, func() { _ = conn.Close() })
 	defer stopClose()
 	_ = conn.SetDeadline(time.Now().Add(HandshakeTimeout))
@@ -431,10 +586,10 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 		failure = reject(conn, http.StatusBadGateway)
 		return failure
 	}
-	if observation != nil {
-		observation.UpstreamTLSVersion = tlsVersionName(peer.Version)
-		observation.ALPN = peer.NegotiatedProtocol
-	}
+	r.updateObservation(observation, func(value *Observation) {
+		value.UpstreamTLSVersion = tlsVersionName(peer.Version)
+		value.ALPN = peer.NegotiatedProtocol
+	})
 	failureKind = "leaf"
 	leaf, err := r.config.Leaf(ctx, host)
 	if err != nil || leaf == nil || ctx.Err() != nil {
@@ -474,12 +629,12 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 		return failure
 	}
 	downstreamState := downstream.ConnectionState()
-	if observation != nil {
-		observation.DownstreamTLSVersion = tlsVersionName(downstreamState.Version)
-		if observation.ALPN == "" {
-			observation.ALPN = downstreamState.NegotiatedProtocol
+	r.updateObservation(observation, func(value *Observation) {
+		value.DownstreamTLSVersion = tlsVersionName(downstreamState.Version)
+		if value.ALPN == "" {
+			value.ALPN = downstreamState.NegotiatedProtocol
 		}
-	}
+	})
 	failureKind = "authorization-revoked"
 	if err := r.config.Authorize(ctx, host); err != nil || ctx.Err() != nil {
 		failure = errors.New("inspection authorization revoked")
@@ -489,25 +644,87 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 	_ = conn.SetDeadline(deadline)
 	_ = rawUpstream.SetDeadline(deadline)
 	failureKind = "relay"
-	uploaded, downloaded, relayErr := r.relay(ctx, downstream, upstream, conn, rawUpstream)
-	if observation != nil {
-		observation.Uploaded = uploaded
-		observation.Downloaded = downloaded
-	}
-	failure = relayErr
+	uploaded, downloaded, failure = r.relay(
+		ctx, downstream, upstream, conn, rawUpstream, observation,
+	)
 	return failure
 }
 
-func (r *Runtime) relay(ctx context.Context, client, upstream *tls.Conn, rawClient, rawUpstream net.Conn) (uint64, uint64, error) {
+func (r *Runtime) relay(
+	ctx context.Context,
+	client *tls.Conn,
+	upstream *tls.Conn,
+	rawClient net.Conn,
+	rawUpstream net.Conn,
+	observation *runtimeObservation,
+) (uint64, uint64, error) {
 	type copied struct {
 		upload bool
 		n      int64
 		err    error
 	}
 	results := make(chan copied, 2)
-	copyOne := func(dst, src *tls.Conn, upload bool) {
+	var requestReader io.Reader = client
+	var responseReader io.Reader = upstream
+	var requestMetadataReader *metadataObservingReader
+	var responseMetadataReader *metadataObservingReader
+	if observation != nil {
+		requestObserver := newHTTPRequestMetadataObserver()
+		requestMetadataReader = &metadataObservingReader{
+			reader: client,
+			observe: func(data []byte) {
+				if !observation.activeFor(r.captureSession()) {
+					requestObserver.Abort()
+					return
+				}
+				if value, done := requestObserver.Observe(data); done && value != nil {
+					r.publishHTTPRequest(observation, value)
+				}
+			},
+			finish: func() {
+				if !observation.activeFor(r.captureSession()) {
+					requestObserver.Abort()
+					return
+				}
+				if value, _ := requestObserver.Finish(); value != nil {
+					r.publishHTTPRequest(observation, value)
+				}
+			},
+			abort: requestObserver.Abort,
+		}
+		requestReader = requestMetadataReader
+
+		responseObserver := newHTTPResponseMetadataObserver(observation.startedAt())
+		responseMetadataReader = &metadataObservingReader{
+			reader: upstream,
+			observe: func(data []byte) {
+				if !observation.activeFor(r.captureSession()) {
+					responseObserver.Abort()
+					return
+				}
+				if value, done := responseObserver.Observe(data); done && value != nil {
+					r.publishHTTPResponse(observation, value)
+				}
+			},
+			finish: func() {
+				if !observation.activeFor(r.captureSession()) {
+					responseObserver.Abort()
+					return
+				}
+				if value, _ := responseObserver.Finish(); value != nil {
+					r.publishHTTPResponse(observation, value)
+				}
+			},
+			abort: responseObserver.Abort,
+		}
+		responseReader = responseMetadataReader
+	}
+	copyOne := func(dst *tls.Conn, src io.Reader, metadataReader *metadataObservingReader, upload bool) {
 		result := copied{upload: upload}
 		defer func() {
+			if metadataReader != nil {
+				metadataReader.Finish()
+			}
 			if recover() != nil {
 				result.err = errors.New("inspection relay failed")
 			}
@@ -515,8 +732,8 @@ func (r *Runtime) relay(ctx context.Context, client, upstream *tls.Conn, rawClie
 		}()
 		result.n, result.err = io.CopyBuffer(dst, src, make([]byte, 16*1024))
 	}
-	go copyOne(upstream, client, true)
-	go copyOne(client, upstream, false)
+	go copyOne(upstream, requestReader, requestMetadataReader, true)
+	go copyOne(client, responseReader, responseMetadataReader, false)
 	first := <-results
 	var second copied
 	if first.upload && first.err == nil {

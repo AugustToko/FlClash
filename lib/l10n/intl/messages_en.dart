@@ -621,7 +621,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP observations exported",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR export remains observation-only. For observed cleartext HTTP/1 it may include the request method, sanitized target and header names, plus the first response status, version and header names. Reason phrases, all header values, bodies, later keep-alive messages, decrypted TLS data, and detailed timings remain unknown.",
+      "HAR export remains metadata-only. For the first observed HTTP/1 transaction—from passive cleartext observation or the explicitly authorized inspection relay—it may include the request method, query-free target and header names, plus the first final response status, version and header names. Reason phrases, all header values, cookies, bodies, later keep-alive transactions, raw payloads and browser-style timings remain unknown.",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Header names",
@@ -647,7 +647,7 @@ class MessageLookup extends MessageLookupByLibrary {
           "Informational status list truncated",
         ),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "This entry came from the explicitly authorized loopback HTTPS relay. It records only the host, TLS versions, ALPN, lifecycle and byte totals. Source-app identity, HTTP method/path, header values and bodies are not retained.",
+      "This entry came from the explicitly authorized loopback HTTPS relay. It keeps only the first decrypted HTTP/1 request method, query-free path and header names, plus the first final response status, version and header names, TLS versions, lifecycle and byte totals. Header values, cookies, bodies, later keep-alive transactions and raw payloads are never retained.",
     ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Not observed",
