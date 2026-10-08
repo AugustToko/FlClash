@@ -309,14 +309,60 @@ void main() {
       'alpn': 'http/1.1',
       'uploaded': 100,
       'downloaded': 200,
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headerNames': ['host', 'authorization', 'cookie'],
+        'headersComplete': true,
+      },
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 201,
+        'informationalStatusCodes': [100],
+        'headerNames': ['content-type', 'set-cookie'],
+        'headersComplete': true,
+        'observedBytes': 128,
+        'observedAfterMilliseconds': 25,
+      },
     });
     expect(value.completed, isTrue);
     expect(value.host, 'api.example.com');
+    expect(value.httpRequest?.target, '/items');
+    expect(value.httpResponse?.statusCode, 201);
+    expect(value.metadataRank, 3);
     expect(value.toJson(), isNot(containsPair('failureKind', anything)));
     expect(
       TlsInspectionRuntimeObservation.fromJson(value.toJson()).toJson(),
       value.toJson(),
     );
+  });
+
+  test('HTTP/1 metadata remains valid when TLS negotiates no ALPN', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final value = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:no-alpn',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': started.toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'uploaded': 64,
+      'downloaded': 0,
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/fallback',
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headerNames': ['host'],
+        'headersComplete': true,
+      },
+    });
+    expect(value.alpn, isEmpty);
+    expect(value.httpRequest?.target, '/fallback');
   });
 
   test('capture interruption is terminal and retains only coarse metadata', () {
@@ -328,11 +374,19 @@ void main() {
       'host': 'api.example.com',
       'state': 'running',
       'startedAt': started.toIso8601String(),
-      'downstreamTlsVersion': '',
-      'upstreamTlsVersion': '',
-      'alpn': '',
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
       'uploaded': 0,
       'downloaded': 0,
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headerNames': ['host'],
+        'headersComplete': true,
+      },
     });
     final interrupted = running.interrupt(
       completedAt: started.add(const Duration(seconds: 2)),
@@ -341,6 +395,7 @@ void main() {
     expect(interrupted.completed, isTrue);
     expect(interrupted.state, 'interrupted');
     expect(interrupted.failureKind, 'capture-stopped');
+    expect(interrupted.httpRequest?.target, '/items');
     expect(
       TlsInspectionRuntimeObservation.fromJson(interrupted.toJson()).toJson(),
       interrupted.toJson(),
@@ -385,6 +440,171 @@ void main() {
           'uploaded': 100,
           'downloaded': 200,
           mutation.key: mutation.value,
+        }),
+        throwsFormatException,
+      );
+    });
+  }
+
+  test(
+    'runtime observation merges terminal state with richer HTTP metadata',
+    () {
+      final started = DateTime.utc(2026, 10, 7, 2);
+      final running = TlsInspectionRuntimeObservation.fromJson({
+        'sessionId': 'http-capture:merge',
+        'connectionId': _id,
+        'runtimeId': _generation,
+        'host': 'api.example.com',
+        'state': 'running',
+        'startedAt': started.toIso8601String(),
+        'downstreamTlsVersion': 'TLS 1.3',
+        'upstreamTlsVersion': 'TLS 1.3',
+        'alpn': 'http/1.1',
+        'uploaded': 0,
+        'downloaded': 0,
+        'httpRequest': {
+          'method': 'GET',
+          'target': '/items',
+          'version': 'HTTP/1.1',
+          'host': 'api.example.com',
+          'headerNames': ['host', 'authorization'],
+          'headersComplete': true,
+        },
+        'httpResponse': {
+          'version': 'HTTP/1.1',
+          'statusCode': 200,
+          'headerNames': ['content-type'],
+          'headersComplete': true,
+          'observedBytes': 64,
+        },
+      });
+      final completed = TlsInspectionRuntimeObservation.fromJson({
+        'sessionId': 'http-capture:merge',
+        'connectionId': _id,
+        'runtimeId': _generation,
+        'host': 'api.example.com',
+        'state': 'completed',
+        'startedAt': started.toIso8601String(),
+        'completedAt': started
+            .add(const Duration(seconds: 1))
+            .toIso8601String(),
+        'downstreamTlsVersion': 'TLS 1.3',
+        'upstreamTlsVersion': 'TLS 1.3',
+        'alpn': 'http/1.1',
+        'uploaded': 128,
+        'downloaded': 256,
+      });
+      final merged = completed.merge(running);
+      expect(merged.state, 'completed');
+      expect(merged.httpRequest?.target, '/items');
+      expect(merged.httpResponse?.statusCode, 200);
+      expect(merged.uploaded, 128);
+      expect(merged.downloaded, 256);
+      expect(merged.failureKind, isEmpty);
+    },
+  );
+
+  for (final invalid in <String, Object?>{
+    'response without request': {
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 200,
+        'headersComplete': true,
+        'observedBytes': 64,
+      },
+    },
+    'HTTP metadata without TLS relay evidence': {
+      'downstreamTlsVersion': '',
+      'upstreamTlsVersion': '',
+      'alpn': '',
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'headersComplete': true,
+      },
+    },
+    'unknown response without informational status': {
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'headersComplete': true,
+      },
+      'httpResponse': {
+        'version': '',
+        'statusCode': 0,
+        'headersComplete': false,
+        'observedBytes': 64,
+        'truncated': true,
+      },
+    },
+    'unknown response without truncation': {
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'headersComplete': true,
+      },
+      'httpResponse': {
+        'version': '',
+        'statusCode': 0,
+        'informationalStatusCodes': [100],
+        'headersComplete': false,
+        'observedBytes': 64,
+        'truncated': false,
+      },
+    },
+    'request query': {
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items?secret=value',
+        'version': 'HTTP/1.1',
+        'headersComplete': true,
+      },
+    },
+    'request header case': {
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'headerNames': ['Authorization'],
+        'headersComplete': true,
+      },
+    },
+    'response informational final status': {
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 100,
+        'headersComplete': true,
+        'observedBytes': 64,
+      },
+    },
+    'response byte overflow': {
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 200,
+        'headersComplete': true,
+        'observedBytes': 32769,
+      },
+    },
+  }.entries) {
+    test('runtime observation rejects malformed ${invalid.key}', () {
+      final started = DateTime.utc(2026, 10, 7, 2);
+      expect(
+        () => TlsInspectionRuntimeObservation.fromJson({
+          'sessionId': 'http-capture:invalid-http',
+          'connectionId': _id,
+          'runtimeId': _generation,
+          'host': 'api.example.com',
+          'state': 'running',
+          'startedAt': started.toIso8601String(),
+          'downstreamTlsVersion': 'TLS 1.3',
+          'upstreamTlsVersion': 'TLS 1.3',
+          'alpn': 'http/1.1',
+          'uploaded': 0,
+          'downloaded': 0,
+          ...invalid.value! as Map<String, Object?>,
         }),
         throwsFormatException,
       );

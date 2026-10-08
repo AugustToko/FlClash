@@ -463,6 +463,22 @@ void main() {
       'alpn': 'http/1.1',
       'uploaded': 123,
       'downloaded': 456,
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headerNames': ['host', 'authorization'],
+        'headersComplete': true,
+      },
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 201,
+        'headerNames': ['content-type', 'set-cookie'],
+        'headersComplete': true,
+        'observedBytes': 96,
+        'observedAfterMilliseconds': 18,
+      },
     });
     final entry = HttpCaptureEntry.fromInspectionRuntime(
       id: 99,
@@ -472,8 +488,12 @@ void main() {
     expect(entry.source, HttpCaptureSource.inspectedRuntime);
     expect(entry.isInspectedRuntime, isTrue);
     expect(entry.isCoreObserved, isFalse);
-    expect(entry.protocol, HttpCaptureProtocol.tls);
+    expect(entry.protocol, HttpCaptureProtocol.http);
     expect(entry.host, 'api.example.com');
+    expect(entry.origin, 'https://api.example.com');
+    expect(entry.requestUrl, 'https://api.example.com/items');
+    expect(entry.httpObservation?.method, 'GET');
+    expect(entry.httpResponseObservation?.statusCode, 201);
     expect(entry.searchText, contains('inspected-runtime'));
     final roundTrip = HttpCaptureEntry.decodePayload(entry.encodePayload());
     expect(roundTrip.source, HttpCaptureSource.inspectedRuntime);
@@ -497,9 +517,15 @@ void main() {
     );
     final request = exported['request']! as Map<String, Object?>;
     final response = exported['response']! as Map<String, Object?>;
-    expect(request['method'], 'UNKNOWN');
-    expect(response['status'], 0);
-    expect(jsonEncode(har), isNot(contains('Authorization')));
+    expect(request['method'], 'GET');
+    expect(request['url'], 'https://api.example.com/items');
+    expect(request['headers'], isEmpty);
+    expect(response['status'], 201);
+    expect(response['statusText'], isEmpty);
+    expect(response['headers'], isEmpty);
+    final encoded = jsonEncode(har);
+    expect(encoded, isNot(contains('Bearer private-token')));
+    expect(encoded, isNot(contains('session=private-cookie')));
   });
 
   test('capture source is derived from verified payload content', () {
@@ -553,7 +579,7 @@ void main() {
     );
     final legacy = Map<String, Object?>.from(trackerEntry.toJson())
       ..remove('source')
-      ..['version'] = 3;
+      ..['version'] = 4;
     expect(
       HttpCaptureEntry.fromJson(legacy).source,
       HttpCaptureSource.connectionCandidate,

@@ -513,7 +513,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 観測データをエクスポートしました",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR エクスポートは観測専用です。観測済みの平文 HTTP/1 では、リクエストメソッド、サニタイズ済みターゲット、リクエストヘッダー名に加え、最初のレスポンスのステータス、バージョン、レスポンスヘッダー名を含む場合があります。Reason Phrase、すべてのヘッダー値、本文、Keep-Alive の後続メッセージ、復号済み TLS データ、詳細タイミングは不明のままです。",
+      "HAR エクスポートは引き続きメタデータ専用です。平文の受動観測または明示的に認可された検査リレーで観測した最初の HTTP/1 トランザクションについて、リクエストメソッド、クエリを除いたターゲット、ヘッダー名、および最初の最終レスポンスのステータス、バージョン、ヘッダー名を含む場合があります。Reason Phrase、すべてのヘッダー値、Cookie、本文、後続の Keep-Alive トランザクション、生のペイロード、ブラウザー形式の詳細タイミングは不明のままです。",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("ヘッダー名"),
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
@@ -535,7 +535,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureInformationalStatusCodesTruncated":
         MessageLookupByLibrary.simpleMessage("情報ステータス一覧を切り詰めました"),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "この記録は明示的に認可されたループバック HTTPS リレーから生成され、ホスト名、TLS バージョン、ALPN、ライフサイクル、バイト数だけを保持します。送信元アプリの識別情報、HTTP メソッド/パス、ヘッダー値、本文は保持しません。",
+      "この記録は明示的に認可されたループバック HTTPS リレーから生成されます。最初に復号された HTTP/1 リクエストのメソッド、クエリを除いたパス、ヘッダー名と、最初の最終レスポンスのステータス、バージョン、ヘッダー名に加え、TLS バージョン、ライフサイクル、バイト総数だけを保持します。ヘッダー値、Cookie、本文、後続の Keep-Alive トランザクション、生のペイロードは保持しません。",
     ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),

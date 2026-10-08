@@ -9,7 +9,7 @@ This package is an explicit, authenticated, loopback-only CONNECT TLS relay. It 
 - Authenticate and authorize before dialing. Upstream uses normal TLS verification and the exact target ServerName; the inspection CA is NOT installed into the upstream trust pool.
 - Upstream TLS must verify before CONNECT succeeds and before any client application bytes can reach the origin.
 - Downstream SNI must match CONNECT; TLS 1.2 or newer and HTTP/1.1 only. No certificate-pinning bypass or plaintext fallback.
-- Relay bytes without retaining headers, URLs, cookies or bodies. Public runtime status contains aggregate counters only. Byte counters describe relayed plaintext bytes, not network-interface totals or a browser waterfall.
+- Relay application bytes byte-for-byte unchanged. When HTTP Capture is active, independent 32 KiB request/response observers may publish only the first decrypted HTTP/1 request method, query-free path, normalized Host and header names, plus bounded informational statuses and the first final response status, version and header names. Header values, cookies, reason phrases, bodies, raw header bytes and later keep-alive transactions are never retained. Public runtime status still contains aggregate counters only; byte counters describe relayed plaintext bytes, not network-interface totals or a browser waterfall.
 - Limit accepted clients, including unauthenticated clients, to 16. CONNECT headers are bounded to 8 KiB; header/handshake deadlines are five seconds; connections have a 120-second absolute lifetime; a runtime expires after ten minutes.
 - Stop closes the listener and cancels accepted clients. The package provides a joinable wait for its client workers.
 
@@ -27,11 +27,11 @@ CA rotation/deletion, leaf-policy reset, Core init/shutdown and stopping listene
 
 The HTTPS inspection safety workspace owns explicit start, stop, refresh and temporary credential presentation. A runtime is never restored or auto-started from persisted policy. The App keeps the password in memory only, hides it by default, clears copied settings after a bounded interval when the clipboard still contains the same value, and reports an unconfirmed stop without discarding the runtime identity needed for recovery.
 
-When HTTP Capture is active, Core emits a separate inspected-runtime metadata event. Capture stores the runtime/connection identity, target host, TLS versions, ALPN, lifecycle state and aggregate byte counts. It does not retain CONNECT authorization, HTTP headers, URLs, cookies or bodies. Passive observations, inspected-runtime metadata and connection candidates remain explicitly distinguishable in the UI and export format.
+When HTTP Capture is active, Core emits immutable inspected-runtime metadata updates for the same runtime/connection identity. Capture may enrich that row with the first decrypted HTTP/1 request method, query-free path, normalized Host and header names, followed by the first final response status, version and header names, alongside TLS versions, ALPN, lifecycle state and aggregate byte counts. It never retains CONNECT authorization, header values, cookies, bodies, raw payloads or later keep-alive transactions. Passive observations, inspected-runtime metadata and connection candidates remain explicitly distinguishable in the UI and export format.
 
 ## Verification
 
-The package tests use a loopback TLS origin, an independent origin CA and a separate inspection CA. They verify actual HTTPS request/response transfer through two TLS sessions, both downstream TLS 1.2 and TLS 1.3, authentication before dial, excluded/invalid targets, upstream trust/hostname rejection before HTTP payload release, client SNI/ALPN rejection, bounded idle clients and cancellation.
+The package tests use a loopback TLS origin, an independent origin CA and a separate inspection CA. They verify actual HTTPS request/response transfer through two TLS sessions, both downstream TLS 1.2 and TLS 1.3, authentication before dial, excluded/invalid targets, upstream trust/hostname rejection before HTTP payload release, client SNI/ALPN rejection, bounded idle clients and cancellation. Metadata tests cover arbitrary read boundaries, query/fragment removal, bounded 1xx handling, 101, 32 KiB truncation, malformed streams, callback panics, update ordering and secret scans while asserting relayed bytes remain unchanged.
 
 Parent-Core tests additionally run the production Mihomo Tunnel handler with live rules and test proxies. They prove that an active route change takes effect for the next runtime connection, a `REJECT` rule blocks the route, and INNER runtime traffic does not invent an external application's UID, process or source address.
 
@@ -43,4 +43,4 @@ Injected private roots and a local dial callback are test seams in the Go packag
 
 This relay is an explicit per-session local proxy. It does not change the system proxy, transparently redirect TUN/mixed-port traffic, preserve the original application's process identity, bypass certificate pinning or claim that every Android application trusts the user CA. Device validation must therefore separately cover platform CA installation and an opted-in test client.
 
-HTTP/2, HTTP/3, persistent header/body capture, Rewrite, Map Local and request/response scripts remain separate later stages.
+Later HTTP/1 keep-alive transactions, header values, bodies, HTTP/2, HTTP/3, Rewrite, Map Local and request/response scripts remain separate later stages.

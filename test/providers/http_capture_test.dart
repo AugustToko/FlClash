@@ -651,6 +651,95 @@ void main() {
     },
   );
 
+  test('an older runtime row cannot roll HTTP metadata back', () async {
+    final originalDatabase = database;
+    final testDatabase = Database(NativeDatabase.memory());
+    database = testDatabase;
+    addTearDown(() async {
+      database = originalDatabase;
+      await testDatabase.close();
+    });
+    await testDatabase.profilesDao.putAll([
+      const Profile(
+        id: 1,
+        label: 'Capture profile',
+        autoUpdateDuration: Duration.zero,
+      ).toCompanion(),
+    ]);
+
+    final scope = container(persistence: true);
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+    await notifier.start();
+    final sessionId = scope.read(httpCaptureProvider).sessionId;
+    final startedAt = DateTime.utc(2026, 10, 7, 4);
+    final initial = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': sessionId,
+      'connectionId': '0123456789abcdef0123456789abcdef',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': startedAt.toIso8601String(),
+      'uploaded': 0,
+      'downloaded': 0,
+    });
+    final enriched = TlsInspectionRuntimeObservation.fromJson({
+      ...initial.toJson(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 64,
+      'downloaded': 128,
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headerNames': ['host', 'authorization'],
+        'headersComplete': true,
+      },
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 200,
+        'headerNames': ['content-type', 'set-cookie'],
+        'headersComplete': true,
+        'observedBytes': 64,
+        'observedAfterMilliseconds': 12,
+      },
+    });
+    final metadataRanks = <int>[];
+    final subscription = scope.listen<HttpCaptureState>(httpCaptureProvider, (
+      _,
+      next,
+    ) {
+      if (next.entries case [final entry]) {
+        final runtime = entry.inspectionRuntime;
+        if (runtime != null) {
+          metadataRanks.add(runtime.metadataRank);
+        }
+      }
+    });
+    addTearDown(subscription.close);
+
+    await Future.wait([
+      notifier.observeInspectionRuntime(initial),
+      notifier.observeInspectionRuntime(enriched),
+    ]);
+
+    final entry = scope.read(httpCaptureProvider).entries.single;
+    expect(entry.protocol, HttpCaptureProtocol.http);
+    expect(entry.requestUrl, 'https://api.example.com/items');
+    expect(entry.httpObservation?.method, 'GET');
+    expect(entry.httpResponseObservation?.statusCode, 200);
+    final firstRich = metadataRanks.indexOf(3);
+    expect(firstRich, isNonNegative);
+    expect(
+      metadataRanks.skip(firstRich),
+      everyElement(3),
+      reason: 'persistence must not roll HTTP metadata back',
+    );
+  });
+
   test(
     'deleting an optimistic update cannot resurrect its canonical row',
     () async {

@@ -150,29 +150,32 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     if (current == null) {
       return canonical;
     }
-    final currentResponse = current.httpResponseObservation;
-    final canonicalResponse = canonical.httpResponseObservation;
+
     final currentRuntime = current.inspectionRuntime;
     final canonicalRuntime = canonical.inspectionRuntime;
-    int runtimeRank(TlsInspectionRuntimeObservation? value) =>
-        switch (value?.state) {
-          'completed' || 'failed' => 2,
-          'interrupted' => 1,
-          'running' => 0,
-          _ => -1,
-        };
-    final currentRuntimeIsRicher =
-        currentRuntime != null &&
-        (canonicalRuntime == null ||
-            runtimeRank(currentRuntime) > runtimeRank(canonicalRuntime) ||
-            (runtimeRank(currentRuntime) == runtimeRank(canonicalRuntime) &&
-                ((currentRuntime.completedAt != null &&
-                        canonicalRuntime.completedAt == null) ||
-                    (currentRuntime.failureKind.isNotEmpty &&
-                        canonicalRuntime.failureKind.isEmpty))));
+    if (currentRuntime != null && canonicalRuntime != null) {
+      final merged = currentRuntime.merge(canonicalRuntime);
+      return canonical.copyWith(
+        inspectionRuntime: merged,
+        protocol: merged.httpRequest == null
+            ? HttpCaptureProtocol.tls
+            : HttpCaptureProtocol.http,
+        upload: current.upload > canonical.upload
+            ? current.upload
+            : canonical.upload,
+        download: current.download > canonical.download
+            ? current.download
+            : canonical.download,
+      );
+    }
+    if (currentRuntime != null && canonicalRuntime == null) {
+      return current.copyWith(id: canonical.id);
+    }
+
+    final currentResponse = current.httpResponseObservation;
+    final canonicalResponse = canonical.httpResponseObservation;
     final currentIsRicher =
         (currentResponse != null && canonicalResponse == null) ||
-        currentRuntimeIsRicher ||
         current.upload > canonical.upload ||
         current.download > canonical.download;
     return currentIsRicher ? current.copyWith(id: canonical.id) : canonical;
