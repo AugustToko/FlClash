@@ -46,6 +46,32 @@ jobs:
           test "$actual_patch" = "$expected_patch"
           git apply --check --verbose /tmp/http2-ui-integration.patch
           git apply --verbose /tmp/http2-ui-integration.patch
+          python3 - <<'PY'
+          from pathlib import Path
+
+          capture = Path('lib/models/http_capture.dart')
+          text = capture.read_text()
+          old = "import 'common.dart';\nimport 'tls_inspection_runtime.dart';"
+          new = "import 'common.dart';\nimport 'http_inspection.dart';\nimport 'tls_inspection_runtime.dart';"
+          if text.count(old) != 1:
+              raise SystemExit('unexpected HTTP capture import block')
+          capture.write_text(text.replace(old, new, 1))
+
+          runtime = Path('lib/models/tls_inspection_runtime.dart')
+          text = runtime.read_text()
+          policy = 'Map<String, dynamic>.from(rawPolicy),'
+          if text.count(policy) != 2:
+              raise SystemExit('unexpected capture policy conversion count')
+          text = text.replace(policy, 'Map<String, dynamic>.from(rawPolicy as Map),')
+          go_away = 'Map<String, Object?>.from(rawGoAway),'
+          if text.count(go_away) != 1:
+              raise SystemExit('unexpected GOAWAY conversion count')
+          text = text.replace(
+              go_away,
+              'Map<String, Object?>.from(rawGoAway as Map),',
+          )
+          runtime.write_text(text)
+          PY
           git diff --check
 
       - name: Setup Flutter
