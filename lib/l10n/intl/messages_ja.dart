@@ -50,42 +50,48 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} 時間";
 
-  static String m14(count) => "${count} 件のトランザクション";
+  static String m14(code) => "エラー ${code}";
 
-  static String m15(target) => "${target} は無効なポリシーです";
+  static String m15(count) => "ヘッダー値 ${count} 件";
 
-  static String m16(proxyName) => "${proxyName} は無効なプロキシです";
+  static String m16(id) => "ストリーム ${id}";
 
-  static String m17(providerName) => "${providerName} は無効なプロキシプロバイダーです";
+  static String m17(count) => "${count} 件のトランザクション";
 
-  static String m18(subRule) => "${subRule} は無効な SUB_RULE です";
+  static String m18(target) => "${target} は無効なポリシーです";
 
-  static String m19(appName) =>
+  static String m19(proxyName) => "${proxyName} は無効なプロキシです";
+
+  static String m20(providerName) => "${providerName} は無効なプロキシプロバイダーです";
+
+  static String m21(subRule) => "${subRule} は無効な SUB_RULE です";
+
+  static String m22(appName) =>
       "1. システム設定 > プライバシーとセキュリティ を開く\n2. 位置情報サービス を選択\n3. リストで ${appName} を見つけてチェックを入れる\n\n設定が完了したらアプリに戻ると、通常どおり使用できます。ご協力ありがとうございます。";
 
-  static String m20(label, max) => "${label}は最大${max}文字です";
+  static String m23(label, max) => "${label}は最大${max}文字です";
 
-  static String m21(count) => "${count} 分前";
+  static String m24(count) => "${count} 分前";
 
-  static String m22(count) => "${count} か月前";
+  static String m25(count) => "${count} か月前";
 
-  static String m23(label) => "${label}はまだありません";
+  static String m26(label) => "${label}はまだありません";
 
-  static String m24(label) => "${label}は数値である必要があります";
+  static String m27(label) => "${label}は数値である必要があります";
 
-  static String m25(label) => "${label} は 1024〜49151 の範囲で指定してください";
+  static String m28(label) => "${label} は 1024〜49151 の範囲で指定してください";
 
-  static String m26(count) => "プロキシ ${count} 件";
+  static String m29(count) => "プロキシ ${count} 件";
 
-  static String m27(count) => "ルール ${count} 件";
+  static String m30(count) => "ルール ${count} 件";
 
-  static String m28(count) => "${count} 秒";
+  static String m31(count) => "${count} 秒";
 
-  static String m29(count) => "${count} 件選択中";
+  static String m32(count) => "${count} 件選択中";
 
-  static String m30(label) => "${label}はURLである必要があります";
+  static String m33(label) => "${label}はURLである必要があります";
 
-  static String m31(count) => "${count} 年前";
+  static String m34(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -459,12 +465,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
       "すべてのプロファイル",
     ),
+    "httpCaptureBodyAll": MessageLookupByLibrary.simpleMessage("対応する全形式"),
+    "httpCaptureBodyEncoding": MessageLookupByLibrary.simpleMessage(
+      "本文エンコーディング",
+    ),
+    "httpCaptureBodyLimit": MessageLookupByLibrary.simpleMessage("本文ごとの上限"),
+    "httpCaptureBodyMode": MessageLookupByLibrary.simpleMessage("本文キャプチャ"),
+    "httpCaptureBodyNone": MessageLookupByLibrary.simpleMessage("無効"),
+    "httpCaptureBodyText": MessageLookupByLibrary.simpleMessage(
+      "テキスト、JSON、フォーム",
+    ),
     "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
       "ClientHello の完全性",
     ),
     "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完全"),
+    "httpCaptureConnectCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "上流接続の完了遅延",
+    ),
     "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
       "接続メタデータへフォールバック",
+    ),
+    "httpCaptureContentEnabled": MessageLookupByLibrary.simpleMessage(
+      "コンテンツキャプチャ有効",
     ),
     "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
       "Core 受動オブザーバー",
@@ -476,12 +498,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "現在のプロファイル",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Core の受動メタデータと明示的な検査リレーの TLS 接続メタデータを 1 つのローカル画面で確認します",
+      "明示的なローカルプライバシーポリシーで HTTP/1 トランザクションと HTTP/2 ストリームを検査します",
     ),
+    "httpCaptureDownstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("クライアント TLS の完了遅延"),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "HTTP 観測データはありません",
     ),
+    "httpCaptureEmptyValue": MessageLookupByLibrary.simpleMessage("空の値"),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("観測したエンドポイント"),
+    "httpCaptureErrorCode": m14,
     "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
       "Core が HTTP/1 リクエスト先頭を観測",
     ),
@@ -515,11 +541,21 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP 観測データをエクスポートしました",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR エクスポートは引き続きメタデータ専用です。平文の受動観測は最初の HTTP/1 トランザクション、明示的に認可された検査リレーは最大 32 件の順序付きトランザクションを含む場合があります。クエリを除いたターゲット、ヘッダー名、レスポンス状態メタデータのみを出力し、Reason Phrase、すべてのヘッダー値、Cookie、本文、生のペイロード、ブラウザー形式の詳細タイミングは不明のままです。",
+      "HAR エクスポートは現在のキャプチャポリシーに従います。受動ソースはメタデータのみです。明示的に認可した検査リレーは HTTP/1 トランザクションまたは HTTP/2 ストリーム、許可されたヘッダー値、制限付き本文、利用可能な接続/リクエスト時系列を出力できます。マスク値はマスクされたままです。",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("ヘッダー名"),
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
       "ヘッダー名一覧を切り詰めました",
+    ),
+    "httpCaptureHeaderValueCount": m15,
+    "httpCaptureHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値をキャプチャ",
+    ),
+    "httpCaptureHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "制限付きのリクエスト/レスポンスヘッダー値を保存します。既知の機密フィールドはマスクされます。",
+    ),
+    "httpCaptureHeaderValuesTruncated": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値を切り詰めました",
     ),
     "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
       "ヘッダーの完全性",
@@ -527,8 +563,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
       "Host を切り詰めました",
     ),
+    "httpCaptureHttp2GoAway": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 GOAWAY",
+    ),
+    "httpCaptureHttp2Stream": MessageLookupByLibrary.simpleMessage("ストリーム"),
+    "httpCaptureHttp2Streams": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 ストリーム",
+    ),
     "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
       "HTTP バージョン",
+    ),
+    "httpCaptureImagePreviewFailed": MessageLookupByLibrary.simpleMessage(
+      "キャプチャした画像データをプレビューできません。",
     ),
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完全"),
     "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
@@ -537,17 +583,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureInformationalStatusCodesTruncated":
         MessageLookupByLibrary.simpleMessage("情報ステータス一覧を切り詰めました"),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "この記録は明示的に認可されたループバック HTTPS リレーから生成されます。最大 32 件の順序付き復号 HTTP/1 トランザクションについて、リクエストメソッド、クエリを除いたパス、ヘッダー名と、最終レスポンスのステータス、バージョン、ヘッダー名だけを保持します。ヘッダー値、フレーミング値、Cookie、本文、生のペイロードは保持しません。",
+      "この記録は明示的に認可されたループバック HTTPS リレーから生成されます。接続ごとに最大 32 件の HTTP/1 トランザクションまたは HTTP/2 ストリームを保持します。既定はメタデータのみで、ヘッダー値と制限付き本文は記録済みポリシーが許可した場合だけ表示されます。",
     ),
+    "httpCaptureMetadataOnly": MessageLookupByLibrary.simpleMessage("メタデータのみ"),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
     "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "オプトインのキャプチャは、制限付きの Core 受動観測と、明示的に開始したローカル HTTPS 検査リレーのメタデータを組み合わせます。リレーは接続ごとに最大 32 件の HTTP/1 トランザクションを記録できますが、クエリ文字列、Reason Phrase、ヘッダー値、本文、証明書、生の HTTP メッセージは保存しません。リレーのペイロードはメモリを通過するだけで保持されません。対象は新しい接続のみで、ローカル記録はバックアップから除外されます。",
+      "オプトインのキャプチャは、制限付きの Core 受動観測と、明示的に開始したローカル HTTPS 検査リレーを組み合わせます。リレーは順序付き HTTP/1 トランザクションと同時実行 HTTP/2 ストリームを観測します。既定はメタデータのみです。ヘッダー値とサイズ制限付き本文は明示的に有効化した場合だけ保持され、機密ヘッダーは個別に許可しない限りマスクされます。クエリ、フラグメント、Reason Phrase、証明書、生の HTTP メッセージは保持しません。新しい接続だけが対象で、ローカル記録はバックアップ対象外です。",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "観測した先頭部分",
     ),
+    "httpCaptureOmitted": MessageLookupByLibrary.simpleMessage("省略"),
+    "httpCapturePolicyLocked": MessageLookupByLibrary.simpleMessage(
+      "ポリシーを変更する前にキャプチャを停止してください。",
+    ),
     "httpCapturePresent": MessageLookupByLibrary.simpleMessage("あり"),
+    "httpCapturePrivacy": MessageLookupByLibrary.simpleMessage(
+      "キャプチャプライバシーポリシー",
+    ),
+    "httpCapturePrivacyDesc": MessageLookupByLibrary.simpleMessage(
+      "キャプチャ開始前に設定します。セッション全体で開始時のスナップショットを使用します。",
+    ),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("プロセスパス"),
     "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
     "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
@@ -559,6 +616,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
       "不明なプロトコル",
     ),
+    "httpCaptureRedacted": MessageLookupByLibrary.simpleMessage("マスク済み"),
+    "httpCaptureRedactedHeaders": MessageLookupByLibrary.simpleMessage(
+      "常にマスクするヘッダー",
+    ),
+    "httpCaptureRedactedHeadersDesc": MessageLookupByLibrary.simpleMessage(
+      "カンマまたは空白区切り。機密値を許可しても、これらは常にマスクされます。",
+    ),
+    "httpCaptureRedactedHeadersHint": MessageLookupByLibrary.simpleMessage(
+      "x-private-token, x-session-id",
+    ),
+    "httpCaptureRequestBody": MessageLookupByLibrary.simpleMessage("リクエスト本文"),
+    "httpCaptureRequestCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "リクエスト完了遅延",
+    ),
+    "httpCaptureRequestCookies": MessageLookupByLibrary.simpleMessage(
+      "リクエスト Cookie",
+    ),
+    "httpCaptureRequestHeaders": MessageLookupByLibrary.simpleMessage(
+      "リクエストヘッダー値",
+    ),
     "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
       "リクエストメソッド",
     ),
@@ -569,11 +646,21 @@ class MessageLookup extends MessageLookupByLibrary {
       "サニタイズ済みターゲット",
     ),
     "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("観測したレスポンス"),
+    "httpCaptureResponseBody": MessageLookupByLibrary.simpleMessage("レスポンス本文"),
+    "httpCaptureResponseCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "レスポンス完了遅延",
+    ),
+    "httpCaptureResponseCookies": MessageLookupByLibrary.simpleMessage(
+      "レスポンス Cookie",
+    ),
     "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
       "レスポンスヘッダー名",
     ),
     "httpCaptureResponseHeaderNamesTruncated":
         MessageLookupByLibrary.simpleMessage("レスポンスヘッダー名一覧を切り詰めました"),
+    "httpCaptureResponseHeaders": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダー値",
+    ),
     "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
       "レスポンスヘッダーの完全性",
     ),
@@ -591,6 +678,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
       "レスポンス観測の切り詰め",
+    ),
+    "httpCaptureRiskMessage": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値と本文には認証情報、Cookie、個人情報、私的コンテンツが含まれる場合があります。必要最小限だけ有効にし、狭い許可リストを使い、デバッグ後すぐ停止してください。",
+    ),
+    "httpCaptureRiskTitle": MessageLookupByLibrary.simpleMessage(
+      "機密コンテンツのキャプチャを有効にしますか？",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
     "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
@@ -625,6 +718,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
       "上流 TLS",
     ),
+    "httpCaptureSensitiveHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "機密ヘッダー値を許可",
+    ),
+    "httpCaptureSensitiveHeaderValuesDesc":
+        MessageLookupByLibrary.simpleMessage(
+          "認証情報、Cookie、トークン系ヘッダーを許可します。常時マスクリストが優先されます。",
+        ),
     "httpCaptureSourceConnectionCandidate":
         MessageLookupByLibrary.simpleMessage("接続候補"),
     "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
@@ -635,12 +735,25 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage("観測ソース"),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),
+    "httpCaptureStreamClosed": MessageLookupByLibrary.simpleMessage("クローズ"),
+    "httpCaptureStreamId": m16,
+    "httpCaptureStreamOpen": MessageLookupByLibrary.simpleMessage("オープン"),
+    "httpCaptureStreamRequestEnded": MessageLookupByLibrary.simpleMessage(
+      "リクエスト終了",
+    ),
+    "httpCaptureStreamReset": MessageLookupByLibrary.simpleMessage("リセット"),
+    "httpCaptureStreamResponseEnded": MessageLookupByLibrary.simpleMessage(
+      "レスポンス終了",
+    ),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "リクエストターゲットを切り詰めました",
     ),
     "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
       "トランザクション一覧を切り詰めました",
     ),
+    "httpCaptureTimingReceive": MessageLookupByLibrary.simpleMessage("受信"),
+    "httpCaptureTimingSend": MessageLookupByLibrary.simpleMessage("送信"),
+    "httpCaptureTimingWait": MessageLookupByLibrary.simpleMessage("待機 / TTFB"),
     "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
     "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
       "Encrypted ClientHello",
@@ -655,11 +768,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "対応 TLS バージョン",
     ),
     "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage("トランザクション"),
-    "httpCaptureTransactionCount": m14,
+    "httpCaptureTransactionCount": m17,
     "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
-      "HTTP/1 トランザクション一覧",
+      "HTTP/1 トランザクション",
     ),
     "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("観測の切り詰め"),
+    "httpCaptureUpstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("上流 TLS の完了遅延"),
     "icon": MessageLookupByLibrary.simpleMessage("アイコン"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("アイコン履歴"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("アイコンスタイル"),
@@ -716,10 +831,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "interval": MessageLookupByLibrary.simpleMessage("間隔"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("イントラネットIP"),
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage("無効なバックアップファイル"),
-    "invalidPolicy": m15,
-    "invalidProxy": m16,
-    "invalidProxyProvider": m17,
-    "invalidSubRule": m18,
+    "invalidPolicy": m18,
+    "invalidProxy": m19,
+    "invalidProxyProvider": m20,
+    "invalidSubRule": m21,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "有効にすると、IPv6トラフィックを受信できます",
@@ -752,7 +867,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "システムの要件により、Wi-Fi 名の取得には位置情報の権限が必要です。Android では「常に許可」を選択してください。そうしないと、アプリがバックグラウンドにあるときに Wi-Fi 名を取得できません。",
     ),
-    "locationPermissionGuide": m19,
+    "locationPermissionGuide": m22,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "位置情報の権限が必要です",
     ),
@@ -937,7 +1052,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "matchTargetTitle": MessageLookupByLibrary.simpleMessage("マッチ先"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("最大失敗回数"),
-    "maxLengthTip": m20,
+    "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("メモリ情報"),
     "messageTest": MessageLookupByLibrary.simpleMessage("メッセージテスト"),
@@ -948,11 +1063,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "システム標準の終了動作を変更します",
     ),
-    "minutesAgo": m21,
+    "minutesAgo": m24,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixedポート"),
     "mode": MessageLookupByLibrary.simpleMessage("モード"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("モノクローム"),
-    "monthsAgo": m22,
+    "monthsAgo": m25,
     "more": MessageLookupByLibrary.simpleMessage("その他"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "複数の値はカンマで区切ってください",
@@ -990,8 +1105,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "プロファイルがありません。先にプロファイルを追加してください",
     ),
-    "nullTip": m23,
-    "numberTip": m24,
+    "nullTip": m26,
+    "numberTip": m27,
     "onDemand": MessageLookupByLibrary.simpleMessage("オンデマンド"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "特定のシナリオでのアプリの実行状態を設定します",
@@ -1031,7 +1146,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "port": MessageLookupByLibrary.simpleMessage("ポート"),
     "portConflictTip": MessageLookupByLibrary.simpleMessage("別のポートを入力してください"),
-    "portTip": m25,
+    "portTip": m28,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage("DoHでHTTP/3を優先します"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("前提条件"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("キーを押してください"),
@@ -1060,7 +1175,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("プロジェクト"),
     "providers": MessageLookupByLibrary.simpleMessage("外部リソース"),
     "proxies": MessageLookupByLibrary.simpleMessage("プロキシ"),
-    "proxiesCount": m26,
+    "proxiesCount": m29,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("プロキシが空です"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("プロキシチェーン"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -1254,7 +1369,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("ルールセット"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("ルールターゲット"),
     "rules": MessageLookupByLibrary.simpleMessage("ルール"),
-    "rulesCount": m27,
+    "rulesCount": m30,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存しますか？"),
     "script": MessageLookupByLibrary.simpleMessage("スクリプト"),
@@ -1264,7 +1379,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("選択項目へスクロール"),
     "search": MessageLookupByLibrary.simpleMessage("検索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
-    "secondsCount": m28,
+    "secondsCount": m31,
     "selectAll": MessageLookupByLibrary.simpleMessage("すべて選択"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "MATCH-TARGET を選択",
@@ -1279,7 +1394,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectSubRule": MessageLookupByLibrary.simpleMessage("サブルールを選択してください"),
     "selected": MessageLookupByLibrary.simpleMessage("選択済み"),
-    "selectedCountTitle": m29,
+    "selectedCountTitle": m32,
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
     "show": MessageLookupByLibrary.simpleMessage("表示"),
     "showLess": MessageLookupByLibrary.simpleMessage("折りたたむ"),
@@ -1827,7 +1942,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("アップロード"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URLからプロファイルを取得します"),
-    "urlTip": m30,
+    "urlTip": m33,
     "useHosts": MessageLookupByLibrary.simpleMessage("Hostsを使用"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("システムのHostsを使用"),
     "usedTraffic": MessageLookupByLibrary.simpleMessage("使用済みトラフィック"),
@@ -1844,7 +1959,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPNの再起動後に有効になります"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
-    "yearsAgo": m31,
+    "yearsAgo": m34,
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };
 }

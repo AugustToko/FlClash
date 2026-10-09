@@ -173,6 +173,7 @@ void main() {
     expect(handler.calls[CoreMethod.setHttpObservationEnabled], {
       'enabled': true,
       'sessionId': 'session-a',
+      'policy': TlsInspectionCapturePolicy.metadataOnly.toJson(),
     });
   });
 

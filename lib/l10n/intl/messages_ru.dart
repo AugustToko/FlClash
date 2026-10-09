@@ -55,48 +55,54 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m13(count) =>
       "${Intl.plural(count, one: '${count} час', few: '${count} часа', many: '${count} часов', other: '${count} часа')}";
 
-  static String m14(count) => "Транзакций: ${count}";
+  static String m14(code) => "Ошибка ${code}";
 
-  static String m15(target) => "${target} — недопустимая политика";
+  static String m15(count) => "Значений заголовков: ${count}";
 
-  static String m16(proxyName) => "${proxyName} — недопустимый прокси";
+  static String m16(id) => "Поток ${id}";
 
-  static String m17(providerName) =>
+  static String m17(count) => "Транзакций: ${count}";
+
+  static String m18(target) => "${target} — недопустимая политика";
+
+  static String m19(proxyName) => "${proxyName} — недопустимый прокси";
+
+  static String m20(providerName) =>
       "${providerName} — недопустимый провайдер прокси";
 
-  static String m18(subRule) => "${subRule} — недопустимый SUB_RULE";
+  static String m21(subRule) => "${subRule} — недопустимый SUB_RULE";
 
-  static String m19(appName) =>
+  static String m22(appName) =>
       "1. Откройте Системные настройки > Конфиденциальность и безопасность\n2. Выберите Службы геолокации\n3. Найдите и отметьте ${appName} в списке\n\nПосле настройки вернитесь в приложение и продолжайте работу. Спасибо за сотрудничество.";
 
-  static String m20(label, max) => "«${label}» — не более ${max} символов";
+  static String m23(label, max) => "«${label}» — не более ${max} символов";
 
-  static String m21(count) =>
+  static String m24(count) =>
       "${Intl.plural(count, one: '${count} минуту назад', few: '${count} минуты назад', many: '${count} минут назад', other: '${count} минуты назад')}";
 
-  static String m22(count) =>
+  static String m25(count) =>
       "${Intl.plural(count, one: '${count} месяц назад', few: '${count} месяца назад', many: '${count} месяцев назад', other: '${count} месяца назад')}";
 
-  static String m23(label) => "Пока нет: ${label}";
+  static String m26(label) => "Пока нет: ${label}";
 
-  static String m24(label) => "Значение «${label}» должно быть числом";
+  static String m27(label) => "Значение «${label}» должно быть числом";
 
-  static String m25(label) =>
+  static String m28(label) =>
       "Значение «${label}» должно быть от 1024 до 49151";
 
-  static String m26(count) => "${count} прокси";
+  static String m29(count) => "${count} прокси";
 
-  static String m27(count) =>
+  static String m30(count) =>
       "${Intl.plural(count, one: '${count} правило', few: '${count} правила', many: '${count} правил', other: '${count} правила')}";
 
-  static String m28(count) =>
+  static String m31(count) =>
       "${Intl.plural(count, one: '${count} секунда', few: '${count} секунды', many: '${count} секунд', other: '${count} секунды')}";
 
-  static String m29(count) => "Выбрано: ${count}";
+  static String m32(count) => "Выбрано: ${count}";
 
-  static String m30(label) => "Значение «${label}» должно быть URL";
+  static String m33(label) => "Значение «${label}» должно быть URL";
 
-  static String m31(count) =>
+  static String m34(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -583,12 +589,32 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
       "Все профили",
     ),
+    "httpCaptureBodyAll": MessageLookupByLibrary.simpleMessage(
+      "Все поддерживаемые типы",
+    ),
+    "httpCaptureBodyEncoding": MessageLookupByLibrary.simpleMessage(
+      "Кодировка тела",
+    ),
+    "httpCaptureBodyLimit": MessageLookupByLibrary.simpleMessage(
+      "Лимит одного тела",
+    ),
+    "httpCaptureBodyMode": MessageLookupByLibrary.simpleMessage("Захват тела"),
+    "httpCaptureBodyNone": MessageLookupByLibrary.simpleMessage("Выключен"),
+    "httpCaptureBodyText": MessageLookupByLibrary.simpleMessage(
+      "Текст, JSON и формы",
+    ),
     "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
       "Полнота ClientHello",
     ),
     "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Полностью"),
+    "httpCaptureConnectCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Завершение подключения к серверу",
+    ),
     "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
       "Резервные метаданные соединения",
+    ),
+    "httpCaptureContentEnabled": MessageLookupByLibrary.simpleMessage(
+      "Захват содержимого включён",
     ),
     "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
       "Пассивный наблюдатель Core",
@@ -600,14 +626,20 @@ class MessageLookup extends MessageLookupByLibrary {
       "Текущий профиль",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Единая локальная рабочая область для пассивных метаданных Core и TLS-метаданных явно запущенного проверочного ретранслятора",
+      "Проверка транзакций HTTP/1 и потоков HTTP/2 с явной локальной политикой конфиденциальности",
     ),
+    "httpCaptureDownstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Завершение TLS клиента"),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "Наблюдений HTTP пока нет",
+    ),
+    "httpCaptureEmptyValue": MessageLookupByLibrary.simpleMessage(
+      "Пустое значение",
     ),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый адрес",
     ),
+    "httpCaptureErrorCode": m14,
     "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
       "Core наблюдал префикс запроса HTTP/1",
     ),
@@ -641,7 +673,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Наблюдения HTTP экспортированы",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "Экспорт HAR по-прежнему содержит только метаданные. Пассивный открытый источник может включать первую транзакцию HTTP/1, а явно авторизованный инспекционный ретранслятор — до 32 упорядоченных транзакций. Экспортируются только адреса без строки запроса, имена заголовков и метаданные статуса ответа; Reason Phrase, значения заголовков, Cookie, тела, необработанные данные и браузерные тайминги остаются неизвестными.",
+      "Экспорт HAR соответствует активной политике захвата. Пассивные источники остаются только метаданными. Явно разрешённый ретранслятор может экспортировать транзакции HTTP/1 или потоки HTTP/2, разрешённые значения заголовков, ограниченные тела и доступные временные этапы. Скрытые значения остаются скрытыми.",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Имена заголовков",
@@ -649,14 +681,34 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
       "Список имён заголовков усечён",
     ),
+    "httpCaptureHeaderValueCount": m15,
+    "httpCaptureHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Захватывать значения заголовков",
+    ),
+    "httpCaptureHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Сохранять ограниченные значения заголовков запросов и ответов. Известные чувствительные поля скрываются.",
+    ),
+    "httpCaptureHeaderValuesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков усечены",
+    ),
     "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
       "Полнота заголовков",
     ),
     "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
       "Host усечён",
     ),
+    "httpCaptureHttp2GoAway": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 GOAWAY",
+    ),
+    "httpCaptureHttp2Stream": MessageLookupByLibrary.simpleMessage("Поток"),
+    "httpCaptureHttp2Streams": MessageLookupByLibrary.simpleMessage(
+      "Потоки HTTP/2",
+    ),
     "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
       "Версия HTTP",
+    ),
+    "httpCaptureImagePreviewFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось показать захваченные данные изображения.",
     ),
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage(
       "Неполностью",
@@ -669,7 +721,10 @@ class MessageLookup extends MessageLookupByLibrary {
           "Список информационных кодов усечён",
         ),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "Эта запись получена от явно авторизованного loopback HTTPS-ретранслятора. Сохраняется упорядоченная ограниченная временная шкала до 32 расшифрованных транзакций HTTP/1: метод, путь без строки запроса и имена заголовков запроса, а также статус, версия и имена заголовков окончательного ответа. Значения заголовков и полей фрейминга, Cookie, тела и необработанные данные не сохраняются.",
+      "Эта запись получена от явно авторизованного loopback HTTPS-ретранслятора. На соединение сохраняется не более 32 транзакций HTTP/1 или потоков HTTP/2. По умолчанию — только метаданные; значения заголовков и ограниченные тела появляются лишь при разрешении зафиксированной политики.",
+    ),
+    "httpCaptureMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "Только метаданные",
     ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Не наблюдается",
@@ -678,12 +733,22 @@ class MessageLookup extends MessageLookupByLibrary {
       "Задержка наблюдения",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Добровольный захват объединяет ограниченные пассивные наблюдения Core с метаданными явно запущенного локального HTTPS-ретранслятора инспекции. Ретранслятор может записать до 32 транзакций HTTP/1 на соединение, но никогда не сохраняет строки запроса, Reason Phrase, значения заголовков, тела, сертификаты или необработанные HTTP-сообщения. Полезная нагрузка проходит через память, но не сохраняется. Только новые соединения; локальные записи исключены из резервных копий.",
+      "Добровольный захват объединяет ограниченные пассивные наблюдения Core с явно запущенным локальным HTTPS-ретранслятором инспекции. Ретранслятор наблюдает упорядоченные транзакции HTTP/1 и параллельные потоки HTTP/2. По умолчанию сохраняются только метаданные. Значения заголовков и ограниченные по размеру тела сохраняются только после явного включения; чувствительные заголовки остаются скрытыми без отдельного разрешения. Строки запроса, фрагменты, Reason Phrase, сертификаты и необработанные HTTP-сообщения не сохраняются. Только новые соединения; локальные записи не входят в резервные копии.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый префикс",
     ),
+    "httpCaptureOmitted": MessageLookupByLibrary.simpleMessage("Пропущено"),
+    "httpCapturePolicyLocked": MessageLookupByLibrary.simpleMessage(
+      "Остановите захват перед изменением политики.",
+    ),
     "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Есть"),
+    "httpCapturePrivacy": MessageLookupByLibrary.simpleMessage(
+      "Политика конфиденциальности захвата",
+    ),
+    "httpCapturePrivacyDesc": MessageLookupByLibrary.simpleMessage(
+      "Настройте до запуска. Весь сеанс использует снимок политики на момент старта.",
+    ),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
       "Путь процесса",
     ),
@@ -697,6 +762,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
       "Неизвестный протокол",
     ),
+    "httpCaptureRedacted": MessageLookupByLibrary.simpleMessage("Скрыто"),
+    "httpCaptureRedactedHeaders": MessageLookupByLibrary.simpleMessage(
+      "Всегда скрываемые заголовки",
+    ),
+    "httpCaptureRedactedHeadersDesc": MessageLookupByLibrary.simpleMessage(
+      "Имена через запятую или пробел. Они остаются скрытыми даже при разрешении чувствительных значений.",
+    ),
+    "httpCaptureRedactedHeadersHint": MessageLookupByLibrary.simpleMessage(
+      "x-private-token, x-session-id",
+    ),
+    "httpCaptureRequestBody": MessageLookupByLibrary.simpleMessage(
+      "Тело запроса",
+    ),
+    "httpCaptureRequestCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Завершение запроса",
+    ),
+    "httpCaptureRequestCookies": MessageLookupByLibrary.simpleMessage(
+      "Cookie запроса",
+    ),
+    "httpCaptureRequestHeaders": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков запроса",
+    ),
     "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
       "Метод запроса",
     ),
@@ -709,6 +796,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый ответ",
     ),
+    "httpCaptureResponseBody": MessageLookupByLibrary.simpleMessage(
+      "Тело ответа",
+    ),
+    "httpCaptureResponseCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Завершение ответа",
+    ),
+    "httpCaptureResponseCookies": MessageLookupByLibrary.simpleMessage(
+      "Cookie ответа",
+    ),
     "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Имена заголовков ответа",
     ),
@@ -716,6 +812,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Список имён заголовков ответа усечён",
         ),
+    "httpCaptureResponseHeaders": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков ответа",
+    ),
     "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
       "Полнота заголовков ответа",
     ),
@@ -733,6 +832,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
       "Наблюдение ответа усечено",
+    ),
+    "httpCaptureRiskMessage": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков и тела могут содержать учётные данные, Cookie, персональные данные и приватный контент. Включайте только необходимый минимум, используйте узкий список разрешений и остановите захват сразу после отладки.",
+    ),
+    "httpCaptureRiskTitle": MessageLookupByLibrary.simpleMessage(
+      "Включить захват чувствительных данных?",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
       "Захват выполняется",
@@ -783,6 +888,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
       "TLS к вышестоящему серверу",
     ),
+    "httpCaptureSensitiveHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Разрешить чувствительные заголовки",
+    ),
+    "httpCaptureSensitiveHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Разрешить учётные данные, Cookie и заголовки токенов; список постоянного скрытия имеет приоритет.",
+    ),
     "httpCaptureSourceConnectionCandidate":
         MessageLookupByLibrary.simpleMessage("Кандидат соединения"),
     "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
@@ -795,11 +906,28 @@ class MessageLookup extends MessageLookupByLibrary {
       "Источник наблюдения",
     ),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Остановлено"),
+    "httpCaptureStreamClosed": MessageLookupByLibrary.simpleMessage("Закрыт"),
+    "httpCaptureStreamId": m16,
+    "httpCaptureStreamOpen": MessageLookupByLibrary.simpleMessage("Открыт"),
+    "httpCaptureStreamRequestEnded": MessageLookupByLibrary.simpleMessage(
+      "Запрос завершён",
+    ),
+    "httpCaptureStreamReset": MessageLookupByLibrary.simpleMessage("Сброшен"),
+    "httpCaptureStreamResponseEnded": MessageLookupByLibrary.simpleMessage(
+      "Ответ завершён",
+    ),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "Цель запроса усечена",
     ),
     "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
       "Временная шкала усечена",
+    ),
+    "httpCaptureTimingReceive": MessageLookupByLibrary.simpleMessage(
+      "Получение",
+    ),
+    "httpCaptureTimingSend": MessageLookupByLibrary.simpleMessage("Отправка"),
+    "httpCaptureTimingWait": MessageLookupByLibrary.simpleMessage(
+      "Ожидание / TTFB",
     ),
     "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
     "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
@@ -817,13 +945,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage(
       "Транзакция",
     ),
-    "httpCaptureTransactionCount": m14,
+    "httpCaptureTransactionCount": m17,
     "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
-      "Временная шкала HTTP/1",
+      "Транзакции HTTP/1",
     ),
     "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
       "Наблюдение усечено",
     ),
+    "httpCaptureUpstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Завершение TLS к серверу"),
     "icon": MessageLookupByLibrary.simpleMessage("Значок"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("История значков"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль значков"),
@@ -887,10 +1017,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage(
       "Недопустимый файл резервной копии",
     ),
-    "invalidPolicy": m15,
-    "invalidProxy": m16,
-    "invalidProxyProvider": m17,
-    "invalidSubRule": m18,
+    "invalidPolicy": m18,
+    "invalidProxy": m19,
+    "invalidProxyProvider": m20,
+    "invalidSubRule": m21,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "При включении можно принимать трафик IPv6",
@@ -929,7 +1059,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "По требованию системы для получения имени сети Wi-Fi необходимо разрешение на геолокацию. На Android выберите «Разрешить всегда», иначе имя сети Wi-Fi нельзя получить, пока приложение в фоне.",
     ),
-    "locationPermissionGuide": m19,
+    "locationPermissionGuide": m22,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Требуется разрешение на геолокацию",
     ),
@@ -1142,7 +1272,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage(
       "Макс. число неудач",
     ),
-    "maxLengthTip": m20,
+    "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("Развернуть"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Память"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Тест сообщения"),
@@ -1155,11 +1285,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Изменяет стандартное поведение при выходе",
     ),
-    "minutesAgo": m21,
+    "minutesAgo": m24,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Смешанный порт"),
     "mode": MessageLookupByLibrary.simpleMessage("Режим"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
-    "monthsAgo": m22,
+    "monthsAgo": m25,
     "more": MessageLookupByLibrary.simpleMessage("Ещё"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "Разделяйте несколько значений запятыми",
@@ -1207,8 +1337,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Профилей пока нет. Сначала добавьте профиль",
     ),
-    "nullTip": m23,
-    "numberTip": m24,
+    "nullTip": m26,
+    "numberTip": m27,
     "onDemand": MessageLookupByLibrary.simpleMessage("По условию"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "Настройте состояние работы приложения для определённых сценариев",
@@ -1266,7 +1396,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Введите другой порт",
     ),
-    "portTip": m25,
+    "portTip": m28,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Предпочитать HTTP/3 для DoH",
     ),
@@ -1301,7 +1431,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Проект"),
     "providers": MessageLookupByLibrary.simpleMessage("Внешние ресурсы"),
     "proxies": MessageLookupByLibrary.simpleMessage("Прокси"),
-    "proxiesCount": m26,
+    "proxiesCount": m29,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Список прокси пуст"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Цепочка прокси"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -1537,7 +1667,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("Набор правил"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Цель правила"),
     "rules": MessageLookupByLibrary.simpleMessage("Правила"),
-    "rulesCount": m27,
+    "rulesCount": m30,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения?"),
     "script": MessageLookupByLibrary.simpleMessage("Скрипт"),
@@ -1549,7 +1679,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
     "seconds": MessageLookupByLibrary.simpleMessage("секунд"),
-    "secondsCount": m28,
+    "secondsCount": m31,
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать всё"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "Выбрать MATCH-TARGET",
@@ -1568,7 +1698,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Выберите подправило",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
-    "selectedCountTitle": m29,
+    "selectedCountTitle": m32,
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showLess": MessageLookupByLibrary.simpleMessage("Свернуть"),
@@ -2222,7 +2352,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Отдача"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m30,
+    "urlTip": m33,
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системный hosts",
@@ -2249,7 +2379,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
-    "yearsAgo": m31,
+    "yearsAgo": m34,
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };
 }

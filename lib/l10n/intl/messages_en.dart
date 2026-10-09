@@ -55,49 +55,56 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m13(count) =>
       "${Intl.plural(count, one: '1 hour', other: '${count} hours')}";
 
-  static String m14(count) =>
+  static String m14(code) => "Error ${code}";
+
+  static String m15(count) =>
+      "${Intl.plural(count, one: '1 header value', other: '${count} header values')}";
+
+  static String m16(id) => "Stream ${id}";
+
+  static String m17(count) =>
       "${Intl.plural(count, one: '1 transaction', other: '${count} transactions')}";
 
-  static String m15(target) => "${target} is an invalid policy";
+  static String m18(target) => "${target} is an invalid policy";
 
-  static String m16(proxyName) => "${proxyName} is an invalid proxy";
+  static String m19(proxyName) => "${proxyName} is an invalid proxy";
 
-  static String m17(providerName) =>
+  static String m20(providerName) =>
       "${providerName} is an invalid proxy provider";
 
-  static String m18(subRule) => "${subRule} is an invalid SUB_RULE";
+  static String m21(subRule) => "${subRule} is an invalid SUB_RULE";
 
-  static String m19(appName) =>
+  static String m22(appName) =>
       "1. Open System Settings > Privacy & Security\n2. Choose Location Services\n3. Find and check ${appName} in the list\n\nWhen you are done, return to the app to continue. Thank you for your cooperation.";
 
-  static String m20(label, max) => "${label} must be at most ${max} characters";
+  static String m23(label, max) => "${label} must be at most ${max} characters";
 
-  static String m21(count) =>
+  static String m24(count) =>
       "${Intl.plural(count, one: '1 minute ago', other: '${count} minutes ago')}";
 
-  static String m22(count) =>
+  static String m25(count) =>
       "${Intl.plural(count, one: '1 month ago', other: '${count} months ago')}";
 
-  static String m23(label) => "No ${label} yet";
+  static String m26(label) => "No ${label} yet";
 
-  static String m24(label) => "${label} must be a number";
+  static String m27(label) => "${label} must be a number";
 
-  static String m25(label) => "${label} must be between 1024 and 49151";
+  static String m28(label) => "${label} must be between 1024 and 49151";
 
-  static String m26(count) =>
+  static String m29(count) =>
       "${Intl.plural(count, one: '1 proxy', other: '${count} proxies')}";
 
-  static String m27(count) =>
+  static String m30(count) =>
       "${Intl.plural(count, one: '1 rule', other: '${count} rules')}";
 
-  static String m28(count) =>
+  static String m31(count) =>
       "${Intl.plural(count, one: '1 second', other: '${count} seconds')}";
 
-  static String m29(count) => "${count} selected";
+  static String m32(count) => "${count} selected";
 
-  static String m30(label) => "${label} must be a URL";
+  static String m33(label) => "${label} must be a URL";
 
-  static String m31(count) =>
+  static String m34(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -564,12 +571,32 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
       "All profiles",
     ),
+    "httpCaptureBodyAll": MessageLookupByLibrary.simpleMessage(
+      "All supported types",
+    ),
+    "httpCaptureBodyEncoding": MessageLookupByLibrary.simpleMessage(
+      "Body encoding",
+    ),
+    "httpCaptureBodyLimit": MessageLookupByLibrary.simpleMessage(
+      "Per-body limit",
+    ),
+    "httpCaptureBodyMode": MessageLookupByLibrary.simpleMessage("Body capture"),
+    "httpCaptureBodyNone": MessageLookupByLibrary.simpleMessage("Off"),
+    "httpCaptureBodyText": MessageLookupByLibrary.simpleMessage(
+      "Text, JSON and forms",
+    ),
     "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
       "ClientHello complete",
     ),
     "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Complete"),
+    "httpCaptureConnectCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Upstream connect completed after",
+    ),
     "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
       "Connection metadata fallback",
+    ),
+    "httpCaptureContentEnabled": MessageLookupByLibrary.simpleMessage(
+      "Content capture enabled",
     ),
     "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
       "Core passive observer",
@@ -581,14 +608,20 @@ class MessageLookup extends MessageLookupByLibrary {
       "Current profile",
     ),
     "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
-      "Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace",
+      "Inspect HTTP/1 transactions and HTTP/2 streams with an explicit, local privacy policy",
     ),
+    "httpCaptureDownstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Client TLS completed after"),
     "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
       "No HTTP observations yet",
+    ),
+    "httpCaptureEmptyValue": MessageLookupByLibrary.simpleMessage(
+      "Empty value",
     ),
     "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
       "Observed endpoint",
     ),
+    "httpCaptureErrorCode": m14,
     "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
       "HTTP/1 request prefix observed by Core",
     ),
@@ -624,7 +657,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "HTTP observations exported",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "HAR export remains metadata-only. Passive cleartext sources may include their first observed HTTP/1 transaction; an explicitly authorized inspection relay may include up to 32 ordered transactions. Exports contain query-free targets, header names and response status metadata only. Reason phrases, all header values, cookies, bodies, raw payloads and browser-style timings remain unknown.",
+      "HAR export reflects the active capture policy. Passive sources remain metadata-only. An explicitly authorized inspection relay can export HTTP/1 transactions or HTTP/2 streams, permitted header values, bounded bodies and available connection/request timing. Redacted values stay redacted; query strings, fragments, reason phrases and unknown timing phases remain unavailable.",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Header names",
@@ -632,14 +665,34 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
       "Header-name list truncated",
     ),
+    "httpCaptureHeaderValueCount": m15,
+    "httpCaptureHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Capture header values",
+    ),
+    "httpCaptureHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Store bounded request and response header values. Known sensitive fields stay redacted.",
+    ),
+    "httpCaptureHeaderValuesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Header values truncated",
+    ),
     "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
       "Headers complete",
     ),
     "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
       "Host truncated",
     ),
+    "httpCaptureHttp2GoAway": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 GOAWAY",
+    ),
+    "httpCaptureHttp2Stream": MessageLookupByLibrary.simpleMessage("Stream"),
+    "httpCaptureHttp2Streams": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 streams",
+    ),
     "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
       "HTTP version",
+    ),
+    "httpCaptureImagePreviewFailed": MessageLookupByLibrary.simpleMessage(
+      "The captured image bytes could not be previewed.",
     ),
     "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("Incomplete"),
     "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
@@ -650,7 +703,10 @@ class MessageLookup extends MessageLookupByLibrary {
           "Informational status list truncated",
         ),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "This entry came from the explicitly authorized loopback HTTPS relay. It keeps an ordered, bounded timeline of at most 32 decrypted HTTP/1 transactions: request method, query-free path and header names, and final response status, version and header names. Header values, framing values, cookies, bodies and raw payloads are never retained.",
+      "This entry came from the explicitly authorized loopback HTTPS relay. It retains at most 32 HTTP/1 transactions or HTTP/2 streams per connection. Metadata-only is the default; header values and bounded bodies appear only when the recorded policy authorized them. Sensitive values may remain redacted and all truncation is marked.",
+    ),
+    "httpCaptureMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "Metadata only",
     ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Not observed",
@@ -659,12 +715,22 @@ class MessageLookup extends MessageLookupByLibrary {
       "Observation delay",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "Opt-in capture combines bounded passive Core observations with metadata from the explicitly started local HTTPS relay. The relay can record up to 32 HTTP/1 transactions per connection, but never stores query strings, reason phrases, header values, bodies, certificates, or raw HTTP messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.",
+      "Opt-in capture combines bounded passive Core observations with an explicitly started local HTTPS relay. The relay observes ordered HTTP/1 transactions and concurrent HTTP/2 streams. Metadata-only is the default. Header values and size-bounded bodies are retained only when explicitly enabled; sensitive headers remain redacted unless separately authorized. Query strings, fragments, reason phrases, certificates and raw HTTP messages are not retained. New connections only; local records are excluded from backups.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Observed prefix",
     ),
+    "httpCaptureOmitted": MessageLookupByLibrary.simpleMessage("Omitted"),
+    "httpCapturePolicyLocked": MessageLookupByLibrary.simpleMessage(
+      "Stop capture before changing the privacy policy.",
+    ),
     "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Present"),
+    "httpCapturePrivacy": MessageLookupByLibrary.simpleMessage(
+      "Capture privacy policy",
+    ),
+    "httpCapturePrivacyDesc": MessageLookupByLibrary.simpleMessage(
+      "Configure the policy before starting capture. The policy is snapshotted for the whole session.",
+    ),
     "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
       "Process path",
     ),
@@ -678,6 +744,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
       "Unknown protocol",
     ),
+    "httpCaptureRedacted": MessageLookupByLibrary.simpleMessage("Redacted"),
+    "httpCaptureRedactedHeaders": MessageLookupByLibrary.simpleMessage(
+      "Always-redacted headers",
+    ),
+    "httpCaptureRedactedHeadersDesc": MessageLookupByLibrary.simpleMessage(
+      "Comma- or space-separated header names that remain redacted even when sensitive values are authorized.",
+    ),
+    "httpCaptureRedactedHeadersHint": MessageLookupByLibrary.simpleMessage(
+      "x-private-token, x-session-id",
+    ),
+    "httpCaptureRequestBody": MessageLookupByLibrary.simpleMessage(
+      "Request body",
+    ),
+    "httpCaptureRequestCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Request completed after",
+    ),
+    "httpCaptureRequestCookies": MessageLookupByLibrary.simpleMessage(
+      "Request cookies",
+    ),
+    "httpCaptureRequestHeaders": MessageLookupByLibrary.simpleMessage(
+      "Request header values",
+    ),
     "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
       "Request method",
     ),
@@ -690,6 +778,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
       "Observed response",
     ),
+    "httpCaptureResponseBody": MessageLookupByLibrary.simpleMessage(
+      "Response body",
+    ),
+    "httpCaptureResponseCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Response completed after",
+    ),
+    "httpCaptureResponseCookies": MessageLookupByLibrary.simpleMessage(
+      "Response cookies",
+    ),
     "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Response header names",
     ),
@@ -697,6 +794,9 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Response header-name list truncated",
         ),
+    "httpCaptureResponseHeaders": MessageLookupByLibrary.simpleMessage(
+      "Response header values",
+    ),
     "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
       "Response headers complete",
     ),
@@ -714,6 +814,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
       "Response observation truncated",
+    ),
+    "httpCaptureRiskMessage": MessageLookupByLibrary.simpleMessage(
+      "Header values and message bodies can contain credentials, cookies, personal data and private content. Enable only the minimum needed, use a narrow inspection allowlist, and stop capture immediately after debugging.",
+    ),
+    "httpCaptureRiskTitle": MessageLookupByLibrary.simpleMessage(
+      "Enable sensitive capture?",
     ),
     "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
     "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
@@ -762,6 +868,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
       "Upstream TLS",
     ),
+    "httpCaptureSensitiveHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Authorize sensitive header values",
+    ),
+    "httpCaptureSensitiveHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Allow credentials, cookies and token-like headers unless they are in the always-redacted list.",
+    ),
     "httpCaptureSourceConnectionCandidate":
         MessageLookupByLibrary.simpleMessage("Connection candidate"),
     "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
@@ -774,11 +886,26 @@ class MessageLookup extends MessageLookupByLibrary {
       "Observation source",
     ),
     "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),
+    "httpCaptureStreamClosed": MessageLookupByLibrary.simpleMessage("Closed"),
+    "httpCaptureStreamId": m16,
+    "httpCaptureStreamOpen": MessageLookupByLibrary.simpleMessage("Open"),
+    "httpCaptureStreamRequestEnded": MessageLookupByLibrary.simpleMessage(
+      "Request ended",
+    ),
+    "httpCaptureStreamReset": MessageLookupByLibrary.simpleMessage("Reset"),
+    "httpCaptureStreamResponseEnded": MessageLookupByLibrary.simpleMessage(
+      "Response ended",
+    ),
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "Request target truncated",
     ),
     "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
       "Timeline truncated",
+    ),
+    "httpCaptureTimingReceive": MessageLookupByLibrary.simpleMessage("Receive"),
+    "httpCaptureTimingSend": MessageLookupByLibrary.simpleMessage("Send"),
+    "httpCaptureTimingWait": MessageLookupByLibrary.simpleMessage(
+      "Wait / TTFB",
     ),
     "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
     "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
@@ -796,13 +923,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage(
       "Transaction",
     ),
-    "httpCaptureTransactionCount": m14,
+    "httpCaptureTransactionCount": m17,
     "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
-      "HTTP/1 timeline",
+      "HTTP/1 transactions",
     ),
     "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
       "Observation truncated",
     ),
+    "httpCaptureUpstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Upstream TLS completed after"),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon style"),
@@ -868,10 +997,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage(
       "Invalid backup file",
     ),
-    "invalidPolicy": m15,
-    "invalidProxy": m16,
-    "invalidProxyProvider": m17,
-    "invalidSubRule": m18,
+    "invalidPolicy": m18,
+    "invalidProxy": m19,
+    "invalidProxyProvider": m20,
+    "invalidSubRule": m21,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "When enabled, IPv6 traffic can be received",
@@ -910,7 +1039,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "The system requires location permission to read the Wi-Fi name. On Android choose \"Allow all the time\", otherwise the Wi-Fi name cannot be read while the app is in the background.",
     ),
-    "locationPermissionGuide": m19,
+    "locationPermissionGuide": m22,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Location permission required",
     ),
@@ -1115,7 +1244,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "matchTargetTitle": MessageLookupByLibrary.simpleMessage("Match target"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("Max failures"),
-    "maxLengthTip": m20,
+    "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("Maximize"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Message test"),
@@ -1128,11 +1257,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Override the default system exit behavior",
     ),
-    "minutesAgo": m21,
+    "minutesAgo": m24,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixed port"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
-    "monthsAgo": m22,
+    "monthsAgo": m25,
     "more": MessageLookupByLibrary.simpleMessage("More"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "Separate multiple values with commas",
@@ -1182,8 +1311,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "No profiles yet, please add one first",
     ),
-    "nullTip": m23,
-    "numberTip": m24,
+    "nullTip": m26,
+    "numberTip": m27,
     "onDemand": MessageLookupByLibrary.simpleMessage("On demand"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "Configure the app\'s running state for specific scenarios",
@@ -1231,7 +1360,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Please enter a different port",
     ),
-    "portTip": m25,
+    "portTip": m28,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Prefer HTTP/3 for DoH",
     ),
@@ -1264,7 +1393,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Project"),
     "providers": MessageLookupByLibrary.simpleMessage("External resources"),
     "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
-    "proxiesCount": m26,
+    "proxiesCount": m29,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Proxies are empty"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Proxy chain"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -1486,7 +1615,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("Rule set"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Rule target"),
     "rules": MessageLookupByLibrary.simpleMessage("Rules"),
-    "rulesCount": m27,
+    "rulesCount": m30,
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Save the changes?"),
     "script": MessageLookupByLibrary.simpleMessage("Script"),
@@ -1498,7 +1627,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Search"),
     "seconds": MessageLookupByLibrary.simpleMessage("seconds"),
-    "secondsCount": m28,
+    "secondsCount": m31,
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "Select MATCH-TARGET",
@@ -1517,7 +1646,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please select a sub-rule",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
-    "selectedCountTitle": m29,
+    "selectedCountTitle": m32,
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
     "showLess": MessageLookupByLibrary.simpleMessage("Collapse"),
@@ -2159,7 +2288,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "Obtain a profile from a URL",
     ),
-    "urlTip": m30,
+    "urlTip": m33,
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("Use system hosts"),
     "usedTraffic": MessageLookupByLibrary.simpleMessage("Used traffic"),
@@ -2180,7 +2309,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
-    "yearsAgo": m31,
+    "yearsAgo": m34,
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }

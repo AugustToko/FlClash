@@ -29,10 +29,14 @@ final httpCaptureCoreDisableRetryDelayProvider = Provider<Duration>(
 );
 
 typedef HttpCaptureCoreControl =
-    Future<bool> Function(bool enabled, String sessionId);
+    Future<bool> Function(
+      bool enabled,
+      String sessionId,
+      TlsInspectionCapturePolicy policy,
+    );
 
 final httpCaptureCoreControlProvider = Provider<HttpCaptureCoreControl>((ref) {
-  return (enabled, sessionId) async {
+  return (enabled, sessionId, policy) async {
     if (ref.read(coreStatusProvider) != CoreStatus.connected) {
       return false;
     }
@@ -41,6 +45,7 @@ final httpCaptureCoreControlProvider = Provider<HttpCaptureCoreControl>((ref) {
         .setHttpObservationEnabled(
           enabled,
           sessionId: enabled ? sessionId : '',
+          policy: enabled ? policy : TlsInspectionCapturePolicy.metadataOnly,
         );
   };
 });
@@ -50,6 +55,7 @@ class HttpCaptureState {
   final DateTime? sessionStartedAt;
   final String sessionId;
   final bool coreObserverActive;
+  final TlsInspectionCapturePolicy capturePolicy;
   final List<HttpCaptureEntry> entries;
   final int revision;
 
@@ -58,6 +64,7 @@ class HttpCaptureState {
     this.sessionStartedAt,
     this.sessionId = '',
     this.coreObserverActive = false,
+    this.capturePolicy = TlsInspectionCapturePolicy.metadataOnly,
     this.entries = const [],
     this.revision = 0,
   });
@@ -68,6 +75,7 @@ class HttpCaptureState {
     bool clearSessionStartedAt = false,
     String? sessionId,
     bool? coreObserverActive,
+    TlsInspectionCapturePolicy? capturePolicy,
     List<HttpCaptureEntry>? entries,
     int? revision,
   }) {
@@ -78,6 +86,7 @@ class HttpCaptureState {
           : sessionStartedAt ?? this.sessionStartedAt,
       sessionId: sessionId ?? this.sessionId,
       coreObserverActive: coreObserverActive ?? this.coreObserverActive,
+      capturePolicy: capturePolicy ?? this.capturePolicy,
       entries: List.unmodifiable(entries ?? this.entries),
       revision: revision ?? this.revision,
     );
@@ -336,6 +345,7 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
       final active = await ref.read(httpCaptureCoreControlProvider)(
         enabled,
         sessionId,
+        enabled ? state.capturePolicy : TlsInspectionCapturePolicy.metadataOnly,
       );
       _lastCoreToggleFailureLogAt = null;
       return (reached: true, active: active);
@@ -501,6 +511,20 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
     return operation;
   }
 
+  void updateCapturePolicy(TlsInspectionCapturePolicy policy) {
+    if (state.enabled) {
+      return;
+    }
+    final normalized = policy.normalized();
+    if (normalized == state.capturePolicy) {
+      return;
+    }
+    state = state.copyWith(
+      capturePolicy: normalized,
+      revision: state.revision + 1,
+    );
+  }
+
   Future<void> start() async {
     if (state.enabled) {
       return;
@@ -525,7 +549,11 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           title: 'http.capture.session',
           message: 'capture-started',
           correlationId: sessionId,
-          details: const {'status': 'running', 'metadataOnly': true},
+          details: {
+            'status': 'running',
+            'metadataOnly': state.capturePolicy.isMetadataOnly,
+            'capturePolicy': state.capturePolicy.toJson(),
+          },
         );
     // Enable the Core observer before waiting for local history persistence so
     // connections created immediately after the user taps Start are eligible.
@@ -574,7 +602,8 @@ class HttpCaptureNotifier extends Notifier<HttpCaptureState> {
           correlationId: sessionId,
           details: {
             'status': 'completed',
-            'metadataOnly': true,
+            'metadataOnly': state.capturePolicy.isMetadataOnly,
+            'capturePolicy': state.capturePolicy.toJson(),
             'passiveOnly': inspectedRuntimeCount == 0,
             'inspectedRuntimeCount': inspectedRuntimeCount,
             'coreObserverActive': coreObserverActive,

@@ -5820,20 +5820,20 @@ class AppLocalizations {
     );
   }
 
-  /// `Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace`
+  /// `Inspect HTTP/1 transactions and HTTP/2 streams with an explicit, local privacy policy`
   String get httpCaptureDesc {
     return Intl.message(
-      'Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace',
+      'Inspect HTTP/1 transactions and HTTP/2 streams with an explicit, local privacy policy',
       name: 'httpCaptureDesc',
       desc: '',
       args: [],
     );
   }
 
-  /// `Opt-in capture combines bounded passive Core observations with metadata from the explicitly started local HTTPS relay. The relay can record up to 32 HTTP/1 transactions per connection, but never stores query strings, reason phrases, header values, bodies, certificates, or raw HTTP messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.`
+  /// `Opt-in capture combines bounded passive Core observations with an explicitly started local HTTPS relay. The relay observes ordered HTTP/1 transactions and concurrent HTTP/2 streams. Metadata-only is the default. Header values and size-bounded bodies are retained only when explicitly enabled; sensitive headers remain redacted unless separately authorized. Query strings, fragments, reason phrases, certificates and raw HTTP messages are not retained. New connections only; local records are excluded from backups.`
   String get httpCaptureObservationOnly {
     return Intl.message(
-      'Opt-in capture combines bounded passive Core observations with metadata from the explicitly started local HTTPS relay. The relay can record up to 32 HTTP/1 transactions per connection, but never stores query strings, reason phrases, header values, bodies, certificates, or raw HTTP messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.',
+      'Opt-in capture combines bounded passive Core observations with an explicitly started local HTTPS relay. The relay observes ordered HTTP/1 transactions and concurrent HTTP/2 streams. Metadata-only is the default. Header values and size-bounded bodies are retained only when explicitly enabled; sensitive headers remain redacted unless separately authorized. Query strings, fragments, reason phrases, certificates and raw HTTP messages are not retained. New connections only; local records are excluded from backups.',
       name: 'httpCaptureObservationOnly',
       desc: '',
       args: [],
@@ -6030,10 +6030,10 @@ class AppLocalizations {
     );
   }
 
-  /// `HAR export remains metadata-only. Passive cleartext sources may include their first observed HTTP/1 transaction; an explicitly authorized inspection relay may include up to 32 ordered transactions. Exports contain query-free targets, header names and response status metadata only. Reason phrases, all header values, cookies, bodies, raw payloads and browser-style timings remain unknown.`
+  /// `HAR export reflects the active capture policy. Passive sources remain metadata-only. An explicitly authorized inspection relay can export HTTP/1 transactions or HTTP/2 streams, permitted header values, bounded bodies and available connection/request timing. Redacted values stay redacted; query strings, fragments, reason phrases and unknown timing phases remain unavailable.`
   String get httpCaptureHarWarning {
     return Intl.message(
-      'HAR export remains metadata-only. Passive cleartext sources may include their first observed HTTP/1 transaction; an explicitly authorized inspection relay may include up to 32 ordered transactions. Exports contain query-free targets, header names and response status metadata only. Reason phrases, all header values, cookies, bodies, raw payloads and browser-style timings remain unknown.',
+      'HAR export reflects the active capture policy. Passive sources remain metadata-only. An explicitly authorized inspection relay can export HTTP/1 transactions or HTTP/2 streams, permitted header values, bounded bodies and available connection/request timing. Redacted values stay redacted; query strings, fragments, reason phrases and unknown timing phases remain unavailable.',
       name: 'httpCaptureHarWarning',
       desc: '',
       args: [],
@@ -6290,10 +6290,10 @@ class AppLocalizations {
     );
   }
 
-  /// `This entry came from the explicitly authorized loopback HTTPS relay. It keeps an ordered, bounded timeline of at most 32 decrypted HTTP/1 transactions: request method, query-free path and header names, and final response status, version and header names. Header values, framing values, cookies, bodies and raw payloads are never retained.`
+  /// `This entry came from the explicitly authorized loopback HTTPS relay. It retains at most 32 HTTP/1 transactions or HTTP/2 streams per connection. Metadata-only is the default; header values and bounded bodies appear only when the recorded policy authorized them. Sensitive values may remain redacted and all truncation is marked.`
   String get httpCaptureInspectedBoundary {
     return Intl.message(
-      'This entry came from the explicitly authorized loopback HTTPS relay. It keeps an ordered, bounded timeline of at most 32 decrypted HTTP/1 transactions: request method, query-free path and header names, and final response status, version and header names. Header values, framing values, cookies, bodies and raw payloads are never retained.',
+      'This entry came from the explicitly authorized loopback HTTPS relay. It retains at most 32 HTTP/1 transactions or HTTP/2 streams per connection. Metadata-only is the default; header values and bounded bodies appear only when the recorded policy authorized them. Sensitive values may remain redacted and all truncation is marked.',
       name: 'httpCaptureInspectedBoundary',
       desc: '',
       args: [],
@@ -6320,10 +6320,10 @@ class AppLocalizations {
     );
   }
 
-  /// `HTTP/1 timeline`
+  /// `HTTP/1 transactions`
   String get httpCaptureTransactions {
     return Intl.message(
-      'HTTP/1 timeline',
+      'HTTP/1 transactions',
       name: 'httpCaptureTransactions',
       desc: '',
       args: [],
@@ -6684,6 +6684,503 @@ class AppLocalizations {
       name: 'httpCaptureCoreObserverStopping',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Enable sensitive capture?`
+  String get httpCaptureRiskTitle {
+    return Intl.message(
+      'Enable sensitive capture?',
+      name: 'httpCaptureRiskTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header values and message bodies can contain credentials, cookies, personal data and private content. Enable only the minimum needed, use a narrow inspection allowlist, and stop capture immediately after debugging.`
+  String get httpCaptureRiskMessage {
+    return Intl.message(
+      'Header values and message bodies can contain credentials, cookies, personal data and private content. Enable only the minimum needed, use a narrow inspection allowlist, and stop capture immediately after debugging.',
+      name: 'httpCaptureRiskMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Always-redacted headers`
+  String get httpCaptureRedactedHeaders {
+    return Intl.message(
+      'Always-redacted headers',
+      name: 'httpCaptureRedactedHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `x-private-token, x-session-id`
+  String get httpCaptureRedactedHeadersHint {
+    return Intl.message(
+      'x-private-token, x-session-id',
+      name: 'httpCaptureRedactedHeadersHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Comma- or space-separated header names that remain redacted even when sensitive values are authorized.`
+  String get httpCaptureRedactedHeadersDesc {
+    return Intl.message(
+      'Comma- or space-separated header names that remain redacted even when sensitive values are authorized.',
+      name: 'httpCaptureRedactedHeadersDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture privacy policy`
+  String get httpCapturePrivacy {
+    return Intl.message(
+      'Capture privacy policy',
+      name: 'httpCapturePrivacy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configure the policy before starting capture. The policy is snapshotted for the whole session.`
+  String get httpCapturePrivacyDesc {
+    return Intl.message(
+      'Configure the policy before starting capture. The policy is snapshotted for the whole session.',
+      name: 'httpCapturePrivacyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop capture before changing the privacy policy.`
+  String get httpCapturePolicyLocked {
+    return Intl.message(
+      'Stop capture before changing the privacy policy.',
+      name: 'httpCapturePolicyLocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Metadata only`
+  String get httpCaptureMetadataOnly {
+    return Intl.message(
+      'Metadata only',
+      name: 'httpCaptureMetadataOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Content capture enabled`
+  String get httpCaptureContentEnabled {
+    return Intl.message(
+      'Content capture enabled',
+      name: 'httpCaptureContentEnabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture header values`
+  String get httpCaptureHeaderValues {
+    return Intl.message(
+      'Capture header values',
+      name: 'httpCaptureHeaderValues',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Store bounded request and response header values. Known sensitive fields stay redacted.`
+  String get httpCaptureHeaderValuesDesc {
+    return Intl.message(
+      'Store bounded request and response header values. Known sensitive fields stay redacted.',
+      name: 'httpCaptureHeaderValuesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authorize sensitive header values`
+  String get httpCaptureSensitiveHeaderValues {
+    return Intl.message(
+      'Authorize sensitive header values',
+      name: 'httpCaptureSensitiveHeaderValues',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow credentials, cookies and token-like headers unless they are in the always-redacted list.`
+  String get httpCaptureSensitiveHeaderValuesDesc {
+    return Intl.message(
+      'Allow credentials, cookies and token-like headers unless they are in the always-redacted list.',
+      name: 'httpCaptureSensitiveHeaderValuesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Body capture`
+  String get httpCaptureBodyMode {
+    return Intl.message(
+      'Body capture',
+      name: 'httpCaptureBodyMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off`
+  String get httpCaptureBodyNone {
+    return Intl.message('Off', name: 'httpCaptureBodyNone', desc: '', args: []);
+  }
+
+  /// `Text, JSON and forms`
+  String get httpCaptureBodyText {
+    return Intl.message(
+      'Text, JSON and forms',
+      name: 'httpCaptureBodyText',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All supported types`
+  String get httpCaptureBodyAll {
+    return Intl.message(
+      'All supported types',
+      name: 'httpCaptureBodyAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Per-body limit`
+  String get httpCaptureBodyLimit {
+    return Intl.message(
+      'Per-body limit',
+      name: 'httpCaptureBodyLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream connect completed after`
+  String get httpCaptureConnectCompletedAfter {
+    return Intl.message(
+      'Upstream connect completed after',
+      name: 'httpCaptureConnectCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream TLS completed after`
+  String get httpCaptureUpstreamTlsCompletedAfter {
+    return Intl.message(
+      'Upstream TLS completed after',
+      name: 'httpCaptureUpstreamTlsCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client TLS completed after`
+  String get httpCaptureDownstreamTlsCompletedAfter {
+    return Intl.message(
+      'Client TLS completed after',
+      name: 'httpCaptureDownstreamTlsCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/2 GOAWAY`
+  String get httpCaptureHttp2GoAway {
+    return Intl.message(
+      'HTTP/2 GOAWAY',
+      name: 'httpCaptureHttp2GoAway',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stream`
+  String get httpCaptureHttp2Stream {
+    return Intl.message(
+      'Stream',
+      name: 'httpCaptureHttp2Stream',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/2 streams`
+  String get httpCaptureHttp2Streams {
+    return Intl.message(
+      'HTTP/2 streams',
+      name: 'httpCaptureHttp2Streams',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open`
+  String get httpCaptureStreamOpen {
+    return Intl.message(
+      'Open',
+      name: 'httpCaptureStreamOpen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request ended`
+  String get httpCaptureStreamRequestEnded {
+    return Intl.message(
+      'Request ended',
+      name: 'httpCaptureStreamRequestEnded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response ended`
+  String get httpCaptureStreamResponseEnded {
+    return Intl.message(
+      'Response ended',
+      name: 'httpCaptureStreamResponseEnded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Closed`
+  String get httpCaptureStreamClosed {
+    return Intl.message(
+      'Closed',
+      name: 'httpCaptureStreamClosed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset`
+  String get httpCaptureStreamReset {
+    return Intl.message(
+      'Reset',
+      name: 'httpCaptureStreamReset',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request completed after`
+  String get httpCaptureRequestCompletedAfter {
+    return Intl.message(
+      'Request completed after',
+      name: 'httpCaptureRequestCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response completed after`
+  String get httpCaptureResponseCompletedAfter {
+    return Intl.message(
+      'Response completed after',
+      name: 'httpCaptureResponseCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request header values`
+  String get httpCaptureRequestHeaders {
+    return Intl.message(
+      'Request header values',
+      name: 'httpCaptureRequestHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response header values`
+  String get httpCaptureResponseHeaders {
+    return Intl.message(
+      'Response header values',
+      name: 'httpCaptureResponseHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header values truncated`
+  String get httpCaptureHeaderValuesTruncated {
+    return Intl.message(
+      'Header values truncated',
+      name: 'httpCaptureHeaderValuesTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request cookies`
+  String get httpCaptureRequestCookies {
+    return Intl.message(
+      'Request cookies',
+      name: 'httpCaptureRequestCookies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response cookies`
+  String get httpCaptureResponseCookies {
+    return Intl.message(
+      'Response cookies',
+      name: 'httpCaptureResponseCookies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request body`
+  String get httpCaptureRequestBody {
+    return Intl.message(
+      'Request body',
+      name: 'httpCaptureRequestBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response body`
+  String get httpCaptureResponseBody {
+    return Intl.message(
+      'Response body',
+      name: 'httpCaptureResponseBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Send`
+  String get httpCaptureTimingSend {
+    return Intl.message(
+      'Send',
+      name: 'httpCaptureTimingSend',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wait / TTFB`
+  String get httpCaptureTimingWait {
+    return Intl.message(
+      'Wait / TTFB',
+      name: 'httpCaptureTimingWait',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Receive`
+  String get httpCaptureTimingReceive {
+    return Intl.message(
+      'Receive',
+      name: 'httpCaptureTimingReceive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Redacted`
+  String get httpCaptureRedacted {
+    return Intl.message(
+      'Redacted',
+      name: 'httpCaptureRedacted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Empty value`
+  String get httpCaptureEmptyValue {
+    return Intl.message(
+      'Empty value',
+      name: 'httpCaptureEmptyValue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Omitted`
+  String get httpCaptureOmitted {
+    return Intl.message(
+      'Omitted',
+      name: 'httpCaptureOmitted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The captured image bytes could not be previewed.`
+  String get httpCaptureImagePreviewFailed {
+    return Intl.message(
+      'The captured image bytes could not be previewed.',
+      name: 'httpCaptureImagePreviewFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Body encoding`
+  String get httpCaptureBodyEncoding {
+    return Intl.message(
+      'Body encoding',
+      name: 'httpCaptureBodyEncoding',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stream {id}`
+  String httpCaptureStreamId(int id) {
+    return Intl.message(
+      'Stream $id',
+      name: 'httpCaptureStreamId',
+      desc: '',
+      args: [id],
+    );
+  }
+
+  /// `Error {code}`
+  String httpCaptureErrorCode(int code) {
+    return Intl.message(
+      'Error $code',
+      name: 'httpCaptureErrorCode',
+      desc: '',
+      args: [code],
+    );
+  }
+
+  /// `{count, plural, =1{1 header value} other{{count} header values}}`
+  String httpCaptureHeaderValueCount(int count) {
+    return Intl.plural(
+      count,
+      one: '1 header value',
+      other: '$count header values',
+      name: 'httpCaptureHeaderValueCount',
+      desc: '',
+      args: [count],
     );
   }
 

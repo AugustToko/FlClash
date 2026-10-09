@@ -184,15 +184,15 @@ void main() {
     );
     expect(
       rootExtension['limitations'],
-      contains('inspected-runtime-at-most-32-http1-transactions'),
+      contains('inspected-runtime-at-most-32-exchanges-per-connection'),
     );
     expect(
       rootExtension['limitations'],
-      contains('request-header-values-not-captured'),
+      contains('request-and-response-header-values-not-captured'),
     );
     expect(
       rootExtension['limitations'],
-      contains('response-body-not-captured'),
+      contains('request-and-response-bodies-not-captured'),
     );
 
     final encoded = encodeHttpCaptureHar(entries: [entry]);
@@ -575,6 +575,156 @@ void main() {
     expect(encoded, isNot(contains('Bearer private-token')));
     expect(encoded, isNot(contains('session=private-cookie')));
   });
+
+  test(
+    'HTTP/2 HAR export includes authorized headers, bodies, and timings',
+    () {
+      final started = DateTime.utc(2026, 10, 9, 12);
+      final observation = TlsInspectionRuntimeObservation.fromJson({
+        'sessionId': 'http-capture:http2-har',
+        'connectionId': '0123456789abcdef0123456789abcdef',
+        'runtimeId': 'abcdef0123456789abcdef0123456789',
+        'host': 'api.example.com',
+        'state': 'completed',
+        'startedAt': started.toIso8601String(),
+        'completedAt': started
+            .add(const Duration(seconds: 1))
+            .toIso8601String(),
+        'downstreamTlsVersion': 'TLS 1.3',
+        'upstreamTlsVersion': 'TLS 1.3',
+        'alpn': 'h2',
+        'uploaded': 64,
+        'downloaded': 128,
+        'upstreamDialCompletedAfterMilliseconds': 2,
+        'upstreamTlsCompletedAfterMilliseconds': 7,
+        'downstreamTlsCompletedAfterMilliseconds': 10,
+        'capturePolicy': const TlsInspectionCapturePolicy(
+          headerValues: true,
+          sensitiveHeaderValues: true,
+          redactedHeaderNames: ['x-private'],
+          bodyMode: TlsInspectionCaptureBodyMode.all,
+          maxBodyBytes: 4096,
+        ).toJson(),
+        'http2Streams': [
+          {
+            'sequence': 1,
+            'streamId': 1,
+            'state': 'closed',
+            'requestObservedAfterMilliseconds': 12,
+            'requestCompletedAfterMilliseconds': 18,
+            'responseCompletedAfterMilliseconds': 44,
+            'request': {
+              'method': 'POST',
+              'target': '/submit',
+              'version': 'HTTP/2',
+              'host': 'api.example.com',
+              'headerNames': ['content-type', 'cookie', 'x-private'],
+              'headers': [
+                {
+                  'name': 'content-type',
+                  'value': 'application/x-www-form-urlencoded',
+                },
+                {'name': 'cookie', 'value': 'session=allowed'},
+                {'name': 'x-private', 'redacted': true},
+              ],
+              'headersComplete': true,
+            },
+            'requestBody': {
+              'kind': 'form',
+              'contentType': 'application/x-www-form-urlencoded',
+              'encoding': 'utf8',
+              'text': 'name=flclash',
+              'capturedBytes': 12,
+              'observedBytes': 12,
+            },
+            'response': {
+              'version': 'HTTP/2',
+              'statusCode': 200,
+              'headerNames': ['content-type', 'set-cookie'],
+              'headers': [
+                {'name': 'content-type', 'value': 'application/json'},
+                {'name': 'set-cookie', 'value': 'result=ok; Path=/'},
+              ],
+              'headersComplete': true,
+              'observedBytes': 24,
+              'observedAfterMilliseconds': 30,
+            },
+            'responseBody': {
+              'kind': 'json',
+              'contentType': 'application/json',
+              'encoding': 'utf8',
+              'text': '{"ok":true}',
+              'capturedBytes': 11,
+              'observedBytes': 11,
+            },
+          },
+        ],
+      });
+      final entry = HttpCaptureEntry.fromInspectionRuntime(
+        id: 103,
+        observation: observation,
+        profileId: 7,
+      );
+      final har = buildHttpCaptureHar(entries: [entry]);
+      final log = har['log']! as Map<String, Object?>;
+      final extension = log['_flclash']! as Map<String, Object?>;
+      final exported =
+          (log['entries']! as List<Object?>).single! as Map<String, Object?>;
+      final request = exported['request']! as Map<String, Object?>;
+      final response = exported['response']! as Map<String, Object?>;
+      final timings = exported['timings']! as Map<String, Object?>;
+      final requestHeaders = request['headers']! as List<Object?>;
+      final requestCookies = request['cookies']! as List<Object?>;
+      final postData = request['postData']! as Map<String, Object?>;
+      final content = response['content']! as Map<String, Object?>;
+      final entryExtension = exported['_flclash']! as Map<String, Object?>;
+
+      expect(extension['includesHttp2Streams'], isTrue);
+      expect(extension['includesAuthorizedHeaderValues'], isTrue);
+      expect(extension['includesAuthorizedBodies'], isTrue);
+      expect(entry.httpTransactionCount, 1);
+      expect(entry.http2Streams.single.streamId, 1);
+      expect(entryExtension['http2StreamId'], 1);
+      expect(entryExtension['http2StreamState'], 'closed');
+      expect(
+        requestHeaders,
+        contains(
+          allOf(
+            isA<Map>(),
+            containsPair('name', 'cookie'),
+            containsPair('value', 'session=allowed'),
+          ),
+        ),
+      );
+      expect(
+        requestHeaders,
+        contains(
+          allOf(
+            isA<Map>(),
+            containsPair('name', 'x-private'),
+            containsPair('value', '<redacted>'),
+          ),
+        ),
+      );
+      expect(
+        requestCookies,
+        contains(
+          allOf(
+            isA<Map>(),
+            containsPair('name', 'session'),
+            containsPair('value', 'allowed'),
+          ),
+        ),
+      );
+      expect(postData['text'], 'name=flclash');
+      expect(content['text'], '{"ok":true}');
+      expect((response['cookies']! as List<Object?>), isNotEmpty);
+      expect(timings['send'], 6);
+      expect(timings['wait'], 12);
+      expect(timings['receive'], 14);
+      expect(timings['ssl'], 5);
+    },
+  );
 
   test('legacy v5 inspected runtime rows decode into one v6 transaction', () {
     final started = DateTime.utc(2026, 10, 7, 2);

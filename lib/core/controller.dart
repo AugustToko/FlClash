@@ -177,8 +177,13 @@ class CoreController {
   Future<bool> setHttpObservationEnabled(
     bool enabled, {
     String sessionId = '',
+    TlsInspectionCapturePolicy policy = TlsInspectionCapturePolicy.metadataOnly,
   }) async {
-    return _interface.setHttpObservationEnabled(enabled, sessionId: sessionId);
+    return _interface.setHttpObservationEnabled(
+      enabled,
+      sessionId: sessionId,
+      policy: policy,
+    );
   }
 
   Future<void> closeConnection(String id) async {

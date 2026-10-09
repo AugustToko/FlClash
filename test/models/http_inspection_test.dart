@@ -6,11 +6,7 @@ void main() {
     final policy = const TlsInspectionCapturePolicy(
       headerValues: true,
       sensitiveHeaderValues: true,
-      redactedHeaderNames: [
-        'X-Private',
-        'x-private',
-        'bad header',
-      ],
+      redactedHeaderNames: ['X-Private', 'x-private', 'bad header'],
       bodyMode: TlsInspectionCaptureBodyMode.all,
       maxBodyBytes: maximumInspectionBodyBytes + 1,
     ).normalized();
@@ -19,10 +15,7 @@ void main() {
     expect(policy.sensitiveHeaderValues, isTrue);
     expect(policy.redactedHeaderNames, ['x-private']);
     expect(policy.maxBodyBytes, maximumInspectionBodyBytes);
-    expect(
-      TlsInspectionCapturePolicy.fromJson(policy.toJson()),
-      policy,
-    );
+    expect(TlsInspectionCapturePolicy.fromJson(policy.toJson()), policy);
   });
 
   test('header observations enforce bounded redacted values', () {

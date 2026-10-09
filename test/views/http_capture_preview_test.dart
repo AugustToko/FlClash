@@ -139,6 +139,94 @@ HttpCaptureEntry _runtimeEntry() {
   );
 }
 
+HttpCaptureEntry _http2RuntimeEntry() {
+  final startedAt = DateTime(2026, 9, 25, 18, 29);
+  return HttpCaptureEntry.fromInspectionRuntime(
+    id: 7,
+    observation: TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:preview-session',
+      'connectionId': '22222222222222222222222222222222',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'h2.example.com',
+      'state': 'completed',
+      'startedAt': startedAt.toUtc().toIso8601String(),
+      'completedAt': startedAt
+          .add(const Duration(seconds: 2))
+          .toUtc()
+          .toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'h2',
+      'uploaded': 512,
+      'downloaded': 1024,
+      'upstreamDialCompletedAfterMilliseconds': 3,
+      'upstreamTlsCompletedAfterMilliseconds': 9,
+      'downstreamTlsCompletedAfterMilliseconds': 13,
+      'capturePolicy': const TlsInspectionCapturePolicy(
+        headerValues: true,
+        bodyMode: TlsInspectionCaptureBodyMode.text,
+        maxBodyBytes: 4096,
+      ).toJson(),
+      'http2Streams': [
+        {
+          'sequence': 1,
+          'streamId': 1,
+          'state': 'closed',
+          'requestObservedAfterMilliseconds': 16,
+          'requestCompletedAfterMilliseconds': 22,
+          'responseCompletedAfterMilliseconds': 61,
+          'request': {
+            'method': 'POST',
+            'target': '/profile',
+            'version': 'HTTP/2',
+            'host': 'h2.example.com',
+            'headerNames': ['content-type', 'authorization'],
+            'headers': [
+              {'name': 'content-type', 'value': 'application/json'},
+              {'name': 'authorization', 'redacted': true},
+            ],
+            'headersComplete': true,
+          },
+          'requestBody': {
+            'kind': 'json',
+            'contentType': 'application/json',
+            'encoding': 'utf8',
+            'text': '{"name":"FlClash"}',
+            'capturedBytes': 18,
+            'observedBytes': 18,
+          },
+          'response': {
+            'version': 'HTTP/2',
+            'statusCode': 200,
+            'headerNames': ['content-type'],
+            'headers': [
+              {'name': 'content-type', 'value': 'application/json'},
+            ],
+            'headersComplete': true,
+            'observedBytes': 24,
+            'observedAfterMilliseconds': 42,
+          },
+          'responseBody': {
+            'kind': 'json',
+            'contentType': 'application/json',
+            'encoding': 'utf8',
+            'text': '{"ok":true}',
+            'capturedBytes': 11,
+            'observedBytes': 11,
+          },
+        },
+      ],
+      'http2GoAway': {
+        'lastStreamId': 1,
+        'errorCode': 0,
+        'observedAfterMilliseconds': 64,
+      },
+    }),
+    profileId: 7,
+    observedAt: startedAt,
+  );
+}
+
 HttpCaptureEntry _truncatedRuntimeEntryWithoutTransactions() {
   final startedAt = DateTime(2026, 9, 25, 18, 27);
   return HttpCaptureEntry.fromInspectionRuntime(
@@ -193,6 +281,7 @@ List<HttpCaptureEntry> _previewEntries() => [
     ),
   ),
   _runtimeEntry(),
+  _http2RuntimeEntry(),
   _entry(
     id: 2,
     protocol: HttpCaptureProtocol.quic,
@@ -374,6 +463,47 @@ Future<ProviderContainer> _pumpCapture(
   return container;
 }
 
+Future<void> _scrollCapturePageUntilVisible(
+  WidgetTester tester,
+  Finder target, {
+  bool reverse = false,
+  int maxScrolls = 16,
+}) async {
+  final scrollView = find.byType(CustomScrollView);
+  expect(scrollView, findsOneWidget);
+  for (
+    var index = 0;
+    index < maxScrolls && target.evaluate().isEmpty;
+    index++
+  ) {
+    await tester.drag(scrollView, Offset(0, reverse ? 320 : -320));
+    await tester.pumpAndSettle();
+  }
+  expect(target, findsWidgets);
+  await tester.ensureVisible(target.first);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _scrollDetailsUntilVisible(
+  WidgetTester tester,
+  Finder target, {
+  bool reverse = false,
+  int maxScrolls = 16,
+}) async {
+  final detailsList = find.byType(ListView).last;
+  for (
+    var index = 0;
+    index < maxScrolls && target.evaluate().isEmpty;
+    index++
+  ) {
+    await tester.drag(detailsList, Offset(0, reverse ? 280 : -280));
+    await tester.pumpAndSettle();
+  }
+  expect(target, findsWidgets);
+  await tester.ensureVisible(target.first);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('HTTP capture declares its observation-only boundary', (
     tester,
@@ -382,10 +512,12 @@ void main() {
 
     expect(find.text('HTTP 捕获'), findsWidgets);
     expect(find.textContaining('选择性捕获会组合'), findsOneWidget);
-    expect(find.text('https://api.openai.com'), findsOneWidget);
+    expect(find.textContaining('默认仅保留元数据'), findsWidgets);
+    final firstEntry = find.text('https://api.openai.com');
+    await _scrollCapturePageUntilVisible(tester, firstEntry);
+    expect(firstEntry, findsOneWidget);
     expect(find.textContaining('Core 已观察到 TLS ClientHello'), findsOneWidget);
     expect(find.textContaining('UNKNOWN'), findsNothing);
-    expect(find.textContaining('中继载荷只经过内存'), findsOneWidget);
   });
 
   testWidgets('a pending Core disable remains visible', (tester) async {
@@ -397,7 +529,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Core 观察器仍在停止中'), findsOneWidget);
-    expect(find.byIcon(Icons.privacy_tip_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.privacy_tip_outlined), findsWidgets);
   });
 
   testWidgets('capture toggle stops and restarts the current session', (
@@ -423,36 +555,44 @@ void main() {
     await _pumpCapture(tester, size: const Size(430, 932));
 
     expect(find.text('telemetry.example.net'), findsNothing);
-    await tester.tap(find.text('TLS / HTTPS').last);
+    final tlsFilter = find.widgetWithText(FilterChip, 'TLS / HTTPS');
+    await _scrollCapturePageUntilVisible(tester, tlsFilter);
+    await tester.tap(tlsFilter);
     await tester.pumpAndSettle();
 
-    expect(find.text('https://api.openai.com'), findsOneWidget);
+    final tlsEntry = find.text('https://api.openai.com');
+    await _scrollCapturePageUntilVisible(tester, tlsEntry);
+    expect(tlsEntry, findsOneWidget);
     expect(find.text('https://www.youtube.com'), findsNothing);
     expect(find.text('http://router.home'), findsNothing);
 
-    await tester.tap(find.text('当前配置'));
+    final profileFilter = find.widgetWithText(FilterChip, '当前配置');
+    await _scrollCapturePageUntilVisible(tester, profileFilter, reverse: true);
+    await tester.tap(profileFilter);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('全部').first);
+    final unknownProtocol = find.widgetWithText(FilterChip, '未知协议');
+    await _scrollCapturePageUntilVisible(
+      tester,
+      unknownProtocol,
+      reverse: true,
+    );
+    await tester.tap(unknownProtocol);
     await tester.pumpAndSettle();
-    final scrollable = find.byType(Scrollable).last;
-    for (var index = 0; index < 5; index++) {
-      await tester.drag(scrollable, const Offset(0, -360));
-      await tester.pumpAndSettle();
-    }
 
-    expect(find.text('tcp://telemetry.example.net:5228'), findsOneWidget);
+    final telemetry = find.text('tcp://telemetry.example.net:5228');
+    await _scrollCapturePageUntilVisible(tester, telemetry);
+    expect(telemetry, findsOneWidget);
   });
 
   testWidgets('details keep HAR limitations explicit', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
 
     final target = find.text('https://api.openai.com');
-    await tester.ensureVisible(target);
-    await tester.pumpAndSettle();
+    await _scrollCapturePageUntilVisible(tester, target);
     await tester.tap(target);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('HAR 导出仍仅包含元数据'), findsOneWidget);
+    expect(find.textContaining('HAR 导出遵循本次捕获策略'), findsOneWidget);
     expect(find.text('api.openai.com'), findsWidgets);
     expect(find.text('h2, http/1.1'), findsOneWidget);
     expect(
@@ -471,26 +611,25 @@ void main() {
   ) async {
     await _pumpCapture(tester, size: const Size(430, 932));
 
-    final sourceFilter = find.text('本地检查中继');
-    await tester.ensureVisible(sourceFilter);
-    await tester.pumpAndSettle();
+    final sourceFilter = find.widgetWithText(FilterChip, '本地检查中继');
+    await _scrollCapturePageUntilVisible(tester, sourceFilter);
     await tester.tap(sourceFilter);
     await tester.pumpAndSettle();
-    expect(find.text('https://secure.example.com'), findsOneWidget);
+    final target = find.text('https://secure.example.com');
+    await _scrollCapturePageUntilVisible(tester, target);
+    expect(target, findsOneWidget);
     expect(find.text('https://api.openai.com'), findsNothing);
     expect(find.textContaining('GET'), findsWidgets);
     expect(find.textContaining('200'), findsWidgets);
     expect(find.textContaining('2 个事务'), findsOneWidget);
     expect(find.textContaining('事务时间线已截断'), findsOneWidget);
 
-    final target = find.text('https://secure.example.com');
-    await tester.ensureVisible(target);
     await tester.tap(target);
     await tester.pumpAndSettle();
 
     expect(find.textContaining('显式授权的回环 HTTPS 中继'), findsOneWidget);
     expect(find.text('本地检查中继'), findsWidgets);
-    expect(find.text('HTTP/1 事务时间线', skipOffstage: false), findsOneWidget);
+    expect(find.text('HTTP/1 事务', skipOffstage: false), findsOneWidget);
     expect(find.text('2 个事务', skipOffstage: false), findsWidgets);
     expect(find.text('事务 #1', skipOffstage: false), findsOneWidget);
     expect(find.text('事务 #2', skipOffstage: false), findsOneWidget);
@@ -506,19 +645,11 @@ void main() {
     expect(find.text('204', skipOffstage: false), findsWidgets);
     expect(find.text('事务时间线已截断', skipOffstage: false), findsWidgets);
 
-    final downstreamTls = find.text('TLS 1.3', skipOffstage: false);
-    final detailsList = find.byType(ListView).last;
-    for (
-      var index = 0;
-      index < 8 && downstreamTls.evaluate().isEmpty;
-      index++
-    ) {
-      await tester.drag(detailsList, const Offset(0, -280));
-      await tester.pumpAndSettle();
-    }
-    expect(downstreamTls, findsOneWidget);
+    final alpn = find.text('http/1.1');
+    await _scrollDetailsUntilVisible(tester, alpn);
+    expect(alpn, findsOneWidget);
+    expect(find.text('TLS 1.3', skipOffstage: false), findsOneWidget);
     expect(find.text('TLS 1.2', skipOffstage: false), findsOneWidget);
-    expect(find.text('http/1.1', skipOffstage: false), findsWidgets);
   });
 
   testWidgets('truncated empty runtime timeline stays explicit in details', (
@@ -554,21 +685,95 @@ void main() {
     );
     await tester.pumpAndSettle();
     final target = find.text('https://broken.example.com');
-    await tester.ensureVisible(target);
+    await _scrollCapturePageUntilVisible(tester, target);
     await tester.tap(target);
     await tester.pumpAndSettle();
-    expect(find.text('HTTP/1 事务时间线', skipOffstage: false), findsOneWidget);
+    expect(find.text('HTTP/1 事务', skipOffstage: false), findsOneWidget);
     expect(find.text('0 个事务', skipOffstage: false), findsOneWidget);
     expect(find.text('事务时间线已截断', skipOffstage: false), findsWidgets);
   });
 
+  testWidgets(
+    'HTTP/2 stream details expose policy, headers, body, and timing',
+    (tester) async {
+      await _pumpCapture(tester, size: const Size(430, 932));
+      final sourceFilter = find.widgetWithText(FilterChip, '本地检查中继');
+      await _scrollCapturePageUntilVisible(tester, sourceFilter);
+      await tester.tap(sourceFilter);
+      await tester.pumpAndSettle();
+      final target = find.text('https://h2.example.com');
+      await _scrollCapturePageUntilVisible(tester, target);
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+
+      expect(find.text('HTTP/2 Stream', skipOffstage: false), findsOneWidget);
+      expect(find.text('Stream 1', skipOffstage: false), findsWidgets);
+      expect(
+        find.textContaining('POST /profile', skipOffstage: false),
+        findsWidgets,
+      );
+      expect(find.text('请求 Header 值', skipOffstage: false), findsOneWidget);
+      expect(find.text('请求正文', skipOffstage: false), findsOneWidget);
+      expect(
+        find.textContaining('发送 6 ms', skipOffstage: false),
+        findsOneWidget,
+      );
+
+      final requestHeaders = find.text('请求 Header 值');
+      await _scrollDetailsUntilVisible(tester, requestHeaders);
+      await tester.tap(requestHeaders);
+      await tester.pumpAndSettle();
+      expect(find.text('authorization', skipOffstage: false), findsOneWidget);
+      expect(find.text('已脱敏', skipOffstage: false), findsOneWidget);
+
+      final requestBody = find.text('请求正文');
+      await _scrollDetailsUntilVisible(tester, requestBody);
+      await tester.tap(requestBody);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('"FlClash"', skipOffstage: false),
+        findsOneWidget,
+      );
+
+      final goAway = find.text('HTTP/2 GOAWAY');
+      await _scrollDetailsUntilVisible(tester, goAway);
+      expect(goAway, findsOneWidget);
+    },
+  );
+
+  testWidgets('capture privacy policy is editable only while stopped', (
+    tester,
+  ) async {
+    final container = await _pumpCapture(tester, size: const Size(430, 932));
+    expect(find.text('请先停止捕获，再修改隐私策略。'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('http-capture-toggle')));
+    await tester.pumpAndSettle();
+    final headerSwitch = find.widgetWithText(SwitchListTile, '捕获 Header 值');
+    await _scrollCapturePageUntilVisible(tester, headerSwitch, reverse: true);
+    await tester.tap(headerSwitch);
+    await tester.pumpAndSettle();
+    expect(find.text('启用敏感内容捕获？'), findsOneWidget);
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(httpCaptureProvider).capturePolicy.headerValues,
+      isTrue,
+    );
+    expect(find.text('已启用内容捕获'), findsOneWidget);
+  });
+
   testWidgets('HTTP capture inspected-runtime list preview', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
-    final sourceFilter = find.text('本地检查中继');
-    await tester.ensureVisible(sourceFilter);
-    await tester.pumpAndSettle();
+    final sourceFilter = find.widgetWithText(FilterChip, '本地检查中继');
+    await _scrollCapturePageUntilVisible(tester, sourceFilter);
     await tester.tap(sourceFilter);
     await tester.pumpAndSettle();
+    await _scrollCapturePageUntilVisible(
+      tester,
+      find.text('https://h2.example.com'),
+    );
 
     await expectLater(
       find.byType(HttpCaptureView),
@@ -578,13 +783,12 @@ void main() {
 
   testWidgets('HTTP capture inspected-runtime detail preview', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
-    final sourceFilter = find.text('本地检查中继');
-    await tester.ensureVisible(sourceFilter);
-    await tester.pumpAndSettle();
+    final sourceFilter = find.widgetWithText(FilterChip, '本地检查中继');
+    await _scrollCapturePageUntilVisible(tester, sourceFilter);
     await tester.tap(sourceFilter);
     await tester.pumpAndSettle();
     final target = find.text('https://secure.example.com');
-    await tester.ensureVisible(target);
+    await _scrollCapturePageUntilVisible(tester, target);
     await tester.tap(target);
     await tester.pumpAndSettle();
 
@@ -652,8 +856,7 @@ void main() {
   testWidgets('HTTP capture detail preview', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
     final target = find.text('https://api.openai.com');
-    await tester.ensureVisible(target);
-    await tester.pumpAndSettle();
+    await _scrollCapturePageUntilVisible(tester, target);
     await tester.tap(target);
     await tester.pumpAndSettle();
 
@@ -665,14 +868,12 @@ void main() {
 
   testWidgets('HTTP capture HTTP/1 detail preview', (tester) async {
     await _pumpCapture(tester, size: const Size(430, 932));
-    await tester.tap(find.widgetWithText(FilterChip, 'HTTP'));
+    final httpFilter = find.widgetWithText(FilterChip, 'HTTP');
+    await _scrollCapturePageUntilVisible(tester, httpFilter);
+    await tester.tap(httpFilter);
     await tester.pumpAndSettle();
     final target = find.text('http://router.home');
-    for (var index = 0; index < 6 && target.evaluate().isEmpty; index++) {
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -260));
-      await tester.pumpAndSettle();
-    }
-    expect(target, findsOneWidget);
+    await _scrollCapturePageUntilVisible(tester, target);
     await tester.tap(target);
     await tester.pumpAndSettle();
 

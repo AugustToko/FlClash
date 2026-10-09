@@ -68,7 +68,11 @@ mixin CoreInterface {
 
   FutureOr<List<TrackerInfo>> getConnections();
 
-  Future<bool> setHttpObservationEnabled(bool enabled, {String sessionId = ''});
+  Future<bool> setHttpObservationEnabled(
+    bool enabled, {
+    String sessionId = '',
+    TlsInspectionCapturePolicy policy = TlsInspectionCapturePolicy.metadataOnly,
+  });
 
   FutureOr<bool> closeConnection(String id);
 
@@ -278,10 +282,15 @@ abstract class CoreHandlerInterface with CoreInterface {
   Future<bool> setHttpObservationEnabled(
     bool enabled, {
     String sessionId = '',
+    TlsInspectionCapturePolicy policy = TlsInspectionCapturePolicy.metadataOnly,
   }) async {
     return await _invokeMethod<bool>(
           method: CoreMethod.setHttpObservationEnabled,
-          arguments: {'enabled': enabled, 'sessionId': sessionId},
+          arguments: {
+            'enabled': enabled,
+            'sessionId': sessionId,
+            'policy': policy.normalized().toJson(),
+          },
         ) ??
         false;
   }

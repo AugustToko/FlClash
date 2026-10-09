@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'common.dart';
+import 'http_inspection.dart';
 import 'tls_inspection_runtime.dart';
 
 enum HttpCaptureProtocol {
@@ -379,14 +380,18 @@ class HttpCaptureEntry {
   List<TlsInspectionRuntimeHttpTransaction> get httpTransactions =>
       inspectionRuntime?.httpTransactions ?? const [];
 
+  List<TlsInspectionRuntimeHttp2Stream> get http2Streams =>
+      inspectionRuntime?.http2Streams ?? const [];
+
   int get httpTransactionCount => isInspectedRuntime
-      ? httpTransactions.length
+      ? httpTransactions.length + http2Streams.length
       : httpObservation == null
       ? 0
       : 1;
 
   bool get httpTimelineTruncated =>
-      inspectionRuntime?.httpTransactionsTruncated ?? false;
+      (inspectionRuntime?.httpTransactionsTruncated ?? false) ||
+      (inspectionRuntime?.http2StreamsTruncated ?? false);
 
   TlsClientHelloObservation? get tlsObservation => observation?.tls;
 
@@ -519,6 +524,21 @@ class HttpCaptureEntry {
         transaction.response?.informationalStatusCodes.join(' ') ?? '',
         transaction.response?.headerNames.join(' ') ?? '',
       ],
+      for (final stream in http2Streams) ...[
+        stream.sequence,
+        stream.streamId,
+        stream.state,
+        stream.requestObservedAfterMilliseconds,
+        stream.request.method,
+        stream.request.target,
+        stream.request.version,
+        stream.request.host,
+        stream.request.headerNames.join(' '),
+        stream.response?.version ?? '',
+        stream.response?.statusCode ?? '',
+        stream.response?.informationalStatusCodes.join(' ') ?? '',
+        stream.response?.headerNames.join(' ') ?? '',
+      ],
     ].join('\n').toLowerCase();
   }
 
@@ -625,16 +645,67 @@ Map<String, Object?> buildHttpCaptureHar({
   final includesInspectedRuntime = ordered.any(
     (entry) => entry.isInspectedRuntime,
   );
+  final capturesHeaders = ordered.any(
+    (entry) => entry.inspectionRuntime?.capturePolicy.headerValues == true,
+  );
+  final capturesBodies = ordered.any(
+    (entry) => entry.inspectionRuntime?.capturePolicy.capturesBodies == true,
+  );
+  final includesHttp2 = ordered.any((entry) => entry.http2Streams.isNotEmpty);
   final harEntries = <Map<String, Object?>>[];
   for (final entry in ordered) {
-    final transactions = entry.httpTransactions;
-    if (entry.isInspectedRuntime && transactions.isNotEmpty) {
-      for (final transaction in transactions) {
-        harEntries.add(_httpCaptureHarEntry(entry, transaction: transaction));
+    if (entry.isInspectedRuntime && entry.httpTransactions.isNotEmpty) {
+      for (final transaction in entry.httpTransactions) {
+        harEntries.add(
+          _httpCaptureHarEntry(
+            entry,
+            sequence: transaction.sequence,
+            requestObservedAfterMilliseconds:
+                transaction.requestObservedAfterMilliseconds,
+            requestCompletedAfterMilliseconds:
+                transaction.requestCompletedAfterMilliseconds,
+            responseCompletedAfterMilliseconds:
+                transaction.responseCompletedAfterMilliseconds,
+            request: transaction.request,
+            requestBody: transaction.requestBody,
+            response: transaction.response,
+            responseBody: transaction.responseBody,
+          ),
+        );
       }
-    } else {
-      harEntries.add(_httpCaptureHarEntry(entry));
+      continue;
     }
+    if (entry.isInspectedRuntime && entry.http2Streams.isNotEmpty) {
+      for (final stream in entry.http2Streams) {
+        harEntries.add(
+          _httpCaptureHarEntry(
+            entry,
+            sequence: stream.sequence,
+            streamId: stream.streamId,
+            streamState: stream.state,
+            resetCode: stream.resetCode,
+            requestObservedAfterMilliseconds:
+                stream.requestObservedAfterMilliseconds,
+            requestCompletedAfterMilliseconds:
+                stream.requestCompletedAfterMilliseconds,
+            responseCompletedAfterMilliseconds:
+                stream.responseCompletedAfterMilliseconds,
+            request: stream.request,
+            requestBody: stream.requestBody,
+            response: stream.response,
+            responseBody: stream.responseBody,
+          ),
+        );
+      }
+      continue;
+    }
+    harEntries.add(
+      _httpCaptureHarEntry(
+        entry,
+        request: entry.httpObservation,
+        response: entry.httpResponseObservation,
+      ),
+    );
   }
   return {
     'log': {
@@ -646,22 +717,24 @@ Map<String, Object?> buildHttpCaptureHar({
         'format': 'flclash-http-observation',
         'version': 6,
         'observationOnly': !includesInspectedRuntime,
-        'metadataOnly': true,
+        'metadataOnly': !capturesHeaders && !capturesBodies,
         'includesInspectedRuntime': includesInspectedRuntime,
+        'includesHttp2Streams': includesHttp2,
+        'includesAuthorizedHeaderValues': capturesHeaders,
+        'includesAuthorizedBodies': capturesBodies,
         'exportedAt': timestamp.toIso8601String(),
-        'limitations': const [
+        'limitations': [
           'passive-sources-first-http1-transaction-only',
-          'inspected-runtime-at-most-32-http1-transactions',
+          'inspected-runtime-at-most-32-exchanges-per-connection',
           'request-target-query-and-fragment-removed',
-          'request-header-values-not-captured',
-          'request-body-not-captured',
           'response-reason-phrase-not-captured',
-          'response-header-values-not-captured',
-          'response-body-not-captured',
-          'framing-header-values-not-retained',
-          'browser-timings-not-captured',
+          'dns-timing-not-captured',
           'tls-not-decrypted-for-passive-sources',
-          'inspected-runtime-payload-not-retained',
+          if (capturesHeaders) 'sensitive-header-values-may-be-redacted',
+          if (capturesBodies) 'body-content-is-size-bounded',
+          if (!capturesHeaders)
+            'request-and-response-header-values-not-captured',
+          if (!capturesBodies) 'request-and-response-bodies-not-captured',
         ],
       },
     },
@@ -684,59 +757,91 @@ String encodeHttpCaptureHar({
 
 Map<String, Object?> _httpCaptureHarEntry(
   HttpCaptureEntry entry, {
-  TlsInspectionRuntimeHttpTransaction? transaction,
+  HttpProtocolObservation? request,
+  TlsInspectionRuntimeHttpBody? requestBody,
+  HttpResponseProtocolObservation? response,
+  TlsInspectionRuntimeHttpBody? responseBody,
+  int sequence = 0,
+  int streamId = 0,
+  String streamState = '',
+  int resetCode = 0,
+  int requestObservedAfterMilliseconds = 0,
+  int requestCompletedAfterMilliseconds = 0,
+  int responseCompletedAfterMilliseconds = 0,
 }) {
-  final http = transaction?.request ?? entry.httpObservation;
-  final responseObservation =
-      transaction?.response ?? entry.httpResponseObservation;
-  final hasObservedResponse =
-      responseObservation != null && responseObservation.statusCode != 0;
-  final startedAt = transaction == null
+  final hasObservedResponse = response != null && response.statusCode != 0;
+  final startedAt = sequence == 0
       ? entry.startedAt
       : entry.startedAt.add(
-          Duration(milliseconds: transaction.requestObservedAfterMilliseconds),
+          Duration(milliseconds: requestObservedAfterMilliseconds),
         );
+  final responseObservedAfter = response?.observedAfterMilliseconds ?? 0;
+  final send = requestCompletedAfterMilliseconds > 0
+      ? requestCompletedAfterMilliseconds - requestObservedAfterMilliseconds
+      : -1;
+  final wait =
+      responseObservedAfter > 0 && requestCompletedAfterMilliseconds > 0
+      ? responseObservedAfter - requestCompletedAfterMilliseconds
+      : responseObservedAfter > 0
+      ? responseObservedAfter - requestObservedAfterMilliseconds
+      : -1;
+  final receive =
+      responseCompletedAfterMilliseconds > 0 && responseObservedAfter > 0
+      ? responseCompletedAfterMilliseconds - responseObservedAfter
+      : -1;
+  final total = responseCompletedAfterMilliseconds > 0
+      ? responseCompletedAfterMilliseconds - requestObservedAfterMilliseconds
+      : responseObservedAfter > 0
+      ? responseObservedAfter - requestObservedAfterMilliseconds
+      : 0;
+  final runtime = entry.inspectionRuntime;
+  final connect = runtime?.upstreamDialCompletedAfterMilliseconds ?? 0;
+  final tlsCompleted = runtime?.upstreamTlsCompletedAfterMilliseconds ?? 0;
+  final ssl = connect > 0 && tlsCompleted >= connect
+      ? tlsCompleted - connect
+      : -1;
   return {
     'startedDateTime': startedAt.toUtc().toIso8601String(),
-    'time': 0,
+    'time': total < 0 ? 0 : total,
     'request': {
-      'method': http?.method.isNotEmpty == true ? http!.method : 'UNKNOWN',
-      'url': entry.requestUrlFor(http),
-      'httpVersion': http?.version ?? '',
-      'cookies': const <Object?>[],
-      // Header values are deliberately not retained. Names are kept only in
-      // the FlClash extension below so an empty value is never fabricated.
-      'headers': const <Object?>[],
+      'method': request?.method.isNotEmpty == true
+          ? request!.method
+          : 'UNKNOWN',
+      'url': entry.requestUrlFor(request),
+      'httpVersion': request?.version ?? '',
+      'cookies': _harCookies(request?.headers, request: true),
+      'headers': _harHeaders(request?.headers),
       'queryString': const <Object?>[],
       'headersSize': -1,
-      'bodySize': -1,
+      'bodySize': requestBody?.observedBytes ?? -1,
+      if (requestBody != null) 'postData': _harPostData(requestBody),
     },
     'response': {
-      'status': hasObservedResponse ? responseObservation.statusCode : 0,
+      'status': hasObservedResponse ? response.statusCode : 0,
       'statusText': hasObservedResponse ? '' : 'Not captured',
-      'httpVersion': hasObservedResponse ? responseObservation.version : '',
-      'cookies': const <Object?>[],
-      'headers': const <Object?>[],
-      'content': {'size': -1, 'mimeType': ''},
+      'httpVersion': hasObservedResponse ? response.version : '',
+      'cookies': _harCookies(response?.headers, request: false),
+      'headers': _harHeaders(response?.headers),
+      'content': _harContent(responseBody),
       'redirectURL': '',
       'headersSize': -1,
-      'bodySize': -1,
+      'bodySize': responseBody?.observedBytes ?? -1,
     },
     'cache': const <String, Object?>{},
-    'timings': const {
+    'timings': {
       'blocked': -1,
       'dns': -1,
-      'connect': -1,
-      'ssl': -1,
-      'send': -1,
-      'wait': -1,
-      'receive': -1,
+      'connect': connect > 0 ? connect : -1,
+      'ssl': ssl,
+      'send': send < 0 ? -1 : send,
+      'wait': wait < 0 ? -1 : wait,
+      'receive': receive < 0 ? -1 : receive,
     },
     'serverIPAddress': entry.destinationIP,
     'connection': entry.connectionId,
     '_flclash': {
       'observationOnly': !entry.isInspectedRuntime,
-      'metadataOnly': true,
+      'metadataOnly': runtime?.capturePolicy.isMetadataOnly ?? true,
       'sessionId': entry.sessionId,
       'protocol': entry.protocol.name,
       'source': entry.source.wireName,
@@ -751,42 +856,118 @@ Map<String, Object?> _httpCaptureHarEntry(
       'downloadAtObservation': entry.download,
       if (entry.observation != null)
         'coreObservation': entry.observation!.toJson(),
-      if (entry.inspectionRuntime != null)
-        'inspectionRuntime': _httpCaptureRuntimeEnvelope(
-          entry.inspectionRuntime!,
-        ),
-      if (transaction != null) ...{
-        'transactionSequence': transaction.sequence,
+      if (runtime != null)
+        'inspectionRuntime': _httpCaptureRuntimeEnvelope(runtime),
+      if (sequence != 0) ...{
+        'transactionSequence': sequence,
         'transactionCount': entry.httpTransactionCount,
-        'requestObservedAfterMilliseconds':
-            transaction.requestObservedAfterMilliseconds,
+        'requestObservedAfterMilliseconds': requestObservedAfterMilliseconds,
+        if (requestCompletedAfterMilliseconds != 0)
+          'requestCompletedAfterMilliseconds':
+              requestCompletedAfterMilliseconds,
+        if (responseCompletedAfterMilliseconds != 0)
+          'responseCompletedAfterMilliseconds':
+              responseCompletedAfterMilliseconds,
         'timelineTruncated': entry.httpTimelineTruncated,
         'parentConnectionStartedDateTime': entry.startedAt
             .toUtc()
             .toIso8601String(),
       },
-      if (http != null) ...{
-        'headerNames': http.headerNames,
-        'headersComplete': http.headersComplete,
-        'headerNamesTruncated': http.headerNamesTruncated,
+      if (streamId != 0) ...{
+        'http2StreamId': streamId,
+        'http2StreamState': streamState,
+        if (resetCode != 0) 'http2ResetCode': resetCode,
       },
-      if (responseObservation != null) ...{
+      if (request != null) ...{
+        'headerNames': request.headerNames,
+        'headersComplete': request.headersComplete,
+        'headerNamesTruncated': request.headerNamesTruncated,
+        'headerValuesTruncated': request.headerValuesTruncated,
+      },
+      if (response != null) ...{
         'responseObserved': true,
         'responseReasonPhraseCaptured': false,
-        'responseHeaderNames': responseObservation.headerNames,
-        'responseHeadersComplete': responseObservation.headersComplete,
-        'responseObservedBytes': responseObservation.observedBytes,
-        'responseObservedAfterMilliseconds':
-            responseObservation.observedAfterMilliseconds,
-        'responseTruncated': responseObservation.truncated,
-        'responseHeaderNamesTruncated':
-            responseObservation.headerNamesTruncated,
-        'informationalStatusCodes':
-            responseObservation.informationalStatusCodes,
+        'responseHeaderNames': response.headerNames,
+        'responseHeadersComplete': response.headersComplete,
+        'responseObservedBytes': response.observedBytes,
+        'responseObservedAfterMilliseconds': response.observedAfterMilliseconds,
+        'responseTruncated': response.truncated,
+        'responseHeaderNamesTruncated': response.headerNamesTruncated,
+        'responseHeaderValuesTruncated': response.headerValuesTruncated,
+        'informationalStatusCodes': response.informationalStatusCodes,
         'informationalStatusCodesTruncated':
-            responseObservation.informationalStatusCodesTruncated,
+            response.informationalStatusCodesTruncated,
       },
     },
+  };
+}
+
+List<Map<String, Object?>> _harHeaders(List<HttpHeaderObservation>? headers) {
+  if (headers == null || headers.isEmpty) {
+    return const [];
+  }
+  return [
+    for (final header in headers)
+      {
+        'name': header.name,
+        'value': header.redacted ? '<redacted>' : header.value,
+        if (header.truncated) '_truncated': true,
+      },
+  ];
+}
+
+List<Map<String, Object?>> _harCookies(
+  List<HttpHeaderObservation>? headers, {
+  required bool request,
+}) {
+  if (headers == null || headers.isEmpty) {
+    return const [];
+  }
+  final names = request ? const {'cookie'} : const {'set-cookie'};
+  final result = <Map<String, Object?>>[];
+  for (final header in headers.where((value) => names.contains(value.name))) {
+    if (header.redacted || header.value.isEmpty) {
+      continue;
+    }
+    final parts = request ? header.value.split(';') : <String>[header.value];
+    for (final part in parts) {
+      final separator = part.indexOf('=');
+      if (separator <= 0) {
+        continue;
+      }
+      result.add({
+        'name': part.substring(0, separator).trim(),
+        'value': part.substring(separator + 1).trim(),
+      });
+    }
+  }
+  return result;
+}
+
+Map<String, Object?> _harPostData(TlsInspectionRuntimeHttpBody body) => {
+  'mimeType': body.contentType,
+  if (body.text.isNotEmpty) 'text': body.text,
+  if (body.base64.isNotEmpty) 'text': body.base64,
+  if (body.base64.isNotEmpty) 'encoding': 'base64',
+  '_capturedBytes': body.capturedBytes,
+  '_observedBytes': body.observedBytes,
+  if (body.truncated) '_truncated': true,
+  if (body.omittedReason.isNotEmpty) '_omittedReason': body.omittedReason,
+};
+
+Map<String, Object?> _harContent(TlsInspectionRuntimeHttpBody? body) {
+  if (body == null) {
+    return {'size': -1, 'mimeType': ''};
+  }
+  return {
+    'size': body.observedBytes,
+    'mimeType': body.contentType,
+    if (body.text.isNotEmpty) 'text': body.text,
+    if (body.base64.isNotEmpty) 'text': body.base64,
+    if (body.base64.isNotEmpty) 'encoding': 'base64',
+    '_capturedBytes': body.capturedBytes,
+    if (body.truncated) '_truncated': true,
+    if (body.omittedReason.isNotEmpty) '_omittedReason': body.omittedReason,
   };
 }
 
@@ -796,5 +977,7 @@ Map<String, Object?> _httpCaptureRuntimeEnvelope(
   final result = Map<String, Object?>.from(observation.toJson());
   result.remove('httpTransactions');
   result.remove('httpTransactionsTruncated');
+  result.remove('http2Streams');
+  result.remove('http2StreamsTruncated');
   return result;
 }
