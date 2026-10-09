@@ -335,8 +335,7 @@ func classifyHTTPBodyKind(
 	contentEncoding string,
 	data []byte,
 ) string {
-	if encoding := strings.ToLower(strings.TrimSpace(contentEncoding));
-		encoding != "" && encoding != "identity" {
+	if encoding := strings.ToLower(strings.TrimSpace(contentEncoding)); encoding != "" && encoding != "identity" {
 		return "binary"
 	}
 	mediaType, _, err := mime.ParseMediaType(contentType)

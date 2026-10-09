@@ -293,8 +293,8 @@ func (t *http2MetadataTimeline) processFrameLocked(
 			return false, true
 		}
 		t.goAway = &HTTP2GoAwayObservation{
-			LastStreamID: binary.BigEndian.Uint32(payload[:4]) & 0x7fffffff,
-			ErrorCode: binary.BigEndian.Uint32(payload[4:8]),
+			LastStreamID:              binary.BigEndian.Uint32(payload[:4]) & 0x7fffffff,
+			ErrorCode:                 binary.BigEndian.Uint32(payload[4:8]),
 			ObservedAfterMilliseconds: elapsedMilliseconds(t.startedAt),
 		}
 		return true, false
