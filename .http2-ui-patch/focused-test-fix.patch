@@ -1,0 +1,70 @@
+--- a/test/core/tls_runtime_test.dart
++++ b/test/core/tls_runtime_test.dart
+@@ -725,7 +725,7 @@
+     'completedAt': '2020-01-01T00:00:00Z',
+     'downstreamTlsVersion': 'TLS 1.1',
+     'upstreamTlsVersion': 'TLS 1.4',
+-    'alpn': 'h2',
++    'alpn': 'h3',
+     'uploaded': -1,
+     'downloaded': '200',
+     'failureKind': 'raw error text',
+--- a/test/models/http_capture_test.dart
++++ b/test/models/http_capture_test.dart
+@@ -184,15 +184,15 @@
+     );
+     expect(
+       rootExtension['limitations'],
+-      contains('inspected-runtime-at-most-32-http1-transactions'),
++      contains('inspected-runtime-at-most-32-exchanges-per-connection'),
+     );
+     expect(
+       rootExtension['limitations'],
+-      contains('request-header-values-not-captured'),
++      contains('request-and-response-header-values-not-captured'),
+     );
+     expect(
+       rootExtension['limitations'],
+-      contains('response-body-not-captured'),
++      contains('request-and-response-bodies-not-captured'),
+     );
+ 
+     final encoded = encodeHttpCaptureHar(entries: [entry]);
+@@ -684,13 +684,34 @@
+     expect(entryExtension['http2StreamState'], 'closed');
+     expect(
+       requestHeaders,
+-      contains({'name': 'cookie', 'value': 'session=allowed'}),
++      contains(
++        allOf(
++          isA<Map>(),
++          containsPair('name', 'cookie'),
++          containsPair('value', 'session=allowed'),
++        ),
++      ),
+     );
+     expect(
+       requestHeaders,
+-      contains({'name': 'x-private', 'value': '<redacted>'}),
++      contains(
++        allOf(
++          isA<Map>(),
++          containsPair('name', 'x-private'),
++          containsPair('value', '<redacted>'),
++        ),
++      ),
++    );
++    expect(
++      requestCookies,
++      contains(
++        allOf(
++          isA<Map>(),
++          containsPair('name', 'session'),
++          containsPair('value', 'allowed'),
++        ),
++      ),
+     );
+-    expect(requestCookies, contains({'name': 'session', 'value': 'allowed'}));
+     expect(postData['text'], 'name=flclash');
+     expect(content['text'], '{"ok":true}');
+     expect((response['cookies']! as List<Object?>), isNotEmpty);
