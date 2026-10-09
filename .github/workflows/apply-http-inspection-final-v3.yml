@@ -46,7 +46,7 @@ jobs:
             | gzip --decompress \
             > /tmp/http-inspection-analyzer-fixes.patch
           test "$(sha256sum /tmp/http-inspection-analyzer-fixes.patch | cut -d' ' -f1)" = \
-            "8b94b15e95e9b95428ae3e1a2d93f541fd47f45be55d16d1424fb786de4dee6b"
+            "b4ed5c2c1e21937be3be0fc33bf343b843859462e1ee6665f26c2e75c0c62721"
           git apply --check /tmp/http-inspection-ui.patch
           git apply /tmp/http-inspection-ui.patch
           git apply --check /tmp/http-inspection-widgets.patch
