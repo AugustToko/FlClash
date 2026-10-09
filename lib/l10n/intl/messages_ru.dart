@@ -55,46 +55,54 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m13(count) =>
       "${Intl.plural(count, one: '${count} час', few: '${count} часа', many: '${count} часов', other: '${count} часа')}";
 
-  static String m14(target) => "${target} — недопустимая политика";
+  static String m14(code) => "Ошибка ${code}";
 
-  static String m15(proxyName) => "${proxyName} — недопустимый прокси";
+  static String m15(count) => "Значений заголовков: ${count}";
 
-  static String m16(providerName) =>
+  static String m16(id) => "Поток ${id}";
+
+  static String m17(count) => "Транзакций: ${count}";
+
+  static String m18(target) => "${target} — недопустимая политика";
+
+  static String m19(proxyName) => "${proxyName} — недопустимый прокси";
+
+  static String m20(providerName) =>
       "${providerName} — недопустимый провайдер прокси";
 
-  static String m17(subRule) => "${subRule} — недопустимый SUB_RULE";
+  static String m21(subRule) => "${subRule} — недопустимый SUB_RULE";
 
-  static String m18(appName) =>
+  static String m22(appName) =>
       "1. Откройте Системные настройки > Конфиденциальность и безопасность\n2. Выберите Службы геолокации\n3. Найдите и отметьте ${appName} в списке\n\nПосле настройки вернитесь в приложение и продолжайте работу. Спасибо за сотрудничество.";
 
-  static String m19(label, max) => "«${label}» — не более ${max} символов";
+  static String m23(label, max) => "«${label}» — не более ${max} символов";
 
-  static String m20(count) =>
+  static String m24(count) =>
       "${Intl.plural(count, one: '${count} минуту назад', few: '${count} минуты назад', many: '${count} минут назад', other: '${count} минуты назад')}";
 
-  static String m21(count) =>
+  static String m25(count) =>
       "${Intl.plural(count, one: '${count} месяц назад', few: '${count} месяца назад', many: '${count} месяцев назад', other: '${count} месяца назад')}";
 
-  static String m22(label) => "Пока нет: ${label}";
+  static String m26(label) => "Пока нет: ${label}";
 
-  static String m23(label) => "Значение «${label}» должно быть числом";
+  static String m27(label) => "Значение «${label}» должно быть числом";
 
-  static String m24(label) =>
+  static String m28(label) =>
       "Значение «${label}» должно быть от 1024 до 49151";
 
-  static String m25(count) => "${count} прокси";
-
-  static String m26(count) =>
-      "${Intl.plural(count, one: '${count} правило', few: '${count} правила', many: '${count} правил', other: '${count} правила')}";
-
-  static String m27(count) =>
-      "${Intl.plural(count, one: '${count} секунда', few: '${count} секунды', many: '${count} секунд', other: '${count} секунды')}";
-
-  static String m28(count) => "Выбрано: ${count}";
-
-  static String m29(label) => "Значение «${label}» должно быть URL";
+  static String m29(count) => "${count} прокси";
 
   static String m30(count) =>
+      "${Intl.plural(count, one: '${count} правило', few: '${count} правила', many: '${count} правил', other: '${count} правила')}";
+
+  static String m31(count) =>
+      "${Intl.plural(count, one: '${count} секунда', few: '${count} секунды', many: '${count} секунд', other: '${count} секунды')}";
+
+  static String m32(count) => "Выбрано: ${count}";
+
+  static String m33(label) => "Значение «${label}» должно быть URL";
+
+  static String m34(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -274,6 +282,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "У вас уже последняя версия",
     ),
     "clearData": MessageLookupByLibrary.simpleMessage("Очистить данные"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("Очистить журнал"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "Удалить все сохранённые события журнала?",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Очистить поиск"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Экспорт в буфер обмена",
@@ -407,11 +419,54 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "Доступна новая версия",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage(
+      "Дополнительные записи",
+    ),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Ответы"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage(
+      "Авторитетные записи",
+    ),
     "dnsDesc": MessageLookupByLibrary.simpleMessage(
       "Настройки, связанные с DNS",
     ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("Диагностика DNS"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Запрос DNS через работающий Core и просмотр записей",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Перехват DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Режим DNS"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage(
+      "Записи не возвращены",
+    ),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("Домен или IP-адрес"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("Ответ DNS"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Тип записи"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Резолвер"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Активный резолвер Core",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "DNS прямого подключения",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "DNS прокси-сервера",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("Системный DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Флаги ответа"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Выполнить запрос"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Активный резолвер Core недоступен, использован системный DNS",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "В ответе нет записей",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "Ответ был усечён",
+    ),
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
@@ -530,6 +585,375 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("часов"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("Захват HTTP"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "Все профили",
+    ),
+    "httpCaptureBodyAll": MessageLookupByLibrary.simpleMessage(
+      "Все поддерживаемые типы",
+    ),
+    "httpCaptureBodyEncoding": MessageLookupByLibrary.simpleMessage(
+      "Кодировка тела",
+    ),
+    "httpCaptureBodyLimit": MessageLookupByLibrary.simpleMessage(
+      "Лимит одного тела",
+    ),
+    "httpCaptureBodyMode": MessageLookupByLibrary.simpleMessage("Захват тела"),
+    "httpCaptureBodyNone": MessageLookupByLibrary.simpleMessage("Выключен"),
+    "httpCaptureBodyText": MessageLookupByLibrary.simpleMessage(
+      "Текст, JSON и формы",
+    ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота ClientHello",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Полностью"),
+    "httpCaptureConnectCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Завершение подключения к серверу",
+    ),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "Резервные метаданные соединения",
+    ),
+    "httpCaptureContentEnabled": MessageLookupByLibrary.simpleMessage(
+      "Захват содержимого включён",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Пассивный наблюдатель Core",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Наблюдатель Core всё ещё останавливается",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "Текущий профиль",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Проверка транзакций HTTP/1 и потоков HTTP/2 с явной локальной политикой конфиденциальности",
+    ),
+    "httpCaptureDownstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Завершение TLS клиента"),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "Наблюдений HTTP пока нет",
+    ),
+    "httpCaptureEmptyValue": MessageLookupByLibrary.simpleMessage(
+      "Пустое значение",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый адрес",
+    ),
+    "httpCaptureErrorCode": m14,
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core наблюдал префикс запроса HTTP/1",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core наблюдал TLS ClientHello"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "Хост наблюдается, протокол неизвестен",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Метаданные авторизованного HTTPS-ретранслятора",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт HTTP",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт QUIC",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "Типичный порт TLS",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Схема сообщена Core",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "Только транспортные метаданные",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "Экспорт HAR-совместимых наблюдений",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Наблюдения HTTP экспортированы",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "Экспорт HAR соответствует активной политике захвата. Пассивные источники остаются только метаданными. Явно разрешённый ретранслятор может экспортировать транзакции HTTP/1 или потоки HTTP/2, разрешённые значения заголовков, ограниченные тела и доступные временные этапы. Скрытые значения остаются скрытыми.",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Имена заголовков",
+    ),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Список имён заголовков усечён",
+    ),
+    "httpCaptureHeaderValueCount": m15,
+    "httpCaptureHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Захватывать значения заголовков",
+    ),
+    "httpCaptureHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Сохранять ограниченные значения заголовков запросов и ответов. Известные чувствительные поля скрываются.",
+    ),
+    "httpCaptureHeaderValuesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков усечены",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота заголовков",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host усечён",
+    ),
+    "httpCaptureHttp2GoAway": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 GOAWAY",
+    ),
+    "httpCaptureHttp2Stream": MessageLookupByLibrary.simpleMessage("Поток"),
+    "httpCaptureHttp2Streams": MessageLookupByLibrary.simpleMessage(
+      "Потоки HTTP/2",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Версия HTTP",
+    ),
+    "httpCaptureImagePreviewFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось показать захваченные данные изображения.",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage(
+      "Неполностью",
+    ),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "Информационные коды состояния",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Список информационных кодов усечён",
+        ),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "Эта запись получена от явно авторизованного loopback HTTPS-ретранслятора. На соединение сохраняется не более 32 транзакций HTTP/1 или потоков HTTP/2. По умолчанию — только метаданные; значения заголовков и ограниченные тела появляются лишь при разрешении зафиксированной политики.",
+    ),
+    "httpCaptureMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "Только метаданные",
+    ),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
+      "Не наблюдается",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения",
+    ),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "Добровольный захват объединяет ограниченные пассивные наблюдения Core с явно запущенным локальным HTTPS-ретранслятором инспекции. Ретранслятор наблюдает упорядоченные транзакции HTTP/1 и параллельные потоки HTTP/2. По умолчанию сохраняются только метаданные. Значения заголовков и ограниченные по размеру тела сохраняются только после явного включения; чувствительные заголовки остаются скрытыми без отдельного разрешения. Строки запроса, фрагменты, Reason Phrase, сертификаты и необработанные HTTP-сообщения не сохраняются. Только новые соединения; локальные записи не входят в резервные копии.",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый префикс",
+    ),
+    "httpCaptureOmitted": MessageLookupByLibrary.simpleMessage("Пропущено"),
+    "httpCapturePolicyLocked": MessageLookupByLibrary.simpleMessage(
+      "Остановите захват перед изменением политики.",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Есть"),
+    "httpCapturePrivacy": MessageLookupByLibrary.simpleMessage(
+      "Политика конфиденциальности захвата",
+    ),
+    "httpCapturePrivacyDesc": MessageLookupByLibrary.simpleMessage(
+      "Настройте до запуска. Весь сеанс использует снимок политики на момент старта.",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
+      "Путь процесса",
+    ),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "Неизвестный протокол",
+    ),
+    "httpCaptureRedacted": MessageLookupByLibrary.simpleMessage("Скрыто"),
+    "httpCaptureRedactedHeaders": MessageLookupByLibrary.simpleMessage(
+      "Всегда скрываемые заголовки",
+    ),
+    "httpCaptureRedactedHeadersDesc": MessageLookupByLibrary.simpleMessage(
+      "Имена через запятую или пробел. Они остаются скрытыми даже при разрешении чувствительных значений.",
+    ),
+    "httpCaptureRedactedHeadersHint": MessageLookupByLibrary.simpleMessage(
+      "x-private-token, x-session-id",
+    ),
+    "httpCaptureRequestBody": MessageLookupByLibrary.simpleMessage(
+      "Тело запроса",
+    ),
+    "httpCaptureRequestCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Завершение запроса",
+    ),
+    "httpCaptureRequestCookies": MessageLookupByLibrary.simpleMessage(
+      "Cookie запроса",
+    ),
+    "httpCaptureRequestHeaders": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков запроса",
+    ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "Метод запроса",
+    ),
+    "httpCaptureRequestObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения запроса",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "Очищенный адрес",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый ответ",
+    ),
+    "httpCaptureResponseBody": MessageLookupByLibrary.simpleMessage(
+      "Тело ответа",
+    ),
+    "httpCaptureResponseCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Завершение ответа",
+    ),
+    "httpCaptureResponseCookies": MessageLookupByLibrary.simpleMessage(
+      "Cookie ответа",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Имена заголовков ответа",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Список имён заголовков ответа усечён",
+        ),
+    "httpCaptureResponseHeaders": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков ответа",
+    ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Полнота заголовков ответа",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Версия HTTP ответа",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения ответа",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Наблюдаемый префикс ответа",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "Статус ответа",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение ответа усечено",
+    ),
+    "httpCaptureRiskMessage": MessageLookupByLibrary.simpleMessage(
+      "Значения заголовков и тела могут содержать учётные данные, Cookie, персональные данные и приватный контент. Включайте только необходимый минимум, используйте узкий список разрешений и остановите захват сразу после отладки.",
+    ),
+    "httpCaptureRiskTitle": MessageLookupByLibrary.simpleMessage(
+      "Включить захват чувствительных данных?",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "Захват выполняется",
+    ),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "Завершение ретрансляции",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "TLS на стороне клиента",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage(
+      "Тип сбоя ретранслятора",
+    ),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage("Разрешение на проверку отозвано"),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage(
+          "Предыдущий захват был неожиданно прерван",
+        ),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage(
+          "Захват остановлен до завершения ретрансляции",
+        ),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Не удалось выполнить TLS-рукопожатие с клиентом",
+        ),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "Сертификат сайта недоступен",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "Зашифрованный ретранслятор завершился с ошибкой",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage(
+          "Не удалось подключиться к серверу",
+        ),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Не удалось проверить TLS сервера",
+        ),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage(
+      "Сеанс ретранслятора",
+    ),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage(
+      "Состояние ретранслятора",
+    ),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "TLS к вышестоящему серверу",
+    ),
+    "httpCaptureSensitiveHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Разрешить чувствительные заголовки",
+    ),
+    "httpCaptureSensitiveHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Разрешить учётные данные, Cookie и заголовки токенов; список постоянного скрытия имеет приоритет.",
+    ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("Кандидат соединения"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Локальный проверочный ретранслятор",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Пассивный наблюдатель Core",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage(
+      "Источник наблюдения",
+    ),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Остановлено"),
+    "httpCaptureStreamClosed": MessageLookupByLibrary.simpleMessage("Закрыт"),
+    "httpCaptureStreamId": m16,
+    "httpCaptureStreamOpen": MessageLookupByLibrary.simpleMessage("Открыт"),
+    "httpCaptureStreamRequestEnded": MessageLookupByLibrary.simpleMessage(
+      "Запрос завершён",
+    ),
+    "httpCaptureStreamReset": MessageLookupByLibrary.simpleMessage("Сброшен"),
+    "httpCaptureStreamResponseEnded": MessageLookupByLibrary.simpleMessage(
+      "Ответ завершён",
+    ),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "Цель запроса усечена",
+    ),
+    "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
+      "Временная шкала усечена",
+    ),
+    "httpCaptureTimingReceive": MessageLookupByLibrary.simpleMessage(
+      "Получение",
+    ),
+    "httpCaptureTimingSend": MessageLookupByLibrary.simpleMessage("Отправка"),
+    "httpCaptureTimingWait": MessageLookupByLibrary.simpleMessage(
+      "Ожидание / TTFB",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "Устаревшая версия TLS",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "Имя сервера TLS",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "Поддерживаемые версии TLS",
+    ),
+    "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage(
+      "Транзакция",
+    ),
+    "httpCaptureTransactionCount": m17,
+    "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
+      "Транзакции HTTP/1",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
+      "Наблюдение усечено",
+    ),
+    "httpCaptureUpstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Завершение TLS к серверу"),
     "icon": MessageLookupByLibrary.simpleMessage("Значок"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("История значков"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Стиль значков"),
@@ -593,10 +1017,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage(
       "Недопустимый файл резервной копии",
     ),
-    "invalidPolicy": m14,
-    "invalidProxy": m15,
-    "invalidProxyProvider": m16,
-    "invalidSubRule": m17,
+    "invalidPolicy": m18,
+    "invalidProxy": m19,
+    "invalidProxyProvider": m20,
+    "invalidSubRule": m21,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "При включении можно принимать трафик IPv6",
@@ -635,12 +1059,192 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "По требованию системы для получения имени сети Wi-Fi необходимо разрешение на геолокацию. На Android выберите «Разрешить всегда», иначе имя сети Wi-Fi нельзя получить, пока приложение в фоне.",
     ),
-    "locationPermissionGuide": m18,
+    "locationPermissionGuide": m22,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Требуется разрешение на геолокацию",
     ),
     "log": MessageLookupByLibrary.simpleMessage("Лог"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Уровень логов"),
+    "logbook": MessageLookupByLibrary.simpleMessage("Журнал событий"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("Все"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "Резервное копирование отменено",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "Резервное копирование завершено",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка резервного копирования",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage(
+      "Создание резервной копии",
+    ),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "Состояние подключения изменилось",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("Ядро"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "Запрошен диагностический сбой ядра",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось перезапустить ядро",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "Ядро перезапущено с ошибками профиля",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage(
+      "Ядро перезапущено",
+    ),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось запустить ядро",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "Запрос запуска ядра заменён",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("Ядро запущено"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "Постоянная хронология сетевых событий и изменений конфигурации",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS-запрос завершён",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage(
+      "Выполняется DNS-запрос",
+    ),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage(
+      "События пока не записаны",
+    ),
+    "logbookError": MessageLookupByLibrary.simpleMessage("Ошибка"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage(
+      "Geo-данные уже актуальны",
+    ),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить Geo-данные",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Обновление Geo-данных",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
+      "Geo-данные обновлены",
+    ),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "Захват HTTP остановлен",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP-перехват прерван",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "Захват HTTP начат",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("Информация"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "Хранится только на этом устройстве",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("Сеть"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("Профиль"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "Профиль применён",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "Исключение при применении профиля",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось применить профиль",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("Провайдер"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось импортировать данные провайдера",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "Импорт данных провайдера",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "Данные провайдера импортированы",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось обновить провайдер",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Обновление провайдера",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "Провайдер обновлён",
+    ),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "Проверка быстрого маршрута приблизительная",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "Быстрый маршрут не совпадает",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Проверка быстрого маршрута недоступна",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "Быстрый маршрут проверен",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "Восстановление завершено",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка восстановления",
+    ),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage(
+      "Восстановление резервной копии",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("Маршрутизация"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("Скрипт"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка скрипта конфигурации",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "Выполнение скрипта конфигурации",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "Скрипт конфигурации выполнен",
+    ),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("Успешно"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("Система"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "Срок ретранслятора истёк",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка локального HTTPS-ретранслятора",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор отозван",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор работает",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Запуск локального HTTPS-ретранслятора",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Остановка ретранслятора не подтверждена",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор остановлен",
+    ),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "Установка CA отменена",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось установить CA",
+    ),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "Установка CA инспекции",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "CA инспекции установлен",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "Открыты настройки сертификатов",
+    ),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("Предупреждение"),
     "logcat": MessageLookupByLibrary.simpleMessage("Захват логов"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
       "При отключении раздел логов будет скрыт",
@@ -668,7 +1272,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage(
       "Макс. число неудач",
     ),
-    "maxLengthTip": m19,
+    "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("Развернуть"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Память"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Тест сообщения"),
@@ -681,11 +1285,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Изменяет стандартное поведение при выходе",
     ),
-    "minutesAgo": m20,
+    "minutesAgo": m24,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Смешанный порт"),
     "mode": MessageLookupByLibrary.simpleMessage("Режим"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
-    "monthsAgo": m21,
+    "monthsAgo": m25,
     "more": MessageLookupByLibrary.simpleMessage("Ещё"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "Разделяйте несколько значений запятыми",
@@ -733,8 +1337,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Профилей пока нет. Сначала добавьте профиль",
     ),
-    "nullTip": m22,
-    "numberTip": m23,
+    "nullTip": m26,
+    "numberTip": m27,
     "onDemand": MessageLookupByLibrary.simpleMessage("По условию"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "Настройте состояние работы приложения для определённых сценариев",
@@ -792,7 +1396,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Введите другой порт",
     ),
-    "portTip": m24,
+    "portTip": m28,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Предпочитать HTTP/3 для DoH",
     ),
@@ -827,7 +1431,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Проект"),
     "providers": MessageLookupByLibrary.simpleMessage("Внешние ресурсы"),
     "proxies": MessageLookupByLibrary.simpleMessage("Прокси"),
-    "proxiesCount": m25,
+    "proxiesCount": m29,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Список прокси пуст"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Цепочка прокси"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -1063,7 +1667,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("Набор правил"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Цель правила"),
     "rules": MessageLookupByLibrary.simpleMessage("Правила"),
-    "rulesCount": m26,
+    "rulesCount": m30,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения?"),
     "script": MessageLookupByLibrary.simpleMessage("Скрипт"),
@@ -1075,7 +1679,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
     "seconds": MessageLookupByLibrary.simpleMessage("секунд"),
-    "secondsCount": m27,
+    "secondsCount": m31,
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать всё"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "Выбрать MATCH-TARGET",
@@ -1094,7 +1698,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Выберите подправило",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
-    "selectedCountTitle": m28,
+    "selectedCountTitle": m32,
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showLess": MessageLookupByLibrary.simpleMessage("Свернуть"),
@@ -1189,6 +1793,535 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("Время"),
     "timeout": MessageLookupByLibrary.simpleMessage("Тайм-аут"),
     "tip": MessageLookupByLibrary.simpleMessage("Подсказка"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage(
+      "Безопасность HTTPS-инспекции",
+    ),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "Подтвердить риск",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage(
+      "Добавить домен",
+    ),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("Алгоритм"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage(
+      "Список разрешений",
+    ),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "Только эти точные домены или деревья доменов смогут стать доступными для будущей инспекции.",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "Только явный список разрешений",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage(
+      "Локальный центр сертификации",
+    ),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage(
+      "Повреждён",
+    ),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "Истёк",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "Не создан",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "Ещё не действует",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage(
+          "Проверьте права секретного ключа",
+        ),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage(
+      "Готов",
+    ),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "Требуется удалить старые материалы закрытого ключа",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "На этом этапе подготавливаются только сертификат и политика. HTTPS-трафик не расшифровывается, не перехватывается и не изменяется.",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage(
+      "Граница безопасности",
+    ),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage(
+      "Сбросить подтверждение",
+    ),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "Я проверил доверие системы",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Создать локальный центр",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "Удалить центр",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "Локальные файлы секретного ключа и сертификата будут удалены, а подготовленная политика отключена. Ранее установленный сертификат нужно отдельно удалить из системного хранилища доверия.",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Подготовка локального центра и явной политики доменов без включения расшифровки",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "По умолчанию выключено",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "Домен и поддомены",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "Сначала создайте действующий локальный центр.",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "Диапазон слишком широк. Укажите регистрируемый домен, например example.com.",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Подключите Core перед управлением локальным центром.",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "Не удалось выполнить операцию.",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "IP-адреса не принимаются; укажите регистрируемый домен.",
+    ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Не удалось подготовить безопасный кэш конечных сертификатов.",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "Достигнут предел правил доменов.",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "Сохранённая политика содержит небезопасную область домена. Удалите её и снова добавьте регистрируемый домен.",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала выполните требования центра, доверия, риска и списка разрешений.",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage(
+      "Только точный домен",
+    ),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "Исключение имеет приоритет даже при совпадении с более широким разрешением.",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage(
+      "Обязательные исключения",
+    ),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "Исключения всегда важнее списка разрешений.",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "Экспортировать публичный сертификат",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Публичный сертификат экспортирован",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "Отпечаток SHA-256",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "Только безопасная основа выпуска и кэширования сертификатов: движок расшифровки HTTPS ещё не подключён.",
+    ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Успех не подтверждает доверие ОС или приложений. Соединение с сервером, закрепление сертификата и расшифровка реального HTTPS не проверяются.",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "Проверка TLS 1.2, TLS 1.3 и обмена зашифрованными данными с сертификатом разрешённого домена внутри памяти Core. Без подключения к сайту, изменения системного прокси или расшифровки реального HTTPS.",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "Разрешённый домен",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "Введите допустимый домен из активного списка, не попадающий под исключения.",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "Проверка локального TLS не удалась. Проверьте CA и список доменов.",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 проверенного сертификата",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "Самопроверка пройдена",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала подготовьте CA, доверие и список разрешённых доменов.",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "Проверить TLS",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "Идёт проверка",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage(
+      "Область проверки",
+    ),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Канал в памяти Core · только тестовые данные",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "Результат больше не соответствует текущему CA или правилам. Повторите проверку.",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "Самопроверка TLS",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core не подтвердил реальные рукопожатия TLS 1.2 и TLS 1.3. Обновите Core.",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Кэш конечных сертификатов",
+    ),
+    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
+      "Локальный CA изменился. Повторно проверьте доверие и подготовьте политику.",
+    ),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core создаёт отдельные краткоживущие сертификаты только для активного списка разрешений. На этом этапе HTTPS-трафик по-прежнему не перехватывается и не расшифровывается.",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "Отключён",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "Сертификаты в кэше",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "Последнее обновление",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "Секретные ключи конечных сертификатов остаются в данных Core и никогда не возвращаются через IPC и не экспортируются.",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "Права хранения секретных ключей конечных сертификатов ограничены недостаточно.",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "Хэш политики",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage(
+      "Готов",
+    ),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "Максимальный срок",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("До 24 часов"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "Ожидание подготовленной и в данный момент доверенной политики.",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "Без автоматического изменения доверия ОС",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "Без значений заголовков и тел",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage(
+      "Домены не настроены",
+    ),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "Сначала выполните все обязательные условия.",
+    ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage(
+          "Закрепление сертификатов по-прежнему может блокировать инспекцию.",
+        ),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "В Android 11 и новее сертификат нужно вручную установить в настройках безопасности.",
+        ),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage(
+          "Приложение должно явно разрешать доверие пользовательским CA.",
+        ),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage(
+          "Android требует явного подтверждения пользователя перед установкой.",
+        ),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "Установка доверия заблокирована",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("Проверить снова"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android не удалось проверить этот CA в хранилище сертификатов.",
+        ),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "Статус доверия платформы обновлён",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("Ограничения платформы"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash проверяет, что точный отпечаток текущего CA присутствует в хранилище сертификатов Android. Ручное подтверждение не заменяет результат платформы.",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "Экспортировать CA и открыть настройки",
+        ),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Результат привязан к отпечатку текущего CA.",
+        ),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Результат доверия Android относится к другому отпечатку CA.",
+        ),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "Установить CA через Android",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android не смог запустить установку сертификата",
+        ),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android подтвердил установку CA",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("Последняя проверка"),
+    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Приложения Android могут отвергать пользовательские CA без явного разрешения, а закрепление сертификатов по-прежнему блокирует инспекцию.",
+    ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "Не установлен в хранилище Android",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage(
+          "Доверие платформы ещё не проверено.",
+        ),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("Открыть настройки безопасности"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "Сертификат экспортирован; завершите установку в настройках безопасности Android и вернитесь в FlClash",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "Хранилище сертификатов",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Пользовательское и системное хранилища Android",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "Не найден",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Системное хранилище Android"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage("Найден в неопознанном хранилище"),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Пользовательское хранилище Android",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Статус доверия Android недоступен",
+        ),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage(
+          "Автоматическая проверка недоступна",
+        ),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "Присутствует в хранилище CA Android",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage(
+          "Требуется проверенное платформой доверие",
+        ),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Уровень Android API",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "Локальные и WebDAV-архивы FlClash не содержат материалы центра сертификации и политику доменов. Резервное копирование ОС зависит от настроек платформы.",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage(
+      "Политика безопасности подготовлена",
+    ),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "Все условия выполнены. Для реальной инспекции всё ещё нужны отдельный движок и явное включение.",
+    ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "Секретный ключ хранится файлом в каталоге данных приложения и не защищён аппаратно. FlClash не экспортирует секретный ключ; экспортируется только публичный сертификат.",
+    ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
+      "Готовность",
+    ),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "Хотя бы одно правило разрешения",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "Действующий локальный центр",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Кэш конечных сертификатов привязан к текущему CA и политике",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "Риск подтверждён",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "Текущий CA доверен платформой или проверен вручную",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage(
+      "Подтверждение риска",
+    ),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "Риск подтверждён",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS-инспекция может раскрыть учётные данные и личное содержимое. Используйте минимальный список разрешений и не проверяйте банковские, медицинские и другие чувствительные сервисы без строгой необходимости.",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Сменить центр",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "Смена центра аннулирует прежнее подтверждение доверия. Старый сертификат в системе потребуется заменить вручную.",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage(
+      "Область домена",
+    ),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор",
+    ),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage(
+      "Принято",
+    ),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage(
+      "Активные подключения",
+    ),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage(
+      "Адрес прокси",
+    ),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Он не меняет системный прокси, не сохраняет источник приложения или данные, не поддерживает HTTP/2 и не обходит закрепление сертификатов.",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage(
+      "Завершено",
+    ),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "Копировать адрес прокси",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "Не удалось скопировать настройки прокси.",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "Копировать временный пароль",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "Копировать настройки прокси",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "Настройки прокси скопированы и будут очищены через одну минуту.",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "Копировать имя пользователя",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning": MessageLookupByLibrary.simpleMessage(
+      "Учётные данные не сохраняются и не записываются в Logbook. Неизменённая копия очищается через минуту; после подтверждённой остановки или перезапуска Core данные исчезают.",
+    ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "Явный аутентифицированный CONNECT-прокси на loopback для проверки разрешённого HTTPS-трафика через активный маршрут Core.",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "Передано вниз",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "Не удалось запустить или проверить локальный HTTPS-ретранслятор.",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage(
+      "Истекает",
+    ),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "С ошибкой",
+    ),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "Скрыть пароль",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "Осиротевший или устаревший ретранслятор отозван.",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "Временный пароль",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage(
+      "Обновить состояние",
+    ),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Сначала подготовьте CA, доверие платформы, список разрешений и кэш конечных сертификатов.",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Работает",
+    ),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "Показать пароль",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage(
+      "Запустить ретранслятор",
+    ),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "Запустить локальный HTTPS-ретранслятор?",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "На 127.0.0.1 будет запущен аутентифицированный прокси максимум на 10 минут. Его смогут использовать только настроенные вручную клиенты. Временный пароль хранится только в памяти и показывается для этого запуска.",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор запущен.",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Запускается",
+    ),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage(
+      "Остановить ретранслятор",
+    ),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core не подтвердил остановку ретранслятора. Оставьте эту страницу открытой и повторите попытку.",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Остановка не подтверждена",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Остановлен",
+    ),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "Локальный HTTPS-ретранслятор остановлен.",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage(
+      "Останавливается",
+    ),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Недоступен",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "Передано вверх",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage(
+      "Имя пользователя",
+    ),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage(
+      "Серийный номер",
+    ),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage(
+      "Хранилище секретного ключа",
+    ),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "Каталог данных приложения (файловое хранение)",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("Субъект"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage(
+      "Доверие системы",
+    ),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "Текущий отпечаток подтверждён вручную",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "Автоматическая проверка хранилища доверия пока не подключена. Экспортируйте публичный сертификат, установите его вручную и сверьте отпечаток в настройках системы.",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Некоторые приложения игнорируют пользовательские центры, а закрепление сертификатов не обходится.",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Текущий отпечаток не подтверждён",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage(
+      "Срок действия",
+    ),
     "toggle": MessageLookupByLibrary.simpleMessage("Переключить"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("Переключить подписи"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Тональный акцент"),
@@ -1219,7 +2352,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Отдача"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m29,
+    "urlTip": m33,
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системный hosts",
@@ -1246,7 +2379,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
-    "yearsAgo": m30,
+    "yearsAgo": m34,
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };
 }

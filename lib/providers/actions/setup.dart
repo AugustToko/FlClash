@@ -166,6 +166,7 @@ class SetupAction extends _$SetupAction {
     if (!_isCurrent(request)) {
       return true;
     }
+    ref.read(quickRoutingRulesProvider.notifier).clearAll();
     resetCoreTraffic();
     ref.read(trafficsProvider.notifier).clear();
     ref.read(totalTrafficProvider.notifier).value = const Traffic();
@@ -270,12 +271,66 @@ class SetupAction extends _$SetupAction {
     bool force = false,
     Future<void> Function()? preloadInvoke,
   }) async {
-    final result = await _runSetup(
-      force: force,
-      silence: silence,
-      preloadInvoke: preloadInvoke,
-    );
-    return result != _SetupTaskResult.failed;
+    final startedAt = DateTime.now();
+    final profileId = ref.read(currentProfileIdProvider);
+    try {
+      final result = await _runSetup(
+        force: force,
+        silence: silence,
+        preloadInvoke: preloadInvoke,
+      );
+      final applied = result != _SetupTaskResult.failed;
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              profileId: profileId,
+              category: LogbookCategory.profile,
+              severity: applied
+                  ? LogbookSeverity.success
+                  : LogbookSeverity.error,
+              eventType: applied
+                  ? 'profile.apply.completed'
+                  : 'profile.apply.failed',
+              title: applied
+                  ? 'profile.apply.completed'
+                  : 'profile.apply.failed',
+              message:
+                  'Profile ${profileId ?? '-'} · ${result.name} · '
+                  '${DateTime.now().difference(startedAt).inMilliseconds} ms',
+              details: {
+                'durationMs': DateTime.now()
+                    .difference(startedAt)
+                    .inMilliseconds,
+                'force': force,
+                'silent': silence,
+                'setupResult': result.name,
+              },
+            ),
+      );
+      return applied;
+    } catch (error) {
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              profileId: profileId,
+              category: LogbookCategory.profile,
+              severity: LogbookSeverity.error,
+              eventType: 'profile.apply.exception',
+              title: 'profile.apply.exception',
+              message: compactError(error),
+              details: {
+                'durationMs': DateTime.now()
+                    .difference(startedAt)
+                    .inMilliseconds,
+                'force': force,
+                'silent': silence,
+              },
+            ),
+      );
+      rethrow;
+    }
   }
 
   Future<_SetupTaskResult> _runSetup({
@@ -310,6 +365,42 @@ class SetupAction extends _$SetupAction {
           TunAuthorizationState.none;
       rethrow;
     }
+  }
+
+  void _recordScriptEvaluation({
+    required int profileId,
+    required Script script,
+    required String correlationId,
+    required String status,
+    required DateTime startedAt,
+    String? failureKind,
+  }) {
+    final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
+    final severity = switch (status) {
+      'completed' => LogbookSeverity.success,
+      'failed' => LogbookSeverity.error,
+      _ => LogbookSeverity.info,
+    };
+    unawaited(
+      ref
+          .read(logbookProvider.notifier)
+          .record(
+            profileId: profileId,
+            category: LogbookCategory.script,
+            severity: severity,
+            eventType: 'script.evaluate',
+            title: 'script.evaluate',
+            message: '${script.label} · $durationMs ms',
+            correlationId: correlationId,
+            details: {
+              'status': status,
+              'scriptId': script.id,
+              'scriptLabel': script.label,
+              'durationMs': durationMs,
+              'failureKind': ?failureKind,
+            },
+          ),
+    );
   }
 
   Future<({String yaml, String md5})> getProfile({
@@ -348,13 +439,52 @@ class SetupAction extends _$SetupAction {
       tun: patchConfig.tun.getRealTun(routeMode),
     );
     Map<String, dynamic> rawConfig = configMap;
-    if (scriptContent?.isNotEmpty == true) {
-      rawConfig = await handleEvaluate(scriptContent!, rawConfig);
+    final script = setupState.script;
+    if (scriptContent?.isNotEmpty == true && script != null) {
+      final startedAt = DateTime.now();
+      final correlationId =
+          'script-evaluate:${script.id}:${startedAt.microsecondsSinceEpoch}';
+      _recordScriptEvaluation(
+        profileId: profileId,
+        script: script,
+        correlationId: correlationId,
+        status: 'running',
+        startedAt: startedAt,
+      );
+      try {
+        rawConfig = await handleEvaluate(scriptContent!, rawConfig);
+        _recordScriptEvaluation(
+          profileId: profileId,
+          script: script,
+          correlationId: correlationId,
+          status: 'completed',
+          startedAt: startedAt,
+        );
+      } catch (error) {
+        _recordScriptEvaluation(
+          profileId: profileId,
+          script: script,
+          correlationId: correlationId,
+          status: 'failed',
+          startedAt: startedAt,
+          failureKind: error.runtimeType.toString(),
+        );
+        rethrow;
+      }
     }
+    final runtimeRules = ref
+        .read(quickRoutingRulesProvider.notifier)
+        .activeRulesFor(profileId);
+    final mergedRules = mergeQuickRoutingRules(
+      overwriteType: setupState.overwriteType,
+      runtimeRules: runtimeRules,
+      rules: rules,
+      addedRules: addedRules,
+    );
     final directory = await appPath.profilesPath;
     final res = makeRealProfileTask(
       MakeRealProfileState(
-        rules: rules,
+        rules: mergedRules.rules,
         proxyGroups: proxyGroups,
         profilesPath: directory,
         profileId: profileId,
@@ -362,7 +492,7 @@ class SetupAction extends _$SetupAction {
         realPatchConfig: realPatchConfig,
         overrideDns: overrideDns,
         appendSystemDns: appendSystemDns,
-        addedRules: addedRules,
+        addedRules: mergedRules.addedRules,
         defaultUA: defaultUA,
         authentication: networkSetting.authentication.credentials,
         matchTarget: setupState.matchTarget,

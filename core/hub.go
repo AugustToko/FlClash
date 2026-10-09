@@ -39,6 +39,11 @@ var (
 )
 
 func handleInitClash(params *InitParams) bool {
+	tlsInspectionAuthorityMu.Lock()
+	defer tlsInspectionAuthorityMu.Unlock()
+	resetTLSInspectionLeafPolicySession()
+	resetTLSInspectionRuntimeCancellationsLocked()
+
 	configMu.Lock()
 	defer configMu.Unlock()
 	sdkVersion.Store(int32(params.Version))
@@ -58,6 +63,9 @@ func handleStartListener() bool {
 }
 
 func handleStopListener() bool {
+	tlsInspectionAuthorityMu.Lock()
+	stopTLSInspectionRuntimeLocked()
+	tlsInspectionAuthorityMu.Unlock()
 	configMu.Lock()
 	defer configMu.Unlock()
 	isRunning.Store(false)
@@ -81,6 +89,11 @@ func handleForceGC() {
 
 func handleShutdown() bool {
 	handleStopLog()
+	disableHTTPObservation()
+	tlsInspectionAuthorityMu.Lock()
+	resetTLSInspectionLeafPolicySession()
+	resetTLSInspectionRuntimeCancellationsLocked()
+	tlsInspectionAuthorityMu.Unlock()
 
 	configMu.Lock()
 	isRunning.Store(false)
@@ -695,9 +708,12 @@ func init() {
 		})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
+		// Snapshot response-capable trackers before the message enters the batch
+		// queue. Otherwise the initial and response-update events can both marshal
+		// the same later mutable tracker state.
 		sendMessage(Message{
 			Type: RequestMessage,
-			Data: c,
+			Data: c.Info(),
 		})
 	}
 	executor.DefaultProviderLoadedHook = func(providerName string) {

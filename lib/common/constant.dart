@@ -82,6 +82,7 @@ const clashConfigKey = 'clash_config';
 const configKey = 'config';
 const systemDnsRecordKey = 'system_dns_record';
 const bootRecordKey = 'boot_record';
+const tlsInspectionPolicyKey = 'tls_inspection_policy';
 const defaultSystemDnsFallback = '223.5.5.5';
 const double dialogCommonWidth = 300;
 const repository = 'chen08209/FlClash';

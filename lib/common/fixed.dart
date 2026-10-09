@@ -32,6 +32,16 @@ class FixedList<T> {
     return FixedList._(maxLength, _list, _revision + 1);
   }
 
+  FixedList<T> upsert(T item, bool Function(T element) test) {
+    final index = _list.indexWhere(test);
+    if (index == -1) {
+      return append(item);
+    }
+    _list[index] = item;
+    _snapshot = null;
+    return FixedList._(maxLength, _list, _revision + 1);
+  }
+
   List<T> get list => _snapshot ??= List.unmodifiable(_list);
 
   int get length => _list.length;

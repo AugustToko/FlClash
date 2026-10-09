@@ -113,14 +113,37 @@ void main() {
     );
   });
 
+  group('TLS inspection policy', () {
+    test('round-trips local-only policy payloads', () async {
+      const payload = '{"prepared":false,"allowlist":[]}';
+
+      expect(await preferences.saveTlsInspectionPolicy(payload), isTrue);
+
+      expect(await preferences.getTlsInspectionPolicy(), payload);
+      expect(store.getString(tlsInspectionPolicyKey), payload);
+    });
+
+    test('clear removes only the inspection policy', () async {
+      await preferences.setVersion(8);
+      await preferences.saveTlsInspectionPolicy('{"prepared":true}');
+
+      await preferences.clearTlsInspectionPolicy();
+
+      expect(await preferences.getTlsInspectionPolicy(), isNull);
+      expect(await preferences.getVersion(), 8);
+    });
+  });
+
   test('clearPreferences empties every stored key', () async {
     await preferences.setVersion(9);
     await preferences.saveConfig(const Config(themeProps: defaultThemeProps));
+    await preferences.saveTlsInspectionPolicy('{"prepared":true}');
 
     await preferences.clearPreferences();
 
     expect(await preferences.getVersion(), 0);
     expect(await preferences.getConfig(), isNull);
+    expect(await preferences.getTlsInspectionPolicy(), isNull);
   });
 
   test('isInit resolves true once shared preferences are available', () async {

@@ -5114,6 +5114,3945 @@ class AppLocalizations {
       args: [],
     );
   }
+
+  /// `Logbook`
+  String get logbook {
+    return Intl.message('Logbook', name: 'logbook', desc: '', args: []);
+  }
+
+  /// `Persistent timeline of network and configuration events`
+  String get logbookDesc {
+    return Intl.message(
+      'Persistent timeline of network and configuration events',
+      name: 'logbookDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No events have been recorded yet`
+  String get logbookEmpty {
+    return Intl.message(
+      'No events have been recorded yet',
+      name: 'logbookEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear Logbook`
+  String get clearLogbook {
+    return Intl.message(
+      'Clear Logbook',
+      name: 'clearLogbook',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear all stored Logbook events?`
+  String get clearLogbookTip {
+    return Intl.message(
+      'Clear all stored Logbook events?',
+      name: 'clearLogbookTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All`
+  String get logbookAll {
+    return Intl.message('All', name: 'logbookAll', desc: '', args: []);
+  }
+
+  /// `Core`
+  String get logbookCore {
+    return Intl.message('Core', name: 'logbookCore', desc: '', args: []);
+  }
+
+  /// `Profile`
+  String get logbookProfile {
+    return Intl.message('Profile', name: 'logbookProfile', desc: '', args: []);
+  }
+
+  /// `Routing`
+  String get logbookRouting {
+    return Intl.message('Routing', name: 'logbookRouting', desc: '', args: []);
+  }
+
+  /// `Network`
+  String get logbookNetwork {
+    return Intl.message('Network', name: 'logbookNetwork', desc: '', args: []);
+  }
+
+  /// `Provider`
+  String get logbookProvider {
+    return Intl.message(
+      'Provider',
+      name: 'logbookProvider',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS`
+  String get logbookDns {
+    return Intl.message('DNS', name: 'logbookDns', desc: '', args: []);
+  }
+
+  /// `Script`
+  String get logbookScript {
+    return Intl.message('Script', name: 'logbookScript', desc: '', args: []);
+  }
+
+  /// `System`
+  String get logbookSystem {
+    return Intl.message('System', name: 'logbookSystem', desc: '', args: []);
+  }
+
+  /// `Info`
+  String get logbookInfo {
+    return Intl.message('Info', name: 'logbookInfo', desc: '', args: []);
+  }
+
+  /// `Success`
+  String get logbookSuccess {
+    return Intl.message('Success', name: 'logbookSuccess', desc: '', args: []);
+  }
+
+  /// `Warning`
+  String get logbookWarning {
+    return Intl.message('Warning', name: 'logbookWarning', desc: '', args: []);
+  }
+
+  /// `Error`
+  String get logbookError {
+    return Intl.message('Error', name: 'logbookError', desc: '', args: []);
+  }
+
+  /// `Stored locally on this device`
+  String get logbookLocalNotice {
+    return Intl.message(
+      'Stored locally on this device',
+      name: 'logbookLocalNotice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core started`
+  String get logbookCoreStarted {
+    return Intl.message(
+      'Core started',
+      name: 'logbookCoreStarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core start superseded`
+  String get logbookCoreStartSuperseded {
+    return Intl.message(
+      'Core start superseded',
+      name: 'logbookCoreStartSuperseded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core failed to start`
+  String get logbookCoreStartFailed {
+    return Intl.message(
+      'Core failed to start',
+      name: 'logbookCoreStartFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core restarted`
+  String get logbookCoreRestarted {
+    return Intl.message(
+      'Core restarted',
+      name: 'logbookCoreRestarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core restarted with profile errors`
+  String get logbookCoreRestartWarning {
+    return Intl.message(
+      'Core restarted with profile errors',
+      name: 'logbookCoreRestartWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core restart failed`
+  String get logbookCoreRestartFailed {
+    return Intl.message(
+      'Core restart failed',
+      name: 'logbookCoreRestartFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core crash requested`
+  String get logbookCoreCrashRequested {
+    return Intl.message(
+      'Core crash requested',
+      name: 'logbookCoreCrashRequested',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile applied`
+  String get logbookProfileApplied {
+    return Intl.message(
+      'Profile applied',
+      name: 'logbookProfileApplied',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile apply failed`
+  String get logbookProfileApplyFailed {
+    return Intl.message(
+      'Profile apply failed',
+      name: 'logbookProfileApplyFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile apply raised an exception`
+  String get logbookProfileApplyException {
+    return Intl.message(
+      'Profile apply raised an exception',
+      name: 'logbookProfileApplyException',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connectivity changed`
+  String get logbookConnectivityChanged {
+    return Intl.message(
+      'Connectivity changed',
+      name: 'logbookConnectivityChanged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route verified`
+  String get logbookQuickRouteVerified {
+    return Intl.message(
+      'Quick route verified',
+      name: 'logbookQuickRouteVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route verification is approximate`
+  String get logbookQuickRouteApproximate {
+    return Intl.message(
+      'Quick route verification is approximate',
+      name: 'logbookQuickRouteApproximate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route mismatch`
+  String get logbookQuickRouteMismatch {
+    return Intl.message(
+      'Quick route mismatch',
+      name: 'logbookQuickRouteMismatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quick route verification unavailable`
+  String get logbookQuickRouteUnavailable {
+    return Intl.message(
+      'Quick route verification unavailable',
+      name: 'logbookQuickRouteUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating provider`
+  String get logbookProviderUpdateRunning {
+    return Intl.message(
+      'Updating provider',
+      name: 'logbookProviderUpdateRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider updated`
+  String get logbookProviderUpdated {
+    return Intl.message(
+      'Provider updated',
+      name: 'logbookProviderUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider update failed`
+  String get logbookProviderUpdateFailed {
+    return Intl.message(
+      'Provider update failed',
+      name: 'logbookProviderUpdateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Importing provider data`
+  String get logbookProviderImportRunning {
+    return Intl.message(
+      'Importing provider data',
+      name: 'logbookProviderImportRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider data imported`
+  String get logbookProviderImported {
+    return Intl.message(
+      'Provider data imported',
+      name: 'logbookProviderImported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Provider data import failed`
+  String get logbookProviderImportFailed {
+    return Intl.message(
+      'Provider data import failed',
+      name: 'logbookProviderImportFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating Geo data`
+  String get logbookGeoUpdateRunning {
+    return Intl.message(
+      'Updating Geo data',
+      name: 'logbookGeoUpdateRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo data updated`
+  String get logbookGeoUpdated {
+    return Intl.message(
+      'Geo data updated',
+      name: 'logbookGeoUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo data is already up to date`
+  String get logbookGeoSkipped {
+    return Intl.message(
+      'Geo data is already up to date',
+      name: 'logbookGeoSkipped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Geo data update failed`
+  String get logbookGeoUpdateFailed {
+    return Intl.message(
+      'Geo data update failed',
+      name: 'logbookGeoUpdateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Creating backup`
+  String get logbookBackupRunning {
+    return Intl.message(
+      'Creating backup',
+      name: 'logbookBackupRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup completed`
+  String get logbookBackupCompleted {
+    return Intl.message(
+      'Backup completed',
+      name: 'logbookBackupCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup cancelled`
+  String get logbookBackupCancelled {
+    return Intl.message(
+      'Backup cancelled',
+      name: 'logbookBackupCancelled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup failed`
+  String get logbookBackupFailed {
+    return Intl.message(
+      'Backup failed',
+      name: 'logbookBackupFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restoring backup`
+  String get logbookRestoreRunning {
+    return Intl.message(
+      'Restoring backup',
+      name: 'logbookRestoreRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore completed`
+  String get logbookRestoreCompleted {
+    return Intl.message(
+      'Restore completed',
+      name: 'logbookRestoreCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore failed`
+  String get logbookRestoreFailed {
+    return Intl.message(
+      'Restore failed',
+      name: 'logbookRestoreFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running configuration script`
+  String get logbookScriptEvaluateRunning {
+    return Intl.message(
+      'Running configuration script',
+      name: 'logbookScriptEvaluateRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configuration script completed`
+  String get logbookScriptEvaluated {
+    return Intl.message(
+      'Configuration script completed',
+      name: 'logbookScriptEvaluated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configuration script failed`
+  String get logbookScriptEvaluateFailed {
+    return Intl.message(
+      'Configuration script failed',
+      name: 'logbookScriptEvaluateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS diagnostics`
+  String get dnsDiagnostics {
+    return Intl.message(
+      'DNS diagnostics',
+      name: 'dnsDiagnostics',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Query the running Core and inspect DNS records`
+  String get dnsDiagnosticsDesc {
+    return Intl.message(
+      'Query the running Core and inspect DNS records',
+      name: 'dnsDiagnosticsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain or IP address`
+  String get dnsQueryName {
+    return Intl.message(
+      'Domain or IP address',
+      name: 'dnsQueryName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Record type`
+  String get dnsRecordType {
+    return Intl.message(
+      'Record type',
+      name: 'dnsRecordType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resolver`
+  String get dnsResolver {
+    return Intl.message('Resolver', name: 'dnsResolver', desc: '', args: []);
+  }
+
+  /// `Active Core resolver`
+  String get dnsResolverDefault {
+    return Intl.message(
+      'Active Core resolver',
+      name: 'dnsResolverDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System DNS`
+  String get dnsResolverSystem {
+    return Intl.message(
+      'System DNS',
+      name: 'dnsResolverSystem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy server DNS`
+  String get dnsResolverProxy {
+    return Intl.message(
+      'Proxy server DNS',
+      name: 'dnsResolverProxy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Direct outbound DNS`
+  String get dnsResolverDirect {
+    return Intl.message(
+      'Direct outbound DNS',
+      name: 'dnsResolverDirect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Run query`
+  String get dnsRunQuery {
+    return Intl.message('Run query', name: 'dnsRunQuery', desc: '', args: []);
+  }
+
+  /// `DNS response`
+  String get dnsQueryResult {
+    return Intl.message(
+      'DNS response',
+      name: 'dnsQueryResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No records returned`
+  String get dnsNoRecords {
+    return Intl.message(
+      'No records returned',
+      name: 'dnsNoRecords',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Answers`
+  String get dnsAnswerSection {
+    return Intl.message(
+      'Answers',
+      name: 'dnsAnswerSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authority`
+  String get dnsAuthoritySection {
+    return Intl.message(
+      'Authority',
+      name: 'dnsAuthoritySection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Additional`
+  String get dnsAdditionalSection {
+    return Intl.message(
+      'Additional',
+      name: 'dnsAdditionalSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response flags`
+  String get dnsResponseFlags {
+    return Intl.message(
+      'Response flags',
+      name: 'dnsResponseFlags',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS query failed`
+  String get dnsQueryFailed {
+    return Intl.message(
+      'DNS query failed',
+      name: 'dnsQueryFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The active Core resolver was unavailable, so system DNS was used`
+  String get dnsWarningDefaultResolverUnavailable {
+    return Intl.message(
+      'The active Core resolver was unavailable, so system DNS was used',
+      name: 'dnsWarningDefaultResolverUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The response contains no answer records`
+  String get dnsWarningNoAnswer {
+    return Intl.message(
+      'The response contains no answer records',
+      name: 'dnsWarningNoAnswer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The response was truncated`
+  String get dnsWarningTruncated {
+    return Intl.message(
+      'The response was truncated',
+      name: 'dnsWarningTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Querying DNS`
+  String get logbookDnsQueryRunning {
+    return Intl.message(
+      'Querying DNS',
+      name: 'logbookDnsQueryRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS query completed`
+  String get logbookDnsQueryCompleted {
+    return Intl.message(
+      'DNS query completed',
+      name: 'logbookDnsQueryCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `DNS query failed`
+  String get logbookDnsQueryFailed {
+    return Intl.message(
+      'DNS query failed',
+      name: 'logbookDnsQueryFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP Capture`
+  String get httpCapture {
+    return Intl.message(
+      'HTTP Capture',
+      name: 'httpCapture',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspect HTTP/1 transactions and HTTP/2 streams with an explicit, local privacy policy`
+  String get httpCaptureDesc {
+    return Intl.message(
+      'Inspect HTTP/1 transactions and HTTP/2 streams with an explicit, local privacy policy',
+      name: 'httpCaptureDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Opt-in capture combines bounded passive Core observations with an explicitly started local HTTPS relay. The relay observes ordered HTTP/1 transactions and concurrent HTTP/2 streams. Metadata-only is the default. Header values and size-bounded bodies are retained only when explicitly enabled; sensitive headers remain redacted unless separately authorized. Query strings, fragments, reason phrases, certificates and raw HTTP messages are not retained. New connections only; local records are excluded from backups.`
+  String get httpCaptureObservationOnly {
+    return Intl.message(
+      'Opt-in capture combines bounded passive Core observations with an explicitly started local HTTPS relay. The relay observes ordered HTTP/1 transactions and concurrent HTTP/2 streams. Metadata-only is the default. Header values and size-bounded bodies are retained only when explicitly enabled; sensitive headers remain redacted unless separately authorized. Query strings, fragments, reason phrases, certificates and raw HTTP messages are not retained. New connections only; local records are excluded from backups.',
+      name: 'httpCaptureObservationOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capturing`
+  String get httpCaptureRunning {
+    return Intl.message(
+      'Capturing',
+      name: 'httpCaptureRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopped`
+  String get httpCaptureStopped {
+    return Intl.message(
+      'Stopped',
+      name: 'httpCaptureStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export HAR-compatible observations`
+  String get httpCaptureExportHar {
+    return Intl.message(
+      'Export HAR-compatible observations',
+      name: 'httpCaptureExportHar',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP observations exported`
+  String get httpCaptureExportSuccess {
+    return Intl.message(
+      'HTTP observations exported',
+      name: 'httpCaptureExportSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No HTTP observations yet`
+  String get httpCaptureEmpty {
+    return Intl.message(
+      'No HTTP observations yet',
+      name: 'httpCaptureEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All profiles`
+  String get httpCaptureAllProfiles {
+    return Intl.message(
+      'All profiles',
+      name: 'httpCaptureAllProfiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current profile`
+  String get httpCaptureCurrentProfile {
+    return Intl.message(
+      'Current profile',
+      name: 'httpCaptureCurrentProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP`
+  String get httpCaptureProtocolHttp {
+    return Intl.message(
+      'HTTP',
+      name: 'httpCaptureProtocolHttp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS / HTTPS`
+  String get httpCaptureProtocolTls {
+    return Intl.message(
+      'TLS / HTTPS',
+      name: 'httpCaptureProtocolTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QUIC / HTTP/3`
+  String get httpCaptureProtocolQuic {
+    return Intl.message(
+      'QUIC / HTTP/3',
+      name: 'httpCaptureProtocolQuic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown protocol`
+  String get httpCaptureProtocolUnknown {
+    return Intl.message(
+      'Unknown protocol',
+      name: 'httpCaptureProtocolUnknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Scheme reported by Core`
+  String get httpCaptureEvidenceRemoteScheme {
+    return Intl.message(
+      'Scheme reported by Core',
+      name: 'httpCaptureEvidenceRemoteScheme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Common HTTP port`
+  String get httpCaptureEvidenceKnownHttpPort {
+    return Intl.message(
+      'Common HTTP port',
+      name: 'httpCaptureEvidenceKnownHttpPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Common TLS port`
+  String get httpCaptureEvidenceKnownTlsPort {
+    return Intl.message(
+      'Common TLS port',
+      name: 'httpCaptureEvidenceKnownTlsPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Common QUIC port`
+  String get httpCaptureEvidenceKnownQuicPort {
+    return Intl.message(
+      'Common QUIC port',
+      name: 'httpCaptureEvidenceKnownQuicPort',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host observed; protocol unknown`
+  String get httpCaptureEvidenceHostObserved {
+    return Intl.message(
+      'Host observed; protocol unknown',
+      name: 'httpCaptureEvidenceHostObserved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transport metadata only`
+  String get httpCaptureEvidenceTransportOnly {
+    return Intl.message(
+      'Transport metadata only',
+      name: 'httpCaptureEvidenceTransportOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed endpoint`
+  String get httpCaptureEndpoint {
+    return Intl.message(
+      'Observed endpoint',
+      name: 'httpCaptureEndpoint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observation delay`
+  String get httpCaptureObservationDelay {
+    return Intl.message(
+      'Observation delay',
+      name: 'httpCaptureObservationDelay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HAR export reflects the active capture policy. Passive sources remain metadata-only. An explicitly authorized inspection relay can export HTTP/1 transactions or HTTP/2 streams, permitted header values, bounded bodies and available connection/request timing. Redacted values stay redacted; query strings, fragments, reason phrases and unknown timing phases remain unavailable.`
+  String get httpCaptureHarWarning {
+    return Intl.message(
+      'HAR export reflects the active capture policy. Passive sources remain metadata-only. An explicitly authorized inspection relay can export HTTP/1 transactions or HTTP/2 streams, permitted header values, bounded bodies and available connection/request timing. Redacted values stay redacted; query strings, fragments, reason phrases and unknown timing phases remain unavailable.',
+      name: 'httpCaptureHarWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture started`
+  String get logbookHttpCaptureRunning {
+    return Intl.message(
+      'HTTP capture started',
+      name: 'logbookHttpCaptureRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture stopped`
+  String get logbookHttpCaptureCompleted {
+    return Intl.message(
+      'HTTP capture stopped',
+      name: 'logbookHttpCaptureCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP capture interrupted`
+  String get logbookHttpCaptureInterrupted {
+    return Intl.message(
+      'HTTP capture interrupted',
+      name: 'logbookHttpCaptureInterrupted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Process path`
+  String get httpCaptureProcessPath {
+    return Intl.message(
+      'Process path',
+      name: 'httpCaptureProcessPath',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/1 request prefix observed by Core`
+  String get httpCaptureEvidenceCoreHttp1 {
+    return Intl.message(
+      'HTTP/1 request prefix observed by Core',
+      name: 'httpCaptureEvidenceCoreHttp1',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS ClientHello observed by Core`
+  String get httpCaptureEvidenceCoreTlsClientHello {
+    return Intl.message(
+      'TLS ClientHello observed by Core',
+      name: 'httpCaptureEvidenceCoreTlsClientHello',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authorized HTTPS relay metadata`
+  String get httpCaptureEvidenceInspectedRuntime {
+    return Intl.message(
+      'Authorized HTTPS relay metadata',
+      name: 'httpCaptureEvidenceInspectedRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observation source`
+  String get httpCaptureSourceType {
+    return Intl.message(
+      'Observation source',
+      name: 'httpCaptureSourceType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection candidate`
+  String get httpCaptureSourceConnectionCandidate {
+    return Intl.message(
+      'Connection candidate',
+      name: 'httpCaptureSourceConnectionCandidate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Passive Core observer`
+  String get httpCaptureSourcePassiveCore {
+    return Intl.message(
+      'Passive Core observer',
+      name: 'httpCaptureSourcePassiveCore',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspected local relay`
+  String get httpCaptureSourceInspectedRuntime {
+    return Intl.message(
+      'Inspected local relay',
+      name: 'httpCaptureSourceInspectedRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay state`
+  String get httpCaptureRuntimeState {
+    return Intl.message(
+      'Relay state',
+      name: 'httpCaptureRuntimeState',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay session`
+  String get httpCaptureRuntimeId {
+    return Intl.message(
+      'Relay session',
+      name: 'httpCaptureRuntimeId',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client-side TLS`
+  String get httpCaptureRuntimeDownstreamTls {
+    return Intl.message(
+      'Client-side TLS',
+      name: 'httpCaptureRuntimeDownstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream TLS`
+  String get httpCaptureRuntimeUpstreamTls {
+    return Intl.message(
+      'Upstream TLS',
+      name: 'httpCaptureRuntimeUpstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay completed`
+  String get httpCaptureRuntimeCompletedAt {
+    return Intl.message(
+      'Relay completed',
+      name: 'httpCaptureRuntimeCompletedAt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay failure kind`
+  String get httpCaptureRuntimeFailure {
+    return Intl.message(
+      'Relay failure kind',
+      name: 'httpCaptureRuntimeFailure',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream connection failed`
+  String get httpCaptureRuntimeFailureUpstreamDial {
+    return Intl.message(
+      'Upstream connection failed',
+      name: 'httpCaptureRuntimeFailureUpstreamDial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream TLS verification failed`
+  String get httpCaptureRuntimeFailureUpstreamTls {
+    return Intl.message(
+      'Upstream TLS verification failed',
+      name: 'httpCaptureRuntimeFailureUpstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf certificate unavailable`
+  String get httpCaptureRuntimeFailureLeaf {
+    return Intl.message(
+      'Leaf certificate unavailable',
+      name: 'httpCaptureRuntimeFailureLeaf',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client-side TLS handshake failed`
+  String get httpCaptureRuntimeFailureDownstreamTls {
+    return Intl.message(
+      'Client-side TLS handshake failed',
+      name: 'httpCaptureRuntimeFailureDownstreamTls',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspection authorization was revoked`
+  String get httpCaptureRuntimeFailureAuthorizationRevoked {
+    return Intl.message(
+      'Inspection authorization was revoked',
+      name: 'httpCaptureRuntimeFailureAuthorizationRevoked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Encrypted relay ended with an error`
+  String get httpCaptureRuntimeFailureRelay {
+    return Intl.message(
+      'Encrypted relay ended with an error',
+      name: 'httpCaptureRuntimeFailureRelay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture stopped before the relay completed`
+  String get httpCaptureRuntimeFailureCaptureStopped {
+    return Intl.message(
+      'Capture stopped before the relay completed',
+      name: 'httpCaptureRuntimeFailureCaptureStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Previous capture ended unexpectedly`
+  String get httpCaptureRuntimeFailureCaptureInterrupted {
+    return Intl.message(
+      'Previous capture ended unexpectedly',
+      name: 'httpCaptureRuntimeFailureCaptureInterrupted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This entry came from the explicitly authorized loopback HTTPS relay. It retains at most 32 HTTP/1 transactions or HTTP/2 streams per connection. Metadata-only is the default; header values and bounded bodies appear only when the recorded policy authorized them. Sensitive values may remain redacted and all truncation is marked.`
+  String get httpCaptureInspectedBoundary {
+    return Intl.message(
+      'This entry came from the explicitly authorized loopback HTTPS relay. It retains at most 32 HTTP/1 transactions or HTTP/2 streams per connection. Metadata-only is the default; header values and bounded bodies appear only when the recorded policy authorized them. Sensitive values may remain redacted and all truncation is marked.',
+      name: 'httpCaptureInspectedBoundary',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core passive observer`
+  String get httpCaptureCoreObserverActive {
+    return Intl.message(
+      'Core passive observer',
+      name: 'httpCaptureCoreObserverActive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection metadata fallback`
+  String get httpCaptureConnectionFallback {
+    return Intl.message(
+      'Connection metadata fallback',
+      name: 'httpCaptureConnectionFallback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/1 transactions`
+  String get httpCaptureTransactions {
+    return Intl.message(
+      'HTTP/1 transactions',
+      name: 'httpCaptureTransactions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transaction`
+  String get httpCaptureTransaction {
+    return Intl.message(
+      'Transaction',
+      name: 'httpCaptureTransaction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, =1{1 transaction} other{{count} transactions}}`
+  String httpCaptureTransactionCount(int count) {
+    return Intl.plural(
+      count,
+      one: '1 transaction',
+      other: '$count transactions',
+      name: 'httpCaptureTransactionCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Request observed after`
+  String get httpCaptureRequestObservedAfter {
+    return Intl.message(
+      'Request observed after',
+      name: 'httpCaptureRequestObservedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Timeline truncated`
+  String get httpCaptureTimelineTruncated {
+    return Intl.message(
+      'Timeline truncated',
+      name: 'httpCaptureTimelineTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request method`
+  String get httpCaptureRequestMethod {
+    return Intl.message(
+      'Request method',
+      name: 'httpCaptureRequestMethod',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sanitized target`
+  String get httpCaptureRequestTarget {
+    return Intl.message(
+      'Sanitized target',
+      name: 'httpCaptureRequestTarget',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP version`
+  String get httpCaptureHttpVersion {
+    return Intl.message(
+      'HTTP version',
+      name: 'httpCaptureHttpVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header names`
+  String get httpCaptureHeaderNames {
+    return Intl.message(
+      'Header names',
+      name: 'httpCaptureHeaderNames',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Headers complete`
+  String get httpCaptureHeadersComplete {
+    return Intl.message(
+      'Headers complete',
+      name: 'httpCaptureHeadersComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS server name`
+  String get httpCaptureTlsServerName {
+    return Intl.message(
+      'TLS server name',
+      name: 'httpCaptureTlsServerName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ALPN`
+  String get httpCaptureTlsAlpn {
+    return Intl.message('ALPN', name: 'httpCaptureTlsAlpn', desc: '', args: []);
+  }
+
+  /// `Supported TLS versions`
+  String get httpCaptureTlsVersions {
+    return Intl.message(
+      'Supported TLS versions',
+      name: 'httpCaptureTlsVersions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Legacy TLS version`
+  String get httpCaptureTlsLegacyVersion {
+    return Intl.message(
+      'Legacy TLS version',
+      name: 'httpCaptureTlsLegacyVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Encrypted ClientHello`
+  String get httpCaptureTlsEch {
+    return Intl.message(
+      'Encrypted ClientHello',
+      name: 'httpCaptureTlsEch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ClientHello complete`
+  String get httpCaptureClientHelloComplete {
+    return Intl.message(
+      'ClientHello complete',
+      name: 'httpCaptureClientHelloComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed prefix`
+  String get httpCaptureObservedBytes {
+    return Intl.message(
+      'Observed prefix',
+      name: 'httpCaptureObservedBytes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observation truncated`
+  String get httpCaptureTruncated {
+    return Intl.message(
+      'Observation truncated',
+      name: 'httpCaptureTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete`
+  String get httpCaptureComplete {
+    return Intl.message(
+      'Complete',
+      name: 'httpCaptureComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Incomplete`
+  String get httpCaptureIncomplete {
+    return Intl.message(
+      'Incomplete',
+      name: 'httpCaptureIncomplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Present`
+  String get httpCapturePresent {
+    return Intl.message(
+      'Present',
+      name: 'httpCapturePresent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not observed`
+  String get httpCaptureNotPresent {
+    return Intl.message(
+      'Not observed',
+      name: 'httpCaptureNotPresent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request target truncated`
+  String get httpCaptureTargetTruncated {
+    return Intl.message(
+      'Request target truncated',
+      name: 'httpCaptureTargetTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host truncated`
+  String get httpCaptureHostTruncated {
+    return Intl.message(
+      'Host truncated',
+      name: 'httpCaptureHostTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header-name list truncated`
+  String get httpCaptureHeaderNamesTruncated {
+    return Intl.message(
+      'Header-name list truncated',
+      name: 'httpCaptureHeaderNamesTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed response`
+  String get httpCaptureResponse {
+    return Intl.message(
+      'Observed response',
+      name: 'httpCaptureResponse',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response status`
+  String get httpCaptureResponseStatus {
+    return Intl.message(
+      'Response status',
+      name: 'httpCaptureResponseStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response HTTP version`
+  String get httpCaptureResponseHttpVersion {
+    return Intl.message(
+      'Response HTTP version',
+      name: 'httpCaptureResponseHttpVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response header names`
+  String get httpCaptureResponseHeaderNames {
+    return Intl.message(
+      'Response header names',
+      name: 'httpCaptureResponseHeaderNames',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response headers complete`
+  String get httpCaptureResponseHeadersComplete {
+    return Intl.message(
+      'Response headers complete',
+      name: 'httpCaptureResponseHeadersComplete',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed response prefix`
+  String get httpCaptureResponseObservedBytes {
+    return Intl.message(
+      'Observed response prefix',
+      name: 'httpCaptureResponseObservedBytes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response observed after`
+  String get httpCaptureResponseObservedAfter {
+    return Intl.message(
+      'Response observed after',
+      name: 'httpCaptureResponseObservedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response observation truncated`
+  String get httpCaptureResponseTruncated {
+    return Intl.message(
+      'Response observation truncated',
+      name: 'httpCaptureResponseTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response header-name list truncated`
+  String get httpCaptureResponseHeaderNamesTruncated {
+    return Intl.message(
+      'Response header-name list truncated',
+      name: 'httpCaptureResponseHeaderNamesTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Informational status codes`
+  String get httpCaptureInformationalStatusCodes {
+    return Intl.message(
+      'Informational status codes',
+      name: 'httpCaptureInformationalStatusCodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Informational status list truncated`
+  String get httpCaptureInformationalStatusCodesTruncated {
+    return Intl.message(
+      'Informational status list truncated',
+      name: 'httpCaptureInformationalStatusCodesTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core observer is still stopping`
+  String get httpCaptureCoreObserverStopping {
+    return Intl.message(
+      'Core observer is still stopping',
+      name: 'httpCaptureCoreObserverStopping',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enable sensitive capture?`
+  String get httpCaptureRiskTitle {
+    return Intl.message(
+      'Enable sensitive capture?',
+      name: 'httpCaptureRiskTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header values and message bodies can contain credentials, cookies, personal data and private content. Enable only the minimum needed, use a narrow inspection allowlist, and stop capture immediately after debugging.`
+  String get httpCaptureRiskMessage {
+    return Intl.message(
+      'Header values and message bodies can contain credentials, cookies, personal data and private content. Enable only the minimum needed, use a narrow inspection allowlist, and stop capture immediately after debugging.',
+      name: 'httpCaptureRiskMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Always-redacted headers`
+  String get httpCaptureRedactedHeaders {
+    return Intl.message(
+      'Always-redacted headers',
+      name: 'httpCaptureRedactedHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `x-private-token, x-session-id`
+  String get httpCaptureRedactedHeadersHint {
+    return Intl.message(
+      'x-private-token, x-session-id',
+      name: 'httpCaptureRedactedHeadersHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Comma- or space-separated header names that remain redacted even when sensitive values are authorized.`
+  String get httpCaptureRedactedHeadersDesc {
+    return Intl.message(
+      'Comma- or space-separated header names that remain redacted even when sensitive values are authorized.',
+      name: 'httpCaptureRedactedHeadersDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture privacy policy`
+  String get httpCapturePrivacy {
+    return Intl.message(
+      'Capture privacy policy',
+      name: 'httpCapturePrivacy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configure the policy before starting capture. The policy is snapshotted for the whole session.`
+  String get httpCapturePrivacyDesc {
+    return Intl.message(
+      'Configure the policy before starting capture. The policy is snapshotted for the whole session.',
+      name: 'httpCapturePrivacyDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop capture before changing the privacy policy.`
+  String get httpCapturePolicyLocked {
+    return Intl.message(
+      'Stop capture before changing the privacy policy.',
+      name: 'httpCapturePolicyLocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Metadata only`
+  String get httpCaptureMetadataOnly {
+    return Intl.message(
+      'Metadata only',
+      name: 'httpCaptureMetadataOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Content capture enabled`
+  String get httpCaptureContentEnabled {
+    return Intl.message(
+      'Content capture enabled',
+      name: 'httpCaptureContentEnabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Capture header values`
+  String get httpCaptureHeaderValues {
+    return Intl.message(
+      'Capture header values',
+      name: 'httpCaptureHeaderValues',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Store bounded request and response header values. Known sensitive fields stay redacted.`
+  String get httpCaptureHeaderValuesDesc {
+    return Intl.message(
+      'Store bounded request and response header values. Known sensitive fields stay redacted.',
+      name: 'httpCaptureHeaderValuesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Authorize sensitive header values`
+  String get httpCaptureSensitiveHeaderValues {
+    return Intl.message(
+      'Authorize sensitive header values',
+      name: 'httpCaptureSensitiveHeaderValues',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allow credentials, cookies and token-like headers unless they are in the always-redacted list.`
+  String get httpCaptureSensitiveHeaderValuesDesc {
+    return Intl.message(
+      'Allow credentials, cookies and token-like headers unless they are in the always-redacted list.',
+      name: 'httpCaptureSensitiveHeaderValuesDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Body capture`
+  String get httpCaptureBodyMode {
+    return Intl.message(
+      'Body capture',
+      name: 'httpCaptureBodyMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off`
+  String get httpCaptureBodyNone {
+    return Intl.message('Off', name: 'httpCaptureBodyNone', desc: '', args: []);
+  }
+
+  /// `Text, JSON and forms`
+  String get httpCaptureBodyText {
+    return Intl.message(
+      'Text, JSON and forms',
+      name: 'httpCaptureBodyText',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All supported types`
+  String get httpCaptureBodyAll {
+    return Intl.message(
+      'All supported types',
+      name: 'httpCaptureBodyAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Per-body limit`
+  String get httpCaptureBodyLimit {
+    return Intl.message(
+      'Per-body limit',
+      name: 'httpCaptureBodyLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream connect completed after`
+  String get httpCaptureConnectCompletedAfter {
+    return Intl.message(
+      'Upstream connect completed after',
+      name: 'httpCaptureConnectCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upstream TLS completed after`
+  String get httpCaptureUpstreamTlsCompletedAfter {
+    return Intl.message(
+      'Upstream TLS completed after',
+      name: 'httpCaptureUpstreamTlsCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client TLS completed after`
+  String get httpCaptureDownstreamTlsCompletedAfter {
+    return Intl.message(
+      'Client TLS completed after',
+      name: 'httpCaptureDownstreamTlsCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/2 GOAWAY`
+  String get httpCaptureHttp2GoAway {
+    return Intl.message(
+      'HTTP/2 GOAWAY',
+      name: 'httpCaptureHttp2GoAway',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stream`
+  String get httpCaptureHttp2Stream {
+    return Intl.message(
+      'Stream',
+      name: 'httpCaptureHttp2Stream',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/2 streams`
+  String get httpCaptureHttp2Streams {
+    return Intl.message(
+      'HTTP/2 streams',
+      name: 'httpCaptureHttp2Streams',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open`
+  String get httpCaptureStreamOpen {
+    return Intl.message(
+      'Open',
+      name: 'httpCaptureStreamOpen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request ended`
+  String get httpCaptureStreamRequestEnded {
+    return Intl.message(
+      'Request ended',
+      name: 'httpCaptureStreamRequestEnded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response ended`
+  String get httpCaptureStreamResponseEnded {
+    return Intl.message(
+      'Response ended',
+      name: 'httpCaptureStreamResponseEnded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Closed`
+  String get httpCaptureStreamClosed {
+    return Intl.message(
+      'Closed',
+      name: 'httpCaptureStreamClosed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset`
+  String get httpCaptureStreamReset {
+    return Intl.message(
+      'Reset',
+      name: 'httpCaptureStreamReset',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request completed after`
+  String get httpCaptureRequestCompletedAfter {
+    return Intl.message(
+      'Request completed after',
+      name: 'httpCaptureRequestCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response completed after`
+  String get httpCaptureResponseCompletedAfter {
+    return Intl.message(
+      'Response completed after',
+      name: 'httpCaptureResponseCompletedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request header values`
+  String get httpCaptureRequestHeaders {
+    return Intl.message(
+      'Request header values',
+      name: 'httpCaptureRequestHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response header values`
+  String get httpCaptureResponseHeaders {
+    return Intl.message(
+      'Response header values',
+      name: 'httpCaptureResponseHeaders',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Header values truncated`
+  String get httpCaptureHeaderValuesTruncated {
+    return Intl.message(
+      'Header values truncated',
+      name: 'httpCaptureHeaderValuesTruncated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request cookies`
+  String get httpCaptureRequestCookies {
+    return Intl.message(
+      'Request cookies',
+      name: 'httpCaptureRequestCookies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response cookies`
+  String get httpCaptureResponseCookies {
+    return Intl.message(
+      'Response cookies',
+      name: 'httpCaptureResponseCookies',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Request body`
+  String get httpCaptureRequestBody {
+    return Intl.message(
+      'Request body',
+      name: 'httpCaptureRequestBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Response body`
+  String get httpCaptureResponseBody {
+    return Intl.message(
+      'Response body',
+      name: 'httpCaptureResponseBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Send`
+  String get httpCaptureTimingSend {
+    return Intl.message(
+      'Send',
+      name: 'httpCaptureTimingSend',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wait / TTFB`
+  String get httpCaptureTimingWait {
+    return Intl.message(
+      'Wait / TTFB',
+      name: 'httpCaptureTimingWait',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Receive`
+  String get httpCaptureTimingReceive {
+    return Intl.message(
+      'Receive',
+      name: 'httpCaptureTimingReceive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Redacted`
+  String get httpCaptureRedacted {
+    return Intl.message(
+      'Redacted',
+      name: 'httpCaptureRedacted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Empty value`
+  String get httpCaptureEmptyValue {
+    return Intl.message(
+      'Empty value',
+      name: 'httpCaptureEmptyValue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Omitted`
+  String get httpCaptureOmitted {
+    return Intl.message(
+      'Omitted',
+      name: 'httpCaptureOmitted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The captured image bytes could not be previewed.`
+  String get httpCaptureImagePreviewFailed {
+    return Intl.message(
+      'The captured image bytes could not be previewed.',
+      name: 'httpCaptureImagePreviewFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Body encoding`
+  String get httpCaptureBodyEncoding {
+    return Intl.message(
+      'Body encoding',
+      name: 'httpCaptureBodyEncoding',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stream {id}`
+  String httpCaptureStreamId(int id) {
+    return Intl.message(
+      'Stream $id',
+      name: 'httpCaptureStreamId',
+      desc: '',
+      args: [id],
+    );
+  }
+
+  /// `Error {code}`
+  String httpCaptureErrorCode(int code) {
+    return Intl.message(
+      'Error $code',
+      name: 'httpCaptureErrorCode',
+      desc: '',
+      args: [code],
+    );
+  }
+
+  /// `{count, plural, =1{1 header value} other{{count} header values}}`
+  String httpCaptureHeaderValueCount(int count) {
+    return Intl.plural(
+      count,
+      one: '1 header value',
+      other: '$count header values',
+      name: 'httpCaptureHeaderValueCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `HTTPS inspection safety`
+  String get tlsInspection {
+    return Intl.message(
+      'HTTPS inspection safety',
+      name: 'tlsInspection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Prepare a local authority and explicit domain policy without enabling decryption`
+  String get tlsInspectionDesc {
+    return Intl.message(
+      'Prepare a local authority and explicit domain policy without enabling decryption',
+      name: 'tlsInspectionDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Safety boundary`
+  String get tlsInspectionBoundaryTitle {
+    return Intl.message(
+      'Safety boundary',
+      name: 'tlsInspectionBoundaryTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This stage prepares certificate and policy controls only. HTTPS traffic is not decrypted, intercepted, or rewritten.`
+  String get tlsInspectionBoundaryDesc {
+    return Intl.message(
+      'This stage prepares certificate and policy controls only. HTTPS traffic is not decrypted, intercepted, or rewritten.',
+      name: 'tlsInspectionBoundaryDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off by default`
+  String get tlsInspectionDisabledByDefault {
+    return Intl.message(
+      'Off by default',
+      name: 'tlsInspectionDisabledByDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Explicit allowlist only`
+  String get tlsInspectionAllowlistOnly {
+    return Intl.message(
+      'Explicit allowlist only',
+      name: 'tlsInspectionAllowlistOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No header values or bodies`
+  String get tlsInspectionMetadataOnly {
+    return Intl.message(
+      'No header values or bodies',
+      name: 'tlsInspectionMetadataOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No automatic system trust changes`
+  String get tlsInspectionManualTrustOnly {
+    return Intl.message(
+      'No automatic system trust changes',
+      name: 'tlsInspectionManualTrustOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.`
+  String get tlsInspectionFoundationOnly {
+    return Intl.message(
+      'Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.',
+      name: 'tlsInspectionFoundationOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Readiness checklist`
+  String get tlsInspectionReadiness {
+    return Intl.message(
+      'Readiness checklist',
+      name: 'tlsInspectionReadiness',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Safety policy prepared`
+  String get tlsInspectionPrepared {
+    return Intl.message(
+      'Safety policy prepared',
+      name: 'tlsInspectionPrepared',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.`
+  String get tlsInspectionPreparedDesc {
+    return Intl.message(
+      'All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.',
+      name: 'tlsInspectionPreparedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete every prerequisite before the policy can be prepared.`
+  String get tlsInspectionNotPreparedDesc {
+    return Intl.message(
+      'Complete every prerequisite before the policy can be prepared.',
+      name: 'tlsInspectionNotPreparedDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local certificate authority`
+  String get tlsInspectionAuthority {
+    return Intl.message(
+      'Local certificate authority',
+      name: 'tlsInspectionAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not created`
+  String get tlsInspectionAuthorityMissing {
+    return Intl.message(
+      'Not created',
+      name: 'tlsInspectionAuthorityMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready`
+  String get tlsInspectionAuthorityReady {
+    return Intl.message(
+      'Ready',
+      name: 'tlsInspectionAuthorityReady',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Corrupted`
+  String get tlsInspectionAuthorityCorrupt {
+    return Intl.message(
+      'Corrupted',
+      name: 'tlsInspectionAuthorityCorrupt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expired`
+  String get tlsInspectionAuthorityExpired {
+    return Intl.message(
+      'Expired',
+      name: 'tlsInspectionAuthorityExpired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not yet valid`
+  String get tlsInspectionAuthorityNotYetValid {
+    return Intl.message(
+      'Not yet valid',
+      name: 'tlsInspectionAuthorityNotYetValid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private-key permissions need attention`
+  String get tlsInspectionAuthorityPermissionsWarning {
+    return Intl.message(
+      'Private-key permissions need attention',
+      name: 'tlsInspectionAuthorityPermissionsWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stale private-key material needs cleanup`
+  String get tlsInspectionAuthorityStaleMaterial {
+    return Intl.message(
+      'Stale private-key material needs cleanup',
+      name: 'tlsInspectionAuthorityStaleMaterial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable`
+  String get tlsInspectionAuthorityUnavailable {
+    return Intl.message(
+      'Unavailable',
+      name: 'tlsInspectionAuthorityUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create local authority`
+  String get tlsInspectionCreateAuthority {
+    return Intl.message(
+      'Create local authority',
+      name: 'tlsInspectionCreateAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rotate authority`
+  String get tlsInspectionRotateAuthority {
+    return Intl.message(
+      'Rotate authority',
+      name: 'tlsInspectionRotateAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete authority`
+  String get tlsInspectionDeleteAuthority {
+    return Intl.message(
+      'Delete authority',
+      name: 'tlsInspectionDeleteAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export public certificate`
+  String get tlsInspectionExportCertificate {
+    return Intl.message(
+      'Export public certificate',
+      name: 'tlsInspectionExportCertificate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Public certificate exported`
+  String get tlsInspectionExportSuccess {
+    return Intl.message(
+      'Public certificate exported',
+      name: 'tlsInspectionExportSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SHA-256 fingerprint`
+  String get tlsInspectionFingerprint {
+    return Intl.message(
+      'SHA-256 fingerprint',
+      name: 'tlsInspectionFingerprint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subject`
+  String get tlsInspectionSubject {
+    return Intl.message(
+      'Subject',
+      name: 'tlsInspectionSubject',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Serial number`
+  String get tlsInspectionSerial {
+    return Intl.message(
+      'Serial number',
+      name: 'tlsInspectionSerial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Algorithm`
+  String get tlsInspectionAlgorithm {
+    return Intl.message(
+      'Algorithm',
+      name: 'tlsInspectionAlgorithm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Validity`
+  String get tlsInspectionValidity {
+    return Intl.message(
+      'Validity',
+      name: 'tlsInspectionValidity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Private-key storage`
+  String get tlsInspectionStorage {
+    return Intl.message(
+      'Private-key storage',
+      name: 'tlsInspectionStorage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `System trust`
+  String get tlsInspectionTrust {
+    return Intl.message(
+      'System trust',
+      name: 'tlsInspectionTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Automatic trust-store verification is not connected yet. Export the public certificate, install it manually, verify the fingerprint in system settings, then confirm below.`
+  String get tlsInspectionTrustDesc {
+    return Intl.message(
+      'Automatic trust-store verification is not connected yet. Export the public certificate, install it manually, verify the fingerprint in system settings, then confirm below.',
+      name: 'tlsInspectionTrustDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manually confirmed for this fingerprint`
+  String get tlsInspectionTrustConfirmed {
+    return Intl.message(
+      'Manually confirmed for this fingerprint',
+      name: 'tlsInspectionTrustConfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not confirmed for the current fingerprint`
+  String get tlsInspectionTrustUnconfirmed {
+    return Intl.message(
+      'Not confirmed for the current fingerprint',
+      name: 'tlsInspectionTrustUnconfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `I verified system trust`
+  String get tlsInspectionConfirmTrust {
+    return Intl.message(
+      'I verified system trust',
+      name: 'tlsInspectionConfirmTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear confirmation`
+  String get tlsInspectionClearTrust {
+    return Intl.message(
+      'Clear confirmation',
+      name: 'tlsInspectionClearTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Risk acknowledgement`
+  String get tlsInspectionRisk {
+    return Intl.message(
+      'Risk acknowledgement',
+      name: 'tlsInspectionRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTPS inspection can expose credentials and private content. Use the smallest possible allowlist and never inspect accounts, banking, healthcare, or other sensitive services unless strictly required.`
+  String get tlsInspectionRiskDesc {
+    return Intl.message(
+      'HTTPS inspection can expose credentials and private content. Use the smallest possible allowlist and never inspect accounts, banking, healthcare, or other sensitive services unless strictly required.',
+      name: 'tlsInspectionRiskDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Risk acknowledged`
+  String get tlsInspectionRiskAcknowledged {
+    return Intl.message(
+      'Risk acknowledged',
+      name: 'tlsInspectionRiskAcknowledged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Acknowledge risk`
+  String get tlsInspectionAcknowledgeRisk {
+    return Intl.message(
+      'Acknowledge risk',
+      name: 'tlsInspectionAcknowledgeRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspection allowlist`
+  String get tlsInspectionAllowlist {
+    return Intl.message(
+      'Inspection allowlist',
+      name: 'tlsInspectionAllowlist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only these exact domains or domain trees may become eligible in a later inspection stage.`
+  String get tlsInspectionAllowlistDesc {
+    return Intl.message(
+      'Only these exact domains or domain trees may become eligible in a later inspection stage.',
+      name: 'tlsInspectionAllowlistDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Mandatory exclusions`
+  String get tlsInspectionExclusions {
+    return Intl.message(
+      'Mandatory exclusions',
+      name: 'tlsInspectionExclusions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exclusions always override the allowlist.`
+  String get tlsInspectionExclusionsDesc {
+    return Intl.message(
+      'Exclusions always override the allowlist.',
+      name: 'tlsInspectionExclusionsDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An exclusion wins even when a broader allowlist rule matches.`
+  String get tlsInspectionExclusionWins {
+    return Intl.message(
+      'An exclusion wins even when a broader allowlist rule matches.',
+      name: 'tlsInspectionExclusionWins',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add domain`
+  String get tlsInspectionAddDomain {
+    return Intl.message(
+      'Add domain',
+      name: 'tlsInspectionAddDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Exact domain only`
+  String get tlsInspectionExactDomain {
+    return Intl.message(
+      'Exact domain only',
+      name: 'tlsInspectionExactDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain and subdomains`
+  String get tlsInspectionDomainAndSubdomains {
+    return Intl.message(
+      'Domain and subdomains',
+      name: 'tlsInspectionDomainAndSubdomains',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `api.example.com`
+  String get tlsInspectionDomainHint {
+    return Intl.message(
+      'api.example.com',
+      name: 'tlsInspectionDomainHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No domains configured`
+  String get tlsInspectionNoRules {
+    return Intl.message(
+      'No domains configured',
+      name: 'tlsInspectionNoRules',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Domain scope`
+  String get tlsInspectionRuleScope {
+    return Intl.message(
+      'Domain scope',
+      name: 'tlsInspectionRuleScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rotating the authority invalidates the previous trust confirmation. Existing system trust entries must be replaced manually.`
+  String get tlsInspectionRotateWarning {
+    return Intl.message(
+      'Rotating the authority invalidates the previous trust confirmation. Existing system trust entries must be replaced manually.',
+      name: 'tlsInspectionRotateWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This deletes the local private-key and certificate files. The prepared policy will be disabled; remove any previously installed certificate from the system trust store separately.`
+  String get tlsInspectionDeleteWarning {
+    return Intl.message(
+      'This deletes the local private-key and certificate files. The prepared policy will be disabled; remove any previously installed certificate from the system trust store separately.',
+      name: 'tlsInspectionDeleteWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.`
+  String get tlsInspectionPrivateKeyNeverExported {
+    return Intl.message(
+      'The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.',
+      name: 'tlsInspectionPrivateKeyNeverExported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.`
+  String get tlsInspectionPolicyNotBackedUp {
+    return Intl.message(
+      'FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.',
+      name: 'tlsInspectionPolicyNotBackedUp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Valid local authority`
+  String get tlsInspectionRequirementAuthority {
+    return Intl.message(
+      'Valid local authority',
+      name: 'tlsInspectionRequirementAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Risk acknowledged`
+  String get tlsInspectionRequirementRisk {
+    return Intl.message(
+      'Risk acknowledged',
+      name: 'tlsInspectionRequirementRisk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current CA trusted by the platform or manually verified`
+  String get tlsInspectionRequirementTrust {
+    return Intl.message(
+      'Current CA trusted by the platform or manually verified',
+      name: 'tlsInspectionRequirementTrust',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `At least one allowlist rule`
+  String get tlsInspectionRequirementAllowlist {
+    return Intl.message(
+      'At least one allowlist rule',
+      name: 'tlsInspectionRequirementAllowlist',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf certificate cache bound to the current CA and policy`
+  String get tlsInspectionRequirementLeafCache {
+    return Intl.message(
+      'Leaf certificate cache bound to the current CA and policy',
+      name: 'tlsInspectionRequirementLeafCache',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf certificate cache`
+  String get tlsInspectionLeafCache {
+    return Intl.message(
+      'Leaf certificate cache',
+      name: 'tlsInspectionLeafCache',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready`
+  String get tlsInspectionLeafCacheReady {
+    return Intl.message(
+      'Ready',
+      name: 'tlsInspectionLeafCacheReady',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disabled`
+  String get tlsInspectionLeafCacheDisabled {
+    return Intl.message(
+      'Disabled',
+      name: 'tlsInspectionLeafCacheDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable`
+  String get tlsInspectionLeafCacheUnavailable {
+    return Intl.message(
+      'Unavailable',
+      name: 'tlsInspectionLeafCacheUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.`
+  String get tlsInspectionLeafCacheDesc {
+    return Intl.message(
+      'Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.',
+      name: 'tlsInspectionLeafCacheDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Waiting for a prepared and currently trusted policy.`
+  String get tlsInspectionLeafCacheWaiting {
+    return Intl.message(
+      'Waiting for a prepared and currently trusted policy.',
+      name: 'tlsInspectionLeafCacheWaiting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The local authority changed. Revalidate trust and prepare the policy again.`
+  String get tlsInspectionLeafCacheAuthorityChanged {
+    return Intl.message(
+      'The local authority changed. Revalidate trust and prepare the policy again.',
+      name: 'tlsInspectionLeafCacheAuthorityChanged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf private-key storage permissions are not sufficiently restricted.`
+  String get tlsInspectionLeafCachePermissions {
+    return Intl.message(
+      'Leaf private-key storage permissions are not sufficiently restricted.',
+      name: 'tlsInspectionLeafCachePermissions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cached certificates`
+  String get tlsInspectionLeafCacheEntries {
+    return Intl.message(
+      'Cached certificates',
+      name: 'tlsInspectionLeafCacheEntries',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum validity`
+  String get tlsInspectionLeafCacheValidity {
+    return Intl.message(
+      'Maximum validity',
+      name: 'tlsInspectionLeafCacheValidity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Up to 24 hours`
+  String get tlsInspectionLeafCacheValidityOneDay {
+    return Intl.message(
+      'Up to 24 hours',
+      name: 'tlsInspectionLeafCacheValidityOneDay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Policy digest`
+  String get tlsInspectionLeafCachePolicyDigest {
+    return Intl.message(
+      'Policy digest',
+      name: 'tlsInspectionLeafCachePolicyDigest',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last updated`
+  String get tlsInspectionLeafCacheLastUpdated {
+    return Intl.message(
+      'Last updated',
+      name: 'tlsInspectionLeafCacheLastUpdated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leaf private keys remain inside Core app data and are never returned through IPC or export.`
+  String get tlsInspectionLeafCacheNoExport {
+    return Intl.message(
+      'Leaf private keys remain inside Core app data and are never returned through IPC or export.',
+      name: 'tlsInspectionLeafCacheNoExport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The leaf certificate safety cache could not be prepared.`
+  String get tlsInspectionErrorLeafCache {
+    return Intl.message(
+      'The leaf certificate safety cache could not be prepared.',
+      name: 'tlsInspectionErrorLeafCache',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `IP addresses are not accepted; enter a registrable domain.`
+  String get tlsInspectionErrorIp {
+    return Intl.message(
+      'IP addresses are not accepted; enter a registrable domain.',
+      name: 'tlsInspectionErrorIp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This domain is too broad. Enter a registrable domain such as example.com.`
+  String get tlsInspectionErrorBroad {
+    return Intl.message(
+      'This domain is too broad. Enter a registrable domain such as example.com.',
+      name: 'tlsInspectionErrorBroad',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The saved policy contains a domain that is no longer safe. Remove it and add a registrable domain again.`
+  String get tlsInspectionErrorPolicyRule {
+    return Intl.message(
+      'The saved policy contains a domain that is no longer safe. Remove it and add a registrable domain again.',
+      name: 'tlsInspectionErrorPolicyRule',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The domain-rule limit has been reached.`
+  String get tlsInspectionErrorLimit {
+    return Intl.message(
+      'The domain-rule limit has been reached.',
+      name: 'tlsInspectionErrorLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create a valid local authority first.`
+  String get tlsInspectionErrorAuthority {
+    return Intl.message(
+      'Create a valid local authority first.',
+      name: 'tlsInspectionErrorAuthority',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete the authority, trust, risk, and allowlist requirements first.`
+  String get tlsInspectionErrorRequirements {
+    return Intl.message(
+      'Complete the authority, trust, risk, and allowlist requirements first.',
+      name: 'tlsInspectionErrorRequirements',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connect the Core before managing the local authority.`
+  String get tlsInspectionErrorCoreDisconnected {
+    return Intl.message(
+      'Connect the Core before managing the local authority.',
+      name: 'tlsInspectionErrorCoreDisconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The operation could not be completed.`
+  String get tlsInspectionErrorGeneric {
+    return Intl.message(
+      'The operation could not be completed.',
+      name: 'tlsInspectionErrorGeneric',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App data directory (file-backed)`
+  String get tlsInspectionStorageAppSandbox {
+    return Intl.message(
+      'App data directory (file-backed)',
+      name: 'tlsInspectionStorageAppSandbox',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.`
+  String get tlsInspectionTrustLimitations {
+    return Intl.message(
+      'User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.',
+      name: 'tlsInspectionTrustLimitations',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform-verified trust required`
+  String get tlsInspectionPlatformTrustVerifiedOnly {
+    return Intl.message(
+      'Platform-verified trust required',
+      name: 'tlsInspectionPlatformTrustVerifiedOnly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Present in Android CA store`
+  String get tlsInspectionPlatformTrustVerified {
+    return Intl.message(
+      'Present in Android CA store',
+      name: 'tlsInspectionPlatformTrustVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not installed in Android trust store`
+  String get tlsInspectionPlatformTrustMissing {
+    return Intl.message(
+      'Not installed in Android trust store',
+      name: 'tlsInspectionPlatformTrustMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trust installation blocked`
+  String get tlsInspectionPlatformTrustBlocked {
+    return Intl.message(
+      'Trust installation blocked',
+      name: 'tlsInspectionPlatformTrustBlocked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android trust status unavailable`
+  String get tlsInspectionPlatformTrustUnavailable {
+    return Intl.message(
+      'Android trust status unavailable',
+      name: 'tlsInspectionPlatformTrustUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Automatic verification unavailable`
+  String get tlsInspectionPlatformTrustUnsupported {
+    return Intl.message(
+      'Automatic verification unavailable',
+      name: 'tlsInspectionPlatformTrustUnsupported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `FlClash verifies that this exact CA fingerprint is present in the Android certificate store. A manual confirmation cannot replace the platform result.`
+  String get tlsInspectionPlatformTrustDesc {
+    return Intl.message(
+      'FlClash verifies that this exact CA fingerprint is present in the Android certificate store. A manual confirmation cannot replace the platform result.',
+      name: 'tlsInspectionPlatformTrustDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.`
+  String get tlsInspectionPlatformTrustLimitations {
+    return Intl.message(
+      'Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.',
+      name: 'tlsInspectionPlatformTrustLimitations',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The result is bound to the current CA fingerprint.`
+  String get tlsInspectionPlatformTrustFingerprintMatch {
+    return Intl.message(
+      'The result is bound to the current CA fingerprint.',
+      name: 'tlsInspectionPlatformTrustFingerprintMatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate store`
+  String get tlsInspectionPlatformTrustStore {
+    return Intl.message(
+      'Certificate store',
+      name: 'tlsInspectionPlatformTrustStore',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android user store`
+  String get tlsInspectionPlatformTrustStoreUser {
+    return Intl.message(
+      'Android user store',
+      name: 'tlsInspectionPlatformTrustStoreUser',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android system store`
+  String get tlsInspectionPlatformTrustStoreSystem {
+    return Intl.message(
+      'Android system store',
+      name: 'tlsInspectionPlatformTrustStoreSystem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android user and system stores`
+  String get tlsInspectionPlatformTrustStoreBoth {
+    return Intl.message(
+      'Android user and system stores',
+      name: 'tlsInspectionPlatformTrustStoreBoth',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not present`
+  String get tlsInspectionPlatformTrustStoreNone {
+    return Intl.message(
+      'Not present',
+      name: 'tlsInspectionPlatformTrustStoreNone',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Present in an unidentified store`
+  String get tlsInspectionPlatformTrustStoreUnknown {
+    return Intl.message(
+      'Present in an unidentified store',
+      name: 'tlsInspectionPlatformTrustStoreUnknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last checked`
+  String get tlsInspectionPlatformTrustLastChecked {
+    return Intl.message(
+      'Last checked',
+      name: 'tlsInspectionPlatformTrustLastChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android API level`
+  String get tlsInspectionPlatformVersion {
+    return Intl.message(
+      'Android API level',
+      name: 'tlsInspectionPlatformVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform constraints`
+  String get tlsInspectionPlatformTrustConstraints {
+    return Intl.message(
+      'Platform constraints',
+      name: 'tlsInspectionPlatformTrustConstraints',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Export CA and open Settings`
+  String get tlsInspectionPlatformTrustExportAndOpenSettings {
+    return Intl.message(
+      'Export CA and open Settings',
+      name: 'tlsInspectionPlatformTrustExportAndOpenSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Install CA with Android`
+  String get tlsInspectionPlatformTrustInstall {
+    return Intl.message(
+      'Install CA with Android',
+      name: 'tlsInspectionPlatformTrustInstall',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check again`
+  String get tlsInspectionPlatformTrustCheckAgain {
+    return Intl.message(
+      'Check again',
+      name: 'tlsInspectionPlatformTrustCheckAgain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open security settings`
+  String get tlsInspectionPlatformTrustOpenSettings {
+    return Intl.message(
+      'Open security settings',
+      name: 'tlsInspectionPlatformTrustOpenSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform trust status refreshed`
+  String get tlsInspectionPlatformTrustChecked {
+    return Intl.message(
+      'Platform trust status refreshed',
+      name: 'tlsInspectionPlatformTrustChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android confirmed the CA is installed`
+  String get tlsInspectionPlatformTrustInstalled {
+    return Intl.message(
+      'Android confirmed the CA is installed',
+      name: 'tlsInspectionPlatformTrustInstalled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate exported; finish installation in Android security settings, then return to FlClash`
+  String get tlsInspectionPlatformTrustSettingsOpened {
+    return Intl.message(
+      'Certificate exported; finish installation in Android security settings, then return to FlClash',
+      name: 'tlsInspectionPlatformTrustSettingsOpened',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android could not start the certificate installation workflow`
+  String get tlsInspectionPlatformTrustInstallFailed {
+    return Intl.message(
+      'Android could not start the certificate installation workflow',
+      name: 'tlsInspectionPlatformTrustInstallFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Apps must explicitly opt in to trust user-installed CAs.`
+  String get tlsInspectionPlatformConstraintUserCaOptIn {
+    return Intl.message(
+      'Apps must explicitly opt in to trust user-installed CAs.',
+      name: 'tlsInspectionPlatformConstraintUserCaOptIn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate pinning can still block inspection.`
+  String get tlsInspectionPlatformConstraintCertificatePinning {
+    return Intl.message(
+      'Certificate pinning can still block inspection.',
+      name: 'tlsInspectionPlatformConstraintCertificatePinning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android 11 and later require manual installation in security settings.`
+  String get tlsInspectionPlatformConstraintManualSettings {
+    return Intl.message(
+      'Android 11 and later require manual installation in security settings.',
+      name: 'tlsInspectionPlatformConstraintManualSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android requires explicit user confirmation before installation.`
+  String get tlsInspectionPlatformConstraintUserConfirmation {
+    return Intl.message(
+      'Android requires explicit user confirmation before installation.',
+      name: 'tlsInspectionPlatformConstraintUserConfirmation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Installing inspection CA`
+  String get logbookTlsTrustInstallRunning {
+    return Intl.message(
+      'Installing inspection CA',
+      name: 'logbookTlsTrustInstallRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Inspection CA installed`
+  String get logbookTlsTrustInstalled {
+    return Intl.message(
+      'Inspection CA installed',
+      name: 'logbookTlsTrustInstalled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Certificate settings opened`
+  String get logbookTlsTrustSettingsOpened {
+    return Intl.message(
+      'Certificate settings opened',
+      name: 'logbookTlsTrustSettingsOpened',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `CA installation cancelled`
+  String get logbookTlsTrustCancelled {
+    return Intl.message(
+      'CA installation cancelled',
+      name: 'logbookTlsTrustCancelled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `CA installation failed`
+  String get logbookTlsTrustFailed {
+    return Intl.message(
+      'CA installation failed',
+      name: 'logbookTlsTrustFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Platform trust has not been checked yet.`
+  String get tlsInspectionPlatformTrustNotChecked {
+    return Intl.message(
+      'Platform trust has not been checked yet.',
+      name: 'tlsInspectionPlatformTrustNotChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android returned trust for a different certificate fingerprint.`
+  String get tlsInspectionPlatformTrustFingerprintMismatch {
+    return Intl.message(
+      'Android returned trust for a different certificate fingerprint.',
+      name: 'tlsInspectionPlatformTrustFingerprintMismatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Android could not verify this CA in the certificate store.`
+  String get tlsInspectionPlatformTrustCheckFailed {
+    return Intl.message(
+      'Android could not verify this CA in the certificate store.',
+      name: 'tlsInspectionPlatformTrustCheckFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS handshake self-test`
+  String get tlsInspectionHandshakeTitle {
+    return Intl.message(
+      'TLS handshake self-test',
+      name: 'tlsInspectionHandshakeTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.`
+  String get tlsInspectionHandshakeDescription {
+    return Intl.message(
+      'Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.',
+      name: 'tlsInspectionHandshakeDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Allowlisted domain`
+  String get tlsInspectionHandshakeDomain {
+    return Intl.message(
+      'Allowlisted domain',
+      name: 'tlsInspectionHandshakeDomain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify handshake`
+  String get tlsInspectionHandshakeRun {
+    return Intl.message(
+      'Verify handshake',
+      name: 'tlsInspectionHandshakeRun',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verifying handshake`
+  String get tlsInspectionHandshakeRunning {
+    return Intl.message(
+      'Verifying handshake',
+      name: 'tlsInspectionHandshakeRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This handshake test passed`
+  String get tlsInspectionHandshakePassed {
+    return Intl.message(
+      'This handshake test passed',
+      name: 'tlsInspectionHandshakePassed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verification scope`
+  String get tlsInspectionHandshakeScope {
+    return Intl.message(
+      'Verification scope',
+      name: 'tlsInspectionHandshakeScope',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core memory channel · synthetic test data only`
+  String get tlsInspectionHandshakeScopeValue {
+    return Intl.message(
+      'Core memory channel · synthetic test data only',
+      name: 'tlsInspectionHandshakeScopeValue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verified leaf certificate SHA-256`
+  String get tlsInspectionHandshakeFingerprint {
+    return Intl.message(
+      'Verified leaf certificate SHA-256',
+      name: 'tlsInspectionHandshakeFingerprint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Complete CA, trust and allowlist preparation first.`
+  String get tlsInspectionHandshakeRequirements {
+    return Intl.message(
+      'Complete CA, trust and allowlist preparation first.',
+      name: 'tlsInspectionHandshakeRequirements',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.`
+  String get tlsInspectionHandshakeBoundary {
+    return Intl.message(
+      'Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.',
+      name: 'tlsInspectionHandshakeBoundary',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local TLS verification failed. Check the CA and allowlist, then retry.`
+  String get tlsInspectionHandshakeError {
+    return Intl.message(
+      'Local TLS verification failed. Check the CA and allowlist, then retry.',
+      name: 'tlsInspectionHandshakeError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.`
+  String get tlsInspectionHandshakeUnsupported {
+    return Intl.message(
+      'Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.',
+      name: 'tlsInspectionHandshakeUnsupported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a valid domain within the active allowlist and outside exclusions.`
+  String get tlsInspectionHandshakeDomainError {
+    return Intl.message(
+      'Enter a valid domain within the active allowlist and outside exclusions.',
+      name: 'tlsInspectionHandshakeDomainError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This result no longer matches the current CA or policy. Verify again.`
+  String get tlsInspectionHandshakeStale {
+    return Intl.message(
+      'This result no longer matches the current CA or policy. Verify again.',
+      name: 'tlsInspectionHandshakeStale',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay`
+  String get tlsInspectionRuntime {
+    return Intl.message(
+      'Local HTTPS relay',
+      name: 'tlsInspectionRuntime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An explicit, authenticated loopback CONNECT proxy for testing allowlisted HTTPS traffic through the active Core route.`
+  String get tlsInspectionRuntimeDesc {
+    return Intl.message(
+      'An explicit, authenticated loopback CONNECT proxy for testing allowlisted HTTPS traffic through the active Core route.',
+      name: 'tlsInspectionRuntimeDesc',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `It does not change the system proxy, preserve the source app identity, retain payloads, support HTTP/2, or bypass certificate pinning.`
+  String get tlsInspectionRuntimeBoundary {
+    return Intl.message(
+      'It does not change the system proxy, preserve the source app identity, retain payloads, support HTTP/2, or bypass certificate pinning.',
+      name: 'tlsInspectionRuntimeBoundary',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopped`
+  String get tlsInspectionRuntimeStopped {
+    return Intl.message(
+      'Stopped',
+      name: 'tlsInspectionRuntimeStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Starting`
+  String get tlsInspectionRuntimeStarting {
+    return Intl.message(
+      'Starting',
+      name: 'tlsInspectionRuntimeStarting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running`
+  String get tlsInspectionRuntimeRunning {
+    return Intl.message(
+      'Running',
+      name: 'tlsInspectionRuntimeRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopping`
+  String get tlsInspectionRuntimeStopping {
+    return Intl.message(
+      'Stopping',
+      name: 'tlsInspectionRuntimeStopping',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop not confirmed`
+  String get tlsInspectionRuntimeStopUnconfirmed {
+    return Intl.message(
+      'Stop not confirmed',
+      name: 'tlsInspectionRuntimeStopUnconfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable`
+  String get tlsInspectionRuntimeUnavailable {
+    return Intl.message(
+      'Unavailable',
+      name: 'tlsInspectionRuntimeUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start relay`
+  String get tlsInspectionRuntimeStart {
+    return Intl.message(
+      'Start relay',
+      name: 'tlsInspectionRuntimeStart',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop relay`
+  String get tlsInspectionRuntimeStop {
+    return Intl.message(
+      'Stop relay',
+      name: 'tlsInspectionRuntimeStop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Refresh status`
+  String get tlsInspectionRuntimeRefresh {
+    return Intl.message(
+      'Refresh status',
+      name: 'tlsInspectionRuntimeRefresh',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start local HTTPS relay?`
+  String get tlsInspectionRuntimeStartTitle {
+    return Intl.message(
+      'Start local HTTPS relay?',
+      name: 'tlsInspectionRuntimeStartTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This starts a 10-minute authenticated proxy on 127.0.0.1. Only clients you configure manually can use it. The temporary password is held in memory and shown only for this run.`
+  String get tlsInspectionRuntimeStartWarning {
+    return Intl.message(
+      'This starts a 10-minute authenticated proxy on 127.0.0.1. Only clients you configure manually can use it. The temporary password is held in memory and shown only for this run.',
+      name: 'tlsInspectionRuntimeStartWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay started.`
+  String get tlsInspectionRuntimeStarted {
+    return Intl.message(
+      'Local HTTPS relay started.',
+      name: 'tlsInspectionRuntimeStarted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay stopped.`
+  String get tlsInspectionRuntimeStoppedNotice {
+    return Intl.message(
+      'Local HTTPS relay stopped.',
+      name: 'tlsInspectionRuntimeStoppedNotice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy address`
+  String get tlsInspectionRuntimeAddress {
+    return Intl.message(
+      'Proxy address',
+      name: 'tlsInspectionRuntimeAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username`
+  String get tlsInspectionRuntimeUsername {
+    return Intl.message(
+      'Username',
+      name: 'tlsInspectionRuntimeUsername',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Temporary password`
+  String get tlsInspectionRuntimePassword {
+    return Intl.message(
+      'Temporary password',
+      name: 'tlsInspectionRuntimePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show password`
+  String get tlsInspectionRuntimeShowPassword {
+    return Intl.message(
+      'Show password',
+      name: 'tlsInspectionRuntimeShowPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide password`
+  String get tlsInspectionRuntimeHidePassword {
+    return Intl.message(
+      'Hide password',
+      name: 'tlsInspectionRuntimeHidePassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy proxy address`
+  String get tlsInspectionRuntimeCopyAddress {
+    return Intl.message(
+      'Copy proxy address',
+      name: 'tlsInspectionRuntimeCopyAddress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy username`
+  String get tlsInspectionRuntimeCopyUsername {
+    return Intl.message(
+      'Copy username',
+      name: 'tlsInspectionRuntimeCopyUsername',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy temporary password`
+  String get tlsInspectionRuntimeCopyPassword {
+    return Intl.message(
+      'Copy temporary password',
+      name: 'tlsInspectionRuntimeCopyPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy proxy settings`
+  String get tlsInspectionRuntimeCopySettings {
+    return Intl.message(
+      'Copy proxy settings',
+      name: 'tlsInspectionRuntimeCopySettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy settings copied and scheduled to clear after one minute.`
+  String get tlsInspectionRuntimeCopySuccess {
+    return Intl.message(
+      'Proxy settings copied and scheduled to clear after one minute.',
+      name: 'tlsInspectionRuntimeCopySuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proxy settings could not be copied.`
+  String get tlsInspectionRuntimeCopyError {
+    return Intl.message(
+      'Proxy settings could not be copied.',
+      name: 'tlsInspectionRuntimeCopyError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expires`
+  String get tlsInspectionRuntimeExpires {
+    return Intl.message(
+      'Expires',
+      name: 'tlsInspectionRuntimeExpires',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Active connections`
+  String get tlsInspectionRuntimeActive {
+    return Intl.message(
+      'Active connections',
+      name: 'tlsInspectionRuntimeActive',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accepted`
+  String get tlsInspectionRuntimeAccepted {
+    return Intl.message(
+      'Accepted',
+      name: 'tlsInspectionRuntimeAccepted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Completed`
+  String get tlsInspectionRuntimeCompleted {
+    return Intl.message(
+      'Completed',
+      name: 'tlsInspectionRuntimeCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed`
+  String get tlsInspectionRuntimeFailed {
+    return Intl.message(
+      'Failed',
+      name: 'tlsInspectionRuntimeFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relayed upload`
+  String get tlsInspectionRuntimeUploaded {
+    return Intl.message(
+      'Relayed upload',
+      name: 'tlsInspectionRuntimeUploaded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relayed download`
+  String get tlsInspectionRuntimeDownloaded {
+    return Intl.message(
+      'Relayed download',
+      name: 'tlsInspectionRuntimeDownloaded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Credentials are never persisted or written to Logbook. Copied settings are cleared after one minute when still unchanged; credentials disappear after a confirmed stop or Core restart.`
+  String get tlsInspectionRuntimeCredentialsWarning {
+    return Intl.message(
+      'Credentials are never persisted or written to Logbook. Copied settings are cleared after one minute when still unchanged; credentials disappear after a confirmed stop or Core restart.',
+      name: 'tlsInspectionRuntimeCredentialsWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Prepare the CA, platform trust, allowlist and leaf cache before starting the relay.`
+  String get tlsInspectionRuntimeRequirements {
+    return Intl.message(
+      'Prepare the CA, platform trust, allowlist and leaf cache before starting the relay.',
+      name: 'tlsInspectionRuntimeRequirements',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The local HTTPS relay could not be started or verified.`
+  String get tlsInspectionRuntimeError {
+    return Intl.message(
+      'The local HTTPS relay could not be started or verified.',
+      name: 'tlsInspectionRuntimeError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Core did not confirm that the relay stopped. Keep this page open and retry.`
+  String get tlsInspectionRuntimeStopError {
+    return Intl.message(
+      'Core did not confirm that the relay stopped. Keep this page open and retry.',
+      name: 'tlsInspectionRuntimeStopError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An unowned or stale relay was revoked.`
+  String get tlsInspectionRuntimeOrphaned {
+    return Intl.message(
+      'An unowned or stale relay was revoked.',
+      name: 'tlsInspectionRuntimeOrphaned',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Starting local HTTPS relay`
+  String get logbookTlsRuntimeStarting {
+    return Intl.message(
+      'Starting local HTTPS relay',
+      name: 'logbookTlsRuntimeStarting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay running`
+  String get logbookTlsRuntimeRunning {
+    return Intl.message(
+      'Local HTTPS relay running',
+      name: 'logbookTlsRuntimeRunning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay stopped`
+  String get logbookTlsRuntimeStopped {
+    return Intl.message(
+      'Local HTTPS relay stopped',
+      name: 'logbookTlsRuntimeStopped',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay expired`
+  String get logbookTlsRuntimeExpired {
+    return Intl.message(
+      'Local HTTPS relay expired',
+      name: 'logbookTlsRuntimeExpired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay revoked`
+  String get logbookTlsRuntimeRevoked {
+    return Intl.message(
+      'Local HTTPS relay revoked',
+      name: 'logbookTlsRuntimeRevoked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Relay stop not confirmed`
+  String get logbookTlsRuntimeStopUnconfirmed {
+    return Intl.message(
+      'Relay stop not confirmed',
+      name: 'logbookTlsRuntimeStopUnconfirmed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Local HTTPS relay failed`
+  String get logbookTlsRuntimeFailed {
+    return Intl.message(
+      'Local HTTPS relay failed',
+      name: 'logbookTlsRuntimeFailed',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {

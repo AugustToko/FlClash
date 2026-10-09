@@ -50,40 +50,48 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(count) => "${count} 時間";
 
-  static String m14(target) => "${target} は無効なポリシーです";
+  static String m14(code) => "エラー ${code}";
 
-  static String m15(proxyName) => "${proxyName} は無効なプロキシです";
+  static String m15(count) => "ヘッダー値 ${count} 件";
 
-  static String m16(providerName) => "${providerName} は無効なプロキシプロバイダーです";
+  static String m16(id) => "ストリーム ${id}";
 
-  static String m17(subRule) => "${subRule} は無効な SUB_RULE です";
+  static String m17(count) => "${count} 件のトランザクション";
 
-  static String m18(appName) =>
+  static String m18(target) => "${target} は無効なポリシーです";
+
+  static String m19(proxyName) => "${proxyName} は無効なプロキシです";
+
+  static String m20(providerName) => "${providerName} は無効なプロキシプロバイダーです";
+
+  static String m21(subRule) => "${subRule} は無効な SUB_RULE です";
+
+  static String m22(appName) =>
       "1. システム設定 > プライバシーとセキュリティ を開く\n2. 位置情報サービス を選択\n3. リストで ${appName} を見つけてチェックを入れる\n\n設定が完了したらアプリに戻ると、通常どおり使用できます。ご協力ありがとうございます。";
 
-  static String m19(label, max) => "${label}は最大${max}文字です";
+  static String m23(label, max) => "${label}は最大${max}文字です";
 
-  static String m20(count) => "${count} 分前";
+  static String m24(count) => "${count} 分前";
 
-  static String m21(count) => "${count} か月前";
+  static String m25(count) => "${count} か月前";
 
-  static String m22(label) => "${label}はまだありません";
+  static String m26(label) => "${label}はまだありません";
 
-  static String m23(label) => "${label}は数値である必要があります";
+  static String m27(label) => "${label}は数値である必要があります";
 
-  static String m24(label) => "${label} は 1024〜49151 の範囲で指定してください";
+  static String m28(label) => "${label} は 1024〜49151 の範囲で指定してください";
 
-  static String m25(count) => "プロキシ ${count} 件";
+  static String m29(count) => "プロキシ ${count} 件";
 
-  static String m26(count) => "ルール ${count} 件";
+  static String m30(count) => "ルール ${count} 件";
 
-  static String m27(count) => "${count} 秒";
+  static String m31(count) => "${count} 秒";
 
-  static String m28(count) => "${count} 件選択中";
+  static String m32(count) => "${count} 件選択中";
 
-  static String m29(label) => "${label}はURLである必要があります";
+  static String m33(label) => "${label}はURLである必要があります";
 
-  static String m30(count) => "${count} 年前";
+  static String m34(count) => "${count} 年前";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -212,6 +220,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkUpdate": MessageLookupByLibrary.simpleMessage("更新を確認"),
     "checkUpdateError": MessageLookupByLibrary.simpleMessage("すでに最新バージョンです"),
     "clearData": MessageLookupByLibrary.simpleMessage("データを消去"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("イベントログを消去"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "保存されたイベントログをすべて消去しますか？",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("検索をクリア"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage("クリップボードへエクスポート"),
     "clipboardImport": MessageLookupByLibrary.simpleMessage("クリップボードからインポート"),
@@ -323,9 +335,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "新しいバージョンが見つかりました",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("追加"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("回答"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("権威"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage("DNS関連の設定を更新します"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS 診断"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "実行中の Core で DNS を照会し、レコードを確認します",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNSハイジャック"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNSモード"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("レコードが返されませんでした"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 照会に失敗しました"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("ドメインまたは IP アドレス"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS 応答"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("レコードタイプ"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("リゾルバー"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "現在の Core リゾルバー",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage("直接接続 DNS"),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage("プロキシサーバー DNS"),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("システム DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("応答フラグ"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("照会を実行"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "現在の Core リゾルバーが利用できないため、システム DNS を使用しました",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "応答に回答レコードがありません",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage("応答が切り詰められました"),
     "domain": MessageLookupByLibrary.simpleMessage("ドメイン"),
     "download": MessageLookupByLibrary.simpleMessage("ダウンロード"),
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
@@ -420,6 +461,320 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("時間"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP キャプチャ"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "すべてのプロファイル",
+    ),
+    "httpCaptureBodyAll": MessageLookupByLibrary.simpleMessage("対応する全形式"),
+    "httpCaptureBodyEncoding": MessageLookupByLibrary.simpleMessage(
+      "本文エンコーディング",
+    ),
+    "httpCaptureBodyLimit": MessageLookupByLibrary.simpleMessage("本文ごとの上限"),
+    "httpCaptureBodyMode": MessageLookupByLibrary.simpleMessage("本文キャプチャ"),
+    "httpCaptureBodyNone": MessageLookupByLibrary.simpleMessage("無効"),
+    "httpCaptureBodyText": MessageLookupByLibrary.simpleMessage(
+      "テキスト、JSON、フォーム",
+    ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello の完全性",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("完全"),
+    "httpCaptureConnectCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "上流接続の完了遅延",
+    ),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "接続メタデータへフォールバック",
+    ),
+    "httpCaptureContentEnabled": MessageLookupByLibrary.simpleMessage(
+      "コンテンツキャプチャ有効",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core 受動オブザーバー",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core オブザーバーを停止中です",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "現在のプロファイル",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "明示的なローカルプライバシーポリシーで HTTP/1 トランザクションと HTTP/2 ストリームを検査します",
+    ),
+    "httpCaptureDownstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("クライアント TLS の完了遅延"),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "HTTP 観測データはありません",
+    ),
+    "httpCaptureEmptyValue": MessageLookupByLibrary.simpleMessage("空の値"),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage("観測したエンドポイント"),
+    "httpCaptureErrorCode": m14,
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "Core が HTTP/1 リクエスト先頭を観測",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage("Core が TLS ClientHello を観測"),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "ホストを観測、プロトコルは不明",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "認可済み HTTPS リレーのメタデータ",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な HTTP ポート",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な QUIC ポート",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "一般的な TLS ポート",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Core が報告したスキーム",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "トランスポートメタデータのみ",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "HAR 互換の観測データをエクスポート",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP 観測データをエクスポートしました",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR エクスポートは現在のキャプチャポリシーに従います。受動ソースはメタデータのみです。明示的に認可した検査リレーは HTTP/1 トランザクションまたは HTTP/2 ストリーム、許可されたヘッダー値、制限付き本文、利用可能な接続/リクエスト時系列を出力できます。マスク値はマスクされたままです。",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage("ヘッダー名"),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー名一覧を切り詰めました",
+    ),
+    "httpCaptureHeaderValueCount": m15,
+    "httpCaptureHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値をキャプチャ",
+    ),
+    "httpCaptureHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "制限付きのリクエスト/レスポンスヘッダー値を保存します。既知の機密フィールドはマスクされます。",
+    ),
+    "httpCaptureHeaderValuesTruncated": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値を切り詰めました",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "ヘッダーの完全性",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host を切り詰めました",
+    ),
+    "httpCaptureHttp2GoAway": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 GOAWAY",
+    ),
+    "httpCaptureHttp2Stream": MessageLookupByLibrary.simpleMessage("ストリーム"),
+    "httpCaptureHttp2Streams": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 ストリーム",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "HTTP バージョン",
+    ),
+    "httpCaptureImagePreviewFailed": MessageLookupByLibrary.simpleMessage(
+      "キャプチャした画像データをプレビューできません。",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("不完全"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "情報レスポンスのステータスコード",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage("情報ステータス一覧を切り詰めました"),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "この記録は明示的に認可されたループバック HTTPS リレーから生成されます。接続ごとに最大 32 件の HTTP/1 トランザクションまたは HTTP/2 ストリームを保持します。既定はメタデータのみで、ヘッダー値と制限付き本文は記録済みポリシーが許可した場合だけ表示されます。",
+    ),
+    "httpCaptureMetadataOnly": MessageLookupByLibrary.simpleMessage("メタデータのみ"),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage("未観測"),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage("観測遅延"),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "オプトインのキャプチャは、制限付きの Core 受動観測と、明示的に開始したローカル HTTPS 検査リレーを組み合わせます。リレーは順序付き HTTP/1 トランザクションと同時実行 HTTP/2 ストリームを観測します。既定はメタデータのみです。ヘッダー値とサイズ制限付き本文は明示的に有効化した場合だけ保持され、機密ヘッダーは個別に許可しない限りマスクされます。クエリ、フラグメント、Reason Phrase、証明書、生の HTTP メッセージは保持しません。新しい接続だけが対象で、ローカル記録はバックアップ対象外です。",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "観測した先頭部分",
+    ),
+    "httpCaptureOmitted": MessageLookupByLibrary.simpleMessage("省略"),
+    "httpCapturePolicyLocked": MessageLookupByLibrary.simpleMessage(
+      "ポリシーを変更する前にキャプチャを停止してください。",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("あり"),
+    "httpCapturePrivacy": MessageLookupByLibrary.simpleMessage(
+      "キャプチャプライバシーポリシー",
+    ),
+    "httpCapturePrivacyDesc": MessageLookupByLibrary.simpleMessage(
+      "キャプチャ開始前に設定します。セッション全体で開始時のスナップショットを使用します。",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage("プロセスパス"),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "不明なプロトコル",
+    ),
+    "httpCaptureRedacted": MessageLookupByLibrary.simpleMessage("マスク済み"),
+    "httpCaptureRedactedHeaders": MessageLookupByLibrary.simpleMessage(
+      "常にマスクするヘッダー",
+    ),
+    "httpCaptureRedactedHeadersDesc": MessageLookupByLibrary.simpleMessage(
+      "カンマまたは空白区切り。機密値を許可しても、これらは常にマスクされます。",
+    ),
+    "httpCaptureRedactedHeadersHint": MessageLookupByLibrary.simpleMessage(
+      "x-private-token, x-session-id",
+    ),
+    "httpCaptureRequestBody": MessageLookupByLibrary.simpleMessage("リクエスト本文"),
+    "httpCaptureRequestCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "リクエスト完了遅延",
+    ),
+    "httpCaptureRequestCookies": MessageLookupByLibrary.simpleMessage(
+      "リクエスト Cookie",
+    ),
+    "httpCaptureRequestHeaders": MessageLookupByLibrary.simpleMessage(
+      "リクエストヘッダー値",
+    ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "リクエストメソッド",
+    ),
+    "httpCaptureRequestObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "リクエスト観測遅延",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "サニタイズ済みターゲット",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage("観測したレスポンス"),
+    "httpCaptureResponseBody": MessageLookupByLibrary.simpleMessage("レスポンス本文"),
+    "httpCaptureResponseCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "レスポンス完了遅延",
+    ),
+    "httpCaptureResponseCookies": MessageLookupByLibrary.simpleMessage(
+      "レスポンス Cookie",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダー名",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage("レスポンスヘッダー名一覧を切り詰めました"),
+    "httpCaptureResponseHeaders": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダー値",
+    ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "レスポンスヘッダーの完全性",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "レスポンス HTTP バージョン",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "レスポンス観測遅延",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "観測したレスポンス先頭",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "レスポンスステータス",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "レスポンス観測の切り詰め",
+    ),
+    "httpCaptureRiskMessage": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値と本文には認証情報、Cookie、個人情報、私的コンテンツが含まれる場合があります。必要最小限だけ有効にし、狭い許可リストを使い、デバッグ後すぐ停止してください。",
+    ),
+    "httpCaptureRiskTitle": MessageLookupByLibrary.simpleMessage(
+      "機密コンテンツのキャプチャを有効にしますか？",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("キャプチャ中"),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "リレー完了時刻",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "クライアント側 TLS",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage(
+      "リレー失敗種別",
+    ),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage("検査の承認が取り消されました"),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage("前回のキャプチャが予期せず中断されました"),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage("リレー完了前にキャプチャが停止しました"),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage("クライアント側 TLS ハンドシェイクに失敗"),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "リーフ証明書を利用できません",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "暗号化リレーがエラーで終了しました",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage("アップストリーム接続に失敗"),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage("アップストリーム TLS 検証に失敗"),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage("リレーセッション"),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage("リレー状態"),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "上流 TLS",
+    ),
+    "httpCaptureSensitiveHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "機密ヘッダー値を許可",
+    ),
+    "httpCaptureSensitiveHeaderValuesDesc":
+        MessageLookupByLibrary.simpleMessage(
+          "認証情報、Cookie、トークン系ヘッダーを許可します。常時マスクリストが優先されます。",
+        ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("接続候補"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "ローカル検査リレー",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Core 受動オブザーバー",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage("観測ソース"),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("停止中"),
+    "httpCaptureStreamClosed": MessageLookupByLibrary.simpleMessage("クローズ"),
+    "httpCaptureStreamId": m16,
+    "httpCaptureStreamOpen": MessageLookupByLibrary.simpleMessage("オープン"),
+    "httpCaptureStreamRequestEnded": MessageLookupByLibrary.simpleMessage(
+      "リクエスト終了",
+    ),
+    "httpCaptureStreamReset": MessageLookupByLibrary.simpleMessage("リセット"),
+    "httpCaptureStreamResponseEnded": MessageLookupByLibrary.simpleMessage(
+      "レスポンス終了",
+    ),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "リクエストターゲットを切り詰めました",
+    ),
+    "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
+      "トランザクション一覧を切り詰めました",
+    ),
+    "httpCaptureTimingReceive": MessageLookupByLibrary.simpleMessage("受信"),
+    "httpCaptureTimingSend": MessageLookupByLibrary.simpleMessage("送信"),
+    "httpCaptureTimingWait": MessageLookupByLibrary.simpleMessage("待機 / TTFB"),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "レガシー TLS バージョン",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS サーバー名",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "対応 TLS バージョン",
+    ),
+    "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage("トランザクション"),
+    "httpCaptureTransactionCount": m17,
+    "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
+      "HTTP/1 トランザクション",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage("観測の切り詰め"),
+    "httpCaptureUpstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("上流 TLS の完了遅延"),
     "icon": MessageLookupByLibrary.simpleMessage("アイコン"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("アイコン履歴"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("アイコンスタイル"),
@@ -476,10 +831,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "interval": MessageLookupByLibrary.simpleMessage("間隔"),
     "intranetIP": MessageLookupByLibrary.simpleMessage("イントラネットIP"),
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage("無効なバックアップファイル"),
-    "invalidPolicy": m14,
-    "invalidProxy": m15,
-    "invalidProxyProvider": m16,
-    "invalidSubRule": m17,
+    "invalidPolicy": m18,
+    "invalidProxy": m19,
+    "invalidProxyProvider": m20,
+    "invalidSubRule": m21,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "有効にすると、IPv6トラフィックを受信できます",
@@ -512,12 +867,176 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "システムの要件により、Wi-Fi 名の取得には位置情報の権限が必要です。Android では「常に許可」を選択してください。そうしないと、アプリがバックグラウンドにあるときに Wi-Fi 名を取得できません。",
     ),
-    "locationPermissionGuide": m18,
+    "locationPermissionGuide": m22,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "位置情報の権限が必要です",
     ),
     "log": MessageLookupByLibrary.simpleMessage("ログ"),
     "logLevel": MessageLookupByLibrary.simpleMessage("ログレベル"),
+    "logbook": MessageLookupByLibrary.simpleMessage("イベントログ"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("すべて"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "バックアップをキャンセルしました",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "バックアップが完了しました",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "バックアップに失敗しました",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage("バックアップを作成中"),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "接続状態が変わりました",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("コア"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "コアの診断クラッシュを要求しました",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "コアの再起動に失敗しました",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "コアを再起動しましたが、プロファイル適用に問題があります",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage("コアを再起動しました"),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "コアの起動に失敗しました",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "コア起動要求が置き換えられました",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("コアを起動しました"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "ネットワーク、構成、実行イベントの永続タイムライン",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS 照会が完了しました",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "DNS 照会に失敗しました",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage("DNS を照会中"),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage("記録されたイベントはありません"),
+    "logbookError": MessageLookupByLibrary.simpleMessage("エラー"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage("Geo データは最新です"),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo データの更新に失敗しました",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Geo データを更新中",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage("Geo データを更新しました"),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャを停止しました",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャが中断されました",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP キャプチャを開始しました",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("情報"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "このデバイスにのみ保存されます",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("ネットワーク"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("プロファイル"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "プロファイルを適用しました",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "プロファイル適用中に例外が発生しました",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "プロファイルの適用に失敗しました",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータのインポートに失敗しました",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータをインポート中",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーデータをインポートしました",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーの更新に失敗しました",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーを更新中",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "プロバイダーを更新しました",
+    ),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "クイックルートは近似検証です",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "クイックルートが一致しません",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "クイックルートを検証できません",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "クイックルートを検証しました",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "復元が完了しました",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage("復元に失敗しました"),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage("バックアップを復元中"),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("ルーティング"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("スクリプト"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトの実行に失敗しました",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトを実行中",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "構成スクリプトが完了しました",
+    ),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("成功"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("システム"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー期限切れ",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー失敗",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー失効",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー実行中",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを起動中",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "リレー停止未確認",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー停止済み",
+    ),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "CA のインストールをキャンセルしました",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage(
+      "CA のインストールに失敗しました",
+    ),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "検査用 CA をインストール中",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "検査用 CA をインストールしました",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "証明書設定を開きました",
+    ),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("警告"),
     "logcat": MessageLookupByLibrary.simpleMessage("ログキャプチャ"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage("無効にするとログの入り口が非表示になります"),
     "logs": MessageLookupByLibrary.simpleMessage("ログ"),
@@ -533,7 +1052,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "matchTargetTitle": MessageLookupByLibrary.simpleMessage("マッチ先"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("最大失敗回数"),
-    "maxLengthTip": m19,
+    "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("最大化"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("メモリ情報"),
     "messageTest": MessageLookupByLibrary.simpleMessage("メッセージテスト"),
@@ -544,11 +1063,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "システム標準の終了動作を変更します",
     ),
-    "minutesAgo": m20,
+    "minutesAgo": m24,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixedポート"),
     "mode": MessageLookupByLibrary.simpleMessage("モード"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("モノクローム"),
-    "monthsAgo": m21,
+    "monthsAgo": m25,
     "more": MessageLookupByLibrary.simpleMessage("その他"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "複数の値はカンマで区切ってください",
@@ -586,8 +1105,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "プロファイルがありません。先にプロファイルを追加してください",
     ),
-    "nullTip": m22,
-    "numberTip": m23,
+    "nullTip": m26,
+    "numberTip": m27,
     "onDemand": MessageLookupByLibrary.simpleMessage("オンデマンド"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "特定のシナリオでのアプリの実行状態を設定します",
@@ -627,7 +1146,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "port": MessageLookupByLibrary.simpleMessage("ポート"),
     "portConflictTip": MessageLookupByLibrary.simpleMessage("別のポートを入力してください"),
-    "portTip": m24,
+    "portTip": m28,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage("DoHでHTTP/3を優先します"),
     "prerequisites": MessageLookupByLibrary.simpleMessage("前提条件"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage("キーを押してください"),
@@ -656,7 +1175,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("プロジェクト"),
     "providers": MessageLookupByLibrary.simpleMessage("外部リソース"),
     "proxies": MessageLookupByLibrary.simpleMessage("プロキシ"),
-    "proxiesCount": m25,
+    "proxiesCount": m29,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("プロキシが空です"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("プロキシチェーン"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -850,7 +1369,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("ルールセット"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("ルールターゲット"),
     "rules": MessageLookupByLibrary.simpleMessage("ルール"),
-    "rulesCount": m26,
+    "rulesCount": m30,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存しますか？"),
     "script": MessageLookupByLibrary.simpleMessage("スクリプト"),
@@ -860,7 +1379,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "scrollToSelected": MessageLookupByLibrary.simpleMessage("選択項目へスクロール"),
     "search": MessageLookupByLibrary.simpleMessage("検索"),
     "seconds": MessageLookupByLibrary.simpleMessage("秒"),
-    "secondsCount": m27,
+    "secondsCount": m31,
     "selectAll": MessageLookupByLibrary.simpleMessage("すべて選択"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "MATCH-TARGET を選択",
@@ -875,7 +1394,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectSubRule": MessageLookupByLibrary.simpleMessage("サブルールを選択してください"),
     "selected": MessageLookupByLibrary.simpleMessage("選択済み"),
-    "selectedCountTitle": m28,
+    "selectedCountTitle": m32,
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
     "show": MessageLookupByLibrary.simpleMessage("表示"),
     "showLess": MessageLookupByLibrary.simpleMessage("折りたたむ"),
@@ -946,6 +1465,457 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("時刻"),
     "timeout": MessageLookupByLibrary.simpleMessage("タイムアウト"),
     "tip": MessageLookupByLibrary.simpleMessage("ヒント"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage("HTTPS 検査の安全設定"),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "リスクを確認",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage("ドメインを追加"),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("アルゴリズム"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage("検査許可リスト"),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "後の段階で対象になり得る正確なドメインまたはドメインツリーです。",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "明示的な許可リストのみ",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage("ローカル認証局"),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage("破損"),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "期限切れ",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "未作成",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "まだ有効ではありません",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage("秘密鍵の権限を確認してください"),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage("準備完了"),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "古い秘密鍵データの削除が必要です",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "利用不可",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "この段階では証明書とポリシー制御のみを準備します。HTTPS 通信の復号・傍受・書き換えは行いません。",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage("安全境界"),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage("確認を解除"),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "システム信頼を確認しました",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "ローカル認証局を作成",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "認証局を削除",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "ローカルの秘密鍵と証明書ファイルを削除し、準備済みポリシーを無効にします。システム信頼ストアにインストール済みの証明書は別途削除してください。",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "復号を有効にせず、ローカル認証局と明示的なドメインポリシーを準備します",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "既定では無効",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "ドメインとサブドメイン",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "先に有効なローカル認証局を作成してください。",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "範囲が広すぎます。example.com のような登録可能ドメインを入力してください。",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Core に接続してからローカル認証局を管理してください。",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "操作を完了できませんでした。",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "IP アドレスは使用できません。登録可能なドメインを入力してください。",
+    ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "リーフ証明書の安全キャッシュを準備できませんでした。",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "ドメインルールの上限に達しました。",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "保存済みポリシーに安全でないドメイン範囲が含まれています。削除して登録可能なドメインを追加し直してください。",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "認証局、信頼、リスク、許可リストの条件を完了してください。",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage("完全一致のみ"),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "より広い許可ルールに一致しても、除外ルールが優先されます。",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage("強制除外"),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "除外は常に許可リストより優先されます。",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "公開証明書をエクスポート",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "公開証明書をエクスポートしました",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 フィンガープリント",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "証明書発行とキャッシュの安全基盤のみです。HTTPS 復号エンジンはまだ接続されていません。",
+    ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "成功しても、OS や対象アプリが CA を信頼する証明にはなりません。上流接続・証明書ピンニング・実際の HTTPS 復号は未検証です。",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "許可リストのリーフ証明書を使い、Core のメモリ内で TLS 1.2・TLS 1.3 と暗号化データの往復を検証します。接続先への通信、システムプロキシの変更、実際の HTTPS 復号は行いません。",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "許可リストのドメイン",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "有効な許可ドメインを入力してください。除外ルールに一致するドメインは使えません。",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "ローカル TLS の検証に失敗しました。CA と許可リストを確認して再試行してください。",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "検証済みリーフ証明書の SHA-256",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "今回の自己テストに成功",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "先に CA・信頼・許可リストの準備を完了してください。",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "ハンドシェイクを検証",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "検証中",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage("検証範囲"),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Core のメモリ内 · 合成テストデータのみ",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "この結果は現在の CA またはポリシーと一致しません。再検証してください。",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "TLS ハンドシェイクの自己テスト",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core が TLS 1.2 と TLS 1.3 の実際のハンドシェイクを確認していません。Core を更新してください。",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
+      "リーフ証明書キャッシュ",
+    ),
+    "tlsInspectionLeafCacheAuthorityChanged":
+        MessageLookupByLibrary.simpleMessage(
+          "ローカル CA が変更されました。信頼を再検証し、ポリシーを再準備してください。",
+        ),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core は現在の許可リストに含まれるドメインだけに短期間の個別証明書を生成します。この段階でも HTTPS 通信の傍受や復号は行いません。",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "無効",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "キャッシュ済み証明書",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "最終更新",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "リーフ秘密鍵は Core のアプリデータ内にのみ保存され、IPC やエクスポートでは返されません。",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "リーフ秘密鍵の保存権限が十分に制限されていません。",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "ポリシーダイジェスト",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage("準備完了"),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "利用不可",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "最大有効期間",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("最大 24 時間"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "準備済みで現在も信頼されているポリシーを待っています。",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "システム信頼を自動変更しない",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "ヘッダー値と本文は保存しない",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage("ドメインは未設定です"),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "すべての前提条件を完了してください。",
+    ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage("証明書ピンニングにより検査が拒否される場合があります。"),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "Android 11 以降ではセキュリティ設定で手動インストールが必要です。",
+        ),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage("アプリ側でユーザー CA を明示的に信頼する必要があります。"),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage(
+          "インストールには Android の明示的なユーザー確認が必要です。",
+        ),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "信頼のインストールがブロックされました",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("再確認"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android の証明書ストアで現在の CA を確認できませんでした。",
+        ),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "プラットフォームの信頼状態を更新しました",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("プラットフォーム制約"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash は現在の CA の正確なフィンガープリントが Android の証明書ストアに存在することを確認します。手動確認では代用できません。",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage("CA を書き出して設定を開く"),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage("結果は現在の CA フィンガープリントに結び付けられています。"),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Android が返した信頼結果は現在の CA フィンガープリントと一致しません。",
+        ),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "Android で CA をインストール",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage("Android の証明書インストールを開始できませんでした"),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android が CA のインストールを確認しました",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("最終確認"),
+    "tlsInspectionPlatformTrustLimitations":
+        MessageLookupByLibrary.simpleMessage(
+          "ユーザー CA を明示的に許可しない Android アプリは拒否する場合があり、証明書ピンニングも検査を妨げます。",
+        ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "Android の信頼ストアに未登録",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage("プラットフォームの信頼状態はまだ確認されていません。"),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("セキュリティ設定を開く"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "証明書を書き出しました。Android のセキュリティ設定でインストールを完了し、FlClash に戻ってください",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "証明書ストア",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Android ユーザー／システムストア",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "未登録",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Android システムストア"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage("未識別のストアに存在"),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Android ユーザーストア",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage("Android の信頼状態を取得できません"),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage("自動信頼検証は利用できません"),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "Android CA ストアに存在",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage("プラットフォーム検証済みの信頼が必要"),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Android API レベル",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "FlClash のローカルおよび WebDAV バックアップには証明書材料とドメインポリシーを含めません。OS レベルのバックアップ動作はプラットフォーム設定に依存します。",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage("安全ポリシー準備済み"),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "前提条件は完了しています。実際の検査には別のエンジンと明示的な有効化が必要です。",
+    ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "秘密鍵はアプリのデータディレクトリにファイルとして保存され、ハードウェア保護ではありません。FlClash は秘密鍵をエクスポートせず、公開証明書だけをエクスポートできます。",
+    ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage("準備状況"),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "1 件以上の許可ルール",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "有効なローカル認証局",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "現在の CA とポリシーに結び付いたリーフ証明書キャッシュ",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "リスク確認済み",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "現在の CA がプラットフォームで信頼済み、または手動確認済み",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage("リスク確認"),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "リスク確認済み",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS 検査は認証情報や私的内容を露出させる可能性があります。許可リストを最小限にし、必要がない限りアカウント、銀行、医療などを検査しないでください。",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "認証局を更新",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "更新すると以前の信頼確認は無効になります。システム内の古い証明書を手動で置き換えてください。",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage("ドメイン範囲"),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレー",
+    ),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage(
+      "受け付け済み",
+    ),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage(
+      "アクティブ接続",
+    ),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage(
+      "プロキシアドレス",
+    ),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "システムプロキシの変更、送信元アプリ識別の保持、ペイロード保存、HTTP/2、証明書ピンニング回避は行いません。",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage("完了"),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "プロキシアドレスをコピー",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "プロキシ設定をコピーできませんでした。",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "一時パスワードをコピー",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "プロキシ設定をコピー",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "プロキシ設定をコピーしました。1 分後に自動消去されます。",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "ユーザー名をコピー",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning": MessageLookupByLibrary.simpleMessage(
+      "認証情報は保存も Logbook への記録もされません。コピー内容が置き換えられていなければ 1 分後に消去され、停止確認または Core 再起動後に認証情報は失われます。",
+    ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "許可リスト内の HTTPS 通信を現在の Core ルートでテストする、明示的に認証されたループバック CONNECT プロキシです。",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "リレー下り",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを開始または検証できませんでした。",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage("有効期限"),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage("失敗"),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "パスワードを隠す",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "所有者不明または古いリレーを失効させました。",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "一時パスワード",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage(
+      "状態を更新",
+    ),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "CA、プラットフォーム信頼、許可リスト、リーフ証明書キャッシュを先に準備してください。",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage("実行中"),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "パスワードを表示",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage("リレーを開始"),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを開始しますか？",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "127.0.0.1 上で最長 10 分間の認証付きプロキシを開始します。手動設定したクライアントだけが利用できます。一時パスワードはメモリ内だけに保持され、この実行でのみ表示されます。",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを開始しました。",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage("起動中"),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage("リレーを停止"),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core がリレー停止を確認していません。この画面を開いたまま再試行してください。",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "停止未確認",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage("停止済み"),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "ローカル HTTPS リレーを停止しました。",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage("停止中"),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "利用不可",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "リレー上り",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage(
+      "ユーザー名",
+    ),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage("シリアル番号"),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage("秘密鍵の保存先"),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "アプリデータディレクトリ（ファイル保存）",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("サブジェクト"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage("システム信頼"),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "現在のフィンガープリントを手動確認済み",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "信頼ストアの自動検証はまだ接続されていません。公開証明書をエクスポートして手動でインストールし、システム設定でフィンガープリントを確認してください。",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "ユーザー認証局を無視するアプリがあり、証明書ピンニングも回避されません。",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "現在のフィンガープリントは未確認",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage("有効期間"),
     "toggle": MessageLookupByLibrary.simpleMessage("切り替え"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("ラベルを切り替え"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("トーナルスポット"),
@@ -972,7 +1942,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("アップロード"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("URLからプロファイルを取得します"),
-    "urlTip": m29,
+    "urlTip": m33,
     "useHosts": MessageLookupByLibrary.simpleMessage("Hostsを使用"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("システムのHostsを使用"),
     "usedTraffic": MessageLookupByLibrary.simpleMessage("使用済みトラフィック"),
@@ -989,7 +1959,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "vpnTip": MessageLookupByLibrary.simpleMessage("変更はVPNの再起動後に有効になります"),
     "webDAVConfiguration": MessageLookupByLibrary.simpleMessage("WebDAV設定"),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("ホワイトリストモード"),
-    "yearsAgo": m30,
+    "yearsAgo": m34,
     "zhCN": MessageLookupByLibrary.simpleMessage("簡体字中国語"),
   };
 }

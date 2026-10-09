@@ -6,7 +6,9 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
@@ -27,11 +29,13 @@ Widget buildManagerStack({
   final platformApp = isDesktop
       ? WindowHeaderContainer(child: child)
       : VpnManager(child: child);
-  final state = AppStateManager(
-    child: CoreManager(
-      child: ConnectivityManager(
-        onConnectivityChanged: onConnectivityChanged,
-        child: platformApp,
+  final state = QuickRoutingManager(
+    child: AppStateManager(
+      child: CoreManager(
+        child: ConnectivityManager(
+          onConnectivityChanged: onConnectivityChanged,
+          child: platformApp,
+        ),
       ),
     ),
   );
@@ -57,8 +61,15 @@ class Application extends ConsumerStatefulWidget {
 }
 
 class ApplicationState extends ConsumerState<Application> {
+  static const _networkRuleRetryDelay = Duration(seconds: 30);
+
   Timer? _autoUpdateProfilesTaskTimer;
+  Timer? _networkRuleRetryTimer;
   bool _preHasVpn = false;
+  bool _networkCleanupRunning = false;
+  String? _networkSignature;
+  String? _lastLoggedNetworkSignature;
+  List<ConnectivityResult>? _pendingNetworkResults;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -128,17 +139,161 @@ class ApplicationState extends ConsumerState<Application> {
     });
   }
 
-  Future<void> _handleConnectivityChanged(
+  String _getNetworkSignature(List<ConnectivityResult> results) {
+    final values =
+        results
+            .where(
+              (result) =>
+                  result != ConnectivityResult.vpn &&
+                  result != ConnectivityResult.none,
+            )
+            .map((result) => result.name)
+            .toList()
+          ..sort();
+    return values.join(',');
+  }
+
+  Future<void> _clearNetworkRoutingRulesIfNeeded(
     List<ConnectivityResult> results,
   ) async {
+    _pendingNetworkResults = List<ConnectivityResult>.unmodifiable(results);
+    if (_networkCleanupRunning) {
+      return;
+    }
+    _networkCleanupRunning = true;
+    try {
+      while (mounted) {
+        final pending = _pendingNetworkResults;
+        if (pending == null) {
+          break;
+        }
+        _pendingNetworkResults = null;
+        await _processNetworkRoutingChange(pending);
+      }
+    } finally {
+      _networkCleanupRunning = false;
+    }
+  }
+
+  Future<void> _processNetworkRoutingChange(
+    List<ConnectivityResult> results,
+  ) async {
+    final nextSignature = _getNetworkSignature(results);
+    final previousSignature = _networkSignature;
+    _networkSignature = nextSignature;
+    if (previousSignature == null || previousSignature == nextSignature) {
+      return;
+    }
+    _networkRuleRetryTimer?.cancel();
+    _networkRuleRetryTimer = null;
+    final snapshot = ref.read(quickRoutingRulesProvider);
+    final notifier = ref.read(quickRoutingRulesProvider.notifier);
+    if (!notifier.clearNetworkBound()) {
+      return;
+    }
+    if (ref.read(runTimeProvider) == null) {
+      return;
+    }
+    try {
+      final applied = await ref
+          .read(setupActionProvider.notifier)
+          .applyProfile(force: true, silence: true);
+      if (!mounted) {
+        return;
+      }
+      if (!applied) {
+        throw StateError('Failed to clear network quick routing rules');
+      }
+    } catch (error, stackTrace) {
+      if (!mounted) {
+        commonPrint.log(
+          'network quick routing cleanup stopped after disposal: '
+          '${compactError(error)}, $stackTrace',
+          logLevel: LogLevel.warning,
+        );
+        return;
+      }
+      notifier.replaceAll(snapshot);
+      _networkSignature = previousSignature;
+      if (ref.read(runTimeProvider) != null) {
+        try {
+          await ref
+              .read(setupActionProvider.notifier)
+              .applyProfile(force: true, silence: true);
+        } catch (rollbackError, rollbackStackTrace) {
+          commonPrint.log(
+            'network quick routing rollback failed: '
+            '${compactError(rollbackError)}, $rollbackStackTrace',
+            logLevel: LogLevel.error,
+          );
+        }
+      }
+      if (!mounted) {
+        return;
+      }
+      commonPrint.log(
+        'network quick routing cleanup failed: '
+        '${compactError(error)}, $stackTrace',
+        logLevel: LogLevel.warning,
+      );
+      dialogs.showNotifier(
+        currentAppLocalizations.databaseWriteFailedTip,
+        level: MessageLevel.error,
+      );
+      _scheduleNetworkRuleRetry(results);
+    }
+  }
+
+  void _scheduleNetworkRuleRetry(List<ConnectivityResult> results) {
+    _networkRuleRetryTimer?.cancel();
+    final retryResults = List<ConnectivityResult>.unmodifiable(results);
+    _networkRuleRetryTimer = Timer(_networkRuleRetryDelay, () {
+      _networkRuleRetryTimer = null;
+      if (!mounted) {
+        return;
+      }
+      unawaited(_clearNetworkRoutingRulesIfNeeded(retryResults));
+    });
+  }
+
+  Future<void> _handleConnectivityChanged(List<ConnectivityResult> results) {
     commonPrint.log('connectivityChanged ${results.toString()}');
+    final signature = _getNetworkSignature(results);
+    if (_lastLoggedNetworkSignature != signature) {
+      final previous = _lastLoggedNetworkSignature;
+      _lastLoggedNetworkSignature = signature;
+      unawaited(
+        ref
+            .read(logbookProvider.notifier)
+            .record(
+              profileId: ref.read(currentProfileIdProvider),
+              category: LogbookCategory.network,
+              severity: results.contains(ConnectivityResult.none)
+                  ? LogbookSeverity.warning
+                  : LogbookSeverity.info,
+              eventType: 'network.connectivity.changed',
+              title: 'network.connectivity.changed',
+              message: signature.isEmpty
+                  ? ConnectivityResult.none.name
+                  : signature,
+              details: {
+                'previous': previous ?? '',
+                'current': signature,
+                'transports': results.map((value) => value.name).toList(),
+                'vpn': results.contains(ConnectivityResult.vpn),
+              },
+            ),
+      );
+    }
     unawaited(systemDnsCoordinator?.resync() ?? Future.value());
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
+    unawaited(_clearNetworkRoutingRulesIfNeeded(results));
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
       ref.read(checkIpNumProvider.notifier).add();
     }
     _preHasVpn = hasVpn;
+    return Future<void>.value();
   }
 
   @override
@@ -200,6 +355,8 @@ class ApplicationState extends ConsumerState<Application> {
   void dispose() {
     linkManager.destroy();
     _autoUpdateProfilesTaskTimer?.cancel();
+    _networkRuleRetryTimer?.cancel();
+    _pendingNetworkResults = null;
     super.dispose();
   }
 }

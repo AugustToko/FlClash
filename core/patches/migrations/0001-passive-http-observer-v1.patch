@@ -1,0 +1,1682 @@
+diff --git a/component/observer/observer.go b/component/observer/observer.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..c1787d9bfeb19e2d54bf562c08fe4bb1cdafcc7c
+--- /dev/null
++++ b/component/observer/observer.go
+@@ -0,0 +1,894 @@
++package observer
++
++import (
++	"bytes"
++	"encoding/binary"
++	"net"
++	"net/url"
++	"strconv"
++	"strings"
++	"sync/atomic"
++	"time"
++	"unicode/utf8"
++
++	"github.com/metacubex/sing/common/metadata"
++
++	N "github.com/metacubex/mihomo/common/net"
++	C "github.com/metacubex/mihomo/constant"
++)
++
++const (
++	defaultObservationTimeout = 200 * time.Millisecond
++	maxObservationBytes       = 32 * 1024
++	maxHTTPHeaderNames        = 64
++	maxHTTPHeaderNameBytes    = 128
++	maxRequestTargetBytes     = 512
++	maxHostBytes              = 255
++	maxTLSListItems           = 16
++	tlsRecordHeaderLen        = 5
++	tlsMaxPlaintext           = 1 << 14
++)
++
++type configuration struct {
++	enabled   bool
++	sessionID string
++}
++
++var currentConfiguration atomic.Pointer[configuration]
++
++func init() {
++	currentConfiguration.Store(&configuration{})
++}
++
++// Configure controls the passive observer globally. The session ID is copied
++// into every observation so a delayed connection from an older capture session
++// cannot be attributed to a newer one.
++func Configure(value bool, sessionID string) {
++	if !value {
++		currentConfiguration.Store(&configuration{})
++		return
++	}
++	sessionID = strings.TrimSpace(sessionID)
++	if containsControl(sessionID) {
++		sessionID = ""
++	}
++	sessionID = boundedText(sessionID, 128)
++	currentConfiguration.Store(&configuration{enabled: true, sessionID: sessionID})
++}
++
++// SetEnabled is kept for callers that do not need capture-session correlation.
++func SetEnabled(value bool) {
++	Configure(value, "")
++}
++
++func Enabled() bool {
++	state := currentConfiguration.Load()
++	return state != nil && state.enabled
++}
++
++func SessionID() string {
++	state := currentConfiguration.Load()
++	if state == nil || !state.enabled {
++		return ""
++	}
++	return state.sessionID
++}
++
++// PrepareTCP reports whether this connection is eligible for passive
++// observation and snapshots the active capture session. It deliberately does
++// not read or grow the connection buffer: the eligibility check is allocation-
++// free and does not add serial connection latency.
++func PrepareTCP(conn *N.BufferedConn) (sessionID string, prepared bool) {
++	state := currentConfiguration.Load()
++	if state == nil || !state.enabled || conn == nil {
++		return "", false
++	}
++	return state.sessionID, true
++}
++
++// ObserveBufferedTCP parses only bytes that are already buffered by Mihomo's
++// normal sniff/read-ahead path. It never waits for more client data and never
++// consumes or rewrites the buffered bytes.
++func ObserveBufferedTCP(conn *N.BufferedConn, sessionID string) *C.ProtocolObservation {
++	if conn == nil {
++		return nil
++	}
++	available := conn.Buffered()
++	if available <= 0 {
++		return nil
++	}
++	if available > maxObservationBytes {
++		available = maxObservationBytes
++	}
++	data, err := conn.Peek(available)
++	if err != nil && len(data) == 0 {
++		return nil
++	}
++	return withSessionID(observeBuffered(data, maxObservationBytes), sessionID)
++}
++
++// ObserveTCP reads a bounded initial prefix for a connection that was accepted
++// by PrepareTCP. Production tunnel code overlaps this read with route/dial work.
++func ObserveTCP(conn *N.BufferedConn, sessionID string) *C.ProtocolObservation {
++	return withSessionID(
++		observeTCP(conn, defaultObservationTimeout, maxObservationBytes),
++		sessionID,
++	)
++}
++
++func withSessionID(observation *C.ProtocolObservation, sessionID string) *C.ProtocolObservation {
++	if observation != nil {
++		observation.SessionID = boundedText(sessionID, 128)
++	}
++	return observation
++}
++
++func observeBuffered(data []byte, limit int) *C.ProtocolObservation {
++	if limit <= 0 || len(data) == 0 {
++		return nil
++	}
++	if len(data) > limit {
++		data = data[:limit]
++	}
++	switch {
++	case data[0] == 0x16:
++		handshake, valid, needWire, wireTruncated := extractTLSHandshake(data, limit)
++		if !valid {
++			return nil
++		}
++		tls, recognized, complete, metadataTruncated := parseTLSClientHello(handshake)
++		if !recognized || tls == nil {
++			return nil
++		}
++		observedBytes := len(data)
++		if complete && needWire > 0 && needWire < observedBytes {
++			observedBytes = needWire
++		}
++		return &C.ProtocolObservation{
++			Kind:          "tls-client-hello",
++			ObservedBytes: observedBytes,
++			Truncated:     !complete || wireTruncated || metadataTruncated,
++			TLS:           tls,
++		}
++	case isHTTPMethodPrefix(data):
++		http, valid, complete, need := parseHTTPPrefix(data)
++		if !valid || http == nil {
++			return nil
++		}
++		observedBytes := len(data)
++		if complete && need > 0 && need < observedBytes {
++			observedBytes = need
++		}
++		return &C.ProtocolObservation{
++			Kind:          "http1",
++			ObservedBytes: observedBytes,
++			Truncated:     !complete || httpMetadataTruncated(http),
++			HTTP:          http,
++		}
++	default:
++		return nil
++	}
++}
++
++func observeTCP(conn *N.BufferedConn, timeout time.Duration, limit int) *C.ProtocolObservation {
++	if conn == nil || limit <= 0 {
++		return nil
++	}
++	deadline := time.Now().Add(timeout)
++	data, _ := peekAtLeast(conn, 1, deadline, limit)
++	if len(data) == 0 {
++		return nil
++	}
++
++	switch {
++	case data[0] == 0x16:
++		return observeTLS(conn, deadline, limit)
++	case isHTTPMethodPrefix(data):
++		return observeHTTP(conn, deadline, limit)
++	default:
++		return nil
++	}
++}
++
++func peekAtLeast(conn *N.BufferedConn, want int, deadline time.Time, limit int) ([]byte, error) {
++	if want < 1 {
++		want = 1
++	}
++	if want > limit {
++		want = limit
++	}
++	conn.Grow(want)
++	_ = conn.SetReadDeadline(deadline)
++	_, err := conn.Peek(want)
++	_ = conn.SetReadDeadline(time.Time{})
++
++	available := conn.Buffered()
++	if available > limit {
++		available = limit
++	}
++	if available == 0 {
++		return nil, err
++	}
++	data, peekErr := conn.Peek(available)
++	if err == nil {
++		err = peekErr
++	}
++	return data, err
++}
++
++var httpMethods = [...]string{
++	"GET", "POST", "HEAD", "PUT", "DELETE", "OPTIONS", "CONNECT", "PATCH", "TRACE",
++}
++
++func isHTTPMethodPrefix(data []byte) bool {
++	for _, method := range httpMethods {
++		if len(data) <= len(method) && bytes.Equal(data, []byte(method[:len(data)])) {
++			return true
++		}
++		if len(data) > len(method) && bytes.Equal(data[:len(method)], []byte(method)) && data[len(method)] == ' ' {
++			return true
++		}
++	}
++	return false
++}
++
++func isHTTPMethod(method string) bool {
++	for _, candidate := range httpMethods {
++		if method == candidate {
++			return true
++		}
++	}
++	return false
++}
++
++func observeHTTP(conn *N.BufferedConn, deadline time.Time, limit int) *C.ProtocolObservation {
++	want := 1
++	for {
++		data, err := peekAtLeast(conn, want, deadline, limit)
++		http, valid, complete, need := parseHTTPPrefix(data)
++		if !valid {
++			return nil
++		}
++		if http != nil && complete {
++			return &C.ProtocolObservation{
++				Kind:          "http1",
++				ObservedBytes: need,
++				Truncated:     httpMetadataTruncated(http),
++				HTTP:          http,
++			}
++		}
++		if len(data) >= limit || err != nil || time.Now().After(deadline) {
++			if http == nil {
++				return nil
++			}
++			return &C.ProtocolObservation{
++				Kind:          "http1",
++				ObservedBytes: len(data),
++				Truncated:     true,
++				HTTP:          http,
++			}
++		}
++		if need <= len(data) {
++			need = len(data) + 1
++		}
++		if need > limit {
++			if http == nil {
++				return nil
++			}
++			return &C.ProtocolObservation{
++				Kind:          "http1",
++				ObservedBytes: len(data),
++				Truncated:     true,
++				HTTP:          http,
++			}
++		}
++		want = need
++	}
++}
++
++func parseHTTPPrefix(data []byte) (*C.HTTPObservation, bool, bool, int) {
++	space := bytes.IndexByte(data, ' ')
++	if space < 0 {
++		return nil, isHTTPMethodPrefix(data), false, len(data) + 1
++	}
++	method := string(data[:space])
++	if !isHTTPMethod(method) {
++		return nil, false, false, 0
++	}
++
++	lineEnd := bytes.Index(data, []byte("\r\n"))
++	if lineEnd < 0 {
++		return nil, true, false, len(data) + 1
++	}
++	parts := bytes.Fields(data[:lineEnd])
++	if len(parts) != 3 {
++		return nil, false, false, 0
++	}
++	method = string(parts[0])
++	if !isHTTPMethod(method) {
++		return nil, false, false, 0
++	}
++	version := string(parts[2])
++	if version != "HTTP/1.0" && version != "HTTP/1.1" {
++		return nil, false, false, 0
++	}
++	target, absoluteHost, targetTruncated, hostTruncated, ok := sanitizeRequestTarget(method, string(parts[1]))
++	if !ok {
++		return nil, false, false, 0
++	}
++
++	observation := &C.HTTPObservation{
++		Method:          method,
++		Target:          target,
++		Version:         version,
++		Host:            absoluteHost,
++		TargetTruncated: targetTruncated,
++		HostTruncated:   hostTruncated,
++	}
++	seenNames := make(map[string]struct{}, maxHTTPHeaderNames)
++	offset := lineEnd + 2
++	for {
++		relativeEnd := bytes.Index(data[offset:], []byte("\r\n"))
++		if relativeEnd < 0 {
++			return observation, true, false, len(data) + 1
++		}
++		lineEnd = offset + relativeEnd
++		line := data[offset:lineEnd]
++		offset = lineEnd + 2
++		if len(line) == 0 {
++			observation.HeadersComplete = true
++			return observation, true, true, offset
++		}
++		if line[0] == ' ' || line[0] == '\t' {
++			// Obsolete line folding is ignored. Retaining it would require
++			// retaining a header value, which this observer deliberately avoids.
++			continue
++		}
++		colon := bytes.IndexByte(line, ':')
++		if colon <= 0 {
++			return nil, false, false, 0
++		}
++		nameBytes := line[:colon]
++		if !validHeaderName(nameBytes) {
++			return nil, false, false, 0
++		}
++		name, nameTruncated := boundedTextWithTruncation(
++			strings.ToLower(string(nameBytes)),
++			maxHTTPHeaderNameBytes,
++		)
++		observation.HeaderNamesTruncated = observation.HeaderNamesTruncated || nameTruncated
++		if _, exists := seenNames[name]; !exists {
++			seenNames[name] = struct{}{}
++			if len(observation.HeaderNames) < maxHTTPHeaderNames {
++				observation.HeaderNames = append(observation.HeaderNames, name)
++			} else {
++				observation.HeaderNamesTruncated = true
++			}
++		}
++		if name == "host" && observation.Host == "" {
++			host, truncated := sanitizeHTTPHost(string(bytes.TrimSpace(line[colon+1:])))
++			observation.Host = host
++			observation.HostTruncated = truncated
++		}
++	}
++}
++
++func validHeaderName(value []byte) bool {
++	if len(value) == 0 {
++		return false
++	}
++	for _, b := range value {
++		switch {
++		case b >= 'a' && b <= 'z', b >= 'A' && b <= 'Z', b >= '0' && b <= '9':
++		case strings.ContainsRune("!#$%&'*+-.^_`|~", rune(b)):
++		default:
++			return false
++		}
++	}
++	return true
++}
++
++func httpMetadataTruncated(observation *C.HTTPObservation) bool {
++	return observation != nil && (observation.TargetTruncated || observation.HostTruncated || observation.HeaderNamesTruncated)
++}
++
++func sanitizeRequestTarget(method, raw string) (target string, host string, targetTruncated bool, hostTruncated bool, ok bool) {
++	if raw == "" || containsControl(raw) {
++		return "", "", false, false, false
++	}
++	if method == "CONNECT" {
++		return sanitizeConnectAuthority(raw)
++	}
++	if raw == "*" {
++		return raw, "", false, false, true
++	}
++
++	if parsed, err := url.ParseRequestURI(raw); err == nil && parsed.IsAbs() {
++		host, hostTruncated = sanitizeHTTPHost(parsed.Host)
++		if host == "" {
++			return "", "", false, false, false
++		}
++		target = parsed.EscapedPath()
++		if target == "" {
++			target = "/"
++		}
++		target, targetTruncated = boundedTextWithTruncation(target, maxRequestTargetBytes)
++		return target, host, targetTruncated, hostTruncated, true
++	}
++
++	if index := strings.IndexAny(raw, "?#"); index >= 0 {
++		raw = raw[:index]
++	}
++	if raw == "" {
++		raw = "/"
++	}
++	if raw[0] != '/' {
++		return "", "", false, false, false
++	}
++	target, targetTruncated = boundedTextWithTruncation(raw, maxRequestTargetBytes)
++	return target, "", targetTruncated, false, true
++}
++
++func sanitizeConnectAuthority(raw string) (target string, host string, targetTruncated bool, hostTruncated bool, ok bool) {
++	raw = strings.TrimSpace(raw)
++	if raw == "" || containsControl(raw) || strings.ContainsAny(raw, " /?#\t\r\n") {
++		return "", "", false, false, false
++	}
++	// CONNECT userinfo is invalid authority-form. If a malformed client sends
++	// it anyway, drop the sensitive prefix rather than retaining credentials.
++	if at := strings.LastIndexByte(raw, '@'); at >= 0 {
++		raw = raw[at+1:]
++	}
++	rawHost, rawPort, err := net.SplitHostPort(raw)
++	if err != nil {
++		return "", "", false, false, false
++	}
++	port, err := strconv.Atoi(rawPort)
++	if err != nil || port < 1 || port > 65535 {
++		return "", "", false, false, false
++	}
++	host, hostTruncated = sanitizeHTTPHost(rawHost)
++	if host == "" {
++		return "", "", false, false, false
++	}
++	authority := net.JoinHostPort(host, strconv.Itoa(port))
++	target, targetTruncated = boundedTextWithTruncation(authority, maxRequestTargetBytes)
++	return target, host, targetTruncated, hostTruncated, true
++}
++
++func sanitizeHTTPHost(raw string) (string, bool) {
++	raw = strings.TrimSpace(raw)
++	if raw == "" || containsControl(raw) || strings.ContainsAny(raw, " /?#\t\r\n") {
++		return "", false
++	}
++	if at := strings.LastIndexByte(raw, '@'); at >= 0 {
++		raw = raw[at+1:]
++	}
++
++	host := raw
++	switch {
++	case strings.HasPrefix(raw, "["):
++		closing := strings.IndexByte(raw, ']')
++		if closing <= 1 {
++			return "", false
++		}
++		host = raw[1:closing]
++		if net.ParseIP(host) == nil {
++			return "", false
++		}
++		remainder := raw[closing+1:]
++		if remainder != "" {
++			if remainder[0] != ':' || !validHTTPPort(remainder[1:]) {
++				return "", false
++			}
++		}
++	case net.ParseIP(raw) != nil:
++		// A bare IP literal has no authority port to strip.
++	case strings.Count(raw, ":") == 1:
++		var port string
++		var err error
++		host, port, err = net.SplitHostPort(raw)
++		if err != nil || !validHTTPPort(port) {
++			return "", false
++		}
++	case strings.ContainsRune(raw, ':'):
++		// Non-bracketed IPv6 authorities are ambiguous and invalid in HTTP Host.
++		return "", false
++	}
++
++	host = strings.TrimSuffix(strings.TrimSpace(host), ".")
++	if host == "" || !validHTTPHostName(host) {
++		return "", false
++	}
++	value, truncated := boundedTextWithTruncation(host, maxHostBytes)
++	return strings.ToLower(value), truncated
++}
++
++func validHTTPHostName(value string) bool {
++	if net.ParseIP(value) != nil {
++		return true
++	}
++	if strings.HasPrefix(value, ".") || strings.HasSuffix(value, ".") || strings.Contains(value, "..") {
++		return false
++	}
++	for _, b := range []byte(value) {
++		switch {
++		case b >= 'a' && b <= 'z', b >= 'A' && b <= 'Z', b >= '0' && b <= '9', b == '-', b == '_', b == '.':
++		default:
++			return false
++		}
++	}
++	return true
++}
++
++func validHTTPPort(raw string) bool {
++	port, err := strconv.Atoi(raw)
++	return err == nil && port >= 1 && port <= 65535
++}
++
++func sanitizeServerName(raw string) (string, bool) {
++	name := strings.ToLower(strings.TrimSpace(raw))
++	if name == "" || containsControl(name) || len(name) > maxHostBytes || strings.HasSuffix(name, ".") || !metadata.IsDomainName(name) {
++		return "", false
++	}
++	return name, true
++}
++
++func boundedText(value string, limit int) string {
++	bounded, _ := boundedTextWithTruncation(value, limit)
++	return bounded
++}
++
++func boundedTextWithTruncation(value string, limit int) (string, bool) {
++	value = strings.ToValidUTF8(value, "�")
++	if len(value) <= limit {
++		return value, false
++	}
++	value = value[:limit]
++	for len(value) > 0 && !utf8.ValidString(value) {
++		value = value[:len(value)-1]
++	}
++	return value, true
++}
++
++func containsControl(value string) bool {
++	for i := 0; i < len(value); i++ {
++		if value[i] < 0x20 || value[i] == 0x7f {
++			return true
++		}
++	}
++	return false
++}
++
++func observeTLS(conn *N.BufferedConn, deadline time.Time, limit int) *C.ProtocolObservation {
++	want := tlsRecordHeaderLen
++	for {
++		wire, err := peekAtLeast(conn, want, deadline, limit)
++		handshake, valid, needWire, wireTruncated := extractTLSHandshake(wire, limit)
++		if !valid {
++			return nil
++		}
++		tls, recognized, complete, metadataTruncated := parseTLSClientHello(handshake)
++		if complete {
++			return &C.ProtocolObservation{
++				Kind:          "tls-client-hello",
++				ObservedBytes: minInt(needWire, len(wire)),
++				Truncated:     wireTruncated || metadataTruncated,
++				TLS:           tls,
++			}
++		}
++		if len(wire) >= limit || wireTruncated || err != nil || time.Now().After(deadline) {
++			if !recognized || tls == nil {
++				return nil
++			}
++			return &C.ProtocolObservation{
++				Kind:          "tls-client-hello",
++				ObservedBytes: len(wire),
++				Truncated:     true,
++				TLS:           tls,
++			}
++		}
++		if needWire <= len(wire) {
++			needWire = len(wire) + 1
++		}
++		if needWire > limit {
++			if !recognized || tls == nil {
++				return nil
++			}
++			return &C.ProtocolObservation{
++				Kind:          "tls-client-hello",
++				ObservedBytes: len(wire),
++				Truncated:     true,
++				TLS:           tls,
++			}
++		}
++		want = needWire
++	}
++}
++
++func extractTLSHandshake(wire []byte, limit int) (handshake []byte, valid bool, needWire int, truncated bool) {
++	offset := 0
++	for {
++		if len(wire)-offset < tlsRecordHeaderLen {
++			return handshake, true, offset + tlsRecordHeaderLen, false
++		}
++		header := wire[offset : offset+tlsRecordHeaderLen]
++		if header[0] != 0x16 || header[1] != 0x03 {
++			return nil, false, 0, false
++		}
++		recordLen := int(binary.BigEndian.Uint16(header[3:5]))
++		if recordLen <= 0 || recordLen > tlsMaxPlaintext {
++			return nil, false, 0, false
++		}
++		payloadStart := offset + tlsRecordHeaderLen
++		recordEnd := payloadStart + recordLen
++		availableEnd := recordEnd
++		if availableEnd > len(wire) {
++			availableEnd = len(wire)
++		}
++		if availableEnd > payloadStart {
++			handshake = append(handshake, wire[payloadStart:availableEnd]...)
++		}
++		if len(handshake) >= 4 && handshake[0] == 0x01 {
++			helloLen := 4 + uint24(handshake[1:4])
++			if helloLen < 4 {
++				return nil, false, 0, false
++			}
++			if len(handshake) >= helloLen {
++				return handshake[:helloLen], true, recordEnd, false
++			}
++		}
++		if recordEnd > limit {
++			return handshake, true, limit, true
++		}
++		if recordEnd > len(wire) {
++			return handshake, true, recordEnd, false
++		}
++		offset = recordEnd
++		if offset >= limit {
++			return handshake, true, limit, true
++		}
++	}
++}
++
++func parseTLSClientHello(data []byte) (observation *C.TLSClientHelloObservation, recognized bool, complete bool, metadataTruncated bool) {
++	if len(data) == 0 || data[0] != 0x01 {
++		return nil, false, false, false
++	}
++	observation = &C.TLSClientHelloObservation{}
++	if len(data) < 4 {
++		return observation, true, false, false
++	}
++	total := 4 + uint24(data[1:4])
++	if total < 4+2+32+1+2+1 {
++		return nil, false, false, false
++	}
++	available := data
++	if len(available) > total {
++		available = available[:total]
++	}
++	cursor := 4
++	need := func(count int) bool { return cursor+count <= len(available) }
++	if !need(2) {
++		return observation, true, false, false
++	}
++	observation.LegacyVersion = tlsVersion(binary.BigEndian.Uint16(available[cursor : cursor+2]))
++	cursor += 2
++	if !need(32) {
++		return observation, true, false, false
++	}
++	cursor += 32
++	if !need(1) {
++		return observation, true, false, false
++	}
++	sessionLen := int(available[cursor])
++	cursor++
++	if sessionLen > 32 {
++		return nil, false, false, false
++	}
++	if !need(sessionLen) {
++		return observation, true, false, false
++	}
++	cursor += sessionLen
++	if !need(2) {
++		return observation, true, false, false
++	}
++	cipherLen := int(binary.BigEndian.Uint16(available[cursor : cursor+2]))
++	cursor += 2
++	if cipherLen == 0 || cipherLen%2 != 0 {
++		return nil, false, false, false
++	}
++	if !need(cipherLen) {
++		return observation, true, false, false
++	}
++	cursor += cipherLen
++	if !need(1) {
++		return observation, true, false, false
++	}
++	compressionLen := int(available[cursor])
++	cursor++
++	if compressionLen == 0 {
++		return nil, false, false, false
++	}
++	if !need(compressionLen) {
++		return observation, true, false, false
++	}
++	cursor += compressionLen
++	if cursor == total {
++		observation.ClientHelloComplete = len(data) >= total
++		return observation, true, observation.ClientHelloComplete, false
++	}
++	if !need(2) {
++		return observation, true, false, false
++	}
++	extensionsLen := int(binary.BigEndian.Uint16(available[cursor : cursor+2]))
++	cursor += 2
++	extensionsEnd := cursor + extensionsLen
++	if extensionsEnd != total {
++		return nil, false, false, false
++	}
++	parseEnd := extensionsEnd
++	if parseEnd > len(available) {
++		parseEnd = len(available)
++	}
++	for cursor < parseEnd {
++		if cursor+4 > parseEnd {
++			return observation, true, false, metadataTruncated
++		}
++		extensionType := binary.BigEndian.Uint16(available[cursor : cursor+2])
++		extensionLen := int(binary.BigEndian.Uint16(available[cursor+2 : cursor+4]))
++		cursor += 4
++		extensionEnd := cursor + extensionLen
++		if extensionEnd > extensionsEnd {
++			return nil, false, false, false
++		}
++		if extensionEnd > parseEnd {
++			return observation, true, false, metadataTruncated
++		}
++		payload := available[cursor:extensionEnd]
++		var ok bool
++		switch extensionType {
++		case 0x0000:
++			observation.ServerName, ok = parseServerName(payload)
++			if !ok {
++				return nil, false, false, false
++			}
++		case 0x0010:
++			observation.ALPN, observation.ALPNTruncated, ok = parseALPN(payload)
++			if !ok {
++				return nil, false, false, false
++			}
++			metadataTruncated = metadataTruncated || observation.ALPNTruncated
++		case 0x002b:
++			observation.SupportedVersions, observation.SupportedVersionsTruncated, ok = parseSupportedVersions(payload)
++			if !ok {
++				return nil, false, false, false
++			}
++			metadataTruncated = metadataTruncated || observation.SupportedVersionsTruncated
++		case 0xfe0d, 0xffce:
++			observation.EncryptedClientHello = true
++		}
++		cursor = extensionEnd
++	}
++	observation.ClientHelloComplete = len(data) >= total && cursor == extensionsEnd
++	return observation, true, observation.ClientHelloComplete, metadataTruncated
++}
++
++func parseServerName(data []byte) (string, bool) {
++	if len(data) < 2 {
++		return "", false
++	}
++	listLen := int(binary.BigEndian.Uint16(data[:2]))
++	if listLen != len(data)-2 {
++		return "", false
++	}
++	cursor := 2
++	for cursor < len(data) {
++		if cursor+3 > len(data) {
++			return "", false
++		}
++		nameType := data[cursor]
++		nameLen := int(binary.BigEndian.Uint16(data[cursor+1 : cursor+3]))
++		cursor += 3
++		if cursor+nameLen > len(data) {
++			return "", false
++		}
++		if nameType == 0 {
++			name, valid := sanitizeServerName(string(data[cursor : cursor+nameLen]))
++			if !valid {
++				return "", false
++			}
++			return name, true
++		}
++		cursor += nameLen
++	}
++	return "", true
++}
++
++func parseALPN(data []byte) ([]string, bool, bool) {
++	if len(data) < 2 {
++		return nil, false, false
++	}
++	listLen := int(binary.BigEndian.Uint16(data[:2]))
++	if listLen != len(data)-2 {
++		return nil, false, false
++	}
++	values := make([]string, 0, 4)
++	truncated := false
++	cursor := 2
++	for cursor < len(data) {
++		length := int(data[cursor])
++		cursor++
++		if length == 0 || cursor+length > len(data) {
++			return nil, false, false
++		}
++		value := string(data[cursor : cursor+length])
++		if containsControl(value) {
++			return nil, false, false
++		}
++		if len(values) < maxTLSListItems {
++			values = append(values, boundedText(value, 255))
++		} else {
++			truncated = true
++		}
++		cursor += length
++	}
++	return values, truncated, true
++}
++
++func parseSupportedVersions(data []byte) ([]string, bool, bool) {
++	if len(data) < 1 {
++		return nil, false, false
++	}
++	listLen := int(data[0])
++	if listLen != len(data)-1 || listLen%2 != 0 {
++		return nil, false, false
++	}
++	values := make([]string, 0, listLen/2)
++	truncated := false
++	for cursor := 1; cursor < len(data); cursor += 2 {
++		value := tlsVersion(binary.BigEndian.Uint16(data[cursor : cursor+2]))
++		if len(values) < maxTLSListItems {
++			values = append(values, value)
++		} else {
++			truncated = true
++		}
++	}
++	return values, truncated, true
++}
++
++func tlsVersion(value uint16) string {
++	switch value {
++	case 0x0301:
++		return "TLS 1.0"
++	case 0x0302:
++		return "TLS 1.1"
++	case 0x0303:
++		return "TLS 1.2"
++	case 0x0304:
++		return "TLS 1.3"
++	default:
++		return "0x" + strings.ToUpper(hex4(value))
++	}
++}
++
++func hex4(value uint16) string {
++	const digits = "0123456789abcdef"
++	return string([]byte{
++		digits[(value>>12)&0xf],
++		digits[(value>>8)&0xf],
++		digits[(value>>4)&0xf],
++		digits[value&0xf],
++	})
++}
++
++func uint24(data []byte) int {
++	return int(data[0])<<16 | int(data[1])<<8 | int(data[2])
++}
++
++func minInt(a, b int) int {
++	if a < b {
++		return a
++	}
++	return b
++}
+diff --git a/component/observer/observer_test.go b/component/observer/observer_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..ee1806f21e626df730cb8dce05fbf3327a509276
+--- /dev/null
++++ b/component/observer/observer_test.go
+@@ -0,0 +1,488 @@
++package observer
++
++import (
++	"bytes"
++	"encoding/binary"
++	"encoding/json"
++	"io"
++	"net"
++	"strings"
++	"testing"
++	"time"
++
++	N "github.com/metacubex/mihomo/common/net"
++	C "github.com/metacubex/mihomo/constant"
++)
++
++func observePayload(t *testing.T, payload []byte, timeout time.Duration, limit int) (*N.BufferedConn, *C.ProtocolObservation) {
++	t.Helper()
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	writeDone := make(chan error, 1)
++	go func() {
++		_, err := peer.Write(payload)
++		_ = peer.Close()
++		writeDone <- err
++	}()
++	observation := observeTCP(conn, timeout, limit)
++	if err := <-writeDone; err != nil {
++		t.Fatalf("write payload: %v", err)
++	}
++	return conn, observation
++}
++
++func TestObserveHTTPKeepsOnlySanitizedMetadata(t *testing.T) {
++	payload := []byte("GET /private/orders/42?token=secret#fragment HTTP/1.1\r\n" +
++		"Host: API.Example.com\r\n" +
++		"Authorization: Bearer super-secret\r\n" +
++		"X-Trace: abc123\r\n\r\nbody-must-not-be-stored")
++	conn, result := observePayload(t, payload, time.Second, maxObservationBytes)
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("HTTP observation = %#v", result)
++	}
++	if result.Kind != "http1" || result.HTTP.Method != "GET" || result.HTTP.Version != "HTTP/1.1" {
++		t.Fatalf("unexpected HTTP identity: %#v", result.HTTP)
++	}
++	if result.HTTP.Target != "/private/orders/42" {
++		t.Fatalf("sanitized target = %q", result.HTTP.Target)
++	}
++	if result.HTTP.Host != "api.example.com" {
++		t.Fatalf("host = %q", result.HTTP.Host)
++	}
++	wantNames := []string{"host", "authorization", "x-trace"}
++	if strings.Join(result.HTTP.HeaderNames, ",") != strings.Join(wantNames, ",") {
++		t.Fatalf("header names = %#v, want %#v", result.HTTP.HeaderNames, wantNames)
++	}
++	if !result.HTTP.HeadersComplete || result.Truncated {
++		t.Fatalf("completion = %#v", result)
++	}
++
++	encoded, err := json.Marshal(result)
++	if err != nil {
++		t.Fatal(err)
++	}
++	for _, secret := range []string{"token=secret", "super-secret", "abc123", "body-must-not-be-stored"} {
++		if bytes.Contains(encoded, []byte(secret)) {
++			t.Fatalf("serialized observation retained %q: %s", secret, encoded)
++		}
++	}
++
++	replayed := make([]byte, len(payload))
++	if _, err := io.ReadFull(conn, replayed); err != nil {
++		t.Fatalf("read unconsumed payload: %v", err)
++	}
++	if !bytes.Equal(replayed, payload) {
++		t.Fatal("passive observation changed the relayed bytes")
++	}
++	_ = conn.Close()
++}
++
++func TestObserveHTTPMarksABoundedIncompleteHeaderBlock(t *testing.T) {
++	payload := []byte("GET /path?secret=yes HTTP/1.1\r\nHost: example.com\r\nX-Large: " + strings.Repeat("a", 256))
++	_, result := observePayload(t, payload, time.Second, 96)
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("HTTP observation = %#v", result)
++	}
++	if !result.Truncated || result.HTTP.HeadersComplete {
++		t.Fatalf("expected bounded incomplete observation: %#v", result)
++	}
++	if result.HTTP.Target != "/path" {
++		t.Fatalf("target = %q", result.HTTP.Target)
++	}
++	encoded, _ := json.Marshal(result)
++	if bytes.Contains(encoded, []byte("secret=yes")) || bytes.Contains(encoded, []byte(strings.Repeat("a", 16))) {
++		t.Fatalf("bounded observation retained a value: %s", encoded)
++	}
++}
++
++func TestObserveTLSClientHelloMetadata(t *testing.T) {
++	payload := testClientHello(t)
++	conn, result := observePayload(t, payload, time.Second, maxObservationBytes)
++	if result == nil || result.TLS == nil {
++		t.Fatalf("TLS observation = %#v", result)
++	}
++	if result.Kind != "tls-client-hello" || result.Truncated {
++		t.Fatalf("unexpected TLS envelope: %#v", result)
++	}
++	if result.TLS.ServerName != "api.example.com" {
++		t.Fatalf("SNI = %q", result.TLS.ServerName)
++	}
++	if strings.Join(result.TLS.ALPN, ",") != "h2,http/1.1" {
++		t.Fatalf("ALPN = %#v", result.TLS.ALPN)
++	}
++	if result.TLS.LegacyVersion != "TLS 1.2" || strings.Join(result.TLS.SupportedVersions, ",") != "TLS 1.3,TLS 1.2" {
++		t.Fatalf("TLS versions = %#v", result.TLS)
++	}
++	if !result.TLS.EncryptedClientHello || !result.TLS.ClientHelloComplete {
++		t.Fatalf("TLS completeness/ECH = %#v", result.TLS)
++	}
++
++	replayed := make([]byte, len(payload))
++	if _, err := io.ReadFull(conn, replayed); err != nil {
++		t.Fatalf("read unconsumed ClientHello: %v", err)
++	}
++	if !bytes.Equal(replayed, payload) {
++		t.Fatal("passive TLS observation changed the relayed bytes")
++	}
++	_ = conn.Close()
++}
++
++func TestObserveTCPRejectsUnrelatedOrMalformedTraffic(t *testing.T) {
++	for _, payload := range [][]byte{
++		[]byte("SSH-2.0-OpenSSH_9.0\r\n"),
++		[]byte("GET / HTTP/2.0\r\n\r\n"),
++		{0x16, 0x02, 0x01, 0x00, 0x01, 0x01},
++	} {
++		_, result := observePayload(t, payload, 50*time.Millisecond, maxObservationBytes)
++		if result != nil {
++			t.Fatalf("payload %x produced %#v", payload, result)
++		}
++	}
++}
++
++func TestPublicObserverIsOptIn(t *testing.T) {
++	SetEnabled(false)
++	client, peer := net.Pipe()
++	defer client.Close()
++	defer peer.Close()
++	if _, prepared := PrepareTCP(N.NewBufferedConn(client)); prepared {
++		t.Fatal("disabled observer prepared a connection")
++	}
++}
++
++func testClientHello(t testing.TB) []byte {
++	t.Helper()
++	extension := func(kind uint16, payload []byte) []byte {
++		value := make([]byte, 4+len(payload))
++		binary.BigEndian.PutUint16(value[0:2], kind)
++		binary.BigEndian.PutUint16(value[2:4], uint16(len(payload)))
++		copy(value[4:], payload)
++		return value
++	}
++
++	host := []byte("api.example.com")
++	serverName := make([]byte, 2+1+2+len(host))
++	binary.BigEndian.PutUint16(serverName[0:2], uint16(1+2+len(host)))
++	serverName[2] = 0
++	binary.BigEndian.PutUint16(serverName[3:5], uint16(len(host)))
++	copy(serverName[5:], host)
++
++	alpnValues := append([]byte{2}, []byte("h2")...)
++	alpnValues = append(alpnValues, byte(len("http/1.1")))
++	alpnValues = append(alpnValues, []byte("http/1.1")...)
++	alpn := make([]byte, 2+len(alpnValues))
++	binary.BigEndian.PutUint16(alpn[0:2], uint16(len(alpnValues)))
++	copy(alpn[2:], alpnValues)
++
++	versions := []byte{4, 0x03, 0x04, 0x03, 0x03}
++	extensions := append([]byte{}, extension(0x0000, serverName)...)
++	extensions = append(extensions, extension(0x0010, alpn)...)
++	extensions = append(extensions, extension(0x002b, versions)...)
++	extensions = append(extensions, extension(0xfe0d, []byte{0x00})...)
++
++	body := []byte{0x03, 0x03}
++	body = append(body, bytes.Repeat([]byte{0x42}, 32)...)
++	body = append(body, 0)
++	body = append(body, 0, 2, 0x13, 0x01)
++	body = append(body, 1, 0)
++	extensionLength := make([]byte, 2)
++	binary.BigEndian.PutUint16(extensionLength, uint16(len(extensions)))
++	body = append(body, extensionLength...)
++	body = append(body, extensions...)
++
++	handshake := []byte{0x01, byte(len(body) >> 16), byte(len(body) >> 8), byte(len(body))}
++	handshake = append(handshake, body...)
++	record := []byte{0x16, 0x03, 0x01, byte(len(handshake) >> 8), byte(len(handshake))}
++	return append(record, handshake...)
++}
++
++func TestObserveHTTPConnectDropsMalformedUserInfo(t *testing.T) {
++	payload := []byte("CONNECT user:private-password@example.com:443 HTTP/1.1\r\n" +
++		"Host: example.com:443\r\n\r\n")
++	_, result := observePayload(t, payload, time.Second, maxObservationBytes)
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("CONNECT observation = %#v", result)
++	}
++	if result.HTTP.Target != "example.com:443" || result.HTTP.Host != "example.com" {
++		t.Fatalf("sanitized CONNECT = %#v", result.HTTP)
++	}
++	encoded, err := json.Marshal(result)
++	if err != nil {
++		t.Fatal(err)
++	}
++	for _, secret := range []string{"user", "private-password"} {
++		if bytes.Contains(encoded, []byte(secret)) {
++			t.Fatalf("CONNECT observation retained %q: %s", secret, encoded)
++		}
++	}
++}
++
++func TestObserveHTTPBoundsIndividualHeaderNames(t *testing.T) {
++	longName := "X-" + strings.Repeat("A", maxHTTPHeaderNameBytes+64)
++	payload := []byte("GET / HTTP/1.1\r\nHost: example.com\r\n" + longName + ": private-value\r\n\r\n")
++	_, result := observePayload(t, payload, time.Second, maxObservationBytes)
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("HTTP observation = %#v", result)
++	}
++	if !result.Truncated || !result.HTTP.HeaderNamesTruncated {
++		t.Fatalf("header-name truncation = %#v", result)
++	}
++	for _, name := range result.HTTP.HeaderNames {
++		if len(name) > maxHTTPHeaderNameBytes {
++			t.Fatalf("header name exceeded bound: %d", len(name))
++		}
++	}
++	encoded, _ := json.Marshal(result)
++	if bytes.Contains(encoded, []byte("private-value")) {
++		t.Fatalf("header value leaked: %s", encoded)
++	}
++}
++
++func TestObserveHTTPNormalizesHostAuthorities(t *testing.T) {
++	tests := []struct {
++		name string
++		host string
++		want string
++	}{
++		{name: "domain with port", host: "API.Example.com:8080", want: "api.example.com"},
++		{name: "bracketed ipv6 with port", host: "[2001:db8::1]:8080", want: "2001:db8::1"},
++		{name: "bracketed ipv6", host: "[2001:db8::2]", want: "2001:db8::2"},
++		{name: "bare ipv6", host: "2001:db8::3", want: "2001:db8::3"},
++		{name: "absolute domain", host: "Edge.Example.com.", want: "edge.example.com"},
++	}
++	for _, test := range tests {
++		t.Run(test.name, func(t *testing.T) {
++			payload := []byte("GET / HTTP/1.1\r\nHost: " + test.host + "\r\n\r\n")
++			_, result := observePayload(t, payload, time.Second, maxObservationBytes)
++			if result == nil || result.HTTP == nil {
++				t.Fatalf("HTTP observation = %#v", result)
++			}
++			if result.HTTP.Host != test.want {
++				t.Fatalf("host = %q, want %q", result.HTTP.Host, test.want)
++			}
++		})
++	}
++}
++
++func TestSanitizeHTTPHostRejectsInvalidAuthorities(t *testing.T) {
++	for _, raw := range []string{
++		"example.com:0",
++		"example.com:65536",
++		"example.com:not-a-port",
++		"[2001:db8::1",
++		"[example.com]:443",
++		"bad,host.example",
++		".leading-dot.example",
++		"double..dot.example",
++	} {
++		if host, _ := sanitizeHTTPHost(raw); host != "" {
++			t.Fatalf("sanitizeHTTPHost(%q) = %q", raw, host)
++		}
++	}
++}
++
++func TestObserveHTTPReportsTargetAndHostTruncation(t *testing.T) {
++	longTarget := "/" + strings.Repeat("p", maxRequestTargetBytes+64)
++	longHost := strings.Repeat("a", maxHostBytes+64)
++	payload := []byte("GET " + longTarget + " HTTP/1.1\r\nHost: " + longHost + "\r\n\r\n")
++	_, result := observePayload(t, payload, time.Second, maxObservationBytes)
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("long HTTP observation = %#v", result)
++	}
++	if !result.Truncated || !result.HTTP.TargetTruncated || !result.HTTP.HostTruncated {
++		t.Fatalf("truncation flags = %#v", result)
++	}
++	if len(result.HTTP.Target) > maxRequestTargetBytes || len(result.HTTP.Host) > maxHostBytes {
++		t.Fatalf("bounded values exceeded limits: %#v", result.HTTP)
++	}
++}
++
++func TestSanitizeServerNameRejectsInvalidOrOversizedNames(t *testing.T) {
++	for _, value := range []string{
++		"bad name.example",
++		"trailing.example.",
++		strings.Repeat("a", maxHostBytes+1),
++		"127.0.0.1",
++	} {
++		if sanitized, ok := sanitizeServerName(value); ok || sanitized != "" {
++			t.Fatalf("sanitizeServerName(%q) = %q/%v", value, sanitized, ok)
++		}
++	}
++	if sanitized, ok := sanitizeServerName("API.Example.COM"); !ok || sanitized != "api.example.com" {
++		t.Fatalf("valid SNI = %q/%v", sanitized, ok)
++	}
++}
++
++func TestObserveBufferedTCPDoesNotConsumeBufferedBytes(t *testing.T) {
++	payload := []byte("GET /ready HTTP/1.1\r\nHost: service.example\r\n\r\n")
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	SetEnabled(true)
++	t.Cleanup(func() {
++		SetEnabled(false)
++		_ = conn.Close()
++		_ = peer.Close()
++	})
++	sessionID, prepared := PrepareTCP(conn)
++	if !prepared {
++		t.Fatal("PrepareTCP returned false while enabled")
++	}
++	writeDone := make(chan error, 1)
++	go func() {
++		_, err := peer.Write(payload)
++		writeDone <- err
++	}()
++	_ = conn.SetReadDeadline(time.Now().Add(time.Second))
++	if _, err := conn.Peek(len(payload)); err != nil {
++		t.Fatalf("buffer payload: %v", err)
++	}
++	_ = conn.SetReadDeadline(time.Time{})
++
++	startedAt := time.Now()
++	result := ObserveBufferedTCP(conn, sessionID)
++	if elapsed := time.Since(startedAt); elapsed > 50*time.Millisecond {
++		t.Fatalf("buffer-only observation waited %s", elapsed)
++	}
++	if result == nil || result.HTTP == nil || result.HTTP.Target != "/ready" {
++		t.Fatalf("buffered observation = %#v", result)
++	}
++
++	replayed := make([]byte, len(payload))
++	if _, err := io.ReadFull(conn, replayed); err != nil {
++		t.Fatalf("read unconsumed payload: %v", err)
++	}
++	if !bytes.Equal(replayed, payload) {
++		t.Fatal("buffer-only observation changed relayed bytes")
++	}
++	if err := <-writeDone; err != nil {
++		t.Fatalf("write payload: %v", err)
++	}
++}
++
++func FuzzObserveBufferedNeverPanics(f *testing.F) {
++	for _, seed := range [][]byte{
++		[]byte("GET /?token=secret HTTP/1.1\r\nHost: example.com\r\n\r\n"),
++		testClientHello(f),
++		[]byte("SSH-2.0-OpenSSH_9.0\r\n"),
++		{0x16, 0x03, 0x01, 0xff, 0xff},
++	} {
++		f.Add(seed)
++	}
++	f.Fuzz(func(t *testing.T, input []byte) {
++		if len(input) > maxObservationBytes*2 {
++			input = input[:maxObservationBytes*2]
++		}
++		result := observeBuffered(input, maxObservationBytes)
++		if result != nil {
++			if _, err := json.Marshal(result); err != nil {
++				t.Fatalf("marshal observation: %v", err)
++			}
++		}
++	})
++}
++
++func TestPrepareTCPDoesNotAllocate(t *testing.T) {
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	t.Cleanup(func() {
++		SetEnabled(false)
++		_ = conn.Close()
++		_ = peer.Close()
++	})
++
++	SetEnabled(false)
++	if allocations := testing.AllocsPerRun(1000, func() {
++		_, _ = PrepareTCP(conn)
++	}); allocations != 0 {
++		t.Fatalf("disabled PrepareTCP allocated %.2f objects", allocations)
++	}
++
++	Configure(true, "session-a")
++	if allocations := testing.AllocsPerRun(1000, func() {
++		_, _ = PrepareTCP(conn)
++	}); allocations != 0 {
++		t.Fatalf("enabled PrepareTCP allocated %.2f objects", allocations)
++	}
++}
++
++func TestPrepareTCPDoesNotReadOrMarkPeeked(t *testing.T) {
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	SetEnabled(true)
++	t.Cleanup(func() {
++		SetEnabled(false)
++		_ = conn.Close()
++		_ = peer.Close()
++	})
++
++	if _, prepared := PrepareTCP(conn); !prepared {
++		t.Fatal("PrepareTCP returned false while enabled")
++	}
++	if conn.Peeked() || conn.Buffered() != 0 {
++		t.Fatalf("PrepareTCP changed reader state: peeked=%v buffered=%d", conn.Peeked(), conn.Buffered())
++	}
++}
++
++func TestPreparedSessionSurvivesAConfigurationChange(t *testing.T) {
++	Configure(true, "session-a")
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	t.Cleanup(func() {
++		SetEnabled(false)
++		_ = conn.Close()
++		_ = peer.Close()
++	})
++
++	sessionID, prepared := PrepareTCP(conn)
++	if !prepared || sessionID != "session-a" {
++		t.Fatalf("prepared = %v, session = %q", prepared, sessionID)
++	}
++	Configure(true, "session-b")
++
++	payload := []byte("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n")
++	writeDone := make(chan error, 1)
++	go func() {
++		_, err := peer.Write(payload)
++		writeDone <- err
++	}()
++	result := ObserveTCP(conn, sessionID)
++	if result == nil || result.SessionID != "session-a" {
++		t.Fatalf("observation = %#v", result)
++	}
++	if err := <-writeDone; err != nil {
++		t.Fatal(err)
++	}
++}
++
++func TestConfigureBoundsTheSessionIdentifier(t *testing.T) {
++	Configure(true, strings.Repeat("s", 256))
++	t.Cleanup(func() { SetEnabled(false) })
++	if got := SessionID(); len(got) != 128 {
++		t.Fatalf("session ID length = %d", len(got))
++	}
++	Configure(true, "bad\nsession")
++	if got := SessionID(); got != "" {
++		t.Fatalf("control-bearing session ID = %q", got)
++	}
++}
++
++func TestObserveHTTPAbsoluteURIKeepsNoUserInfoOrQuery(t *testing.T) {
++	payload := []byte("GET http://user:private-password@example.com/private/path?token=secret HTTP/1.1\r\n" +
++		"Host: ignored.example\r\n\r\n")
++	_, result := observePayload(t, payload, time.Second, maxObservationBytes)
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("absolute-form observation = %#v", result)
++	}
++	if result.HTTP.Host != "example.com" || result.HTTP.Target != "/private/path" {
++		t.Fatalf("sanitized absolute-form request = %#v", result.HTTP)
++	}
++	encoded, err := json.Marshal(result)
++	if err != nil {
++		t.Fatal(err)
++	}
++	for _, secret := range []string{"user", "private-password", "token=secret"} {
++		if bytes.Contains(encoded, []byte(secret)) {
++			t.Fatalf("absolute-form observation retained %q: %s", secret, encoded)
++		}
++	}
++}
+diff --git a/constant/observation.go b/constant/observation.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..655e3f5fe874090292f009caf07a984b2911b047
+--- /dev/null
++++ b/constant/observation.go
+@@ -0,0 +1,43 @@
++package constant
++
++// ProtocolObservation is a bounded, privacy-preserving description of the
++// client bytes Mihomo already had to relay. It intentionally contains no raw
++// packet bytes, HTTP header values (except Host), query strings, bodies, or
++// decrypted TLS application data.
++type ProtocolObservation struct {
++	SessionID     string                     `json:"sessionId,omitempty"`
++	Kind          string                     `json:"kind"`
++	ObservedBytes int                        `json:"observedBytes"`
++	Truncated     bool                       `json:"truncated,omitempty"`
++	HTTP          *HTTPObservation           `json:"http,omitempty"`
++	TLS           *TLSClientHelloObservation `json:"tls,omitempty"`
++}
++
++// HTTPObservation describes one client HTTP/1.x request prefix. Target is
++// sanitized before storage: query and fragment components are removed and the
++// retained value is bounded.
++type HTTPObservation struct {
++	Method               string   `json:"method"`
++	Target               string   `json:"target"`
++	Version              string   `json:"version"`
++	Host                 string   `json:"host,omitempty"`
++	HeaderNames          []string `json:"headerNames,omitempty"`
++	HeadersComplete      bool     `json:"headersComplete"`
++	TargetTruncated      bool     `json:"targetTruncated,omitempty"`
++	HostTruncated        bool     `json:"hostTruncated,omitempty"`
++	HeaderNamesTruncated bool     `json:"headerNamesTruncated,omitempty"`
++}
++
++// TLSClientHelloObservation contains only metadata that is visible in a
++// plaintext TLS ClientHello. It never contains certificates, secrets, or
++// application data.
++type TLSClientHelloObservation struct {
++	ServerName                 string   `json:"serverName,omitempty"`
++	ALPN                       []string `json:"alpn,omitempty"`
++	LegacyVersion              string   `json:"legacyVersion,omitempty"`
++	SupportedVersions          []string `json:"supportedVersions,omitempty"`
++	EncryptedClientHello       bool     `json:"encryptedClientHello,omitempty"`
++	ClientHelloComplete        bool     `json:"clientHelloComplete"`
++	ALPNTruncated              bool     `json:"alpnTruncated,omitempty"`
++	SupportedVersionsTruncated bool     `json:"supportedVersionsTruncated,omitempty"`
++}
+diff --git a/tunnel/observation_test.go b/tunnel/observation_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c80ecf6a6332a8cf60b99272727cac5c0fa726d
+--- /dev/null
++++ b/tunnel/observation_test.go
+@@ -0,0 +1,79 @@
++package tunnel
++
++import (
++	"bytes"
++	"io"
++	"net"
++	"testing"
++
++	N "github.com/metacubex/mihomo/common/net"
++	"github.com/metacubex/mihomo/component/observer"
++	C "github.com/metacubex/mihomo/constant"
++)
++
++func TestInitialTCPObservationReadsEnoughWithoutConsuming(t *testing.T) {
++	payload := []byte("GET /health?token=private HTTP/1.1\r\nHost: API.Example.com:8080\r\nAuthorization: secret\r\n\r\nbody")
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	observer.Configure(true, "session-a")
++	t.Cleanup(func() {
++		observer.SetEnabled(false)
++		_ = conn.Close()
++		_ = peer.Close()
++	})
++
++	resultCh := make(chan *C.ProtocolObservation, 1)
++	go func() {
++		resultCh <- initialTCPObservation(conn, true, "session-a")
++	}()
++	writeDone := make(chan error, 1)
++	go func() {
++		_, err := peer.Write(payload)
++		writeDone <- err
++	}()
++
++	result := <-resultCh
++	if result == nil || result.HTTP == nil {
++		t.Fatalf("HTTP observation = %#v", result)
++	}
++	if result.SessionID != "session-a" {
++		t.Fatalf("session ID = %q", result.SessionID)
++	}
++	if result.HTTP.Method != "GET" || result.HTTP.Target != "/health" || result.HTTP.Host != "api.example.com" {
++		t.Fatalf("HTTP metadata = %#v", result.HTTP)
++	}
++
++	replayed := make([]byte, len(payload))
++	if _, err := io.ReadFull(conn, replayed); err != nil {
++		t.Fatalf("read buffered payload: %v", err)
++	}
++	if !bytes.Equal(replayed, payload) {
++		t.Fatal("initial observation changed relayed bytes")
++	}
++	if err := <-writeDone; err != nil {
++		t.Fatalf("write payload: %v", err)
++	}
++}
++
++func TestInitialTCPPeekRemainsBoundedWhenObservationIsDisabled(t *testing.T) {
++	client, peer := net.Pipe()
++	conn := N.NewBufferedConn(client)
++	t.Cleanup(func() {
++		_ = conn.Close()
++		_ = peer.Close()
++	})
++
++	resultCh := make(chan *C.ProtocolObservation, 1)
++	go func() {
++		resultCh <- initialTCPObservation(conn, false, "")
++	}()
++	if _, err := peer.Write([]byte{'X'}); err != nil {
++		t.Fatal(err)
++	}
++	if result := <-resultCh; result != nil {
++		t.Fatalf("disabled observation returned %#v", result)
++	}
++	if conn.Buffered() != 1 {
++		t.Fatalf("buffered = %d, want existing one-byte peek", conn.Buffered())
++	}
++}
+diff --git a/tunnel/statistic/tracker.go b/tunnel/statistic/tracker.go
+index fa9860a04c2dc4bb37ba791569d86c56583a11d7..d77c48fd469be67ec57de23de961c334faae62a5 100644
+--- a/tunnel/statistic/tracker.go
++++ b/tunnel/statistic/tracker.go
+@@ -22,15 +22,16 @@ type Tracker interface {
+ }
+ 
+ type TrackerInfo struct {
+-	UUID          uuid.UUID    `json:"id"`
+-	Metadata      *C.Metadata  `json:"metadata"`
+-	UploadTotal   atomic.Int64 `json:"upload"`
+-	DownloadTotal atomic.Int64 `json:"download"`
+-	Start         time.Time    `json:"start"`
+-	Chain         C.Chain      `json:"chains"`
+-	ProviderChain C.Chain      `json:"providerChains"`
+-	Rule          string       `json:"rule"`
+-	RulePayload   string       `json:"rulePayload"`
++	UUID          uuid.UUID              `json:"id"`
++	Metadata      *C.Metadata            `json:"metadata"`
++	UploadTotal   atomic.Int64           `json:"upload"`
++	DownloadTotal atomic.Int64           `json:"download"`
++	Start         time.Time              `json:"start"`
++	Chain         C.Chain                `json:"chains"`
++	ProviderChain C.Chain                `json:"providerChains"`
++	Rule          string                 `json:"rule"`
++	RulePayload   string                 `json:"rulePayload"`
++	Observation   *C.ProtocolObservation `json:"observation,omitempty"`
+ }
+ 
+ type tcpTracker struct {
+@@ -116,8 +117,12 @@ func (tt *tcpTracker) Upstream() any {
+ 	return tt.Conn
+ }
+ 
+-func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool) *tcpTracker {
++func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule, uploadTotal int64, downloadTotal int64, pushToManager bool, observations ...*C.ProtocolObservation) *tcpTracker {
+ 	metadata.RemoteDst = conn.RemoteDestination()
++	var observation *C.ProtocolObservation
++	if len(observations) > 0 {
++		observation = observations[0]
++	}
+ 
+ 	tt := &tcpTracker{
+ 		Conn:    conn,
+@@ -131,6 +136,7 @@ func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.R
+ 			Rule:          "",
+ 			UploadTotal:   atomic.NewInt64(uploadTotal),
+ 			DownloadTotal: atomic.NewInt64(downloadTotal),
++			Observation:   observation,
+ 		},
+ 		pushToManager: pushToManager,
+ 	}
+diff --git a/tunnel/tunnel.go b/tunnel/tunnel.go
+index e4b85bf392381298b52b15bf2f6827a3df5d7b1a..0c81bb22e8e132a2c90acb2972d38c7ca41d735d 100644
+--- a/tunnel/tunnel.go
++++ b/tunnel/tunnel.go
+@@ -17,6 +17,7 @@ import (
+ 	"github.com/metacubex/mihomo/common/utils"
+ 	"github.com/metacubex/mihomo/component/loopback"
+ 	"github.com/metacubex/mihomo/component/nat"
++	"github.com/metacubex/mihomo/component/observer"
+ 	"github.com/metacubex/mihomo/component/process"
+ 	"github.com/metacubex/mihomo/component/proxydialer"
+ 	"github.com/metacubex/mihomo/component/resolver"
+@@ -541,14 +542,24 @@ func handleTCPConn(connCtx C.ConnContext) {
+ 		return
+ 	}
+ 
++	// Passive observation shares the existing asynchronous initial-read window.
++	// Route resolution and dialing continue in parallel, and the normal path
++	// keeps the same 200 ms upper bound it already used for Peek(1).
++	observationSessionID, observationPrepared := observer.PrepareTCP(conn)
++	var peekBytes []byte
++	var peekLen int
++	var protocolObservation *C.ProtocolObservation
++
+ 	peekMutex := sync.Mutex{}
+ 	if !conn.Peeked() {
+ 		peekMutex.Lock()
+ 		go func() {
+ 			defer peekMutex.Unlock()
+-			_ = conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+-			_, _ = conn.Peek(1)
+-			_ = conn.SetReadDeadline(time.Time{})
++			protocolObservation = initialTCPObservation(
++				conn,
++				observationPrepared,
++				observationSessionID,
++			)
+ 		}()
+ 	}
+ 
+@@ -569,9 +580,6 @@ func handleTCPConn(connCtx C.ConnContext) {
+ 		}
+ 	}
+ 
+-	var peekBytes []byte
+-	var peekLen int
+-
+ 	ctx, cancel := context.WithTimeout(context.Background(), C.DefaultTCPTimeout)
+ 	defer cancel()
+ 	remoteConn, err := retry(ctx, func(ctx context.Context) (remoteConn C.Conn, err error) {
+@@ -596,6 +604,9 @@ func handleTCPConn(connCtx C.ConnContext) {
+ 			peekMutex.Lock()
+ 			defer peekMutex.Unlock()
+ 			peekBytes, _ = conn.Peek(conn.Buffered())
++			if observationPrepared && protocolObservation == nil {
++				protocolObservation = observer.ObserveBufferedTCP(conn, observationSessionID)
++			}
+ 			_, err = remoteConn.Write(peekBytes)
+ 			if err != nil {
+ 				return
+@@ -613,18 +624,36 @@ func handleTCPConn(connCtx C.ConnContext) {
+ 	}
+ 	logMetadata(metadata, rule, remoteConn)
+ 
+-	remoteConn = statistic.NewTCPTracker(remoteConn, statistic.DefaultManager, metadata, rule, int64(peekLen), 0, true)
++	_ = conn.SetReadDeadline(time.Now()) // stop unfinished peek
++	peekMutex.Lock()
++	_ = conn.SetReadDeadline(time.Time{}) // reset
++	if observationPrepared && protocolObservation == nil {
++		protocolObservation = observer.ObserveBufferedTCP(conn, observationSessionID)
++	}
++	peekMutex.Unlock()
++
++	remoteConn = statistic.NewTCPTracker(remoteConn, statistic.DefaultManager, metadata, rule, int64(peekLen), 0, true, protocolObservation)
+ 	defer func(remoteConn C.Conn) {
+ 		_ = remoteConn.Close()
+ 	}(remoteConn)
+ 
+-	_ = conn.SetReadDeadline(time.Now()) // stop unfinished peek
+-	peekMutex.Lock()
+-	defer peekMutex.Unlock()
+-	_ = conn.SetReadDeadline(time.Time{}) // reset
+ 	handleSocket(conn, remoteConn)
+ }
+ 
++func initialTCPObservation(
++	conn *N.BufferedConn,
++	observe bool,
++	sessionID string,
++) *C.ProtocolObservation {
++	if observe {
++		return observer.ObserveTCP(conn, sessionID)
++	}
++	_ = conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
++	_, _ = conn.Peek(1)
++	_ = conn.SetReadDeadline(time.Time{})
++	return nil
++}
++
+ func logMetadataErr(metadata *C.Metadata, rule C.Rule, proxy C.ProxyAdapter, err error) {
+ 	if rule == nil {
+ 		log.Warnln("[%s] dial %s %s --> %s error: %s", strings.ToUpper(metadata.NetWork.String()), proxy.Name(), metadata.SourceDetail(), metadata.RemoteAddress(), err.Error())

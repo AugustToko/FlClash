@@ -55,46 +55,56 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m13(count) =>
       "${Intl.plural(count, one: '1 hour', other: '${count} hours')}";
 
-  static String m14(target) => "${target} is an invalid policy";
+  static String m14(code) => "Error ${code}";
 
-  static String m15(proxyName) => "${proxyName} is an invalid proxy";
+  static String m15(count) =>
+      "${Intl.plural(count, one: '1 header value', other: '${count} header values')}";
 
-  static String m16(providerName) =>
+  static String m16(id) => "Stream ${id}";
+
+  static String m17(count) =>
+      "${Intl.plural(count, one: '1 transaction', other: '${count} transactions')}";
+
+  static String m18(target) => "${target} is an invalid policy";
+
+  static String m19(proxyName) => "${proxyName} is an invalid proxy";
+
+  static String m20(providerName) =>
       "${providerName} is an invalid proxy provider";
 
-  static String m17(subRule) => "${subRule} is an invalid SUB_RULE";
+  static String m21(subRule) => "${subRule} is an invalid SUB_RULE";
 
-  static String m18(appName) =>
+  static String m22(appName) =>
       "1. Open System Settings > Privacy & Security\n2. Choose Location Services\n3. Find and check ${appName} in the list\n\nWhen you are done, return to the app to continue. Thank you for your cooperation.";
 
-  static String m19(label, max) => "${label} must be at most ${max} characters";
+  static String m23(label, max) => "${label} must be at most ${max} characters";
 
-  static String m20(count) =>
+  static String m24(count) =>
       "${Intl.plural(count, one: '1 minute ago', other: '${count} minutes ago')}";
 
-  static String m21(count) =>
+  static String m25(count) =>
       "${Intl.plural(count, one: '1 month ago', other: '${count} months ago')}";
 
-  static String m22(label) => "No ${label} yet";
+  static String m26(label) => "No ${label} yet";
 
-  static String m23(label) => "${label} must be a number";
+  static String m27(label) => "${label} must be a number";
 
-  static String m24(label) => "${label} must be between 1024 and 49151";
+  static String m28(label) => "${label} must be between 1024 and 49151";
 
-  static String m25(count) =>
+  static String m29(count) =>
       "${Intl.plural(count, one: '1 proxy', other: '${count} proxies')}";
 
-  static String m26(count) =>
+  static String m30(count) =>
       "${Intl.plural(count, one: '1 rule', other: '${count} rules')}";
 
-  static String m27(count) =>
+  static String m31(count) =>
       "${Intl.plural(count, one: '1 second', other: '${count} seconds')}";
 
-  static String m28(count) => "${count} selected";
+  static String m32(count) => "${count} selected";
 
-  static String m29(label) => "${label} must be a URL";
+  static String m33(label) => "${label} must be a URL";
 
-  static String m30(count) =>
+  static String m34(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -266,6 +276,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "The app is already up to date",
     ),
     "clearData": MessageLookupByLibrary.simpleMessage("Clear data"),
+    "clearLogbook": MessageLookupByLibrary.simpleMessage("Clear Logbook"),
+    "clearLogbookTip": MessageLookupByLibrary.simpleMessage(
+      "Clear all stored Logbook events?",
+    ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clipboardExport": MessageLookupByLibrary.simpleMessage(
       "Export to clipboard",
@@ -397,11 +411,48 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "New version found",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("Additional"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Answers"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("Authority"),
     "dnsDesc": MessageLookupByLibrary.simpleMessage(
       "Update DNS-related settings",
     ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS diagnostics"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Query the running Core and inspect DNS records",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS hijacking"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("No records returned"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS query failed"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage(
+      "Domain or IP address",
+    ),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS response"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Record type"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Resolver"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Active Core resolver",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "Direct outbound DNS",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "Proxy server DNS",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("System DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Response flags"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Run query"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "The active Core resolver was unavailable, so system DNS was used",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "The response contains no answer records",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "The response was truncated",
+    ),
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
@@ -516,6 +567,371 @@ class MessageLookup extends MessageLookupByLibrary {
     "hours": MessageLookupByLibrary.simpleMessage("hours"),
     "hoursAgo": m12,
     "hoursCount": m13,
+    "httpCapture": MessageLookupByLibrary.simpleMessage("HTTP Capture"),
+    "httpCaptureAllProfiles": MessageLookupByLibrary.simpleMessage(
+      "All profiles",
+    ),
+    "httpCaptureBodyAll": MessageLookupByLibrary.simpleMessage(
+      "All supported types",
+    ),
+    "httpCaptureBodyEncoding": MessageLookupByLibrary.simpleMessage(
+      "Body encoding",
+    ),
+    "httpCaptureBodyLimit": MessageLookupByLibrary.simpleMessage(
+      "Per-body limit",
+    ),
+    "httpCaptureBodyMode": MessageLookupByLibrary.simpleMessage("Body capture"),
+    "httpCaptureBodyNone": MessageLookupByLibrary.simpleMessage("Off"),
+    "httpCaptureBodyText": MessageLookupByLibrary.simpleMessage(
+      "Text, JSON and forms",
+    ),
+    "httpCaptureClientHelloComplete": MessageLookupByLibrary.simpleMessage(
+      "ClientHello complete",
+    ),
+    "httpCaptureComplete": MessageLookupByLibrary.simpleMessage("Complete"),
+    "httpCaptureConnectCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Upstream connect completed after",
+    ),
+    "httpCaptureConnectionFallback": MessageLookupByLibrary.simpleMessage(
+      "Connection metadata fallback",
+    ),
+    "httpCaptureContentEnabled": MessageLookupByLibrary.simpleMessage(
+      "Content capture enabled",
+    ),
+    "httpCaptureCoreObserverActive": MessageLookupByLibrary.simpleMessage(
+      "Core passive observer",
+    ),
+    "httpCaptureCoreObserverStopping": MessageLookupByLibrary.simpleMessage(
+      "Core observer is still stopping",
+    ),
+    "httpCaptureCurrentProfile": MessageLookupByLibrary.simpleMessage(
+      "Current profile",
+    ),
+    "httpCaptureDesc": MessageLookupByLibrary.simpleMessage(
+      "Inspect HTTP/1 transactions and HTTP/2 streams with an explicit, local privacy policy",
+    ),
+    "httpCaptureDownstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Client TLS completed after"),
+    "httpCaptureEmpty": MessageLookupByLibrary.simpleMessage(
+      "No HTTP observations yet",
+    ),
+    "httpCaptureEmptyValue": MessageLookupByLibrary.simpleMessage(
+      "Empty value",
+    ),
+    "httpCaptureEndpoint": MessageLookupByLibrary.simpleMessage(
+      "Observed endpoint",
+    ),
+    "httpCaptureErrorCode": m14,
+    "httpCaptureEvidenceCoreHttp1": MessageLookupByLibrary.simpleMessage(
+      "HTTP/1 request prefix observed by Core",
+    ),
+    "httpCaptureEvidenceCoreTlsClientHello":
+        MessageLookupByLibrary.simpleMessage(
+          "TLS ClientHello observed by Core",
+        ),
+    "httpCaptureEvidenceHostObserved": MessageLookupByLibrary.simpleMessage(
+      "Host observed; protocol unknown",
+    ),
+    "httpCaptureEvidenceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Authorized HTTPS relay metadata",
+    ),
+    "httpCaptureEvidenceKnownHttpPort": MessageLookupByLibrary.simpleMessage(
+      "Common HTTP port",
+    ),
+    "httpCaptureEvidenceKnownQuicPort": MessageLookupByLibrary.simpleMessage(
+      "Common QUIC port",
+    ),
+    "httpCaptureEvidenceKnownTlsPort": MessageLookupByLibrary.simpleMessage(
+      "Common TLS port",
+    ),
+    "httpCaptureEvidenceRemoteScheme": MessageLookupByLibrary.simpleMessage(
+      "Scheme reported by Core",
+    ),
+    "httpCaptureEvidenceTransportOnly": MessageLookupByLibrary.simpleMessage(
+      "Transport metadata only",
+    ),
+    "httpCaptureExportHar": MessageLookupByLibrary.simpleMessage(
+      "Export HAR-compatible observations",
+    ),
+    "httpCaptureExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "HTTP observations exported",
+    ),
+    "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
+      "HAR export reflects the active capture policy. Passive sources remain metadata-only. An explicitly authorized inspection relay can export HTTP/1 transactions or HTTP/2 streams, permitted header values, bounded bodies and available connection/request timing. Redacted values stay redacted; query strings, fragments, reason phrases and unknown timing phases remain unavailable.",
+    ),
+    "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Header names",
+    ),
+    "httpCaptureHeaderNamesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Header-name list truncated",
+    ),
+    "httpCaptureHeaderValueCount": m15,
+    "httpCaptureHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Capture header values",
+    ),
+    "httpCaptureHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Store bounded request and response header values. Known sensitive fields stay redacted.",
+    ),
+    "httpCaptureHeaderValuesTruncated": MessageLookupByLibrary.simpleMessage(
+      "Header values truncated",
+    ),
+    "httpCaptureHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Headers complete",
+    ),
+    "httpCaptureHostTruncated": MessageLookupByLibrary.simpleMessage(
+      "Host truncated",
+    ),
+    "httpCaptureHttp2GoAway": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 GOAWAY",
+    ),
+    "httpCaptureHttp2Stream": MessageLookupByLibrary.simpleMessage("Stream"),
+    "httpCaptureHttp2Streams": MessageLookupByLibrary.simpleMessage(
+      "HTTP/2 streams",
+    ),
+    "httpCaptureHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "HTTP version",
+    ),
+    "httpCaptureImagePreviewFailed": MessageLookupByLibrary.simpleMessage(
+      "The captured image bytes could not be previewed.",
+    ),
+    "httpCaptureIncomplete": MessageLookupByLibrary.simpleMessage("Incomplete"),
+    "httpCaptureInformationalStatusCodes": MessageLookupByLibrary.simpleMessage(
+      "Informational status codes",
+    ),
+    "httpCaptureInformationalStatusCodesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Informational status list truncated",
+        ),
+    "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
+      "This entry came from the explicitly authorized loopback HTTPS relay. It retains at most 32 HTTP/1 transactions or HTTP/2 streams per connection. Metadata-only is the default; header values and bounded bodies appear only when the recorded policy authorized them. Sensitive values may remain redacted and all truncation is marked.",
+    ),
+    "httpCaptureMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "Metadata only",
+    ),
+    "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
+      "Not observed",
+    ),
+    "httpCaptureObservationDelay": MessageLookupByLibrary.simpleMessage(
+      "Observation delay",
+    ),
+    "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
+      "Opt-in capture combines bounded passive Core observations with an explicitly started local HTTPS relay. The relay observes ordered HTTP/1 transactions and concurrent HTTP/2 streams. Metadata-only is the default. Header values and size-bounded bodies are retained only when explicitly enabled; sensitive headers remain redacted unless separately authorized. Query strings, fragments, reason phrases, certificates and raw HTTP messages are not retained. New connections only; local records are excluded from backups.",
+    ),
+    "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Observed prefix",
+    ),
+    "httpCaptureOmitted": MessageLookupByLibrary.simpleMessage("Omitted"),
+    "httpCapturePolicyLocked": MessageLookupByLibrary.simpleMessage(
+      "Stop capture before changing the privacy policy.",
+    ),
+    "httpCapturePresent": MessageLookupByLibrary.simpleMessage("Present"),
+    "httpCapturePrivacy": MessageLookupByLibrary.simpleMessage(
+      "Capture privacy policy",
+    ),
+    "httpCapturePrivacyDesc": MessageLookupByLibrary.simpleMessage(
+      "Configure the policy before starting capture. The policy is snapshotted for the whole session.",
+    ),
+    "httpCaptureProcessPath": MessageLookupByLibrary.simpleMessage(
+      "Process path",
+    ),
+    "httpCaptureProtocolHttp": MessageLookupByLibrary.simpleMessage("HTTP"),
+    "httpCaptureProtocolQuic": MessageLookupByLibrary.simpleMessage(
+      "QUIC / HTTP/3",
+    ),
+    "httpCaptureProtocolTls": MessageLookupByLibrary.simpleMessage(
+      "TLS / HTTPS",
+    ),
+    "httpCaptureProtocolUnknown": MessageLookupByLibrary.simpleMessage(
+      "Unknown protocol",
+    ),
+    "httpCaptureRedacted": MessageLookupByLibrary.simpleMessage("Redacted"),
+    "httpCaptureRedactedHeaders": MessageLookupByLibrary.simpleMessage(
+      "Always-redacted headers",
+    ),
+    "httpCaptureRedactedHeadersDesc": MessageLookupByLibrary.simpleMessage(
+      "Comma- or space-separated header names that remain redacted even when sensitive values are authorized.",
+    ),
+    "httpCaptureRedactedHeadersHint": MessageLookupByLibrary.simpleMessage(
+      "x-private-token, x-session-id",
+    ),
+    "httpCaptureRequestBody": MessageLookupByLibrary.simpleMessage(
+      "Request body",
+    ),
+    "httpCaptureRequestCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Request completed after",
+    ),
+    "httpCaptureRequestCookies": MessageLookupByLibrary.simpleMessage(
+      "Request cookies",
+    ),
+    "httpCaptureRequestHeaders": MessageLookupByLibrary.simpleMessage(
+      "Request header values",
+    ),
+    "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
+      "Request method",
+    ),
+    "httpCaptureRequestObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Request observed after",
+    ),
+    "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
+      "Sanitized target",
+    ),
+    "httpCaptureResponse": MessageLookupByLibrary.simpleMessage(
+      "Observed response",
+    ),
+    "httpCaptureResponseBody": MessageLookupByLibrary.simpleMessage(
+      "Response body",
+    ),
+    "httpCaptureResponseCompletedAfter": MessageLookupByLibrary.simpleMessage(
+      "Response completed after",
+    ),
+    "httpCaptureResponseCookies": MessageLookupByLibrary.simpleMessage(
+      "Response cookies",
+    ),
+    "httpCaptureResponseHeaderNames": MessageLookupByLibrary.simpleMessage(
+      "Response header names",
+    ),
+    "httpCaptureResponseHeaderNamesTruncated":
+        MessageLookupByLibrary.simpleMessage(
+          "Response header-name list truncated",
+        ),
+    "httpCaptureResponseHeaders": MessageLookupByLibrary.simpleMessage(
+      "Response header values",
+    ),
+    "httpCaptureResponseHeadersComplete": MessageLookupByLibrary.simpleMessage(
+      "Response headers complete",
+    ),
+    "httpCaptureResponseHttpVersion": MessageLookupByLibrary.simpleMessage(
+      "Response HTTP version",
+    ),
+    "httpCaptureResponseObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Response observed after",
+    ),
+    "httpCaptureResponseObservedBytes": MessageLookupByLibrary.simpleMessage(
+      "Observed response prefix",
+    ),
+    "httpCaptureResponseStatus": MessageLookupByLibrary.simpleMessage(
+      "Response status",
+    ),
+    "httpCaptureResponseTruncated": MessageLookupByLibrary.simpleMessage(
+      "Response observation truncated",
+    ),
+    "httpCaptureRiskMessage": MessageLookupByLibrary.simpleMessage(
+      "Header values and message bodies can contain credentials, cookies, personal data and private content. Enable only the minimum needed, use a narrow inspection allowlist, and stop capture immediately after debugging.",
+    ),
+    "httpCaptureRiskTitle": MessageLookupByLibrary.simpleMessage(
+      "Enable sensitive capture?",
+    ),
+    "httpCaptureRunning": MessageLookupByLibrary.simpleMessage("Capturing"),
+    "httpCaptureRuntimeCompletedAt": MessageLookupByLibrary.simpleMessage(
+      "Relay completed",
+    ),
+    "httpCaptureRuntimeDownstreamTls": MessageLookupByLibrary.simpleMessage(
+      "Client-side TLS",
+    ),
+    "httpCaptureRuntimeFailure": MessageLookupByLibrary.simpleMessage(
+      "Relay failure kind",
+    ),
+    "httpCaptureRuntimeFailureAuthorizationRevoked":
+        MessageLookupByLibrary.simpleMessage(
+          "Inspection authorization was revoked",
+        ),
+    "httpCaptureRuntimeFailureCaptureInterrupted":
+        MessageLookupByLibrary.simpleMessage(
+          "Previous capture ended unexpectedly",
+        ),
+    "httpCaptureRuntimeFailureCaptureStopped":
+        MessageLookupByLibrary.simpleMessage(
+          "Capture stopped before the relay completed",
+        ),
+    "httpCaptureRuntimeFailureDownstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Client-side TLS handshake failed",
+        ),
+    "httpCaptureRuntimeFailureLeaf": MessageLookupByLibrary.simpleMessage(
+      "Leaf certificate unavailable",
+    ),
+    "httpCaptureRuntimeFailureRelay": MessageLookupByLibrary.simpleMessage(
+      "Encrypted relay ended with an error",
+    ),
+    "httpCaptureRuntimeFailureUpstreamDial":
+        MessageLookupByLibrary.simpleMessage("Upstream connection failed"),
+    "httpCaptureRuntimeFailureUpstreamTls":
+        MessageLookupByLibrary.simpleMessage(
+          "Upstream TLS verification failed",
+        ),
+    "httpCaptureRuntimeId": MessageLookupByLibrary.simpleMessage(
+      "Relay session",
+    ),
+    "httpCaptureRuntimeState": MessageLookupByLibrary.simpleMessage(
+      "Relay state",
+    ),
+    "httpCaptureRuntimeUpstreamTls": MessageLookupByLibrary.simpleMessage(
+      "Upstream TLS",
+    ),
+    "httpCaptureSensitiveHeaderValues": MessageLookupByLibrary.simpleMessage(
+      "Authorize sensitive header values",
+    ),
+    "httpCaptureSensitiveHeaderValuesDesc": MessageLookupByLibrary.simpleMessage(
+      "Allow credentials, cookies and token-like headers unless they are in the always-redacted list.",
+    ),
+    "httpCaptureSourceConnectionCandidate":
+        MessageLookupByLibrary.simpleMessage("Connection candidate"),
+    "httpCaptureSourceInspectedRuntime": MessageLookupByLibrary.simpleMessage(
+      "Inspected local relay",
+    ),
+    "httpCaptureSourcePassiveCore": MessageLookupByLibrary.simpleMessage(
+      "Passive Core observer",
+    ),
+    "httpCaptureSourceType": MessageLookupByLibrary.simpleMessage(
+      "Observation source",
+    ),
+    "httpCaptureStopped": MessageLookupByLibrary.simpleMessage("Stopped"),
+    "httpCaptureStreamClosed": MessageLookupByLibrary.simpleMessage("Closed"),
+    "httpCaptureStreamId": m16,
+    "httpCaptureStreamOpen": MessageLookupByLibrary.simpleMessage("Open"),
+    "httpCaptureStreamRequestEnded": MessageLookupByLibrary.simpleMessage(
+      "Request ended",
+    ),
+    "httpCaptureStreamReset": MessageLookupByLibrary.simpleMessage("Reset"),
+    "httpCaptureStreamResponseEnded": MessageLookupByLibrary.simpleMessage(
+      "Response ended",
+    ),
+    "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
+      "Request target truncated",
+    ),
+    "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
+      "Timeline truncated",
+    ),
+    "httpCaptureTimingReceive": MessageLookupByLibrary.simpleMessage("Receive"),
+    "httpCaptureTimingSend": MessageLookupByLibrary.simpleMessage("Send"),
+    "httpCaptureTimingWait": MessageLookupByLibrary.simpleMessage(
+      "Wait / TTFB",
+    ),
+    "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
+    "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
+      "Encrypted ClientHello",
+    ),
+    "httpCaptureTlsLegacyVersion": MessageLookupByLibrary.simpleMessage(
+      "Legacy TLS version",
+    ),
+    "httpCaptureTlsServerName": MessageLookupByLibrary.simpleMessage(
+      "TLS server name",
+    ),
+    "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
+      "Supported TLS versions",
+    ),
+    "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage(
+      "Transaction",
+    ),
+    "httpCaptureTransactionCount": m17,
+    "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
+      "HTTP/1 transactions",
+    ),
+    "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
+      "Observation truncated",
+    ),
+    "httpCaptureUpstreamTlsCompletedAfter":
+        MessageLookupByLibrary.simpleMessage("Upstream TLS completed after"),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon style"),
@@ -581,10 +997,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage(
       "Invalid backup file",
     ),
-    "invalidPolicy": m14,
-    "invalidProxy": m15,
-    "invalidProxyProvider": m16,
-    "invalidSubRule": m17,
+    "invalidPolicy": m18,
+    "invalidProxy": m19,
+    "invalidProxyProvider": m20,
+    "invalidSubRule": m21,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "When enabled, IPv6 traffic can be received",
@@ -623,12 +1039,192 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "The system requires location permission to read the Wi-Fi name. On Android choose \"Allow all the time\", otherwise the Wi-Fi name cannot be read while the app is in the background.",
     ),
-    "locationPermissionGuide": m18,
+    "locationPermissionGuide": m22,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Location permission required",
     ),
     "log": MessageLookupByLibrary.simpleMessage("Log"),
     "logLevel": MessageLookupByLibrary.simpleMessage("Log level"),
+    "logbook": MessageLookupByLibrary.simpleMessage("Logbook"),
+    "logbookAll": MessageLookupByLibrary.simpleMessage("All"),
+    "logbookBackupCancelled": MessageLookupByLibrary.simpleMessage(
+      "Backup cancelled",
+    ),
+    "logbookBackupCompleted": MessageLookupByLibrary.simpleMessage(
+      "Backup completed",
+    ),
+    "logbookBackupFailed": MessageLookupByLibrary.simpleMessage(
+      "Backup failed",
+    ),
+    "logbookBackupRunning": MessageLookupByLibrary.simpleMessage(
+      "Creating backup",
+    ),
+    "logbookConnectivityChanged": MessageLookupByLibrary.simpleMessage(
+      "Connectivity changed",
+    ),
+    "logbookCore": MessageLookupByLibrary.simpleMessage("Core"),
+    "logbookCoreCrashRequested": MessageLookupByLibrary.simpleMessage(
+      "Core crash requested",
+    ),
+    "logbookCoreRestartFailed": MessageLookupByLibrary.simpleMessage(
+      "Core restart failed",
+    ),
+    "logbookCoreRestartWarning": MessageLookupByLibrary.simpleMessage(
+      "Core restarted with profile errors",
+    ),
+    "logbookCoreRestarted": MessageLookupByLibrary.simpleMessage(
+      "Core restarted",
+    ),
+    "logbookCoreStartFailed": MessageLookupByLibrary.simpleMessage(
+      "Core failed to start",
+    ),
+    "logbookCoreStartSuperseded": MessageLookupByLibrary.simpleMessage(
+      "Core start superseded",
+    ),
+    "logbookCoreStarted": MessageLookupByLibrary.simpleMessage("Core started"),
+    "logbookDesc": MessageLookupByLibrary.simpleMessage(
+      "Persistent timeline of network and configuration events",
+    ),
+    "logbookDns": MessageLookupByLibrary.simpleMessage("DNS"),
+    "logbookDnsQueryCompleted": MessageLookupByLibrary.simpleMessage(
+      "DNS query completed",
+    ),
+    "logbookDnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "DNS query failed",
+    ),
+    "logbookDnsQueryRunning": MessageLookupByLibrary.simpleMessage(
+      "Querying DNS",
+    ),
+    "logbookEmpty": MessageLookupByLibrary.simpleMessage(
+      "No events have been recorded yet",
+    ),
+    "logbookError": MessageLookupByLibrary.simpleMessage("Error"),
+    "logbookGeoSkipped": MessageLookupByLibrary.simpleMessage(
+      "Geo data is already up to date",
+    ),
+    "logbookGeoUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Geo data update failed",
+    ),
+    "logbookGeoUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Updating Geo data",
+    ),
+    "logbookGeoUpdated": MessageLookupByLibrary.simpleMessage(
+      "Geo data updated",
+    ),
+    "logbookHttpCaptureCompleted": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture stopped",
+    ),
+    "logbookHttpCaptureInterrupted": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture interrupted",
+    ),
+    "logbookHttpCaptureRunning": MessageLookupByLibrary.simpleMessage(
+      "HTTP capture started",
+    ),
+    "logbookInfo": MessageLookupByLibrary.simpleMessage("Info"),
+    "logbookLocalNotice": MessageLookupByLibrary.simpleMessage(
+      "Stored locally on this device",
+    ),
+    "logbookNetwork": MessageLookupByLibrary.simpleMessage("Network"),
+    "logbookProfile": MessageLookupByLibrary.simpleMessage("Profile"),
+    "logbookProfileApplied": MessageLookupByLibrary.simpleMessage(
+      "Profile applied",
+    ),
+    "logbookProfileApplyException": MessageLookupByLibrary.simpleMessage(
+      "Profile apply raised an exception",
+    ),
+    "logbookProfileApplyFailed": MessageLookupByLibrary.simpleMessage(
+      "Profile apply failed",
+    ),
+    "logbookProvider": MessageLookupByLibrary.simpleMessage("Provider"),
+    "logbookProviderImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Provider data import failed",
+    ),
+    "logbookProviderImportRunning": MessageLookupByLibrary.simpleMessage(
+      "Importing provider data",
+    ),
+    "logbookProviderImported": MessageLookupByLibrary.simpleMessage(
+      "Provider data imported",
+    ),
+    "logbookProviderUpdateFailed": MessageLookupByLibrary.simpleMessage(
+      "Provider update failed",
+    ),
+    "logbookProviderUpdateRunning": MessageLookupByLibrary.simpleMessage(
+      "Updating provider",
+    ),
+    "logbookProviderUpdated": MessageLookupByLibrary.simpleMessage(
+      "Provider updated",
+    ),
+    "logbookQuickRouteApproximate": MessageLookupByLibrary.simpleMessage(
+      "Quick route verification is approximate",
+    ),
+    "logbookQuickRouteMismatch": MessageLookupByLibrary.simpleMessage(
+      "Quick route mismatch",
+    ),
+    "logbookQuickRouteUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Quick route verification unavailable",
+    ),
+    "logbookQuickRouteVerified": MessageLookupByLibrary.simpleMessage(
+      "Quick route verified",
+    ),
+    "logbookRestoreCompleted": MessageLookupByLibrary.simpleMessage(
+      "Restore completed",
+    ),
+    "logbookRestoreFailed": MessageLookupByLibrary.simpleMessage(
+      "Restore failed",
+    ),
+    "logbookRestoreRunning": MessageLookupByLibrary.simpleMessage(
+      "Restoring backup",
+    ),
+    "logbookRouting": MessageLookupByLibrary.simpleMessage("Routing"),
+    "logbookScript": MessageLookupByLibrary.simpleMessage("Script"),
+    "logbookScriptEvaluateFailed": MessageLookupByLibrary.simpleMessage(
+      "Configuration script failed",
+    ),
+    "logbookScriptEvaluateRunning": MessageLookupByLibrary.simpleMessage(
+      "Running configuration script",
+    ),
+    "logbookScriptEvaluated": MessageLookupByLibrary.simpleMessage(
+      "Configuration script completed",
+    ),
+    "logbookSuccess": MessageLookupByLibrary.simpleMessage("Success"),
+    "logbookSystem": MessageLookupByLibrary.simpleMessage("System"),
+    "logbookTlsRuntimeExpired": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay expired",
+    ),
+    "logbookTlsRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay failed",
+    ),
+    "logbookTlsRuntimeRevoked": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay revoked",
+    ),
+    "logbookTlsRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay running",
+    ),
+    "logbookTlsRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Starting local HTTPS relay",
+    ),
+    "logbookTlsRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Relay stop not confirmed",
+    ),
+    "logbookTlsRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay stopped",
+    ),
+    "logbookTlsTrustCancelled": MessageLookupByLibrary.simpleMessage(
+      "CA installation cancelled",
+    ),
+    "logbookTlsTrustFailed": MessageLookupByLibrary.simpleMessage(
+      "CA installation failed",
+    ),
+    "logbookTlsTrustInstallRunning": MessageLookupByLibrary.simpleMessage(
+      "Installing inspection CA",
+    ),
+    "logbookTlsTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Inspection CA installed",
+    ),
+    "logbookTlsTrustSettingsOpened": MessageLookupByLibrary.simpleMessage(
+      "Certificate settings opened",
+    ),
+    "logbookWarning": MessageLookupByLibrary.simpleMessage("Warning"),
     "logcat": MessageLookupByLibrary.simpleMessage("Logcat"),
     "logcatDesc": MessageLookupByLibrary.simpleMessage(
       "Disabling hides the log entry point",
@@ -648,7 +1244,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "matchTargetTitle": MessageLookupByLibrary.simpleMessage("Match target"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("Max failures"),
-    "maxLengthTip": m19,
+    "maxLengthTip": m23,
     "maximize": MessageLookupByLibrary.simpleMessage("Maximize"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Message test"),
@@ -661,11 +1257,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Override the default system exit behavior",
     ),
-    "minutesAgo": m20,
+    "minutesAgo": m24,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixed port"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
-    "monthsAgo": m21,
+    "monthsAgo": m25,
     "more": MessageLookupByLibrary.simpleMessage("More"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "Separate multiple values with commas",
@@ -715,8 +1311,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "No profiles yet, please add one first",
     ),
-    "nullTip": m22,
-    "numberTip": m23,
+    "nullTip": m26,
+    "numberTip": m27,
     "onDemand": MessageLookupByLibrary.simpleMessage("On demand"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "Configure the app\'s running state for specific scenarios",
@@ -764,7 +1360,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Please enter a different port",
     ),
-    "portTip": m24,
+    "portTip": m28,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Prefer HTTP/3 for DoH",
     ),
@@ -797,7 +1393,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Project"),
     "providers": MessageLookupByLibrary.simpleMessage("External resources"),
     "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
-    "proxiesCount": m25,
+    "proxiesCount": m29,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Proxies are empty"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Proxy chain"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -1019,7 +1615,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("Rule set"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Rule target"),
     "rules": MessageLookupByLibrary.simpleMessage("Rules"),
-    "rulesCount": m26,
+    "rulesCount": m30,
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Save the changes?"),
     "script": MessageLookupByLibrary.simpleMessage("Script"),
@@ -1031,7 +1627,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Search"),
     "seconds": MessageLookupByLibrary.simpleMessage("seconds"),
-    "secondsCount": m27,
+    "secondsCount": m31,
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "Select MATCH-TARGET",
@@ -1050,7 +1646,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please select a sub-rule",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
-    "selectedCountTitle": m28,
+    "selectedCountTitle": m32,
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "show": MessageLookupByLibrary.simpleMessage("Show"),
     "showLess": MessageLookupByLibrary.simpleMessage("Collapse"),
@@ -1135,6 +1731,531 @@ class MessageLookup extends MessageLookupByLibrary {
     "time": MessageLookupByLibrary.simpleMessage("Time"),
     "timeout": MessageLookupByLibrary.simpleMessage("Timeout"),
     "tip": MessageLookupByLibrary.simpleMessage("Tip"),
+    "tlsInspection": MessageLookupByLibrary.simpleMessage(
+      "HTTPS inspection safety",
+    ),
+    "tlsInspectionAcknowledgeRisk": MessageLookupByLibrary.simpleMessage(
+      "Acknowledge risk",
+    ),
+    "tlsInspectionAddDomain": MessageLookupByLibrary.simpleMessage(
+      "Add domain",
+    ),
+    "tlsInspectionAlgorithm": MessageLookupByLibrary.simpleMessage("Algorithm"),
+    "tlsInspectionAllowlist": MessageLookupByLibrary.simpleMessage(
+      "Inspection allowlist",
+    ),
+    "tlsInspectionAllowlistDesc": MessageLookupByLibrary.simpleMessage(
+      "Only these exact domains or domain trees may become eligible in a later inspection stage.",
+    ),
+    "tlsInspectionAllowlistOnly": MessageLookupByLibrary.simpleMessage(
+      "Explicit allowlist only",
+    ),
+    "tlsInspectionAuthority": MessageLookupByLibrary.simpleMessage(
+      "Local certificate authority",
+    ),
+    "tlsInspectionAuthorityCorrupt": MessageLookupByLibrary.simpleMessage(
+      "Corrupted",
+    ),
+    "tlsInspectionAuthorityExpired": MessageLookupByLibrary.simpleMessage(
+      "Expired",
+    ),
+    "tlsInspectionAuthorityMissing": MessageLookupByLibrary.simpleMessage(
+      "Not created",
+    ),
+    "tlsInspectionAuthorityNotYetValid": MessageLookupByLibrary.simpleMessage(
+      "Not yet valid",
+    ),
+    "tlsInspectionAuthorityPermissionsWarning":
+        MessageLookupByLibrary.simpleMessage(
+          "Private-key permissions need attention",
+        ),
+    "tlsInspectionAuthorityReady": MessageLookupByLibrary.simpleMessage(
+      "Ready",
+    ),
+    "tlsInspectionAuthorityStaleMaterial": MessageLookupByLibrary.simpleMessage(
+      "Stale private-key material needs cleanup",
+    ),
+    "tlsInspectionAuthorityUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable",
+    ),
+    "tlsInspectionBoundaryDesc": MessageLookupByLibrary.simpleMessage(
+      "This stage prepares certificate and policy controls only. HTTPS traffic is not decrypted, intercepted, or rewritten.",
+    ),
+    "tlsInspectionBoundaryTitle": MessageLookupByLibrary.simpleMessage(
+      "Safety boundary",
+    ),
+    "tlsInspectionClearTrust": MessageLookupByLibrary.simpleMessage(
+      "Clear confirmation",
+    ),
+    "tlsInspectionConfirmTrust": MessageLookupByLibrary.simpleMessage(
+      "I verified system trust",
+    ),
+    "tlsInspectionCreateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Create local authority",
+    ),
+    "tlsInspectionDeleteAuthority": MessageLookupByLibrary.simpleMessage(
+      "Delete authority",
+    ),
+    "tlsInspectionDeleteWarning": MessageLookupByLibrary.simpleMessage(
+      "This deletes the local private-key and certificate files. The prepared policy will be disabled; remove any previously installed certificate from the system trust store separately.",
+    ),
+    "tlsInspectionDesc": MessageLookupByLibrary.simpleMessage(
+      "Prepare a local authority and explicit domain policy without enabling decryption",
+    ),
+    "tlsInspectionDisabledByDefault": MessageLookupByLibrary.simpleMessage(
+      "Off by default",
+    ),
+    "tlsInspectionDomainAndSubdomains": MessageLookupByLibrary.simpleMessage(
+      "Domain and subdomains",
+    ),
+    "tlsInspectionDomainHint": MessageLookupByLibrary.simpleMessage(
+      "api.example.com",
+    ),
+    "tlsInspectionErrorAuthority": MessageLookupByLibrary.simpleMessage(
+      "Create a valid local authority first.",
+    ),
+    "tlsInspectionErrorBroad": MessageLookupByLibrary.simpleMessage(
+      "This domain is too broad. Enter a registrable domain such as example.com.",
+    ),
+    "tlsInspectionErrorCoreDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Connect the Core before managing the local authority.",
+    ),
+    "tlsInspectionErrorGeneric": MessageLookupByLibrary.simpleMessage(
+      "The operation could not be completed.",
+    ),
+    "tlsInspectionErrorIp": MessageLookupByLibrary.simpleMessage(
+      "IP addresses are not accepted; enter a registrable domain.",
+    ),
+    "tlsInspectionErrorLeafCache": MessageLookupByLibrary.simpleMessage(
+      "The leaf certificate safety cache could not be prepared.",
+    ),
+    "tlsInspectionErrorLimit": MessageLookupByLibrary.simpleMessage(
+      "The domain-rule limit has been reached.",
+    ),
+    "tlsInspectionErrorPolicyRule": MessageLookupByLibrary.simpleMessage(
+      "The saved policy contains a domain that is no longer safe. Remove it and add a registrable domain again.",
+    ),
+    "tlsInspectionErrorRequirements": MessageLookupByLibrary.simpleMessage(
+      "Complete the authority, trust, risk, and allowlist requirements first.",
+    ),
+    "tlsInspectionExactDomain": MessageLookupByLibrary.simpleMessage(
+      "Exact domain only",
+    ),
+    "tlsInspectionExclusionWins": MessageLookupByLibrary.simpleMessage(
+      "An exclusion wins even when a broader allowlist rule matches.",
+    ),
+    "tlsInspectionExclusions": MessageLookupByLibrary.simpleMessage(
+      "Mandatory exclusions",
+    ),
+    "tlsInspectionExclusionsDesc": MessageLookupByLibrary.simpleMessage(
+      "Exclusions always override the allowlist.",
+    ),
+    "tlsInspectionExportCertificate": MessageLookupByLibrary.simpleMessage(
+      "Export public certificate",
+    ),
+    "tlsInspectionExportSuccess": MessageLookupByLibrary.simpleMessage(
+      "Public certificate exported",
+    ),
+    "tlsInspectionFingerprint": MessageLookupByLibrary.simpleMessage(
+      "SHA-256 fingerprint",
+    ),
+    "tlsInspectionFoundationOnly": MessageLookupByLibrary.simpleMessage(
+      "Certificate issuance and cache foundation only: no HTTPS decryption engine is connected yet.",
+    ),
+    "tlsInspectionHandshakeBoundary": MessageLookupByLibrary.simpleMessage(
+      "Passing this local test does not prove system or target-app trust. Upstream connections, certificate pinning and live HTTPS decryption are not tested.",
+    ),
+    "tlsInspectionHandshakeDescription": MessageLookupByLibrary.simpleMessage(
+      "Verify TLS 1.2, TLS 1.3 and encrypted data round-trips with an allowlisted leaf certificate inside Core memory. No target-server connection, system-proxy change or live HTTPS decryption occurs.",
+    ),
+    "tlsInspectionHandshakeDomain": MessageLookupByLibrary.simpleMessage(
+      "Allowlisted domain",
+    ),
+    "tlsInspectionHandshakeDomainError": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid domain within the active allowlist and outside exclusions.",
+    ),
+    "tlsInspectionHandshakeError": MessageLookupByLibrary.simpleMessage(
+      "Local TLS verification failed. Check the CA and allowlist, then retry.",
+    ),
+    "tlsInspectionHandshakeFingerprint": MessageLookupByLibrary.simpleMessage(
+      "Verified leaf certificate SHA-256",
+    ),
+    "tlsInspectionHandshakePassed": MessageLookupByLibrary.simpleMessage(
+      "This handshake test passed",
+    ),
+    "tlsInspectionHandshakeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Complete CA, trust and allowlist preparation first.",
+    ),
+    "tlsInspectionHandshakeRun": MessageLookupByLibrary.simpleMessage(
+      "Verify handshake",
+    ),
+    "tlsInspectionHandshakeRunning": MessageLookupByLibrary.simpleMessage(
+      "Verifying handshake",
+    ),
+    "tlsInspectionHandshakeScope": MessageLookupByLibrary.simpleMessage(
+      "Verification scope",
+    ),
+    "tlsInspectionHandshakeScopeValue": MessageLookupByLibrary.simpleMessage(
+      "Core memory channel · synthetic test data only",
+    ),
+    "tlsInspectionHandshakeStale": MessageLookupByLibrary.simpleMessage(
+      "This result no longer matches the current CA or policy. Verify again.",
+    ),
+    "tlsInspectionHandshakeTitle": MessageLookupByLibrary.simpleMessage(
+      "TLS handshake self-test",
+    ),
+    "tlsInspectionHandshakeUnsupported": MessageLookupByLibrary.simpleMessage(
+      "Core did not confirm real TLS 1.2 and TLS 1.3 handshakes. Update Core before retrying.",
+    ),
+    "tlsInspectionLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Leaf certificate cache",
+    ),
+    "tlsInspectionLeafCacheAuthorityChanged": MessageLookupByLibrary.simpleMessage(
+      "The local authority changed. Revalidate trust and prepare the policy again.",
+    ),
+    "tlsInspectionLeafCacheDesc": MessageLookupByLibrary.simpleMessage(
+      "Core creates short-lived, per-domain certificates only for the active allowlist. This stage still does not intercept or decrypt HTTPS traffic.",
+    ),
+    "tlsInspectionLeafCacheDisabled": MessageLookupByLibrary.simpleMessage(
+      "Disabled",
+    ),
+    "tlsInspectionLeafCacheEntries": MessageLookupByLibrary.simpleMessage(
+      "Cached certificates",
+    ),
+    "tlsInspectionLeafCacheLastUpdated": MessageLookupByLibrary.simpleMessage(
+      "Last updated",
+    ),
+    "tlsInspectionLeafCacheNoExport": MessageLookupByLibrary.simpleMessage(
+      "Leaf private keys remain inside Core app data and are never returned through IPC or export.",
+    ),
+    "tlsInspectionLeafCachePermissions": MessageLookupByLibrary.simpleMessage(
+      "Leaf private-key storage permissions are not sufficiently restricted.",
+    ),
+    "tlsInspectionLeafCachePolicyDigest": MessageLookupByLibrary.simpleMessage(
+      "Policy digest",
+    ),
+    "tlsInspectionLeafCacheReady": MessageLookupByLibrary.simpleMessage(
+      "Ready",
+    ),
+    "tlsInspectionLeafCacheUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable",
+    ),
+    "tlsInspectionLeafCacheValidity": MessageLookupByLibrary.simpleMessage(
+      "Maximum validity",
+    ),
+    "tlsInspectionLeafCacheValidityOneDay":
+        MessageLookupByLibrary.simpleMessage("Up to 24 hours"),
+    "tlsInspectionLeafCacheWaiting": MessageLookupByLibrary.simpleMessage(
+      "Waiting for a prepared and currently trusted policy.",
+    ),
+    "tlsInspectionManualTrustOnly": MessageLookupByLibrary.simpleMessage(
+      "No automatic system trust changes",
+    ),
+    "tlsInspectionMetadataOnly": MessageLookupByLibrary.simpleMessage(
+      "No header values or bodies",
+    ),
+    "tlsInspectionNoRules": MessageLookupByLibrary.simpleMessage(
+      "No domains configured",
+    ),
+    "tlsInspectionNotPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "Complete every prerequisite before the policy can be prepared.",
+    ),
+    "tlsInspectionPlatformConstraintCertificatePinning":
+        MessageLookupByLibrary.simpleMessage(
+          "Certificate pinning can still block inspection.",
+        ),
+    "tlsInspectionPlatformConstraintManualSettings":
+        MessageLookupByLibrary.simpleMessage(
+          "Android 11 and later require manual installation in security settings.",
+        ),
+    "tlsInspectionPlatformConstraintUserCaOptIn":
+        MessageLookupByLibrary.simpleMessage(
+          "Apps must explicitly opt in to trust user-installed CAs.",
+        ),
+    "tlsInspectionPlatformConstraintUserConfirmation":
+        MessageLookupByLibrary.simpleMessage(
+          "Android requires explicit user confirmation before installation.",
+        ),
+    "tlsInspectionPlatformTrustBlocked": MessageLookupByLibrary.simpleMessage(
+      "Trust installation blocked",
+    ),
+    "tlsInspectionPlatformTrustCheckAgain":
+        MessageLookupByLibrary.simpleMessage("Check again"),
+    "tlsInspectionPlatformTrustCheckFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android could not verify this CA in the certificate store.",
+        ),
+    "tlsInspectionPlatformTrustChecked": MessageLookupByLibrary.simpleMessage(
+      "Platform trust status refreshed",
+    ),
+    "tlsInspectionPlatformTrustConstraints":
+        MessageLookupByLibrary.simpleMessage("Platform constraints"),
+    "tlsInspectionPlatformTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "FlClash verifies that this exact CA fingerprint is present in the Android certificate store. A manual confirmation cannot replace the platform result.",
+    ),
+    "tlsInspectionPlatformTrustExportAndOpenSettings":
+        MessageLookupByLibrary.simpleMessage("Export CA and open Settings"),
+    "tlsInspectionPlatformTrustFingerprintMatch":
+        MessageLookupByLibrary.simpleMessage(
+          "The result is bound to the current CA fingerprint.",
+        ),
+    "tlsInspectionPlatformTrustFingerprintMismatch":
+        MessageLookupByLibrary.simpleMessage(
+          "Android returned trust for a different certificate fingerprint.",
+        ),
+    "tlsInspectionPlatformTrustInstall": MessageLookupByLibrary.simpleMessage(
+      "Install CA with Android",
+    ),
+    "tlsInspectionPlatformTrustInstallFailed":
+        MessageLookupByLibrary.simpleMessage(
+          "Android could not start the certificate installation workflow",
+        ),
+    "tlsInspectionPlatformTrustInstalled": MessageLookupByLibrary.simpleMessage(
+      "Android confirmed the CA is installed",
+    ),
+    "tlsInspectionPlatformTrustLastChecked":
+        MessageLookupByLibrary.simpleMessage("Last checked"),
+    "tlsInspectionPlatformTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "Android apps may reject user CAs unless they explicitly opt in, and certificate pinning can still block inspection.",
+    ),
+    "tlsInspectionPlatformTrustMissing": MessageLookupByLibrary.simpleMessage(
+      "Not installed in Android trust store",
+    ),
+    "tlsInspectionPlatformTrustNotChecked":
+        MessageLookupByLibrary.simpleMessage(
+          "Platform trust has not been checked yet.",
+        ),
+    "tlsInspectionPlatformTrustOpenSettings":
+        MessageLookupByLibrary.simpleMessage("Open security settings"),
+    "tlsInspectionPlatformTrustSettingsOpened":
+        MessageLookupByLibrary.simpleMessage(
+          "Certificate exported; finish installation in Android security settings, then return to FlClash",
+        ),
+    "tlsInspectionPlatformTrustStore": MessageLookupByLibrary.simpleMessage(
+      "Certificate store",
+    ),
+    "tlsInspectionPlatformTrustStoreBoth": MessageLookupByLibrary.simpleMessage(
+      "Android user and system stores",
+    ),
+    "tlsInspectionPlatformTrustStoreNone": MessageLookupByLibrary.simpleMessage(
+      "Not present",
+    ),
+    "tlsInspectionPlatformTrustStoreSystem":
+        MessageLookupByLibrary.simpleMessage("Android system store"),
+    "tlsInspectionPlatformTrustStoreUnknown":
+        MessageLookupByLibrary.simpleMessage(
+          "Present in an unidentified store",
+        ),
+    "tlsInspectionPlatformTrustStoreUser": MessageLookupByLibrary.simpleMessage(
+      "Android user store",
+    ),
+    "tlsInspectionPlatformTrustUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Android trust status unavailable",
+        ),
+    "tlsInspectionPlatformTrustUnsupported":
+        MessageLookupByLibrary.simpleMessage(
+          "Automatic verification unavailable",
+        ),
+    "tlsInspectionPlatformTrustVerified": MessageLookupByLibrary.simpleMessage(
+      "Present in Android CA store",
+    ),
+    "tlsInspectionPlatformTrustVerifiedOnly":
+        MessageLookupByLibrary.simpleMessage(
+          "Platform-verified trust required",
+        ),
+    "tlsInspectionPlatformVersion": MessageLookupByLibrary.simpleMessage(
+      "Android API level",
+    ),
+    "tlsInspectionPolicyNotBackedUp": MessageLookupByLibrary.simpleMessage(
+      "FlClash local and WebDAV backup archives exclude the authority material and domain policy. Operating-system backup behavior depends on platform settings.",
+    ),
+    "tlsInspectionPrepared": MessageLookupByLibrary.simpleMessage(
+      "Safety policy prepared",
+    ),
+    "tlsInspectionPreparedDesc": MessageLookupByLibrary.simpleMessage(
+      "All prerequisites are satisfied. Future inspection still requires a separate engine and explicit activation.",
+    ),
+    "tlsInspectionPrivateKeyNeverExported": MessageLookupByLibrary.simpleMessage(
+      "The private key is stored as a file in the app data directory, is not hardware-backed, and is never exported by FlClash. Only the public certificate can be exported.",
+    ),
+    "tlsInspectionReadiness": MessageLookupByLibrary.simpleMessage(
+      "Readiness checklist",
+    ),
+    "tlsInspectionRequirementAllowlist": MessageLookupByLibrary.simpleMessage(
+      "At least one allowlist rule",
+    ),
+    "tlsInspectionRequirementAuthority": MessageLookupByLibrary.simpleMessage(
+      "Valid local authority",
+    ),
+    "tlsInspectionRequirementLeafCache": MessageLookupByLibrary.simpleMessage(
+      "Leaf certificate cache bound to the current CA and policy",
+    ),
+    "tlsInspectionRequirementRisk": MessageLookupByLibrary.simpleMessage(
+      "Risk acknowledged",
+    ),
+    "tlsInspectionRequirementTrust": MessageLookupByLibrary.simpleMessage(
+      "Current CA trusted by the platform or manually verified",
+    ),
+    "tlsInspectionRisk": MessageLookupByLibrary.simpleMessage(
+      "Risk acknowledgement",
+    ),
+    "tlsInspectionRiskAcknowledged": MessageLookupByLibrary.simpleMessage(
+      "Risk acknowledged",
+    ),
+    "tlsInspectionRiskDesc": MessageLookupByLibrary.simpleMessage(
+      "HTTPS inspection can expose credentials and private content. Use the smallest possible allowlist and never inspect accounts, banking, healthcare, or other sensitive services unless strictly required.",
+    ),
+    "tlsInspectionRotateAuthority": MessageLookupByLibrary.simpleMessage(
+      "Rotate authority",
+    ),
+    "tlsInspectionRotateWarning": MessageLookupByLibrary.simpleMessage(
+      "Rotating the authority invalidates the previous trust confirmation. Existing system trust entries must be replaced manually.",
+    ),
+    "tlsInspectionRuleScope": MessageLookupByLibrary.simpleMessage(
+      "Domain scope",
+    ),
+    "tlsInspectionRuntime": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay",
+    ),
+    "tlsInspectionRuntimeAccepted": MessageLookupByLibrary.simpleMessage(
+      "Accepted",
+    ),
+    "tlsInspectionRuntimeActive": MessageLookupByLibrary.simpleMessage(
+      "Active connections",
+    ),
+    "tlsInspectionRuntimeAddress": MessageLookupByLibrary.simpleMessage(
+      "Proxy address",
+    ),
+    "tlsInspectionRuntimeBoundary": MessageLookupByLibrary.simpleMessage(
+      "It does not change the system proxy, preserve the source app identity, retain payloads, support HTTP/2, or bypass certificate pinning.",
+    ),
+    "tlsInspectionRuntimeCompleted": MessageLookupByLibrary.simpleMessage(
+      "Completed",
+    ),
+    "tlsInspectionRuntimeCopyAddress": MessageLookupByLibrary.simpleMessage(
+      "Copy proxy address",
+    ),
+    "tlsInspectionRuntimeCopyError": MessageLookupByLibrary.simpleMessage(
+      "Proxy settings could not be copied.",
+    ),
+    "tlsInspectionRuntimeCopyPassword": MessageLookupByLibrary.simpleMessage(
+      "Copy temporary password",
+    ),
+    "tlsInspectionRuntimeCopySettings": MessageLookupByLibrary.simpleMessage(
+      "Copy proxy settings",
+    ),
+    "tlsInspectionRuntimeCopySuccess": MessageLookupByLibrary.simpleMessage(
+      "Proxy settings copied and scheduled to clear after one minute.",
+    ),
+    "tlsInspectionRuntimeCopyUsername": MessageLookupByLibrary.simpleMessage(
+      "Copy username",
+    ),
+    "tlsInspectionRuntimeCredentialsWarning": MessageLookupByLibrary.simpleMessage(
+      "Credentials are never persisted or written to Logbook. Copied settings are cleared after one minute when still unchanged; credentials disappear after a confirmed stop or Core restart.",
+    ),
+    "tlsInspectionRuntimeDesc": MessageLookupByLibrary.simpleMessage(
+      "An explicit, authenticated loopback CONNECT proxy for testing allowlisted HTTPS traffic through the active Core route.",
+    ),
+    "tlsInspectionRuntimeDownloaded": MessageLookupByLibrary.simpleMessage(
+      "Relayed download",
+    ),
+    "tlsInspectionRuntimeError": MessageLookupByLibrary.simpleMessage(
+      "The local HTTPS relay could not be started or verified.",
+    ),
+    "tlsInspectionRuntimeExpires": MessageLookupByLibrary.simpleMessage(
+      "Expires",
+    ),
+    "tlsInspectionRuntimeFailed": MessageLookupByLibrary.simpleMessage(
+      "Failed",
+    ),
+    "tlsInspectionRuntimeHidePassword": MessageLookupByLibrary.simpleMessage(
+      "Hide password",
+    ),
+    "tlsInspectionRuntimeOrphaned": MessageLookupByLibrary.simpleMessage(
+      "An unowned or stale relay was revoked.",
+    ),
+    "tlsInspectionRuntimePassword": MessageLookupByLibrary.simpleMessage(
+      "Temporary password",
+    ),
+    "tlsInspectionRuntimeRefresh": MessageLookupByLibrary.simpleMessage(
+      "Refresh status",
+    ),
+    "tlsInspectionRuntimeRequirements": MessageLookupByLibrary.simpleMessage(
+      "Prepare the CA, platform trust, allowlist and leaf cache before starting the relay.",
+    ),
+    "tlsInspectionRuntimeRunning": MessageLookupByLibrary.simpleMessage(
+      "Running",
+    ),
+    "tlsInspectionRuntimeShowPassword": MessageLookupByLibrary.simpleMessage(
+      "Show password",
+    ),
+    "tlsInspectionRuntimeStart": MessageLookupByLibrary.simpleMessage(
+      "Start relay",
+    ),
+    "tlsInspectionRuntimeStartTitle": MessageLookupByLibrary.simpleMessage(
+      "Start local HTTPS relay?",
+    ),
+    "tlsInspectionRuntimeStartWarning": MessageLookupByLibrary.simpleMessage(
+      "This starts a 10-minute authenticated proxy on 127.0.0.1. Only clients you configure manually can use it. The temporary password is held in memory and shown only for this run.",
+    ),
+    "tlsInspectionRuntimeStarted": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay started.",
+    ),
+    "tlsInspectionRuntimeStarting": MessageLookupByLibrary.simpleMessage(
+      "Starting",
+    ),
+    "tlsInspectionRuntimeStop": MessageLookupByLibrary.simpleMessage(
+      "Stop relay",
+    ),
+    "tlsInspectionRuntimeStopError": MessageLookupByLibrary.simpleMessage(
+      "Core did not confirm that the relay stopped. Keep this page open and retry.",
+    ),
+    "tlsInspectionRuntimeStopUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Stop not confirmed",
+    ),
+    "tlsInspectionRuntimeStopped": MessageLookupByLibrary.simpleMessage(
+      "Stopped",
+    ),
+    "tlsInspectionRuntimeStoppedNotice": MessageLookupByLibrary.simpleMessage(
+      "Local HTTPS relay stopped.",
+    ),
+    "tlsInspectionRuntimeStopping": MessageLookupByLibrary.simpleMessage(
+      "Stopping",
+    ),
+    "tlsInspectionRuntimeUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Unavailable",
+    ),
+    "tlsInspectionRuntimeUploaded": MessageLookupByLibrary.simpleMessage(
+      "Relayed upload",
+    ),
+    "tlsInspectionRuntimeUsername": MessageLookupByLibrary.simpleMessage(
+      "Username",
+    ),
+    "tlsInspectionSerial": MessageLookupByLibrary.simpleMessage(
+      "Serial number",
+    ),
+    "tlsInspectionStorage": MessageLookupByLibrary.simpleMessage(
+      "Private-key storage",
+    ),
+    "tlsInspectionStorageAppSandbox": MessageLookupByLibrary.simpleMessage(
+      "App data directory (file-backed)",
+    ),
+    "tlsInspectionSubject": MessageLookupByLibrary.simpleMessage("Subject"),
+    "tlsInspectionTrust": MessageLookupByLibrary.simpleMessage("System trust"),
+    "tlsInspectionTrustConfirmed": MessageLookupByLibrary.simpleMessage(
+      "Manually confirmed for this fingerprint",
+    ),
+    "tlsInspectionTrustDesc": MessageLookupByLibrary.simpleMessage(
+      "Automatic trust-store verification is not connected yet. Export the public certificate, install it manually, verify the fingerprint in system settings, then confirm below.",
+    ),
+    "tlsInspectionTrustLimitations": MessageLookupByLibrary.simpleMessage(
+      "User-installed authorities may be ignored by some apps, and certificate pinning is not bypassed.",
+    ),
+    "tlsInspectionTrustUnconfirmed": MessageLookupByLibrary.simpleMessage(
+      "Not confirmed for the current fingerprint",
+    ),
+    "tlsInspectionValidity": MessageLookupByLibrary.simpleMessage("Validity"),
     "toggle": MessageLookupByLibrary.simpleMessage("Toggle"),
     "toggleLabel": MessageLookupByLibrary.simpleMessage("Toggle labels"),
     "tonalSpotScheme": MessageLookupByLibrary.simpleMessage("Tonal spot"),
@@ -1167,7 +2288,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "Obtain a profile from a URL",
     ),
-    "urlTip": m29,
+    "urlTip": m33,
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("Use system hosts"),
     "usedTraffic": MessageLookupByLibrary.simpleMessage("Used traffic"),
@@ -1188,7 +2309,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "WebDAV configuration",
     ),
     "whitelistMode": MessageLookupByLibrary.simpleMessage("Whitelist mode"),
-    "yearsAgo": m30,
+    "yearsAgo": m34,
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }

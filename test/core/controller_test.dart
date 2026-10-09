@@ -260,6 +260,31 @@ void main() {
       expect(result?.value, 100);
     });
 
+    test('setHttpObservationEnabled delegates', () async {
+      when(
+        () => mock.setHttpObservationEnabled(
+          true,
+          sessionId: 'session-a',
+          policy: TlsInspectionCapturePolicy.metadataOnly,
+        ),
+      ).thenAnswer((_) async => true);
+
+      expect(
+        await controller.setHttpObservationEnabled(
+          true,
+          sessionId: 'session-a',
+        ),
+        isTrue,
+      );
+      verify(
+        () => mock.setHttpObservationEnabled(
+          true,
+          sessionId: 'session-a',
+          policy: TlsInspectionCapturePolicy.metadataOnly,
+        ),
+      ).called(1);
+    });
+
     test('startListener delegates', () async {
       when(() => mock.startListener()).thenAnswer((_) async => true);
       final result = await controller.startListener();
