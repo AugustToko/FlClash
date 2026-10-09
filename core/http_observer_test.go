@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/metacubex/mihomo/component/observer"
 )
@@ -55,5 +56,41 @@ func TestDisableHTTPObservationIsIdempotent(t *testing.T) {
 	disableHTTPObservation()
 	if observer.Enabled() || observer.SessionID() != "" {
 		t.Fatal("HTTP observation remained configured after shutdown cleanup")
+	}
+}
+
+func TestHTTPObservationChangeSignalTracksActualSessionChanges(t *testing.T) {
+	disableHTTPObservation()
+	defer disableHTTPObservation()
+
+	enabledSignal := httpObservationChangeSignal()
+	if !handleSetHTTPObservationEnabled(HTTPObservationParams{
+		Enabled: true, SessionID: "http-capture:test-session",
+	}) {
+		t.Fatal("observer did not enable")
+	}
+	select {
+	case <-enabledSignal:
+	case <-time.After(time.Second):
+		t.Fatal("enabling observation did not close the change signal")
+	}
+
+	unchangedSignal := httpObservationChangeSignal()
+	if !handleSetHTTPObservationEnabled(HTTPObservationParams{
+		Enabled: true, SessionID: "http-capture:test-session",
+	}) {
+		t.Fatal("observer did not remain enabled")
+	}
+	select {
+	case <-unchangedSignal:
+		t.Fatal("an unchanged observer configuration emitted a change")
+	default:
+	}
+
+	disableHTTPObservation()
+	select {
+	case <-unchangedSignal:
+	case <-time.After(time.Second):
+		t.Fatal("disabling observation did not close the change signal")
 	}
 }

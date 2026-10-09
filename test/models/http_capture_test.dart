@@ -180,11 +180,11 @@ void main() {
     expect(extension['protocol'], 'tls');
     expect(
       rootExtension['limitations'],
-      contains('initial-client-prefix-only'),
+      contains('passive-sources-first-http1-transaction-only'),
     );
     expect(
       rootExtension['limitations'],
-      contains('later-keep-alive-requests-not-captured'),
+      contains('inspected-runtime-at-most-32-http1-transactions'),
     );
     expect(
       rootExtension['limitations'],
@@ -448,7 +448,7 @@ void main() {
     );
   });
 
-  test('inspected runtime entries round-trip with an explicit source', () {
+  test('inspected runtime timelines round-trip and flatten into HAR', () {
     final started = DateTime.utc(2026, 10, 7, 2);
     final observation = TlsInspectionRuntimeObservation.fromJson({
       'sessionId': 'http-capture:456',
@@ -463,28 +463,56 @@ void main() {
       'alpn': 'http/1.1',
       'uploaded': 123,
       'downloaded': 456,
-      'httpRequest': {
-        'method': 'GET',
-        'target': '/items',
-        'version': 'HTTP/1.1',
-        'host': 'api.example.com',
-        'headerNames': ['host', 'authorization'],
-        'headersComplete': true,
-      },
-      'httpResponse': {
-        'version': 'HTTP/1.1',
-        'statusCode': 201,
-        'headerNames': ['content-type', 'set-cookie'],
-        'headersComplete': true,
-        'observedBytes': 96,
-        'observedAfterMilliseconds': 18,
-      },
+      'httpTransactionsTruncated': true,
+      'httpTransactions': [
+        {
+          'sequence': 1,
+          'requestObservedAfterMilliseconds': 4,
+          'request': {
+            'method': 'GET',
+            'target': '/items',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headerNames': ['host', 'authorization'],
+            'headersComplete': true,
+          },
+          'response': {
+            'version': 'HTTP/1.1',
+            'statusCode': 201,
+            'headerNames': ['content-type', 'set-cookie'],
+            'headersComplete': true,
+            'observedBytes': 96,
+            'observedAfterMilliseconds': 18,
+          },
+        },
+        {
+          'sequence': 2,
+          'requestObservedAfterMilliseconds': 24,
+          'request': {
+            'method': 'POST',
+            'target': '/items/next',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headerNames': ['host', 'content-length'],
+            'headersComplete': true,
+          },
+          'response': {
+            'version': 'HTTP/1.1',
+            'statusCode': 204,
+            'headerNames': ['x-request-id'],
+            'headersComplete': true,
+            'observedBytes': 48,
+            'observedAfterMilliseconds': 31,
+          },
+        },
+      ],
     });
     final entry = HttpCaptureEntry.fromInspectionRuntime(
       id: 99,
       observation: observation,
       profileId: 7,
     );
+    expect(HttpCaptureEntry.formatVersion, 6);
     expect(entry.source, HttpCaptureSource.inspectedRuntime);
     expect(entry.isInspectedRuntime, isTrue);
     expect(entry.isCoreObserved, isFalse);
@@ -492,40 +520,111 @@ void main() {
     expect(entry.host, 'api.example.com');
     expect(entry.origin, 'https://api.example.com');
     expect(entry.requestUrl, 'https://api.example.com/items');
-    expect(entry.httpObservation?.method, 'GET');
-    expect(entry.httpResponseObservation?.statusCode, 201);
-    expect(entry.searchText, contains('inspected-runtime'));
+    expect(entry.httpTransactionCount, 2);
+    expect(entry.httpTransactions.last.request.target, '/items/next');
+    expect(entry.httpTimelineTruncated, isTrue);
+    expect(entry.searchText, contains('/items/next'));
+    expect(entry.searchText, contains('204'));
+    expect(entry.searchText, contains('timeline-truncated'));
+
     final roundTrip = HttpCaptureEntry.decodePayload(entry.encodePayload());
     expect(roundTrip.source, HttpCaptureSource.inspectedRuntime);
     expect(roundTrip.inspectionRuntime?.state, 'completed');
+    expect(roundTrip.httpTransactions, hasLength(2));
+    expect(roundTrip.httpTransactions.last.response?.statusCode, 204);
+    expect(roundTrip.toJson()['version'], 6);
+
     final har = buildHttpCaptureHar(entries: [entry]);
     final log = har['log']! as Map<String, Object?>;
-    final exported =
-        (log['entries']! as List<Object?>).single! as Map<String, Object?>;
-    final extension = exported['_flclash']! as Map<String, Object?>;
-    expect(extension['source'], 'inspected-runtime');
-    expect(extension['observationOnly'], isFalse);
-    expect(extension['metadataOnly'], isTrue);
-    expect(extension['inspectionRuntime'], observation.toJson());
+    final rootExtension = log['_flclash']! as Map<String, Object?>;
+    final exported = log['entries']! as List<Object?>;
+    expect(exported, hasLength(2));
+    expect(rootExtension['version'], 6);
+    expect(rootExtension['observationOnly'], isFalse);
+    expect(rootExtension['includesInspectedRuntime'], isTrue);
+    for (var index = 0; index < exported.length; index++) {
+      final harEntry = exported[index]! as Map<String, Object?>;
+      final extension = harEntry['_flclash']! as Map<String, Object?>;
+      expect(extension['source'], 'inspected-runtime');
+      expect(extension['observationOnly'], isFalse);
+      expect(extension['metadataOnly'], isTrue);
+      expect(extension['transactionSequence'], index + 1);
+      expect(extension['transactionCount'], 2);
+      expect(extension['timelineTruncated'], isTrue);
+      expect(
+        extension['parentConnectionStartedDateTime'],
+        started.toIso8601String(),
+      );
+      final runtime = extension['inspectionRuntime']! as Map<String, Object?>;
+      expect(runtime, isNot(contains('httpTransactions')));
+      expect(runtime, isNot(contains('httpTransactionsTruncated')));
+    }
+    final first = exported.first! as Map<String, Object?>;
+    final second = exported.last! as Map<String, Object?>;
     expect(
-      (log['_flclash']! as Map<String, Object?>)['observationOnly'],
-      isFalse,
+      (first['request']! as Map<String, Object?>)['url'],
+      'https://api.example.com/items',
     );
+    expect((first['response']! as Map<String, Object?>)['status'], 201);
     expect(
-      (log['_flclash']! as Map<String, Object?>)['includesInspectedRuntime'],
-      isTrue,
+      (second['request']! as Map<String, Object?>)['url'],
+      'https://api.example.com/items/next',
     );
-    final request = exported['request']! as Map<String, Object?>;
-    final response = exported['response']! as Map<String, Object?>;
-    expect(request['method'], 'GET');
-    expect(request['url'], 'https://api.example.com/items');
-    expect(request['headers'], isEmpty);
-    expect(response['status'], 201);
-    expect(response['statusText'], isEmpty);
-    expect(response['headers'], isEmpty);
+    expect((second['response']! as Map<String, Object?>)['status'], 204);
     final encoded = jsonEncode(har);
     expect(encoded, isNot(contains('Bearer private-token')));
     expect(encoded, isNot(contains('session=private-cookie')));
+  });
+
+  test('legacy v5 inspected runtime rows decode into one v6 transaction', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final legacyRuntime = {
+      'sessionId': 'http-capture:legacy-v5',
+      'connectionId': '0123456789abcdef0123456789abcdef',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'api.example.com',
+      'state': 'completed',
+      'startedAt': started.toIso8601String(),
+      'completedAt': started.add(const Duration(seconds: 1)).toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 64,
+      'downloaded': 128,
+      'httpRequest': {
+        'method': 'GET',
+        'target': '/legacy',
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headersComplete': true,
+      },
+      'httpResponse': {
+        'version': 'HTTP/1.1',
+        'statusCode': 200,
+        'headersComplete': true,
+        'observedBytes': 32,
+        'observedAfterMilliseconds': 8,
+      },
+    };
+    final observation = TlsInspectionRuntimeObservation.fromJson(
+      Map<String, Object?>.from(legacyRuntime),
+    );
+    expect(observation.httpTransactions, hasLength(1));
+    expect(observation.httpTransactions.single.request.target, '/legacy');
+    expect(observation.toJson(), contains('httpTransactions'));
+    expect(observation.toJson(), isNot(contains('httpRequest')));
+
+    final entry = HttpCaptureEntry.fromInspectionRuntime(
+      id: 100,
+      observation: observation,
+      profileId: null,
+    );
+    final legacyPayload = Map<String, Object?>.from(entry.toJson())
+      ..['version'] = 5
+      ..['inspectionRuntime'] = legacyRuntime;
+    final decoded = HttpCaptureEntry.fromJson(legacyPayload);
+    expect(decoded.httpTransactionCount, 1);
+    expect(decoded.httpObservation?.target, '/legacy');
   });
 
   test('capture source is derived from verified payload content', () {

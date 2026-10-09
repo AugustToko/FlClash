@@ -448,17 +448,47 @@ func TestRuntimePublishesCaptureMetadataWithoutPayloads(t *testing.T) {
 	if err := client.Handshake(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := io.WriteString(client, "GET /private?token=secret HTTP/1.1\r\nHost: api.example.com\r\nAuthorization: Bearer secret\r\nConnection: close\r\n\r\n"); err != nil {
-		t.Fatal(err)
+	responseReader := bufio.NewReader(client)
+	requests := []struct {
+		target string
+		close  bool
+	}{
+		{target: "/private-one?token=first-secret"},
+		{target: "/private-two?token=second-secret", close: true},
 	}
-	result, err := http.ReadResponse(bufio.NewReader(client), &http.Request{Method: http.MethodGet})
-	if err != nil {
-		t.Fatal(err)
+	for index, request := range requests {
+		connection := ""
+		if request.close {
+			connection = "Connection: close\r\n"
+		}
+		if _, err := fmt.Fprintf(
+			client,
+			"GET %s HTTP/1.1\r\nHost: api.example.com\r\nAuthorization: Bearer secret-%d\r\n%s\r\n",
+			request.target,
+			index+1,
+			connection,
+		); err != nil {
+			t.Fatal(err)
+		}
+		result, err := http.ReadResponse(
+			responseReader,
+			&http.Request{Method: http.MethodGet},
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, err := io.ReadAll(result.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = result.Body.Close()
+		if result.StatusCode != http.StatusCreated ||
+			string(body) != "private-response-body" ||
+			result.Header.Get("Set-Cookie") != "session=private-test-cookie" {
+			t.Fatal("relay changed a keep-alive HTTP response")
+		}
 	}
-	if _, err := io.ReadAll(result.Body); err != nil {
-		t.Fatal(err)
-	}
-	_ = result.Body.Close()
+
 	deadline := time.Now().Add(time.Second)
 	var observations []Observation
 	for time.Now().Before(deadline) {
@@ -468,44 +498,70 @@ func TestRuntimePublishesCaptureMetadataWithoutPayloads(t *testing.T) {
 		}
 		time.Sleep(time.Millisecond)
 	}
-	if len(observations) < 4 {
-		t.Fatalf("observation count = %d, want incremental and terminal events", len(observations))
+	if len(observations) < 6 {
+		t.Fatalf("observation count = %d, want incremental timeline and terminal events", len(observations))
 	}
 	started, completed := observations[0], observations[len(observations)-1]
-	requestIndex := -1
-	responseIndex := -1
+	firstRequestIndex := -1
+	firstResponseIndex := -1
+	secondRequestIndex := -1
+	secondResponseIndex := -1
 	for index, observation := range observations {
 		if observation.SessionID != "http-capture:fixture" ||
 			observation.ConnectionID == "" || observation.ConnectionID != started.ConnectionID ||
 			observation.RuntimeID != f.runtime.id || observation.Host != "api.example.com" {
 			t.Fatalf("observation identity changed at %d: %#v", index, observation)
 		}
-		if observation.HTTPRequest != nil && requestIndex == -1 {
-			requestIndex = index
+		if len(observation.HTTPTransactions) >= 1 && firstRequestIndex == -1 {
+			firstRequestIndex = index
 		}
-		if observation.HTTPResponse != nil && responseIndex == -1 {
-			responseIndex = index
+		if len(observation.HTTPTransactions) >= 1 &&
+			observation.HTTPTransactions[0].Response != nil && firstResponseIndex == -1 {
+			firstResponseIndex = index
+		}
+		if len(observation.HTTPTransactions) >= 2 && secondRequestIndex == -1 {
+			secondRequestIndex = index
+		}
+		if len(observation.HTTPTransactions) >= 2 &&
+			observation.HTTPTransactions[1].Response != nil && secondResponseIndex == -1 {
+			secondResponseIndex = index
 		}
 	}
 	if started.State != "running" || completed.State != "completed" ||
-		requestIndex <= 0 || responseIndex <= requestIndex ||
-		completed.HTTPRequest == nil || completed.HTTPResponse == nil ||
-		completed.HTTPRequest.Method != "GET" || completed.HTTPRequest.Target != "/private" ||
-		completed.HTTPRequest.Host != "api.example.com" ||
-		!slices.Contains(completed.HTTPRequest.HeaderNames, "authorization") ||
-		completed.HTTPResponse.StatusCode != http.StatusCreated ||
-		!slices.Contains(completed.HTTPResponse.HeaderNames, "set-cookie") ||
-		(completed.DownstreamTLSVersion != "TLS 1.2" && completed.DownstreamTLSVersion != "TLS 1.3") ||
+		firstRequestIndex <= 0 || firstResponseIndex <= firstRequestIndex ||
+		secondRequestIndex <= firstResponseIndex || secondResponseIndex <= secondRequestIndex ||
+		len(completed.HTTPTransactions) != 2 || completed.HTTPTransactionsTruncated {
+		t.Fatalf("unexpected timeline lifecycle: %#v", observations)
+	}
+	for index, target := range []string{"/private-one", "/private-two"} {
+		transaction := completed.HTTPTransactions[index]
+		if transaction.Sequence != index+1 || transaction.Request.Method != "GET" ||
+			transaction.Request.Target != target ||
+			transaction.Request.Host != "api.example.com" ||
+			!slices.Contains(transaction.Request.HeaderNames, "authorization") ||
+			transaction.Response == nil ||
+			transaction.Response.StatusCode != http.StatusCreated ||
+			!slices.Contains(transaction.Response.HeaderNames, "set-cookie") ||
+			transaction.Response.ObservedAfterMilliseconds <
+				transaction.RequestObservedAfterMilliseconds {
+			t.Fatalf("unexpected transaction %d: %#v", index+1, transaction)
+		}
+	}
+	if (completed.DownstreamTLSVersion != "TLS 1.2" && completed.DownstreamTLSVersion != "TLS 1.3") ||
 		completed.UpstreamTLSVersion == "" || completed.ALPN != "http/1.1" ||
 		completed.Uploaded == 0 || completed.Downloaded == 0 ||
-		completed.CompletedAt == nil || completed.CompletedAt.Before(completed.StartedAt) {
-		t.Fatalf("unexpected observations: %#v", observations)
+		completed.CompletedAt == nil || completed.CompletedAt.Before(completed.StartedAt) ||
+		f.requests.Load() != 2 {
+		t.Fatalf("unexpected terminal observation: %#v", completed)
 	}
 	encoded, err := json.Marshal(observations)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, secret := range []string{"token=secret", "Bearer secret", "private-response-body", "private-test-cookie", f.password} {
+	for _, secret := range []string{
+		"first-secret", "second-secret", "Bearer secret-1", "Bearer secret-2",
+		"private-response-body", "private-test-cookie", f.password,
+	} {
 		if strings.Contains(string(encoded), secret) {
 			t.Fatalf("capture metadata retained %q", secret)
 		}
@@ -550,7 +606,8 @@ func TestRuntimeStopsHTTPMetadataWhenCaptureSessionChanges(t *testing.T) {
 		t.Fatalf("missing original lifecycle observations: %#v", observations)
 	}
 	for _, observation := range observations {
-		if observation.HTTPRequest != nil || observation.HTTPResponse != nil {
+		if len(observation.HTTPTransactions) != 0 ||
+			observation.HTTPTransactionsTruncated {
 			t.Fatalf("stale capture session retained HTTP metadata: %#v", observation)
 		}
 	}

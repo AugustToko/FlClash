@@ -172,6 +172,83 @@ class TlsInspectionRuntimeStart {
   String toString() => 'TlsInspectionRuntimeStart(credentials redacted)';
 }
 
+class TlsInspectionRuntimeHttpTransaction {
+  static const maximumCount = 32;
+
+  final int sequence;
+  final int requestObservedAfterMilliseconds;
+  final HttpProtocolObservation request;
+  final HttpResponseProtocolObservation? response;
+
+  const TlsInspectionRuntimeHttpTransaction({
+    required this.sequence,
+    required this.requestObservedAfterMilliseconds,
+    required this.request,
+    required this.response,
+  });
+
+  factory TlsInspectionRuntimeHttpTransaction.fromJson(
+    Map<String, Object?> json, {
+    required String runtimeHost,
+    bool legacy = false,
+  }) {
+    final sequence = json['sequence'];
+    final requestObservedAfter = json['requestObservedAfterMilliseconds'] ?? 0;
+    final request = _runtimeHttpRequest(json['request']);
+    final response = _runtimeHttpResponse(json['response']);
+    if (sequence is! int ||
+        sequence < 1 ||
+        sequence > maximumCount ||
+        requestObservedAfter is! int ||
+        requestObservedAfter < 0 ||
+        requestObservedAfter > 0x7fffffff ||
+        request == null ||
+        !_validRuntimeTransactionHost(
+          request,
+          runtimeHost,
+          allowLegacyMissingHost: legacy,
+        ) ||
+        (response != null &&
+            response.observedAfterMilliseconds < requestObservedAfter)) {
+      throw const FormatException('Invalid runtime HTTP transaction contract');
+    }
+    return TlsInspectionRuntimeHttpTransaction(
+      sequence: sequence,
+      requestObservedAfterMilliseconds: requestObservedAfter,
+      request: request,
+      response: response,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'sequence': sequence,
+    'requestObservedAfterMilliseconds': requestObservedAfterMilliseconds,
+    'request': request.toJson(),
+    if (response != null) 'response': response!.toJson(),
+  };
+
+  int get metadataRank => 1 + (response == null ? 0 : 2);
+
+  TlsInspectionRuntimeHttpTransaction merge(
+    TlsInspectionRuntimeHttpTransaction other,
+  ) {
+    if (sequence != other.sequence ||
+        !_sameRuntimeHttpRequest(request, other.request)) {
+      return this;
+    }
+    return TlsInspectionRuntimeHttpTransaction(
+      sequence: sequence,
+      requestObservedAfterMilliseconds:
+          requestObservedAfterMilliseconds <
+              other.requestObservedAfterMilliseconds
+          ? requestObservedAfterMilliseconds
+          : other.requestObservedAfterMilliseconds,
+      request: request,
+      response: _richerRuntimeHttpResponse(response, other.response),
+    );
+  }
+}
+
 class TlsInspectionRuntimeObservation {
   final String sessionId;
   final String connectionId;
@@ -186,8 +263,8 @@ class TlsInspectionRuntimeObservation {
   final int uploaded;
   final int downloaded;
   final String failureKind;
-  final HttpProtocolObservation? httpRequest;
-  final HttpResponseProtocolObservation? httpResponse;
+  final List<TlsInspectionRuntimeHttpTransaction> httpTransactions;
+  final bool httpTransactionsTruncated;
 
   const TlsInspectionRuntimeObservation({
     required this.sessionId,
@@ -203,8 +280,8 @@ class TlsInspectionRuntimeObservation {
     required this.uploaded,
     required this.downloaded,
     required this.failureKind,
-    this.httpRequest,
-    this.httpResponse,
+    this.httpTransactions = const [],
+    this.httpTransactionsTruncated = false,
   });
 
   factory TlsInspectionRuntimeObservation.fromJson(Map<String, Object?> json) {
@@ -252,9 +329,90 @@ class TlsInspectionRuntimeObservation {
     final upstream = optionalString('upstreamTlsVersion', 16);
     final alpn = optionalString('alpn', 16);
     final failure = optionalString('failureKind', 32);
-    final httpRequest = _runtimeHttpRequest(json['httpRequest']);
-    final httpResponse = _runtimeHttpResponse(json['httpResponse']);
-    final hasHttpMetadata = httpRequest != null || httpResponse != null;
+    final rawTransactions = json['httpTransactions'];
+    final timelineTruncated = json['httpTransactionsTruncated'] ?? false;
+    if (timelineTruncated is! bool) {
+      throw const FormatException('Invalid runtime HTTP timeline state');
+    }
+    final transactions = <TlsInspectionRuntimeHttpTransaction>[];
+    if (rawTransactions != null) {
+      if (rawTransactions is! List ||
+          rawTransactions.length >
+              TlsInspectionRuntimeHttpTransaction.maximumCount ||
+          json.containsKey('httpRequest') ||
+          json.containsKey('httpResponse')) {
+        throw const FormatException('Invalid runtime HTTP transaction list');
+      }
+      for (final raw in rawTransactions) {
+        if (raw is! Map) {
+          throw const FormatException('Invalid runtime HTTP transaction');
+        }
+        transactions.add(
+          TlsInspectionRuntimeHttpTransaction.fromJson(
+            Map<String, Object?>.from(raw),
+            runtimeHost: host,
+          ),
+        );
+      }
+    } else {
+      final legacyRequest = _runtimeHttpRequest(json['httpRequest']);
+      final legacyResponse = _runtimeHttpResponse(json['httpResponse']);
+      if (legacyResponse != null && legacyRequest == null) {
+        throw const FormatException('Invalid legacy runtime HTTP contract');
+      }
+      if (legacyRequest != null) {
+        transactions.add(
+          TlsInspectionRuntimeHttpTransaction.fromJson(
+            {
+              'sequence': 1,
+              'requestObservedAfterMilliseconds': 0,
+              'request': legacyRequest.toJson(),
+              if (legacyResponse != null) 'response': legacyResponse.toJson(),
+            },
+            runtimeHost: host,
+            legacy: true,
+          ),
+        );
+      }
+    }
+    if (transactions.length ==
+            TlsInspectionRuntimeHttpTransaction.maximumCount &&
+        !timelineTruncated) {
+      throw const FormatException('Invalid complete runtime HTTP timeline cap');
+    }
+    var previousRequestDelay = -1;
+    var previousResponseDelay = -1;
+    var responseGapSeen = false;
+    for (var index = 0; index < transactions.length; index++) {
+      final transaction = transactions[index];
+      final response = transaction.response;
+      if (transaction.sequence != index + 1 ||
+          transaction.requestObservedAfterMilliseconds < previousRequestDelay ||
+          (response != null && responseGapSeen) ||
+          (response != null &&
+              response.observedAfterMilliseconds < previousResponseDelay)) {
+        throw const FormatException('Invalid runtime HTTP transaction order');
+      }
+      previousRequestDelay = transaction.requestObservedAfterMilliseconds;
+      if (response == null) {
+        responseGapSeen = true;
+      } else {
+        previousResponseDelay = response.observedAfterMilliseconds;
+      }
+    }
+    final completedDelay = startedAt == null || completedAt == null
+        ? null
+        : completedAt.difference(startedAt).inMilliseconds;
+    if (completedDelay != null &&
+        transactions.any(
+          (transaction) =>
+              transaction.requestObservedAfterMilliseconds > completedDelay ||
+              (transaction.response?.observedAfterMilliseconds ?? 0) >
+                  completedDelay,
+        )) {
+      throw const FormatException('Invalid runtime HTTP transaction timing');
+    }
+    final hasHttpMetadata = transactions.isNotEmpty || timelineTruncated;
     final validHost = rawHost == host && _validRuntimeHttpHost(host);
     const versions = {'', 'TLS 1.2', 'TLS 1.3'};
     const failures = {
@@ -285,7 +443,6 @@ class TlsInspectionRuntimeObservation {
         !versions.contains(downstream) ||
         !versions.contains(upstream) ||
         (alpn.isNotEmpty && alpn != 'http/1.1') ||
-        (httpResponse != null && httpRequest == null) ||
         (hasHttpMetadata && (downstream.isEmpty || upstream.isEmpty)) ||
         !failures.contains(failure) ||
         ((state == 'failed' || state == 'interrupted') != failure.isNotEmpty)) {
@@ -305,8 +462,8 @@ class TlsInspectionRuntimeObservation {
       uploaded: integer('uploaded'),
       downloaded: integer('downloaded'),
       failureKind: failure,
-      httpRequest: httpRequest,
-      httpResponse: httpResponse,
+      httpTransactions: List.unmodifiable(transactions),
+      httpTransactionsTruncated: timelineTruncated,
     );
   }
 
@@ -326,15 +483,26 @@ class TlsInspectionRuntimeObservation {
     'uploaded': uploaded,
     'downloaded': downloaded,
     if (failureKind.isNotEmpty) 'failureKind': failureKind,
-    if (httpRequest != null) 'httpRequest': httpRequest!.toJson(),
-    if (httpResponse != null) 'httpResponse': httpResponse!.toJson(),
+    if (httpTransactions.isNotEmpty)
+      'httpTransactions': [
+        for (final transaction in httpTransactions) transaction.toJson(),
+      ],
+    if (httpTransactionsTruncated) 'httpTransactionsTruncated': true,
   };
 
   bool get completed =>
       state == 'completed' || state == 'failed' || state == 'interrupted';
 
-  int get metadataRank =>
-      (httpRequest == null ? 0 : 1) + (httpResponse == null ? 0 : 2);
+  HttpProtocolObservation? get httpRequest =>
+      httpTransactions.isEmpty ? null : httpTransactions.first.request;
+
+  HttpResponseProtocolObservation? get httpResponse =>
+      httpTransactions.isEmpty ? null : httpTransactions.first.response;
+
+  int get metadataRank => httpTransactions.fold<int>(
+    httpTransactionsTruncated ? 1 : 0,
+    (rank, transaction) => rank + transaction.metadataRank,
+  );
 
   TlsInspectionRuntimeObservation merge(TlsInspectionRuntimeObservation other) {
     if (sessionId != other.sessionId ||
@@ -353,16 +521,90 @@ class TlsInspectionRuntimeObservation {
     final alternate = identical(preferred, this) ? other : this;
     String richer(String primary, String fallback) =>
         primary.isNotEmpty ? primary : fallback;
+
+    final sameStart = startedAt == other.startedAt;
+    final commonTransactionCount =
+        httpTransactions.length < other.httpTransactions.length
+        ? httpTransactions.length
+        : other.httpTransactions.length;
+    var compatibleTimeline = sameStart;
+    if (compatibleTimeline) {
+      for (var index = 0; index < commonTransactionCount; index++) {
+        final current = httpTransactions[index];
+        final incoming = other.httpTransactions[index];
+        final currentResponse = current.response;
+        final incomingResponse = incoming.response;
+        if (current.sequence != incoming.sequence ||
+            !_sameRuntimeHttpRequest(current.request, incoming.request) ||
+            (currentResponse != null &&
+                incomingResponse != null &&
+                !_sameRuntimeHttpResponseIdentity(
+                  currentResponse,
+                  incomingResponse,
+                ))) {
+          compatibleTimeline = false;
+          break;
+        }
+      }
+    }
+
+    final transactions = <TlsInspectionRuntimeHttpTransaction>[];
+    if (!compatibleTimeline) {
+      transactions.addAll(preferred.httpTransactions);
+    } else {
+      final transactionCount =
+          httpTransactions.length > other.httpTransactions.length
+          ? httpTransactions.length
+          : other.httpTransactions.length;
+      for (var index = 0; index < transactionCount; index++) {
+        if (index < commonTransactionCount) {
+          transactions.add(
+            httpTransactions[index].merge(other.httpTransactions[index]),
+          );
+        } else if (index < httpTransactions.length) {
+          transactions.add(httpTransactions[index]);
+        } else {
+          transactions.add(other.httpTransactions[index]);
+        }
+      }
+    }
+
+    final hadTimelineMetadata =
+        httpTransactions.isNotEmpty ||
+        other.httpTransactions.isNotEmpty ||
+        httpTransactionsTruncated ||
+        other.httpTransactionsTruncated;
+    var timelineTruncated =
+        httpTransactionsTruncated ||
+        other.httpTransactionsTruncated ||
+        (!compatibleTimeline && hadTimelineMetadata);
+    final mergedStartedAt = sameStart ? startedAt : preferred.startedAt;
+    final mergedCompletedAt = preferred.completedAt;
+    if (mergedCompletedAt != null) {
+      final completedDelay = mergedCompletedAt
+          .difference(mergedStartedAt)
+          .inMilliseconds;
+      final firstLateTransaction = transactions.indexWhere(
+        (transaction) =>
+            transaction.requestObservedAfterMilliseconds > completedDelay ||
+            (transaction.response?.observedAfterMilliseconds ?? 0) >
+                completedDelay,
+      );
+      if (firstLateTransaction >= 0) {
+        transactions.removeRange(firstLateTransaction, transactions.length);
+        timelineTruncated = true;
+      }
+    }
+
+    final preserveTerminalCounters = preferred.completed;
     return TlsInspectionRuntimeObservation(
       sessionId: sessionId,
       connectionId: connectionId,
       runtimeId: runtimeId,
       host: host,
       state: preferred.state,
-      startedAt: startedAt.isBefore(other.startedAt)
-          ? startedAt
-          : other.startedAt,
-      completedAt: preferred.completedAt ?? alternate.completedAt,
+      startedAt: mergedStartedAt,
+      completedAt: mergedCompletedAt,
       downstreamTlsVersion: richer(
         preferred.downstreamTlsVersion,
         alternate.downstreamTlsVersion,
@@ -372,14 +614,22 @@ class TlsInspectionRuntimeObservation {
         alternate.upstreamTlsVersion,
       ),
       alpn: richer(preferred.alpn, alternate.alpn),
-      uploaded: uploaded > other.uploaded ? uploaded : other.uploaded,
-      downloaded: downloaded > other.downloaded ? downloaded : other.downloaded,
+      uploaded: preserveTerminalCounters
+          ? preferred.uploaded
+          : uploaded > other.uploaded
+          ? uploaded
+          : other.uploaded,
+      downloaded: preserveTerminalCounters
+          ? preferred.downloaded
+          : downloaded > other.downloaded
+          ? downloaded
+          : other.downloaded,
       failureKind:
           preferred.state == 'failed' || preferred.state == 'interrupted'
           ? preferred.failureKind
           : '',
-      httpRequest: httpRequest ?? other.httpRequest,
-      httpResponse: httpResponse ?? other.httpResponse,
+      httpTransactions: List.unmodifiable(transactions),
+      httpTransactionsTruncated: timelineTruncated,
     );
   }
 
@@ -408,10 +658,112 @@ class TlsInspectionRuntimeObservation {
       uploaded: uploaded,
       downloaded: downloaded,
       failureKind: failureKind,
-      httpRequest: httpRequest,
-      httpResponse: httpResponse,
+      httpTransactions: httpTransactions,
+      httpTransactionsTruncated: httpTransactionsTruncated,
     );
   }
+}
+
+bool _validRuntimeTransactionHost(
+  HttpProtocolObservation request,
+  String runtimeHost, {
+  required bool allowLegacyMissingHost,
+}) {
+  if (request.hostTruncated) {
+    return false;
+  }
+  if (request.method == 'CONNECT') {
+    return request.host.isNotEmpty && request.host == request.target;
+  }
+  if (request.host.isEmpty) {
+    return allowLegacyMissingHost || request.version == 'HTTP/1.0';
+  }
+  return request.host == runtimeHost;
+}
+
+bool _sameRuntimeHttpRequest(
+  HttpProtocolObservation left,
+  HttpProtocolObservation right,
+) =>
+    left.method == right.method &&
+    left.target == right.target &&
+    left.version == right.version &&
+    left.host == right.host &&
+    _sameRuntimeList(left.headerNames, right.headerNames) &&
+    left.headersComplete == right.headersComplete &&
+    left.targetTruncated == right.targetTruncated &&
+    left.hostTruncated == right.hostTruncated &&
+    left.headerNamesTruncated == right.headerNamesTruncated;
+
+HttpResponseProtocolObservation? _richerRuntimeHttpResponse(
+  HttpResponseProtocolObservation? left,
+  HttpResponseProtocolObservation? right,
+) {
+  if (left == null) {
+    return right;
+  }
+  if (right == null) {
+    return left;
+  }
+  if (!_sameRuntimeHttpResponseIdentity(left, right)) {
+    return left;
+  }
+  int rank(HttpResponseProtocolObservation value) =>
+      (value.statusCode == 0 ? 0 : 1000000) +
+      (value.headersComplete ? 100000 : 0) +
+      (value.truncated ? 0 : 10000) +
+      value.headerNames.length * 100 +
+      value.informationalStatusCodes.length * 10 +
+      value.observedBytes;
+  final preferred = rank(right) > rank(left) ? right : left;
+  final alternate = identical(preferred, left) ? right : left;
+  final observedAfter =
+      preferred.observedAfterMilliseconds == 0 ||
+          (alternate.observedAfterMilliseconds != 0 &&
+              alternate.observedAfterMilliseconds <
+                  preferred.observedAfterMilliseconds)
+      ? alternate.observedAfterMilliseconds
+      : preferred.observedAfterMilliseconds;
+  return HttpResponseProtocolObservation(
+    version: preferred.version,
+    statusCode: preferred.statusCode,
+    informationalStatusCodes: preferred.informationalStatusCodes,
+    headerNames: preferred.headerNames,
+    headersComplete: left.headersComplete || right.headersComplete,
+    observedBytes: left.observedBytes > right.observedBytes
+        ? left.observedBytes
+        : right.observedBytes,
+    observedAfterMilliseconds: observedAfter,
+    truncated: left.truncated || right.truncated,
+    headerNamesTruncated:
+        left.headerNamesTruncated || right.headerNamesTruncated,
+    informationalStatusCodesTruncated:
+        left.informationalStatusCodesTruncated ||
+        right.informationalStatusCodesTruncated,
+  );
+}
+
+bool _sameRuntimeHttpResponseIdentity(
+  HttpResponseProtocolObservation left,
+  HttpResponseProtocolObservation right,
+) =>
+    left.version == right.version &&
+    left.statusCode == right.statusCode &&
+    _sameRuntimeList(
+      left.informationalStatusCodes,
+      right.informationalStatusCodes,
+    );
+
+bool _sameRuntimeList<T>(List<T> left, List<T> right) {
+  if (left.length != right.length) {
+    return false;
+  }
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 final _runtimeHttpToken = RegExp(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$");

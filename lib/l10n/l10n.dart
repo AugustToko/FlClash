@@ -5830,10 +5830,10 @@ class AppLocalizations {
     );
   }
 
-  /// `Opt-in capture combines bounded passive Core observations with coarse metadata from the explicitly started local HTTPS relay. It never stores query strings, reason phrases, header values, bodies, certificates, or later keep-alive messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.`
+  /// `Opt-in capture combines bounded passive Core observations with metadata from the explicitly started local HTTPS relay. The relay can record up to 32 HTTP/1 transactions per connection, but never stores query strings, reason phrases, header values, bodies, certificates, or raw HTTP messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.`
   String get httpCaptureObservationOnly {
     return Intl.message(
-      'Opt-in capture combines bounded passive Core observations with coarse metadata from the explicitly started local HTTPS relay. It never stores query strings, reason phrases, header values, bodies, certificates, or later keep-alive messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.',
+      'Opt-in capture combines bounded passive Core observations with metadata from the explicitly started local HTTPS relay. The relay can record up to 32 HTTP/1 transactions per connection, but never stores query strings, reason phrases, header values, bodies, certificates, or raw HTTP messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.',
       name: 'httpCaptureObservationOnly',
       desc: '',
       args: [],
@@ -6030,10 +6030,10 @@ class AppLocalizations {
     );
   }
 
-  /// `HAR export remains metadata-only. For the first observed HTTP/1 transaction—from passive cleartext observation or the explicitly authorized inspection relay—it may include the request method, query-free target and header names, plus the first final response status, version and header names. Reason phrases, all header values, cookies, bodies, later keep-alive transactions, raw payloads and browser-style timings remain unknown.`
+  /// `HAR export remains metadata-only. Passive cleartext sources may include their first observed HTTP/1 transaction; an explicitly authorized inspection relay may include up to 32 ordered transactions. Exports contain query-free targets, header names and response status metadata only. Reason phrases, all header values, cookies, bodies, raw payloads and browser-style timings remain unknown.`
   String get httpCaptureHarWarning {
     return Intl.message(
-      'HAR export remains metadata-only. For the first observed HTTP/1 transaction—from passive cleartext observation or the explicitly authorized inspection relay—it may include the request method, query-free target and header names, plus the first final response status, version and header names. Reason phrases, all header values, cookies, bodies, later keep-alive transactions, raw payloads and browser-style timings remain unknown.',
+      'HAR export remains metadata-only. Passive cleartext sources may include their first observed HTTP/1 transaction; an explicitly authorized inspection relay may include up to 32 ordered transactions. Exports contain query-free targets, header names and response status metadata only. Reason phrases, all header values, cookies, bodies, raw payloads and browser-style timings remain unknown.',
       name: 'httpCaptureHarWarning',
       desc: '',
       args: [],
@@ -6290,10 +6290,10 @@ class AppLocalizations {
     );
   }
 
-  /// `This entry came from the explicitly authorized loopback HTTPS relay. It keeps only the first decrypted HTTP/1 request method, query-free path and header names, plus the first final response status, version and header names, TLS versions, lifecycle and byte totals. Header values, cookies, bodies, later keep-alive transactions and raw payloads are never retained.`
+  /// `This entry came from the explicitly authorized loopback HTTPS relay. It keeps an ordered, bounded timeline of at most 32 decrypted HTTP/1 transactions: request method, query-free path and header names, and final response status, version and header names. Header values, framing values, cookies, bodies and raw payloads are never retained.`
   String get httpCaptureInspectedBoundary {
     return Intl.message(
-      'This entry came from the explicitly authorized loopback HTTPS relay. It keeps only the first decrypted HTTP/1 request method, query-free path and header names, plus the first final response status, version and header names, TLS versions, lifecycle and byte totals. Header values, cookies, bodies, later keep-alive transactions and raw payloads are never retained.',
+      'This entry came from the explicitly authorized loopback HTTPS relay. It keeps an ordered, bounded timeline of at most 32 decrypted HTTP/1 transactions: request method, query-free path and header names, and final response status, version and header names. Header values, framing values, cookies, bodies and raw payloads are never retained.',
       name: 'httpCaptureInspectedBoundary',
       desc: '',
       args: [],
@@ -6315,6 +6315,58 @@ class AppLocalizations {
     return Intl.message(
       'Connection metadata fallback',
       name: 'httpCaptureConnectionFallback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `HTTP/1 timeline`
+  String get httpCaptureTransactions {
+    return Intl.message(
+      'HTTP/1 timeline',
+      name: 'httpCaptureTransactions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transaction`
+  String get httpCaptureTransaction {
+    return Intl.message(
+      'Transaction',
+      name: 'httpCaptureTransaction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count, plural, =1{1 transaction} other{{count} transactions}}`
+  String httpCaptureTransactionCount(int count) {
+    return Intl.plural(
+      count,
+      one: '1 transaction',
+      other: '$count transactions',
+      name: 'httpCaptureTransactionCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Request observed after`
+  String get httpCaptureRequestObservedAfter {
+    return Intl.message(
+      'Request observed after',
+      name: 'httpCaptureRequestObservedAfter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Timeline truncated`
+  String get httpCaptureTimelineTruncated {
+    return Intl.message(
+      'Timeline truncated',
+      name: 'httpCaptureTimelineTruncated',
       desc: '',
       args: [],
     );

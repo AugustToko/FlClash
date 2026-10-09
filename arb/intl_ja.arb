@@ -697,7 +697,7 @@
   "logbookDnsQueryFailed": "DNS 照会に失敗しました",
   "httpCapture": "HTTP キャプチャ",
   "httpCaptureDesc": "Core の受動メタデータと明示的な検査リレーの TLS 接続メタデータを 1 つのローカル画面で確認します",
-  "httpCaptureObservationOnly": "明示的に開始すると、上限付きの Core 受動観測と、明示的に起動したローカル HTTPS リレーの粗粒度メタデータを記録します。クエリ、Reason Phrase、ヘッダー値、本文、証明書、Keep-Alive の後続メッセージは保存しません。リレーペイロードはメモリ内を通過しますが保持されません。開始後の新規接続のみが対象で、記録はバックアップから除外されます。",
+  "httpCaptureObservationOnly": "オプトインのキャプチャは、制限付きの Core 受動観測と、明示的に開始したローカル HTTPS 検査リレーのメタデータを組み合わせます。リレーは接続ごとに最大 32 件の HTTP/1 トランザクションを記録できますが、クエリ文字列、Reason Phrase、ヘッダー値、本文、証明書、生の HTTP メッセージは保存しません。リレーのペイロードはメモリを通過するだけで保持されません。対象は新しい接続のみで、ローカル記録はバックアップから除外されます。",
   "httpCaptureRunning": "キャプチャ中",
   "httpCaptureStopped": "停止中",
   "httpCaptureExportHar": "HAR 互換の観測データをエクスポート",
@@ -717,7 +717,7 @@
   "httpCaptureEvidenceTransportOnly": "トランスポートメタデータのみ",
   "httpCaptureEndpoint": "観測したエンドポイント",
   "httpCaptureObservationDelay": "観測遅延",
-  "httpCaptureHarWarning": "HAR エクスポートは引き続きメタデータ専用です。平文の受動観測または明示的に認可された検査リレーで観測した最初の HTTP/1 トランザクションについて、リクエストメソッド、クエリを除いたターゲット、ヘッダー名、および最初の最終レスポンスのステータス、バージョン、ヘッダー名を含む場合があります。Reason Phrase、すべてのヘッダー値、Cookie、本文、後続の Keep-Alive トランザクション、生のペイロード、ブラウザー形式の詳細タイミングは不明のままです。",
+  "httpCaptureHarWarning": "HAR エクスポートは引き続きメタデータ専用です。平文の受動観測は最初の HTTP/1 トランザクション、明示的に認可された検査リレーは最大 32 件の順序付きトランザクションを含む場合があります。クエリを除いたターゲット、ヘッダー名、レスポンス状態メタデータのみを出力し、Reason Phrase、すべてのヘッダー値、Cookie、本文、生のペイロード、ブラウザー形式の詳細タイミングは不明のままです。",
   "logbookHttpCaptureRunning": "HTTP キャプチャを開始しました",
   "logbookHttpCaptureCompleted": "HTTP キャプチャを停止しました",
   "logbookHttpCaptureInterrupted": "HTTP キャプチャが中断されました",
@@ -743,9 +743,19 @@
   "httpCaptureRuntimeFailureRelay": "暗号化リレーがエラーで終了しました",
   "httpCaptureRuntimeFailureCaptureStopped": "リレー完了前にキャプチャが停止しました",
   "httpCaptureRuntimeFailureCaptureInterrupted": "前回のキャプチャが予期せず中断されました",
-  "httpCaptureInspectedBoundary": "この記録は明示的に認可されたループバック HTTPS リレーから生成されます。最初に復号された HTTP/1 リクエストのメソッド、クエリを除いたパス、ヘッダー名と、最初の最終レスポンスのステータス、バージョン、ヘッダー名に加え、TLS バージョン、ライフサイクル、バイト総数だけを保持します。ヘッダー値、Cookie、本文、後続の Keep-Alive トランザクション、生のペイロードは保持しません。",
+  "httpCaptureInspectedBoundary": "この記録は明示的に認可されたループバック HTTPS リレーから生成されます。最大 32 件の順序付き復号 HTTP/1 トランザクションについて、リクエストメソッド、クエリを除いたパス、ヘッダー名と、最終レスポンスのステータス、バージョン、ヘッダー名だけを保持します。ヘッダー値、フレーミング値、Cookie、本文、生のペイロードは保持しません。",
   "httpCaptureCoreObserverActive": "Core 受動オブザーバー",
   "httpCaptureConnectionFallback": "接続メタデータへフォールバック",
+  "httpCaptureTransactions": "HTTP/1 トランザクション一覧",
+  "httpCaptureTransaction": "トランザクション",
+  "httpCaptureTransactionCount": "{count} 件のトランザクション",
+  "@httpCaptureTransactionCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "httpCaptureRequestObservedAfter": "リクエスト観測遅延",
+  "httpCaptureTimelineTruncated": "トランザクション一覧を切り詰めました",
   "httpCaptureRequestMethod": "リクエストメソッド",
   "httpCaptureRequestTarget": "サニタイズ済みターゲット",
   "httpCaptureHttpVersion": "HTTP バージョン",

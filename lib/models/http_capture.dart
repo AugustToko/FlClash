@@ -35,7 +35,7 @@ enum HttpCaptureSource {
 }
 
 class HttpCaptureEntry {
-  static const formatVersion = 5;
+  static const formatVersion = 6;
 
   final int id;
   final String connectionId;
@@ -376,6 +376,18 @@ class HttpCaptureEntry {
       inspectionRuntime?.httpResponse ??
       (observation?.kind == 'http1' ? observation?.httpResponse : null);
 
+  List<TlsInspectionRuntimeHttpTransaction> get httpTransactions =>
+      inspectionRuntime?.httpTransactions ?? const [];
+
+  int get httpTransactionCount => isInspectedRuntime
+      ? httpTransactions.length
+      : httpObservation == null
+      ? 0
+      : 1;
+
+  bool get httpTimelineTruncated =>
+      inspectionRuntime?.httpTransactionsTruncated ?? false;
+
   TlsClientHelloObservation? get tlsObservation => observation?.tls;
 
   int get observationDelayMs {
@@ -419,9 +431,10 @@ class HttpCaptureEntry {
     return '$transport://$value';
   }
 
-  String get requestUrl {
+  String get requestUrl => requestUrlFor(httpObservation);
+
+  String requestUrlFor(HttpProtocolObservation? http) {
     final base = origin;
-    final http = httpObservation;
     if (base.isEmpty) {
       return http?.target.isNotEmpty == true ? http!.target : 'unknown://';
     }
@@ -490,6 +503,22 @@ class HttpCaptureEntry {
       inspectionRuntime?.upstreamTlsVersion ?? '',
       inspectionRuntime?.alpn ?? '',
       inspectionRuntime?.failureKind ?? '',
+      inspectionRuntime?.httpTransactionsTruncated == true
+          ? 'timeline-truncated'
+          : '',
+      for (final transaction in httpTransactions) ...[
+        transaction.sequence,
+        transaction.requestObservedAfterMilliseconds,
+        transaction.request.method,
+        transaction.request.target,
+        transaction.request.version,
+        transaction.request.host,
+        transaction.request.headerNames.join(' '),
+        transaction.response?.version ?? '',
+        transaction.response?.statusCode ?? '',
+        transaction.response?.informationalStatusCodes.join(' ') ?? '',
+        transaction.response?.headerNames.join(' ') ?? '',
+      ],
     ].join('\n').toLowerCase();
   }
 
@@ -585,7 +614,7 @@ bool shouldCaptureHttpObservation(TrackerInfo tracker) {
 Map<String, Object?> buildHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'capture-5',
+  String creatorVersion = 'capture-6',
 }) {
   final ordered = entries.toList(growable: false)
     ..sort((a, b) {
@@ -596,36 +625,42 @@ Map<String, Object?> buildHttpCaptureHar({
   final includesInspectedRuntime = ordered.any(
     (entry) => entry.isInspectedRuntime,
   );
+  final harEntries = <Map<String, Object?>>[];
+  for (final entry in ordered) {
+    final transactions = entry.httpTransactions;
+    if (entry.isInspectedRuntime && transactions.isNotEmpty) {
+      for (final transaction in transactions) {
+        harEntries.add(_httpCaptureHarEntry(entry, transaction: transaction));
+      }
+    } else {
+      harEntries.add(_httpCaptureHarEntry(entry));
+    }
+  }
   return {
     'log': {
       'version': '1.2',
       'creator': {'name': 'FlClash', 'version': creatorVersion},
       'pages': const <Object?>[],
-      'entries': [for (final entry in ordered) _httpCaptureHarEntry(entry)],
+      'entries': harEntries,
       '_flclash': {
         'format': 'flclash-http-observation',
-        'version': 5,
+        'version': 6,
         'observationOnly': !includesInspectedRuntime,
         'metadataOnly': true,
         'includesInspectedRuntime': includesInspectedRuntime,
         'exportedAt': timestamp.toIso8601String(),
         'limitations': const [
-          'initial-client-prefix-only',
-          'later-keep-alive-requests-not-captured',
-          'initial-server-response-headers-only',
-          'later-keep-alive-responses-not-captured',
-          'request-method-only-for-observed-http1',
+          'passive-sources-first-http1-transaction-only',
+          'inspected-runtime-at-most-32-http1-transactions',
           'request-target-query-and-fragment-removed',
           'request-header-values-not-captured',
           'request-body-not-captured',
-          'response-status-only-for-observed-http1',
           'response-reason-phrase-not-captured',
           'response-header-values-not-captured',
           'response-body-not-captured',
-          'timings-not-captured',
+          'framing-header-values-not-retained',
+          'browser-timings-not-captured',
           'tls-not-decrypted-for-passive-sources',
-          'inspected-runtime-first-http1-transaction-only',
-          'inspected-runtime-header-values-not-retained',
           'inspected-runtime-payload-not-retained',
         ],
       },
@@ -636,7 +671,7 @@ Map<String, Object?> buildHttpCaptureHar({
 String encodeHttpCaptureHar({
   required Iterable<HttpCaptureEntry> entries,
   DateTime? exportedAt,
-  String creatorVersion = 'capture-5',
+  String creatorVersion = 'capture-6',
 }) {
   return const JsonEncoder.withIndent('  ').convert(
     buildHttpCaptureHar(
@@ -647,17 +682,26 @@ String encodeHttpCaptureHar({
   );
 }
 
-Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
-  final http = entry.httpObservation;
-  final responseObservation = entry.httpResponseObservation;
+Map<String, Object?> _httpCaptureHarEntry(
+  HttpCaptureEntry entry, {
+  TlsInspectionRuntimeHttpTransaction? transaction,
+}) {
+  final http = transaction?.request ?? entry.httpObservation;
+  final responseObservation =
+      transaction?.response ?? entry.httpResponseObservation;
   final hasObservedResponse =
       responseObservation != null && responseObservation.statusCode != 0;
+  final startedAt = transaction == null
+      ? entry.startedAt
+      : entry.startedAt.add(
+          Duration(milliseconds: transaction.requestObservedAfterMilliseconds),
+        );
   return {
-    'startedDateTime': entry.startedAt.toUtc().toIso8601String(),
+    'startedDateTime': startedAt.toUtc().toIso8601String(),
     'time': 0,
     'request': {
       'method': http?.method.isNotEmpty == true ? http!.method : 'UNKNOWN',
-      'url': entry.requestUrl,
+      'url': entry.requestUrlFor(http),
       'httpVersion': http?.version ?? '',
       'cookies': const <Object?>[],
       // Header values are deliberately not retained. Names are kept only in
@@ -708,7 +752,19 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
       if (entry.observation != null)
         'coreObservation': entry.observation!.toJson(),
       if (entry.inspectionRuntime != null)
-        'inspectionRuntime': entry.inspectionRuntime!.toJson(),
+        'inspectionRuntime': _httpCaptureRuntimeEnvelope(
+          entry.inspectionRuntime!,
+        ),
+      if (transaction != null) ...{
+        'transactionSequence': transaction.sequence,
+        'transactionCount': entry.httpTransactionCount,
+        'requestObservedAfterMilliseconds':
+            transaction.requestObservedAfterMilliseconds,
+        'timelineTruncated': entry.httpTimelineTruncated,
+        'parentConnectionStartedDateTime': entry.startedAt
+            .toUtc()
+            .toIso8601String(),
+      },
       if (http != null) ...{
         'headerNames': http.headerNames,
         'headersComplete': http.headersComplete,
@@ -732,4 +788,13 @@ Map<String, Object?> _httpCaptureHarEntry(HttpCaptureEntry entry) {
       },
     },
   };
+}
+
+Map<String, Object?> _httpCaptureRuntimeEnvelope(
+  TlsInspectionRuntimeObservation observation,
+) {
+  final result = Map<String, Object?>.from(observation.toJson());
+  result.remove('httpTransactions');
+  result.remove('httpTransactionsTruncated');
+  return result;
 }

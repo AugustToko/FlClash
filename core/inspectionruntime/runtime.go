@@ -30,31 +30,32 @@ const (
 )
 
 type Config struct {
-	ID             string
-	Authorize      func(context.Context, string) error
-	Leaf           func(context.Context, string) (*tls.Certificate, error)
-	Dial           func(context.Context, string, string) (net.Conn, error)
-	CaptureSession func() string
-	Observe        func(Observation)
-	Roots          *x509.CertPool
+	ID                    string
+	Authorize             func(context.Context, string) error
+	Leaf                  func(context.Context, string) (*tls.Certificate, error)
+	Dial                  func(context.Context, string, string) (net.Conn, error)
+	CaptureSession        func() string
+	CaptureSessionChanged func() <-chan struct{}
+	Observe               func(Observation)
+	Roots                 *x509.CertPool
 }
 
 type Observation struct {
-	SessionID            string                   `json:"sessionId"`
-	ConnectionID         string                   `json:"connectionId"`
-	RuntimeID            string                   `json:"runtimeId"`
-	Host                 string                   `json:"host"`
-	State                string                   `json:"state"`
-	StartedAt            time.Time                `json:"startedAt"`
-	CompletedAt          *time.Time               `json:"completedAt,omitempty"`
-	DownstreamTLSVersion string                   `json:"downstreamTlsVersion,omitempty"`
-	UpstreamTLSVersion   string                   `json:"upstreamTlsVersion,omitempty"`
-	ALPN                 string                   `json:"alpn,omitempty"`
-	Uploaded             uint64                   `json:"uploaded"`
-	Downloaded           uint64                   `json:"downloaded"`
-	FailureKind          string                   `json:"failureKind,omitempty"`
-	HTTPRequest          *HTTPRequestObservation  `json:"httpRequest,omitempty"`
-	HTTPResponse         *HTTPResponseObservation `json:"httpResponse,omitempty"`
+	SessionID                 string                       `json:"sessionId"`
+	ConnectionID              string                       `json:"connectionId"`
+	RuntimeID                 string                       `json:"runtimeId"`
+	Host                      string                       `json:"host"`
+	State                     string                       `json:"state"`
+	StartedAt                 time.Time                    `json:"startedAt"`
+	CompletedAt               *time.Time                   `json:"completedAt,omitempty"`
+	DownstreamTLSVersion      string                       `json:"downstreamTlsVersion,omitempty"`
+	UpstreamTLSVersion        string                       `json:"upstreamTlsVersion,omitempty"`
+	ALPN                      string                       `json:"alpn,omitempty"`
+	Uploaded                  uint64                       `json:"uploaded"`
+	Downloaded                uint64                       `json:"downloaded"`
+	FailureKind               string                       `json:"failureKind,omitempty"`
+	HTTPTransactions          []HTTPTransactionObservation `json:"httpTransactions,omitempty"`
+	HTTPTransactionsTruncated bool                         `json:"httpTransactionsTruncated,omitempty"`
 }
 
 type Status struct {
@@ -329,6 +330,18 @@ func (r *Runtime) captureSession() (session string) {
 	return session
 }
 
+func (r *Runtime) captureSessionChangeSignal() (signal <-chan struct{}) {
+	if r.config.CaptureSessionChanged == nil {
+		return nil
+	}
+	defer func() {
+		if recover() != nil {
+			signal = nil
+		}
+	}()
+	return r.config.CaptureSessionChanged()
+}
+
 func (r *Runtime) publishObservation(value Observation) {
 	if r.config.Observe == nil {
 		return
@@ -338,11 +351,10 @@ func (r *Runtime) publishObservation(value Observation) {
 }
 
 type runtimeObservation struct {
-	mu              sync.Mutex
-	publishMu       sync.Mutex
-	value           Observation
-	pendingResponse *HTTPResponseObservation
-	finished        bool
+	mu        sync.Mutex
+	publishMu sync.Mutex
+	value     Observation
+	finished  bool
 }
 
 func cloneHTTPRequestObservation(value *HTTPRequestObservation) *HTTPRequestObservation {
@@ -365,8 +377,7 @@ func cloneHTTPResponseObservation(value *HTTPResponseObservation) *HTTPResponseO
 }
 
 func cloneObservation(value Observation) Observation {
-	value.HTTPRequest = cloneHTTPRequestObservation(value.HTTPRequest)
-	value.HTTPResponse = cloneHTTPResponseObservation(value.HTTPResponse)
+	value.HTTPTransactions = cloneHTTPTransactionObservations(value.HTTPTransactions)
 	return value
 }
 
@@ -407,60 +418,23 @@ func (r *Runtime) updateObservation(observation *runtimeObservation, update func
 	observation.publishMu.Unlock()
 }
 
-func (r *Runtime) publishHTTPRequest(
+func (r *Runtime) publishHTTPTransactions(
 	observation *runtimeObservation,
-	request *HTTPRequestObservation,
+	transactions []HTTPTransactionObservation,
+	truncated bool,
 ) {
-	if observation == nil || request == nil {
+	if observation == nil {
 		return
 	}
 	activeSession := r.captureSession()
 	observation.mu.Lock()
-	if observation.finished ||
-		observation.value.SessionID != activeSession ||
-		observation.value.HTTPRequest != nil {
+	if observation.finished || observation.value.SessionID != activeSession {
 		observation.mu.Unlock()
 		return
 	}
-	observation.value.HTTPRequest = cloneHTTPRequestObservation(request)
-	requestSnapshot := cloneObservation(observation.value)
-	pending := cloneHTTPResponseObservation(observation.pendingResponse)
-	observation.pendingResponse = nil
-	var responseSnapshot Observation
-	if pending != nil {
-		observation.value.HTTPResponse = pending
-		responseSnapshot = cloneObservation(observation.value)
-	}
-	observation.publishMu.Lock()
-	observation.mu.Unlock()
-	r.publishObservation(requestSnapshot)
-	if pending != nil {
-		r.publishObservation(responseSnapshot)
-	}
-	observation.publishMu.Unlock()
-}
-
-func (r *Runtime) publishHTTPResponse(
-	observation *runtimeObservation,
-	response *HTTPResponseObservation,
-) {
-	if observation == nil || response == nil {
-		return
-	}
-	activeSession := r.captureSession()
-	observation.mu.Lock()
-	if observation.finished ||
-		observation.value.SessionID != activeSession ||
-		observation.value.HTTPResponse != nil {
-		observation.mu.Unlock()
-		return
-	}
-	if observation.value.HTTPRequest == nil {
-		observation.pendingResponse = cloneHTTPResponseObservation(response)
-		observation.mu.Unlock()
-		return
-	}
-	observation.value.HTTPResponse = cloneHTTPResponseObservation(response)
+	observation.value.HTTPTransactions = cloneHTTPTransactionObservations(transactions)
+	observation.value.HTTPTransactionsTruncated =
+		observation.value.HTTPTransactionsTruncated || truncated
 	snapshot := cloneObservation(observation.value)
 	observation.publishMu.Lock()
 	observation.mu.Unlock()
@@ -484,7 +458,6 @@ func (r *Runtime) finishObservation(
 		return
 	}
 	observation.finished = true
-	observation.pendingResponse = nil
 	completedAt := time.Now().UTC()
 	observation.value.CompletedAt = &completedAt
 	observation.value.Uploaded = uploaded
@@ -509,6 +482,15 @@ func (observation *runtimeObservation) startedAt() time.Time {
 	observation.mu.Lock()
 	defer observation.mu.Unlock()
 	return observation.value.StartedAt
+}
+
+func (observation *runtimeObservation) host() string {
+	if observation == nil {
+		return ""
+	}
+	observation.mu.Lock()
+	defer observation.mu.Unlock()
+	return observation.value.Host
 }
 
 func (observation *runtimeObservation) activeFor(sessionID string) bool {
@@ -650,6 +632,29 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 	return failure
 }
 
+func (r *Runtime) watchHTTP1Timeline(
+	ctx context.Context,
+	observation *runtimeObservation,
+	timeline *http1MetadataTimeline,
+	signal <-chan struct{},
+	done <-chan struct{},
+) {
+	if observation == nil || timeline == nil || signal == nil {
+		return
+	}
+	if !observation.activeFor(r.captureSession()) {
+		timeline.Abort()
+		return
+	}
+	select {
+	case <-ctx.Done():
+		timeline.Abort()
+	case <-done:
+	case <-signal:
+		timeline.Abort()
+	}
+}
+
 func (r *Runtime) relay(
 	ctx context.Context,
 	client *tls.Conn,
@@ -669,53 +674,58 @@ func (r *Runtime) relay(
 	var requestMetadataReader *metadataObservingReader
 	var responseMetadataReader *metadataObservingReader
 	if observation != nil {
-		requestObserver := newHTTPRequestMetadataObserver()
+		timeline := newHTTP1MetadataTimeline(
+			observation.startedAt(),
+			observation.host(),
+			func(transactions []HTTPTransactionObservation, truncated bool) {
+				if observation.activeFor(r.captureSession()) {
+					r.publishHTTPTransactions(observation, transactions, truncated)
+				}
+			},
+		)
+		timelineDone := make(chan struct{})
+		defer close(timelineDone)
+		changeSignal := r.captureSessionChangeSignal()
+		go r.watchHTTP1Timeline(
+			ctx, observation, timeline, changeSignal, timelineDone,
+		)
 		requestMetadataReader = &metadataObservingReader{
 			reader: client,
 			observe: func(data []byte) {
 				if !observation.activeFor(r.captureSession()) {
-					requestObserver.Abort()
+					timeline.Abort()
 					return
 				}
-				if value, done := requestObserver.Observe(data); done && value != nil {
-					r.publishHTTPRequest(observation, value)
-				}
+				timeline.ObserveRequest(data)
 			},
 			finish: func() {
 				if !observation.activeFor(r.captureSession()) {
-					requestObserver.Abort()
+					timeline.Abort()
 					return
 				}
-				if value, _ := requestObserver.Finish(); value != nil {
-					r.publishHTTPRequest(observation, value)
-				}
+				timeline.FinishRequest()
 			},
-			abort: requestObserver.Abort,
+			abort: timeline.Abort,
 		}
 		requestReader = requestMetadataReader
 
-		responseObserver := newHTTPResponseMetadataObserver(observation.startedAt())
 		responseMetadataReader = &metadataObservingReader{
 			reader: upstream,
 			observe: func(data []byte) {
 				if !observation.activeFor(r.captureSession()) {
-					responseObserver.Abort()
+					timeline.Abort()
 					return
 				}
-				if value, done := responseObserver.Observe(data); done && value != nil {
-					r.publishHTTPResponse(observation, value)
-				}
+				timeline.ObserveResponse(data)
 			},
 			finish: func() {
 				if !observation.activeFor(r.captureSession()) {
-					responseObserver.Abort()
+					timeline.Abort()
 					return
 				}
-				if value, _ := responseObserver.Finish(); value != nil {
-					r.publishHTTPResponse(observation, value)
-				}
+				timeline.FinishResponse()
 			},
-			abort: responseObserver.Abort,
+			abort: timeline.Abort,
 		}
 		responseReader = responseMetadataReader
 	}

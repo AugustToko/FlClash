@@ -158,6 +158,7 @@ func startTLSInspectionRuntime(params *TLSInspectionRuntimeStartParams) (*TLSIns
 			}
 			return observer.SessionID()
 		},
+		CaptureSessionChanged: httpObservationChangeSignal,
 		Observe: func(value inspectionruntime.Observation) {
 			sendMessage(Message{Type: InspectionRuntimeMessage, Data: value})
 		},
