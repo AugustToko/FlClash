@@ -1,6 +1,26 @@
 package main
 
-import "github.com/metacubex/mihomo/component/observer"
+import (
+	"sync"
+
+	"github.com/metacubex/mihomo/component/observer"
+)
+
+var httpObservationChangeMu sync.Mutex
+var httpObservationChange = make(chan struct{})
+
+func httpObservationChangeSignal() <-chan struct{} {
+	httpObservationChangeMu.Lock()
+	defer httpObservationChangeMu.Unlock()
+	return httpObservationChange
+}
+
+func publishHTTPObservationChange() {
+	httpObservationChangeMu.Lock()
+	close(httpObservationChange)
+	httpObservationChange = make(chan struct{})
+	httpObservationChangeMu.Unlock()
+}
 
 type HTTPObservationParams struct {
 	Enabled   bool   `json:"enabled"`
@@ -8,12 +28,19 @@ type HTTPObservationParams struct {
 }
 
 func handleSetHTTPObservationEnabled(params HTTPObservationParams) bool {
+	previousEnabled := observer.Enabled()
+	previousSession := observer.SessionID()
 	observer.Configure(params.Enabled, params.SessionID)
-	return observer.Enabled()
+	enabled := observer.Enabled()
+	session := observer.SessionID()
+	if enabled != previousEnabled || session != previousSession {
+		publishHTTPObservationChange()
+	}
+	return enabled
 }
 
 func disableHTTPObservation() {
-	observer.Configure(false, "")
+	handleSetHTTPObservationEnabled(HTTPObservationParams{})
 }
 
 func init() {

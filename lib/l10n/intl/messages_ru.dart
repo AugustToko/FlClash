@@ -55,46 +55,48 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m13(count) =>
       "${Intl.plural(count, one: '${count} час', few: '${count} часа', many: '${count} часов', other: '${count} часа')}";
 
-  static String m14(target) => "${target} — недопустимая политика";
+  static String m14(count) => "Транзакций: ${count}";
 
-  static String m15(proxyName) => "${proxyName} — недопустимый прокси";
+  static String m15(target) => "${target} — недопустимая политика";
 
-  static String m16(providerName) =>
+  static String m16(proxyName) => "${proxyName} — недопустимый прокси";
+
+  static String m17(providerName) =>
       "${providerName} — недопустимый провайдер прокси";
 
-  static String m17(subRule) => "${subRule} — недопустимый SUB_RULE";
+  static String m18(subRule) => "${subRule} — недопустимый SUB_RULE";
 
-  static String m18(appName) =>
+  static String m19(appName) =>
       "1. Откройте Системные настройки > Конфиденциальность и безопасность\n2. Выберите Службы геолокации\n3. Найдите и отметьте ${appName} в списке\n\nПосле настройки вернитесь в приложение и продолжайте работу. Спасибо за сотрудничество.";
 
-  static String m19(label, max) => "«${label}» — не более ${max} символов";
-
-  static String m20(count) =>
-      "${Intl.plural(count, one: '${count} минуту назад', few: '${count} минуты назад', many: '${count} минут назад', other: '${count} минуты назад')}";
+  static String m20(label, max) => "«${label}» — не более ${max} символов";
 
   static String m21(count) =>
+      "${Intl.plural(count, one: '${count} минуту назад', few: '${count} минуты назад', many: '${count} минут назад', other: '${count} минуты назад')}";
+
+  static String m22(count) =>
       "${Intl.plural(count, one: '${count} месяц назад', few: '${count} месяца назад', many: '${count} месяцев назад', other: '${count} месяца назад')}";
 
-  static String m22(label) => "Пока нет: ${label}";
+  static String m23(label) => "Пока нет: ${label}";
 
-  static String m23(label) => "Значение «${label}» должно быть числом";
+  static String m24(label) => "Значение «${label}» должно быть числом";
 
-  static String m24(label) =>
+  static String m25(label) =>
       "Значение «${label}» должно быть от 1024 до 49151";
 
-  static String m25(count) => "${count} прокси";
-
-  static String m26(count) =>
-      "${Intl.plural(count, one: '${count} правило', few: '${count} правила', many: '${count} правил', other: '${count} правила')}";
+  static String m26(count) => "${count} прокси";
 
   static String m27(count) =>
+      "${Intl.plural(count, one: '${count} правило', few: '${count} правила', many: '${count} правил', other: '${count} правила')}";
+
+  static String m28(count) =>
       "${Intl.plural(count, one: '${count} секунда', few: '${count} секунды', many: '${count} секунд', other: '${count} секунды')}";
 
-  static String m28(count) => "Выбрано: ${count}";
+  static String m29(count) => "Выбрано: ${count}";
 
-  static String m29(label) => "Значение «${label}» должно быть URL";
+  static String m30(label) => "Значение «${label}» должно быть URL";
 
-  static String m30(count) =>
+  static String m31(count) =>
       "${Intl.plural(count, one: '${count} год назад', few: '${count} года назад', many: '${count} лет назад', other: '${count} года назад')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -639,7 +641,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Наблюдения HTTP экспортированы",
     ),
     "httpCaptureHarWarning": MessageLookupByLibrary.simpleMessage(
-      "Экспорт HAR по-прежнему содержит только метаданные. Для первой наблюдаемой транзакции HTTP/1 — из пассивного открытого наблюдения или явно авторизованного инспекционного ретранслятора — он может включать метод запроса, адрес без строки запроса и имена заголовков, а также статус, версию и имена заголовков первого окончательного ответа. Reason Phrase, все значения заголовков, Cookie, тела, последующие транзакции Keep-Alive, необработанные данные и браузерные тайминги остаются неизвестными.",
+      "Экспорт HAR по-прежнему содержит только метаданные. Пассивный открытый источник может включать первую транзакцию HTTP/1, а явно авторизованный инспекционный ретранслятор — до 32 упорядоченных транзакций. Экспортируются только адреса без строки запроса, имена заголовков и метаданные статуса ответа; Reason Phrase, значения заголовков, Cookie, тела, необработанные данные и браузерные тайминги остаются неизвестными.",
     ),
     "httpCaptureHeaderNames": MessageLookupByLibrary.simpleMessage(
       "Имена заголовков",
@@ -667,7 +669,7 @@ class MessageLookup extends MessageLookupByLibrary {
           "Список информационных кодов усечён",
         ),
     "httpCaptureInspectedBoundary": MessageLookupByLibrary.simpleMessage(
-      "Эта запись получена от явно авторизованного loopback HTTPS-ретранслятора. Сохраняются только метод, путь без строки запроса и имена заголовков первого расшифрованного запроса HTTP/1, статус, версия и имена заголовков первого окончательного ответа, а также версии TLS, жизненный цикл и суммарные байты. Значения заголовков, Cookie, тела, последующие транзакции Keep-Alive и необработанные данные никогда не сохраняются.",
+      "Эта запись получена от явно авторизованного loopback HTTPS-ретранслятора. Сохраняется упорядоченная ограниченная временная шкала до 32 расшифрованных транзакций HTTP/1: метод, путь без строки запроса и имена заголовков запроса, а также статус, версия и имена заголовков окончательного ответа. Значения заголовков и полей фрейминга, Cookie, тела и необработанные данные не сохраняются.",
     ),
     "httpCaptureNotPresent": MessageLookupByLibrary.simpleMessage(
       "Не наблюдается",
@@ -676,7 +678,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Задержка наблюдения",
     ),
     "httpCaptureObservationOnly": MessageLookupByLibrary.simpleMessage(
-      "После явного запуска записываются ограниченные пассивные наблюдения Core и грубые метаданные явно запущенного локального HTTPS-ретранслятора. Query-параметры, Reason Phrase, значения заголовков, тела, сертификаты и последующие сообщения Keep-Alive не сохраняются. Данные ретранслятора проходят через память, но не сохраняются. Учитываются только новые соединения; записи исключены из резервных копий.",
+      "Добровольный захват объединяет ограниченные пассивные наблюдения Core с метаданными явно запущенного локального HTTPS-ретранслятора инспекции. Ретранслятор может записать до 32 транзакций HTTP/1 на соединение, но никогда не сохраняет строки запроса, Reason Phrase, значения заголовков, тела, сертификаты или необработанные HTTP-сообщения. Полезная нагрузка проходит через память, но не сохраняется. Только новые соединения; локальные записи исключены из резервных копий.",
     ),
     "httpCaptureObservedBytes": MessageLookupByLibrary.simpleMessage(
       "Наблюдаемый префикс",
@@ -697,6 +699,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureRequestMethod": MessageLookupByLibrary.simpleMessage(
       "Метод запроса",
+    ),
+    "httpCaptureRequestObservedAfter": MessageLookupByLibrary.simpleMessage(
+      "Задержка наблюдения запроса",
     ),
     "httpCaptureRequestTarget": MessageLookupByLibrary.simpleMessage(
       "Очищенный адрес",
@@ -793,6 +798,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "httpCaptureTargetTruncated": MessageLookupByLibrary.simpleMessage(
       "Цель запроса усечена",
     ),
+    "httpCaptureTimelineTruncated": MessageLookupByLibrary.simpleMessage(
+      "Временная шкала усечена",
+    ),
     "httpCaptureTlsAlpn": MessageLookupByLibrary.simpleMessage("ALPN"),
     "httpCaptureTlsEch": MessageLookupByLibrary.simpleMessage(
       "Encrypted ClientHello",
@@ -805,6 +813,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "httpCaptureTlsVersions": MessageLookupByLibrary.simpleMessage(
       "Поддерживаемые версии TLS",
+    ),
+    "httpCaptureTransaction": MessageLookupByLibrary.simpleMessage(
+      "Транзакция",
+    ),
+    "httpCaptureTransactionCount": m14,
+    "httpCaptureTransactions": MessageLookupByLibrary.simpleMessage(
+      "Временная шкала HTTP/1",
     ),
     "httpCaptureTruncated": MessageLookupByLibrary.simpleMessage(
       "Наблюдение усечено",
@@ -872,10 +887,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidBackupFile": MessageLookupByLibrary.simpleMessage(
       "Недопустимый файл резервной копии",
     ),
-    "invalidPolicy": m14,
-    "invalidProxy": m15,
-    "invalidProxyProvider": m16,
-    "invalidSubRule": m17,
+    "invalidPolicy": m15,
+    "invalidProxy": m16,
+    "invalidProxyProvider": m17,
+    "invalidSubRule": m18,
     "ipcidr": MessageLookupByLibrary.simpleMessage("IP/CIDR"),
     "ipv6Desc": MessageLookupByLibrary.simpleMessage(
       "При включении можно принимать трафик IPv6",
@@ -914,7 +929,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "По требованию системы для получения имени сети Wi-Fi необходимо разрешение на геолокацию. На Android выберите «Разрешить всегда», иначе имя сети Wi-Fi нельзя получить, пока приложение в фоне.",
     ),
-    "locationPermissionGuide": m18,
+    "locationPermissionGuide": m19,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Требуется разрешение на геолокацию",
     ),
@@ -1127,7 +1142,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage(
       "Макс. число неудач",
     ),
-    "maxLengthTip": m19,
+    "maxLengthTip": m20,
     "maximize": MessageLookupByLibrary.simpleMessage("Развернуть"),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Память"),
     "messageTest": MessageLookupByLibrary.simpleMessage("Тест сообщения"),
@@ -1140,11 +1155,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
       "Изменяет стандартное поведение при выходе",
     ),
-    "minutesAgo": m20,
+    "minutesAgo": m21,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Смешанный порт"),
     "mode": MessageLookupByLibrary.simpleMessage("Режим"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Монохром"),
-    "monthsAgo": m21,
+    "monthsAgo": m22,
     "more": MessageLookupByLibrary.simpleMessage("Ещё"),
     "multipleValuesTip": MessageLookupByLibrary.simpleMessage(
       "Разделяйте несколько значений запятыми",
@@ -1192,8 +1207,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Профилей пока нет. Сначала добавьте профиль",
     ),
-    "nullTip": m22,
-    "numberTip": m23,
+    "nullTip": m23,
+    "numberTip": m24,
     "onDemand": MessageLookupByLibrary.simpleMessage("По условию"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "Настройте состояние работы приложения для определённых сценариев",
@@ -1251,7 +1266,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Введите другой порт",
     ),
-    "portTip": m24,
+    "portTip": m25,
     "preferH3Desc": MessageLookupByLibrary.simpleMessage(
       "Предпочитать HTTP/3 для DoH",
     ),
@@ -1286,7 +1301,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "project": MessageLookupByLibrary.simpleMessage("Проект"),
     "providers": MessageLookupByLibrary.simpleMessage("Внешние ресурсы"),
     "proxies": MessageLookupByLibrary.simpleMessage("Прокси"),
-    "proxiesCount": m25,
+    "proxiesCount": m26,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Список прокси пуст"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Цепочка прокси"),
     "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
@@ -1522,7 +1537,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("Набор правил"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Цель правила"),
     "rules": MessageLookupByLibrary.simpleMessage("Правила"),
-    "rulesCount": m26,
+    "rulesCount": m27,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения?"),
     "script": MessageLookupByLibrary.simpleMessage("Скрипт"),
@@ -1534,7 +1549,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Поиск"),
     "seconds": MessageLookupByLibrary.simpleMessage("секунд"),
-    "secondsCount": m27,
+    "secondsCount": m28,
     "selectAll": MessageLookupByLibrary.simpleMessage("Выбрать всё"),
     "selectMatchTarget": MessageLookupByLibrary.simpleMessage(
       "Выбрать MATCH-TARGET",
@@ -1553,7 +1568,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Выберите подправило",
     ),
     "selected": MessageLookupByLibrary.simpleMessage("Выбрано"),
-    "selectedCountTitle": m28,
+    "selectedCountTitle": m29,
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "show": MessageLookupByLibrary.simpleMessage("Показать"),
     "showLess": MessageLookupByLibrary.simpleMessage("Свернуть"),
@@ -2207,7 +2222,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "upload": MessageLookupByLibrary.simpleMessage("Отдача"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage("Получить профиль по URL"),
-    "urlTip": m29,
+    "urlTip": m30,
     "useHosts": MessageLookupByLibrary.simpleMessage("Использовать hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage(
       "Использовать системный hosts",
@@ -2234,7 +2249,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "whitelistMode": MessageLookupByLibrary.simpleMessage(
       "Режим белого списка",
     ),
-    "yearsAgo": m30,
+    "yearsAgo": m31,
     "zhCN": MessageLookupByLibrary.simpleMessage("Упрощённый китайский"),
   };
 }

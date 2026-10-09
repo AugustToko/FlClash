@@ -690,22 +690,49 @@ void main() {
       'alpn': 'http/1.1',
       'uploaded': 64,
       'downloaded': 128,
-      'httpRequest': {
-        'method': 'GET',
-        'target': '/items',
-        'version': 'HTTP/1.1',
-        'host': 'api.example.com',
-        'headerNames': ['host', 'authorization'],
-        'headersComplete': true,
-      },
-      'httpResponse': {
-        'version': 'HTTP/1.1',
-        'statusCode': 200,
-        'headerNames': ['content-type', 'set-cookie'],
-        'headersComplete': true,
-        'observedBytes': 64,
-        'observedAfterMilliseconds': 12,
-      },
+      'httpTransactionsTruncated': true,
+      'httpTransactions': [
+        {
+          'sequence': 1,
+          'requestObservedAfterMilliseconds': 3,
+          'request': {
+            'method': 'GET',
+            'target': '/items',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headerNames': ['host', 'authorization'],
+            'headersComplete': true,
+          },
+          'response': {
+            'version': 'HTTP/1.1',
+            'statusCode': 200,
+            'headerNames': ['content-type', 'set-cookie'],
+            'headersComplete': true,
+            'observedBytes': 64,
+            'observedAfterMilliseconds': 12,
+          },
+        },
+        {
+          'sequence': 2,
+          'requestObservedAfterMilliseconds': 18,
+          'request': {
+            'method': 'POST',
+            'target': '/items/next',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headerNames': ['host', 'content-length'],
+            'headersComplete': true,
+          },
+          'response': {
+            'version': 'HTTP/1.1',
+            'statusCode': 204,
+            'headerNames': ['x-request-id'],
+            'headersComplete': true,
+            'observedBytes': 48,
+            'observedAfterMilliseconds': 26,
+          },
+        },
+      ],
     });
     final metadataRanks = <int>[];
     final subscription = scope.listen<HttpCaptureState>(httpCaptureProvider, (
@@ -731,12 +758,16 @@ void main() {
     expect(entry.requestUrl, 'https://api.example.com/items');
     expect(entry.httpObservation?.method, 'GET');
     expect(entry.httpResponseObservation?.statusCode, 200);
-    final firstRich = metadataRanks.indexOf(3);
+    expect(entry.httpTransactions, hasLength(2));
+    expect(entry.httpTransactions.last.request.target, '/items/next');
+    expect(entry.httpTransactions.last.response?.statusCode, 204);
+    expect(entry.httpTimelineTruncated, isTrue);
+    final firstRich = metadataRanks.indexOf(7);
     expect(firstRich, isNonNegative);
     expect(
       metadataRanks.skip(firstRich),
-      everyElement(3),
-      reason: 'persistence must not roll HTTP metadata back',
+      everyElement(7),
+      reason: 'persistence must not roll the HTTP timeline back',
     );
   });
 

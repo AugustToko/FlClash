@@ -239,6 +239,9 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
           final response = entry.httpResponseObservation;
           final tls = entry.tlsObservation;
           final inspected = entry.inspectionRuntime;
+          final runtimeTransactions =
+              inspected?.httpTransactions ??
+              const <TlsInspectionRuntimeHttpTransaction>[];
           String completeness(bool value) =>
               value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
           String presence(bool value) =>
@@ -300,7 +303,62 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   label: l.httpCaptureSourceType,
                   value: entry.source.label(sheetContext),
                 ),
-                if (http != null) ...[
+                if (runtimeTransactions.isNotEmpty ||
+                    entry.httpTimelineTruncated) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l.httpCaptureTransactions,
+                          style: sheetContext.textTheme.titleSmall?.toSoftBold,
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          l.httpCaptureTransactionCount(
+                            runtimeTransactions.length,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (entry.httpTimelineTruncated) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: sheetContext.colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(AppCorner.md),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 18,
+                            color: sheetContext.colorScheme.onErrorContainer,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l.httpCaptureTimelineTruncated,
+                              style: TextStyle(
+                                color:
+                                    sheetContext.colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  for (final transaction in runtimeTransactions) ...[
+                    const SizedBox(height: 8),
+                    _HttpCaptureTransactionCard(transaction: transaction),
+                  ],
+                ],
+                if (http != null && runtimeTransactions.isEmpty) ...[
                   if (http.method.isNotEmpty)
                     _HttpCaptureDetailRow(
                       label: l.httpCaptureRequestMethod,
@@ -341,7 +399,7 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                       value: presence(true),
                     ),
                 ],
-                if (response != null) ...[
+                if (response != null && runtimeTransactions.isEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
                     l.httpCaptureResponse,
@@ -741,6 +799,7 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
 
   Widget _buildEntry(BuildContext context, HttpCaptureEntry entry) {
     final protocol = entry.protocol;
+    final l = context.appLocalizations;
     return CommonCard(
       type: CommonCardType.filled,
       radius: AppCorner.lg,
@@ -788,6 +847,10 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                         if (entry.httpResponseObservation case final response?
                             when response.statusCode != 0)
                           '→ ${response.statusCode}',
+                        if (entry.httpTransactionCount > 1)
+                          '· ${l.httpCaptureTransactionCount(entry.httpTransactionCount)}',
+                        if (entry.httpTimelineTruncated)
+                          '· ${l.httpCaptureTimelineTruncated}',
                       ].join(' '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -957,6 +1020,159 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _HttpCaptureTransactionCard extends StatelessWidget {
+  final TlsInspectionRuntimeHttpTransaction transaction;
+
+  const _HttpCaptureTransactionCard({required this.transaction});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final request = transaction.request;
+    final response = transaction.response;
+    String completeness(bool value) =>
+        value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
+    String presence(bool value) =>
+        value ? l.httpCapturePresent : l.httpCaptureNotPresent;
+    final summary = [
+      '${request.method} ${request.target}'.trim(),
+      if (response != null && response.statusCode != 0)
+        '→ ${response.statusCode}',
+    ].join(' ');
+    return CommonCard(
+      type: CommonCardType.filled,
+      radius: AppCorner.md,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(AppCorner.sm),
+                  ),
+                  child: Text(
+                    '${transaction.sequence}',
+                    style: context.textTheme.labelLarge?.copyWith(
+                      color: context.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${l.httpCaptureTransaction} #${transaction.sequence}',
+                        style: context.textTheme.titleSmall?.toSoftBold,
+                      ),
+                      if (summary.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        SelectableText(
+                          summary,
+                          style: context.textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _HttpCaptureDetailRow(
+              label: l.httpCaptureRequestObservedAfter,
+              value: '${transaction.requestObservedAfterMilliseconds} ms',
+            ),
+            if (request.version.isNotEmpty)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureHttpVersion,
+                value: request.version,
+              ),
+            if (request.headerNames.isNotEmpty)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureHeaderNames,
+                value: request.headerNames.join(', '),
+              ),
+            _HttpCaptureDetailRow(
+              label: l.httpCaptureHeadersComplete,
+              value: completeness(request.headersComplete),
+            ),
+            if (request.targetTruncated)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureTargetTruncated,
+                value: presence(true),
+              ),
+            if (request.hostTruncated)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureHostTruncated,
+                value: presence(true),
+              ),
+            if (request.headerNamesTruncated)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureHeaderNamesTruncated,
+                value: presence(true),
+              ),
+            if (response != null) ...[
+              const Divider(),
+              if (response.statusCode != 0)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureResponseStatus,
+                  value: '${response.statusCode}',
+                ),
+              if (response.version.isNotEmpty)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureResponseHttpVersion,
+                  value: response.version,
+                ),
+              if (response.informationalStatusCodes.isNotEmpty)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureInformationalStatusCodes,
+                  value: response.informationalStatusCodes.join(', '),
+                ),
+              if (response.headerNames.isNotEmpty)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureResponseHeaderNames,
+                  value: response.headerNames.join(', '),
+                ),
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureResponseObservedAfter,
+                value: '${response.observedAfterMilliseconds} ms',
+              ),
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureResponseHeadersComplete,
+                value: completeness(response.headersComplete),
+              ),
+              if (response.truncated)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureResponseTruncated,
+                  value: presence(true),
+                ),
+              if (response.headerNamesTruncated)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureResponseHeaderNamesTruncated,
+                  value: presence(true),
+                ),
+              if (response.informationalStatusCodesTruncated)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureInformationalStatusCodesTruncated,
+                  value: presence(true),
+                ),
+            ],
+          ],
+        ),
       ),
     );
   }

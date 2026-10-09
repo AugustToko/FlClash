@@ -86,26 +86,81 @@ HttpCaptureEntry _runtimeEntry() {
     'alpn': 'http/1.1',
     'uploaded': 2048,
     'downloaded': 8192,
-    'httpRequest': {
-      'method': 'GET',
-      'target': '/items',
-      'version': 'HTTP/1.1',
-      'host': 'secure.example.com',
-      'headerNames': ['host', 'authorization', 'accept'],
-      'headersComplete': true,
-    },
-    'httpResponse': {
-      'version': 'HTTP/1.1',
-      'statusCode': 200,
-      'headerNames': ['content-type', 'set-cookie'],
-      'headersComplete': true,
-      'observedBytes': 112,
-      'observedAfterMilliseconds': 36,
-    },
+    'httpTransactionsTruncated': true,
+    'httpTransactions': [
+      {
+        'sequence': 1,
+        'requestObservedAfterMilliseconds': 8,
+        'request': {
+          'method': 'GET',
+          'target': '/items',
+          'version': 'HTTP/1.1',
+          'host': 'secure.example.com',
+          'headerNames': ['host', 'authorization', 'accept'],
+          'headersComplete': true,
+        },
+        'response': {
+          'version': 'HTTP/1.1',
+          'statusCode': 200,
+          'headerNames': ['content-type', 'set-cookie'],
+          'headersComplete': true,
+          'observedBytes': 112,
+          'observedAfterMilliseconds': 36,
+        },
+      },
+      {
+        'sequence': 2,
+        'requestObservedAfterMilliseconds': 64,
+        'request': {
+          'method': 'POST',
+          'target': '/items/next',
+          'version': 'HTTP/1.1',
+          'host': 'secure.example.com',
+          'headerNames': ['host', 'content-length', 'content-type'],
+          'headersComplete': true,
+        },
+        'response': {
+          'version': 'HTTP/1.1',
+          'statusCode': 204,
+          'informationalStatusCodes': [103],
+          'headerNames': ['x-request-id'],
+          'headersComplete': true,
+          'observedBytes': 72,
+          'observedAfterMilliseconds': 91,
+        },
+      },
+    ],
   });
   return HttpCaptureEntry.fromInspectionRuntime(
     id: 5,
     observation: observation,
+    profileId: 7,
+    observedAt: startedAt,
+  );
+}
+
+HttpCaptureEntry _truncatedRuntimeEntryWithoutTransactions() {
+  final startedAt = DateTime(2026, 9, 25, 18, 27);
+  return HttpCaptureEntry.fromInspectionRuntime(
+    id: 6,
+    observation: TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:preview-session',
+      'connectionId': '11111111111111111111111111111111',
+      'runtimeId': 'abcdef0123456789abcdef0123456789',
+      'host': 'broken.example.com',
+      'state': 'completed',
+      'startedAt': startedAt.toUtc().toIso8601String(),
+      'completedAt': startedAt
+          .add(const Duration(seconds: 1))
+          .toUtc()
+          .toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 32,
+      'downloaded': 64,
+      'httpTransactionsTruncated': true,
+    }),
     profileId: 7,
     observedAt: startedAt,
   );
@@ -233,9 +288,13 @@ class _HttpCaptureLogbook extends LogbookNotifier {
 }
 
 class _PreviewHttpCapture extends HttpCaptureNotifier {
+  final List<HttpCaptureEntry>? _entries;
+
+  _PreviewHttpCapture({List<HttpCaptureEntry>? entries}) : _entries = entries;
+
   @override
   HttpCaptureState build() {
-    final entries = _previewEntries();
+    final entries = _entries ?? _previewEntries();
     return HttpCaptureState(
       enabled: true,
       sessionStartedAt: DateTime(2026, 9, 25, 18),
@@ -322,11 +381,11 @@ void main() {
     await _pumpCapture(tester, size: const Size(430, 932));
 
     expect(find.text('HTTP 捕获'), findsWidgets);
-    expect(find.textContaining('主动开启后'), findsOneWidget);
+    expect(find.textContaining('选择性捕获会组合'), findsOneWidget);
     expect(find.text('https://api.openai.com'), findsOneWidget);
     expect(find.textContaining('Core 已观察到 TLS ClientHello'), findsOneWidget);
     expect(find.textContaining('UNKNOWN'), findsNothing);
-    expect(find.textContaining('中继载荷只在内存中转发'), findsOneWidget);
+    expect(find.textContaining('中继载荷只经过内存'), findsOneWidget);
   });
 
   testWidgets('a pending Core disable remains visible', (tester) async {
@@ -421,6 +480,8 @@ void main() {
     expect(find.text('https://api.openai.com'), findsNothing);
     expect(find.textContaining('GET'), findsWidgets);
     expect(find.textContaining('200'), findsWidgets);
+    expect(find.textContaining('2 个事务'), findsOneWidget);
+    expect(find.textContaining('事务时间线已截断'), findsOneWidget);
 
     final target = find.text('https://secure.example.com');
     await tester.ensureVisible(target);
@@ -429,12 +490,76 @@ void main() {
 
     expect(find.textContaining('显式授权的回环 HTTPS 中继'), findsOneWidget);
     expect(find.text('本地检查中继'), findsWidgets);
-    expect(find.text('TLS 1.3', skipOffstage: false), findsOneWidget);
+    expect(find.text('HTTP/1 事务时间线', skipOffstage: false), findsOneWidget);
+    expect(find.text('2 个事务', skipOffstage: false), findsWidgets);
+    expect(find.text('事务 #1', skipOffstage: false), findsOneWidget);
+    expect(find.text('事务 #2', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('GET /items', skipOffstage: false),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('POST /items/next', skipOffstage: false),
+      findsWidgets,
+    );
+    expect(find.text('200', skipOffstage: false), findsWidgets);
+    expect(find.text('204', skipOffstage: false), findsWidgets);
+    expect(find.text('事务时间线已截断', skipOffstage: false), findsWidgets);
+
+    final downstreamTls = find.text('TLS 1.3', skipOffstage: false);
+    final detailsList = find.byType(ListView).last;
+    for (
+      var index = 0;
+      index < 8 && downstreamTls.evaluate().isEmpty;
+      index++
+    ) {
+      await tester.drag(detailsList, const Offset(0, -280));
+      await tester.pumpAndSettle();
+    }
+    expect(downstreamTls, findsOneWidget);
     expect(find.text('TLS 1.2', skipOffstage: false), findsOneWidget);
     expect(find.text('http/1.1', skipOffstage: false), findsWidgets);
-    expect(find.text('GET', skipOffstage: false), findsWidgets);
-    expect(find.text('/items', skipOffstage: false), findsOneWidget);
-    expect(find.text('200', skipOffstage: false), findsWidgets);
+  });
+
+  testWidgets('truncated empty runtime timeline stays explicit in details', (
+    tester,
+  ) async {
+    const size = Size(430, 932);
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final container = ProviderContainer(
+      overrides: [
+        httpCaptureProvider.overrideWith(
+          () => _PreviewHttpCapture(
+            entries: [_truncatedRuntimeEntryWithoutTransactions()],
+          ),
+        ),
+        httpCapturePersistenceEnabledProvider.overrideWithValue(false),
+        currentProfileIdProvider.overrideWithBuild((_, _) => 7),
+        viewSizeProvider.overrideWithBuild((_, _) => size),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(
+          locale: Locale('zh', 'CN'),
+          child: HttpCaptureView(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final target = find.text('https://broken.example.com');
+    await tester.ensureVisible(target);
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+    expect(find.text('HTTP/1 事务时间线', skipOffstage: false), findsOneWidget);
+    expect(find.text('0 个事务', skipOffstage: false), findsOneWidget);
+    expect(find.text('事务时间线已截断', skipOffstage: false), findsWidgets);
   });
 
   testWidgets('HTTP capture inspected-runtime list preview', (tester) async {
@@ -466,6 +591,14 @@ void main() {
     await expectLater(
       find.byType(Overlay).first,
       matchesGoldenFile('../goldens/http_capture_runtime_detail_preview.png'),
+    );
+
+    final detailsList = find.byType(ListView).last;
+    await tester.drag(detailsList, const Offset(0, -520));
+    await tester.pumpAndSettle();
+    await expectLater(
+      find.byType(Overlay).first,
+      matchesGoldenFile('../goldens/http_capture_runtime_timeline_preview.png'),
     );
   });
 

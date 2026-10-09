@@ -26,7 +26,7 @@ var httpHeaderTerminator = []byte("\r\n\r\n")
 var httpLineTerminator = []byte("\r\n")
 
 // HTTPRequestObservation retains only bounded request-line metadata and header
-// names from the first decrypted HTTP/1 request. Header values and bodies never
+// names for one decrypted HTTP/1 transaction. Header values and bodies never
 // enter this contract.
 type HTTPRequestObservation struct {
 	Method               string   `json:"method"`
@@ -40,9 +40,9 @@ type HTTPRequestObservation struct {
 	HeaderNamesTruncated bool     `json:"headerNamesTruncated,omitempty"`
 }
 
-// HTTPResponseObservation retains the first final HTTP/1 response status and
-// header names. Informational responses are bounded; reason phrases, values and
-// bodies are discarded.
+// HTTPResponseObservation retains one final HTTP/1 response status and header
+// names. Informational responses are bounded; reason phrases, values and bodies
+// are discarded.
 type HTTPResponseObservation struct {
 	Version                           string   `json:"version,omitempty"`
 	StatusCode                        int      `json:"statusCode,omitempty"`

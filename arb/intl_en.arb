@@ -697,7 +697,7 @@
   "logbookDnsQueryFailed": "DNS query failed",
   "httpCapture": "HTTP Capture",
   "httpCaptureDesc": "Observe passive Core metadata and explicit inspected-runtime TLS connection metadata in one local workspace",
-  "httpCaptureObservationOnly": "Opt-in capture combines bounded passive Core observations with coarse metadata from the explicitly started local HTTPS relay. It never stores query strings, reason phrases, header values, bodies, certificates, or later keep-alive messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.",
+  "httpCaptureObservationOnly": "Opt-in capture combines bounded passive Core observations with metadata from the explicitly started local HTTPS relay. The relay can record up to 32 HTTP/1 transactions per connection, but never stores query strings, reason phrases, header values, bodies, certificates, or raw HTTP messages. Relay payload passes through memory but is not retained. New connections only; local records are excluded from backups.",
   "httpCaptureRunning": "Capturing",
   "httpCaptureStopped": "Stopped",
   "httpCaptureExportHar": "Export HAR-compatible observations",
@@ -717,7 +717,7 @@
   "httpCaptureEvidenceTransportOnly": "Transport metadata only",
   "httpCaptureEndpoint": "Observed endpoint",
   "httpCaptureObservationDelay": "Observation delay",
-  "httpCaptureHarWarning": "HAR export remains metadata-only. For the first observed HTTP/1 transaction—from passive cleartext observation or the explicitly authorized inspection relay—it may include the request method, query-free target and header names, plus the first final response status, version and header names. Reason phrases, all header values, cookies, bodies, later keep-alive transactions, raw payloads and browser-style timings remain unknown.",
+  "httpCaptureHarWarning": "HAR export remains metadata-only. Passive cleartext sources may include their first observed HTTP/1 transaction; an explicitly authorized inspection relay may include up to 32 ordered transactions. Exports contain query-free targets, header names and response status metadata only. Reason phrases, all header values, cookies, bodies, raw payloads and browser-style timings remain unknown.",
   "logbookHttpCaptureRunning": "HTTP capture started",
   "logbookHttpCaptureCompleted": "HTTP capture stopped",
   "logbookHttpCaptureInterrupted": "HTTP capture interrupted",
@@ -743,9 +743,19 @@
   "httpCaptureRuntimeFailureRelay": "Encrypted relay ended with an error",
   "httpCaptureRuntimeFailureCaptureStopped": "Capture stopped before the relay completed",
   "httpCaptureRuntimeFailureCaptureInterrupted": "Previous capture ended unexpectedly",
-  "httpCaptureInspectedBoundary": "This entry came from the explicitly authorized loopback HTTPS relay. It keeps only the first decrypted HTTP/1 request method, query-free path and header names, plus the first final response status, version and header names, TLS versions, lifecycle and byte totals. Header values, cookies, bodies, later keep-alive transactions and raw payloads are never retained.",
+  "httpCaptureInspectedBoundary": "This entry came from the explicitly authorized loopback HTTPS relay. It keeps an ordered, bounded timeline of at most 32 decrypted HTTP/1 transactions: request method, query-free path and header names, and final response status, version and header names. Header values, framing values, cookies, bodies and raw payloads are never retained.",
   "httpCaptureCoreObserverActive": "Core passive observer",
   "httpCaptureConnectionFallback": "Connection metadata fallback",
+  "httpCaptureTransactions": "HTTP/1 timeline",
+  "httpCaptureTransaction": "Transaction",
+  "httpCaptureTransactionCount": "{count, plural, =1{1 transaction} other{{count} transactions}}",
+  "@httpCaptureTransactionCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "httpCaptureRequestObservedAfter": "Request observed after",
+  "httpCaptureTimelineTruncated": "Timeline truncated",
   "httpCaptureRequestMethod": "Request method",
   "httpCaptureRequestTarget": "Sanitized target",
   "httpCaptureHttpVersion": "HTTP version",

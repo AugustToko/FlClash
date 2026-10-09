@@ -339,6 +339,216 @@ void main() {
     );
   });
 
+  test('runtime v6 HTTP timeline validates, truncates, and round-trips', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    final value = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:timeline',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'completed',
+      'startedAt': started.toIso8601String(),
+      'completedAt': started.add(const Duration(seconds: 1)).toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 256,
+      'downloaded': 512,
+      'httpTransactionsTruncated': true,
+      'httpTransactions': [
+        {
+          'sequence': 1,
+          'requestObservedAfterMilliseconds': 4,
+          'request': {
+            'method': 'GET',
+            'target': '/one',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headerNames': ['host', 'authorization'],
+            'headersComplete': true,
+          },
+          'response': {
+            'version': 'HTTP/1.1',
+            'statusCode': 200,
+            'headerNames': ['content-type'],
+            'headersComplete': true,
+            'observedBytes': 64,
+            'observedAfterMilliseconds': 12,
+          },
+        },
+        {
+          'sequence': 2,
+          'requestObservedAfterMilliseconds': 18,
+          'request': {
+            'method': 'POST',
+            'target': '/two',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headerNames': ['host', 'content-length'],
+            'headersComplete': true,
+          },
+        },
+      ],
+    });
+    expect(value.httpTransactions, hasLength(2));
+    expect(value.httpTransactions.first.sequence, 1);
+    expect(value.httpTransactions.last.request.target, '/two');
+    expect(value.httpTransactionsTruncated, isTrue);
+    expect(value.httpRequest?.target, '/one');
+    expect(value.httpResponse?.statusCode, 200);
+    expect(value.metadataRank, 5);
+    final encoded = value.toJson();
+    expect(encoded, contains('httpTransactions'));
+    expect(encoded, containsPair('httpTransactionsTruncated', true));
+    expect(encoded, isNot(contains('httpRequest')));
+    expect(encoded, isNot(contains('httpResponse')));
+    expect(TlsInspectionRuntimeObservation.fromJson(encoded).toJson(), encoded);
+  });
+
+  test('runtime v6 timeline rejects malformed correlation', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    Map<String, Object?> base() => {
+      'sessionId': 'http-capture:invalid-timeline',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': started.toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 0,
+      'downloaded': 0,
+    };
+    Map<String, Object?> request({
+      int sequence = 1,
+      int delay = 10,
+      String host = 'api.example.com',
+      int responseDelay = 20,
+      bool includeResponse = true,
+      bool hostTruncated = false,
+    }) => {
+      'sequence': sequence,
+      'requestObservedAfterMilliseconds': delay,
+      'request': {
+        'method': 'GET',
+        'target': '/items',
+        'version': 'HTTP/1.1',
+        'host': host,
+        'headersComplete': true,
+        if (hostTruncated) 'hostTruncated': true,
+      },
+      if (includeResponse)
+        'response': {
+          'version': 'HTTP/1.1',
+          'statusCode': 200,
+          'headersComplete': true,
+          'observedBytes': 64,
+          'observedAfterMilliseconds': responseDelay,
+        },
+    };
+    for (final transactions in <List<Map<String, Object?>>>[
+      [request(sequence: 2)],
+      [request(host: 'other.example.com')],
+      [request(host: '', hostTruncated: true)],
+      [request(delay: 20, responseDelay: 10)],
+      [
+        request(sequence: 1, delay: 20, responseDelay: 30),
+        request(sequence: 2, delay: 10, responseDelay: 40),
+      ],
+      [
+        request(sequence: 1, includeResponse: false),
+        request(sequence: 2, delay: 20, responseDelay: 30),
+      ],
+      [
+        request(sequence: 1, delay: 10, responseDelay: 30),
+        request(sequence: 2, delay: 20, responseDelay: 25),
+      ],
+      [
+        for (
+          var sequence = 1;
+          sequence <= TlsInspectionRuntimeHttpTransaction.maximumCount + 1;
+          sequence++
+        )
+          request(sequence: sequence),
+      ],
+    ]) {
+      expect(
+        () => TlsInspectionRuntimeObservation.fromJson({
+          ...base(),
+          'httpTransactions': transactions,
+        }),
+        throwsFormatException,
+      );
+    }
+    final cappedTransactions = [
+      for (
+        var sequence = 1;
+        sequence <= TlsInspectionRuntimeHttpTransaction.maximumCount;
+        sequence++
+      )
+        request(sequence: sequence),
+    ];
+    expect(
+      () => TlsInspectionRuntimeObservation.fromJson({
+        ...base(),
+        'httpTransactions': cappedTransactions,
+      }),
+      throwsFormatException,
+    );
+    final capped = TlsInspectionRuntimeObservation.fromJson({
+      ...base(),
+      'httpTransactions': cappedTransactions,
+      'httpTransactionsTruncated': true,
+    });
+    expect(capped.httpTransactions, hasLength(32));
+    expect(capped.httpTransactionsTruncated, isTrue);
+    expect(
+      () => TlsInspectionRuntimeObservation.fromJson({
+        ...base(),
+        'httpTransactions': [request()],
+        'httpRequest': request()['request'],
+      }),
+      throwsFormatException,
+    );
+  });
+
+  test('runtime v6 timeline rejects events after connection completion', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    expect(
+      () => TlsInspectionRuntimeObservation.fromJson({
+        'sessionId': 'http-capture:late-timeline',
+        'connectionId': _id,
+        'runtimeId': _generation,
+        'host': 'api.example.com',
+        'state': 'completed',
+        'startedAt': started.toIso8601String(),
+        'completedAt': started
+            .add(const Duration(milliseconds: 50))
+            .toIso8601String(),
+        'downstreamTlsVersion': 'TLS 1.3',
+        'upstreamTlsVersion': 'TLS 1.3',
+        'alpn': 'http/1.1',
+        'uploaded': 0,
+        'downloaded': 0,
+        'httpTransactions': [
+          {
+            'sequence': 1,
+            'requestObservedAfterMilliseconds': 60,
+            'request': {
+              'method': 'GET',
+              'target': '/late',
+              'version': 'HTTP/1.1',
+              'host': 'api.example.com',
+              'headersComplete': true,
+            },
+          },
+        ],
+      }),
+      throwsFormatException,
+    );
+  });
+
   test('HTTP/1 metadata remains valid when TLS negotiates no ALPN', () {
     final started = DateTime.utc(2026, 10, 7, 2);
     final value = TlsInspectionRuntimeObservation.fromJson({
@@ -445,6 +655,301 @@ void main() {
       );
     });
   }
+
+  test('runtime merge never splices an incompatible transaction suffix', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    Map<String, Object?> observation({
+      required String firstTarget,
+      required List<Map<String, Object?>> transactions,
+    }) => {
+      'sessionId': 'http-capture:merge-conflict',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': started.toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 0,
+      'downloaded': 0,
+      'httpTransactions': transactions,
+    };
+    Map<String, Object?> transaction(int sequence, String target) => {
+      'sequence': sequence,
+      'requestObservedAfterMilliseconds': sequence * 5,
+      'request': {
+        'method': 'GET',
+        'target': target,
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headersComplete': true,
+      },
+    };
+    final current = TlsInspectionRuntimeObservation.fromJson(
+      observation(
+        firstTarget: '/current',
+        transactions: [transaction(1, '/current')],
+      ),
+    );
+    final incompatibleLonger = TlsInspectionRuntimeObservation.fromJson(
+      observation(
+        firstTarget: '/incoming',
+        transactions: [
+          transaction(1, '/incoming'),
+          transaction(2, '/must-not-splice'),
+        ],
+      ),
+    );
+    final merged = current.merge(incompatibleLonger);
+    expect(merged.httpTransactions, hasLength(1));
+    expect(merged.httpTransactions.single.request.target, '/current');
+    expect(merged.httpTransactionsTruncated, isTrue);
+  });
+
+  test('runtime merge keeps a timeline anchored to one start time', () {
+    final currentStart = DateTime.utc(2026, 10, 7, 2);
+    final incomingStart = currentStart.add(const Duration(seconds: 1));
+    Map<String, Object?> transaction(int sequence, String target) => {
+      'sequence': sequence,
+      'requestObservedAfterMilliseconds': sequence * 5,
+      'request': {
+        'method': 'GET',
+        'target': target,
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headersComplete': true,
+      },
+    };
+    TlsInspectionRuntimeObservation value(
+      DateTime startedAt,
+      List<Map<String, Object?>> transactions,
+    ) => TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:start-conflict',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': startedAt.toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 0,
+      'downloaded': 0,
+      'httpTransactions': transactions,
+    });
+    final current = value(currentStart, [transaction(1, '/current')]);
+    final incoming = value(incomingStart, [
+      transaction(1, '/current'),
+      transaction(2, '/must-not-splice'),
+    ]);
+    final merged = current.merge(incoming);
+    expect(merged.startedAt, currentStart);
+    expect(merged.httpTransactions, hasLength(1));
+    expect(merged.httpTransactions.single.request.target, '/current');
+    expect(merged.httpTransactionsTruncated, isTrue);
+    expect(
+      TlsInspectionRuntimeObservation.fromJson(merged.toJson()).toJson(),
+      merged.toJson(),
+    );
+  });
+
+  test('runtime terminal merge rejects metadata beyond completion', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    Map<String, Object?> transaction(
+      int sequence,
+      String target,
+      int requestAfter,
+      int responseAfter,
+    ) => {
+      'sequence': sequence,
+      'requestObservedAfterMilliseconds': requestAfter,
+      'request': {
+        'method': 'GET',
+        'target': target,
+        'version': 'HTTP/1.1',
+        'host': 'api.example.com',
+        'headersComplete': true,
+      },
+      'response': {
+        'version': 'HTTP/1.1',
+        'statusCode': 200,
+        'headersComplete': true,
+        'observedBytes': 64,
+        'observedAfterMilliseconds': responseAfter,
+      },
+    };
+    TlsInspectionRuntimeObservation value({
+      required String state,
+      DateTime? completedAt,
+      required int uploaded,
+      required int downloaded,
+      required List<Map<String, Object?>> transactions,
+    }) => TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:terminal-boundary',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': state,
+      'startedAt': started.toIso8601String(),
+      if (completedAt != null) 'completedAt': completedAt.toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': uploaded,
+      'downloaded': downloaded,
+      'httpTransactions': transactions,
+    });
+    final terminal = value(
+      state: 'completed',
+      completedAt: started.add(const Duration(milliseconds: 100)),
+      uploaded: 128,
+      downloaded: 256,
+      transactions: [transaction(1, '/first', 10, 20)],
+    );
+    final lateRunning = value(
+      state: 'running',
+      uploaded: 999,
+      downloaded: 999,
+      transactions: [
+        transaction(1, '/first', 10, 20),
+        transaction(2, '/after-completion', 150, 160),
+      ],
+    );
+    final merged = terminal.merge(lateRunning);
+    expect(merged.state, 'completed');
+    expect(merged.completedAt, terminal.completedAt);
+    expect(merged.uploaded, 128);
+    expect(merged.downloaded, 256);
+    expect(merged.httpTransactions, hasLength(1));
+    expect(merged.httpTransactions.single.request.target, '/first');
+    expect(merged.httpTransactionsTruncated, isTrue);
+    expect(
+      TlsInspectionRuntimeObservation.fromJson(merged.toJson()).toJson(),
+      merged.toJson(),
+    );
+  });
+
+  test('runtime merge preserves response truncation evidence', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    TlsInspectionRuntimeObservation value({
+      required bool complete,
+      required bool truncated,
+      required bool headerNamesTruncated,
+      required bool informationalTruncated,
+      required int observedBytes,
+      required int observedAfter,
+      required List<String> headerNames,
+    }) => TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:response-flags',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'running',
+      'startedAt': started.toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'http/1.1',
+      'uploaded': 0,
+      'downloaded': 0,
+      'httpTransactions': [
+        {
+          'sequence': 1,
+          'requestObservedAfterMilliseconds': 5,
+          'request': {
+            'method': 'GET',
+            'target': '/items',
+            'version': 'HTTP/1.1',
+            'host': 'api.example.com',
+            'headersComplete': true,
+          },
+          'response': {
+            'version': 'HTTP/1.1',
+            'statusCode': 200,
+            'informationalStatusCodes': [103],
+            'headerNames': headerNames,
+            'headersComplete': complete,
+            'observedBytes': observedBytes,
+            'observedAfterMilliseconds': observedAfter,
+            'truncated': truncated,
+            'headerNamesTruncated': headerNamesTruncated,
+            'informationalStatusCodesTruncated': informationalTruncated,
+          },
+        },
+      ],
+    });
+    final complete = value(
+      complete: true,
+      truncated: false,
+      headerNamesTruncated: false,
+      informationalTruncated: false,
+      observedBytes: 64,
+      observedAfter: 20,
+      headerNames: const ['content-type'],
+    );
+    final bounded = value(
+      complete: false,
+      truncated: true,
+      headerNamesTruncated: true,
+      informationalTruncated: true,
+      observedBytes: 128,
+      observedAfter: 18,
+      headerNames: const ['content-type', 'x-request-id'],
+    );
+    final response = complete.merge(bounded).httpTransactions.single.response!;
+    expect(response.headersComplete, isTrue);
+    expect(response.truncated, isTrue);
+    expect(response.headerNamesTruncated, isTrue);
+    expect(response.informationalStatusCodesTruncated, isTrue);
+    expect(response.observedBytes, 128);
+    expect(response.observedAfterMilliseconds, 18);
+    expect(response.headerNames, ['content-type']);
+  });
+
+  test('runtime merge keeps an existing response when identity conflicts', () {
+    final started = DateTime.utc(2026, 10, 7, 2);
+    TlsInspectionRuntimeObservation value(int statusCode) =>
+        TlsInspectionRuntimeObservation.fromJson({
+          'sessionId': 'http-capture:response-conflict',
+          'connectionId': _id,
+          'runtimeId': _generation,
+          'host': 'api.example.com',
+          'state': 'running',
+          'startedAt': started.toIso8601String(),
+          'downstreamTlsVersion': 'TLS 1.3',
+          'upstreamTlsVersion': 'TLS 1.3',
+          'alpn': 'http/1.1',
+          'uploaded': 0,
+          'downloaded': 0,
+          'httpTransactions': [
+            {
+              'sequence': 1,
+              'requestObservedAfterMilliseconds': 5,
+              'request': {
+                'method': 'GET',
+                'target': '/items',
+                'version': 'HTTP/1.1',
+                'host': 'api.example.com',
+                'headersComplete': true,
+              },
+              'response': {
+                'version': 'HTTP/1.1',
+                'statusCode': statusCode,
+                'headersComplete': true,
+                'observedBytes': 64,
+                'observedAfterMilliseconds': 10,
+              },
+            },
+          ],
+        });
+    final merged = value(200).merge(value(500));
+    expect(merged.httpTransactions.single.response?.statusCode, 200);
+    expect(merged.httpTransactionsTruncated, isTrue);
+    expect(
+      TlsInspectionRuntimeObservation.fromJson(merged.toJson()).toJson(),
+      merged.toJson(),
+    );
+  });
 
   test(
     'runtime observation merges terminal state with richer HTTP metadata',
