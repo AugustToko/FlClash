@@ -7,9 +7,30 @@ from http2_batch_http1 import patch_all as patch_http1
 from http2_batch_tests import write_tests
 
 
+def add_http1_watcher_compatibility() -> None:
+    runtime_path = ROOT / "core/inspectionruntime/runtime.go"
+    text = runtime_path.read_text()
+    marker = "func (r *Runtime) relay(\n"
+    compatibility = '''func (r *Runtime) watchHTTP1Timeline(
+\tctx context.Context,
+\tobservation *runtimeObservation,
+\ttimeline *http1MetadataTimeline,
+\tsignal <-chan struct{},
+\tdone <-chan struct{},
+) {
+\tr.watchHTTPTimeline(ctx, observation, timeline, signal, done)
+}
+
+'''
+    if marker not in text:
+        raise RuntimeError("relay marker missing for HTTP/1 watcher compatibility")
+    runtime_path.write_text(text.replace(marker, compatibility + marker, 1))
+
+
 def main() -> None:
     patch_core()
     patch_http1()
+    add_http1_watcher_compatibility()
     write_tests()
 
     # Keep the JSON test payload valid while the generator itself remains a
