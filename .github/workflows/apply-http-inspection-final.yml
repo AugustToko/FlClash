@@ -27,17 +27,24 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Reconstruct and apply product patch
+      - name: Reconstruct and apply product patches
         run: |
           cat tools/http-inspection-ui.patch.gz.b64.part* \
             | base64 --decode \
             | gzip --decompress \
             > /tmp/http-inspection-ui.patch
-          sha256sum /tmp/http-inspection-ui.patch
           test "$(sha256sum /tmp/http-inspection-ui.patch | cut -d' ' -f1)" = \
             "dc0b5e69568b411bf01932c77bd9c796e4b1658602aab1b03f2815fc31f5cc5b"
+          cat tools/http-inspection-widgets.patch.gz.b64.part* \
+            | base64 --decode \
+            | gzip --decompress \
+            > /tmp/http-inspection-widgets.patch
+          test "$(sha256sum /tmp/http-inspection-widgets.patch | cut -d' ' -f1)" = \
+            "1f0301e7c95cf2c6e0793d46e77b6c78acfc028f9070959997b6faf339ab5d4e"
           git apply --check /tmp/http-inspection-ui.patch
           git apply /tmp/http-inspection-ui.patch
+          git apply --check /tmp/http-inspection-widgets.patch
+          git apply /tmp/http-inspection-widgets.patch
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -137,7 +144,8 @@ jobs:
             tools/inspect_http_capture_ui.txt \
             tools/verify_http_inspection_ui.txt \
             tools/http-inspection-ui.patch.gz.b64.complete \
-            tools/http-inspection-ui.patch.gz.b64.part*
+            tools/http-inspection-ui.patch.gz.b64.part* \
+            tools/http-inspection-widgets.patch.gz.b64.part*
 
       - name: Commit verified integration
         run: |
