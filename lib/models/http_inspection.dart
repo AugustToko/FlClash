@@ -6,9 +6,7 @@ const int maximumInspectionBodyBytes = 64 * 1024;
 const int defaultInspectionBodyBytes = 16 * 1024;
 const int maximumInspectionRedactedHeaderNames = 32;
 
-final RegExp _httpTokenPattern = RegExp(
-  r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$",
-);
+final RegExp _httpTokenPattern = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
 
 String _boundedString(
   Object? value,
@@ -160,8 +158,7 @@ class TlsInspectionCapturePolicy {
 
   bool get capturesBodies => bodyMode != TlsInspectionCaptureBodyMode.none;
 
-  bool get capturesSensitiveValues =>
-      headerValues && sensitiveHeaderValues;
+  bool get capturesSensitiveValues => headerValues && sensitiveHeaderValues;
 
   bool get isMetadataOnly => !headerValues && !capturesBodies;
 
@@ -181,8 +178,8 @@ class TlsInspectionCapturePolicy {
     }
     final names = normalizedNames.toList()..sort();
     final normalizedMode = bodyMode;
-    final normalizedMaximum = normalizedMode ==
-            TlsInspectionCaptureBodyMode.none
+    final normalizedMaximum =
+        normalizedMode == TlsInspectionCaptureBodyMode.none
         ? 0
         : maxBodyBytes.clamp(1, maximumInspectionBodyBytes);
     return TlsInspectionCapturePolicy(
@@ -270,8 +267,7 @@ class TlsInspectionCapturePolicy {
         'metadata-only capture cannot retain body bytes',
       );
     }
-    if (bodyMode != TlsInspectionCaptureBodyMode.none &&
-        maxBodyBytes <= 0) {
+    if (bodyMode != TlsInspectionCaptureBodyMode.none && maxBodyBytes <= 0) {
       throw const FormatException('body capture requires a positive limit');
     }
     return TlsInspectionCapturePolicy(

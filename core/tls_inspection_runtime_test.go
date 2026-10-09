@@ -198,7 +198,10 @@ func TestTLSInspectionRuntimeStartIsIdentityBoundAndCredentialsNotInStatus(t *te
 	if started.Status.Runtime.ID != params.ID || started.Status.RuntimeProofID != policy.RuntimeProofID || started.Username != "flclash" || len(started.Password) != 64 {
 		t.Fatal("invalid runtime start contract")
 	}
-	if started.Status.Mode != "loopback-connect-http1" || started.Status.CapturesPayload || started.Status.ChangesSystemProxy {
+	if started.Status.Mode != "loopback-connect-http1-h2" ||
+		started.Status.CapturesPayload ||
+		!started.Status.CapturePolicy.MetadataOnly() ||
+		started.Status.ChangesSystemProxy {
 		t.Fatal("misleading runtime boundary")
 	}
 	encoded, err := json.Marshal(getTLSInspectionRuntimeStatus())
