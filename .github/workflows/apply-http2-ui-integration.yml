@@ -6,6 +6,7 @@ on:
       - feat/http2-stream-capture-policy-20261009
     paths:
       - http2-ui-integration.patch.gz.b64
+      - http2-ui-integration.trigger
   workflow_dispatch:
 
 permissions:
@@ -107,6 +108,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f http2-ui-integration.patch.gz.b64
+          rm -f http2-ui-integration.trigger
           rm -f .github/workflows/apply-http2-ui-integration.yml
           git checkout -- pubspec.yaml pubspec.lock
           git diff --check
