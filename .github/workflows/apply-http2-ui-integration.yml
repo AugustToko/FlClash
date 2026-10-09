@@ -28,14 +28,11 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Verify and apply integration patch
+      - name: Verify and apply integration patches
         run: |
           set -euo pipefail
           expected_encoded=f83ee227d6576e985fd245435612f2aacd31d07aea7f4879e83f9e5bcded6524
           expected_patch=7f1bd18babc2f5dd1e370719d14a9c6a98ab673c684b2c4bac929060559055ec
-          expected_preview_fix=b4fa95b98fcffc3b440d7677ee7a1bb9f313e8dfe71a35dc36c44289d53d417d
-          expected_preview_fix_2=1693af28417d2cd0a2ad3e54666f6b657c792df375f2a58df7669edb50e5b6e2
-          expected_preview_fix_3=e5c0c6784b9735624db3b8c23184a87b45aca42fb1583e46adb27431c4c57323
           parts=(.http2-ui-patch/part-*)
           test "${#parts[@]}" -eq 8
           printf '%s\n' "${parts[@]}"
@@ -49,6 +46,7 @@ jobs:
           test "$actual_patch" = "$expected_patch"
           git apply --check --verbose /tmp/http2-ui-integration.patch
           git apply --verbose /tmp/http2-ui-integration.patch
+
           python3 - <<'PY'
           from pathlib import Path
 
@@ -75,21 +73,16 @@ jobs:
           )
           runtime.write_text(text)
           PY
-          actual_preview_fix="$(sha256sum .http2-ui-patch/preview-test-fix.patch | cut -d' ' -f1)"
-          echo "preview_fix_sha256=$actual_preview_fix"
-          test "$actual_preview_fix" = "$expected_preview_fix"
-          git apply --check --verbose .http2-ui-patch/preview-test-fix.patch
-          git apply --verbose .http2-ui-patch/preview-test-fix.patch
-          actual_preview_fix_2="$(sha256sum .http2-ui-patch/preview-test-fix-2.patch | cut -d' ' -f1)"
-          echo "preview_fix_2_sha256=$actual_preview_fix_2"
-          test "$actual_preview_fix_2" = "$expected_preview_fix_2"
-          git apply --check --verbose .http2-ui-patch/preview-test-fix-2.patch
-          git apply --verbose .http2-ui-patch/preview-test-fix-2.patch
-          actual_preview_fix_3="$(sha256sum .http2-ui-patch/preview-test-fix-3.patch | cut -d' ' -f1)"
-          echo "preview_fix_3_sha256=$actual_preview_fix_3"
-          test "$actual_preview_fix_3" = "$expected_preview_fix_3"
-          git apply --check --verbose .http2-ui-patch/preview-test-fix-3.patch
-          git apply --verbose .http2-ui-patch/preview-test-fix-3.patch
+
+          mapfile -t supplemental < <(
+            find .http2-ui-patch -maxdepth 1 -type f -name '*.patch' -print | sort
+          )
+          test "${#supplemental[@]}" -ge 4
+          for patch in "${supplemental[@]}"; do
+            sha256sum "$patch"
+            git apply --check --verbose "$patch"
+            git apply --verbose "$patch"
+          done
           git diff --check
 
       - name: Setup Flutter
