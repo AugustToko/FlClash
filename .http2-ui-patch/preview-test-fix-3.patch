@@ -1,0 +1,11 @@
+--- a/test/views/http_capture_preview_test.dart
++++ b/test/views/http_capture_preview_test.dart
+@@ -572,7 +572,7 @@
+     );
+     await tester.tap(profileFilter);
+     await tester.pumpAndSettle();
+-    final unknownProtocol = find.widgetWithText(FilterChip, 'UNKNOWN');
++    final unknownProtocol = find.widgetWithText(FilterChip, '未知协议');
+     await _scrollCapturePageUntilVisible(
+       tester,
+       unknownProtocol,
