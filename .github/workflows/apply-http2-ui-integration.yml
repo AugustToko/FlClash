@@ -74,11 +74,14 @@ jobs:
           runtime.write_text(text)
           PY
 
-          mapfile -t supplemental < <(
-            find .http2-ui-patch -maxdepth 1 -type f -name '*.patch' -print | sort
+          supplemental=(
+            .http2-ui-patch/focused-test-fix.patch
+            .http2-ui-patch/preview-test-fix.patch
+            .http2-ui-patch/preview-test-fix-2.patch
+            .http2-ui-patch/preview-test-fix-3.patch
           )
-          test "${#supplemental[@]}" -ge 4
           for patch in "${supplemental[@]}"; do
+            test -f "$patch"
             sha256sum "$patch"
             git apply --check --verbose "$patch"
             git apply --verbose "$patch"
