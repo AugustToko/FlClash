@@ -262,7 +262,11 @@ void main() {
 
     test('setHttpObservationEnabled delegates', () async {
       when(
-        () => mock.setHttpObservationEnabled(true, sessionId: 'session-a'),
+        () => mock.setHttpObservationEnabled(
+          true,
+          sessionId: 'session-a',
+          policy: TlsInspectionCapturePolicy.metadataOnly,
+        ),
       ).thenAnswer((_) async => true);
 
       expect(
@@ -273,7 +277,11 @@ void main() {
         isTrue,
       );
       verify(
-        () => mock.setHttpObservationEnabled(true, sessionId: 'session-a'),
+        () => mock.setHttpObservationEnabled(
+          true,
+          sessionId: 'session-a',
+          policy: TlsInspectionCapturePolicy.metadataOnly,
+        ),
       ).called(1);
     });
 

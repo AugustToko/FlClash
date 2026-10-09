@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'clash_config.dart';
+import 'http_inspection.dart';
 
 part 'generated/common.freezed.dart';
 
@@ -127,16 +128,38 @@ List<String> _boundedProtocolStrings(
   );
 }
 
+List<HttpHeaderObservation> _boundedProtocolHeaders(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final result = <HttpHeaderObservation>[];
+  for (final item in value.take(64)) {
+    if (item is! Map) {
+      continue;
+    }
+    try {
+      result.add(
+        HttpHeaderObservation.fromJson(Map<String, dynamic>.from(item)),
+      );
+    } on FormatException {
+      continue;
+    }
+  }
+  return List.unmodifiable(result);
+}
+
 class HttpProtocolObservation {
   final String method;
   final String target;
   final String version;
   final String host;
   final List<String> headerNames;
+  final List<HttpHeaderObservation> headers;
   final bool headersComplete;
   final bool targetTruncated;
   final bool hostTruncated;
   final bool headerNamesTruncated;
+  final bool headerValuesTruncated;
 
   const HttpProtocolObservation({
     this.method = '',
@@ -144,10 +167,12 @@ class HttpProtocolObservation {
     this.version = '',
     this.host = '',
     this.headerNames = const [],
+    this.headers = const [],
     this.headersComplete = false,
     this.targetTruncated = false,
     this.hostTruncated = false,
     this.headerNamesTruncated = false,
+    this.headerValuesTruncated = false,
   });
 
   factory HttpProtocolObservation.fromJson(Map<String, Object?> json) {
@@ -162,10 +187,12 @@ class HttpProtocolObservation {
         maxLength: 128,
         lowerCase: true,
       ),
+      headers: _boundedProtocolHeaders(json['headers']),
       headersComplete: json['headersComplete'] as bool? ?? false,
       targetTruncated: json['targetTruncated'] as bool? ?? false,
       hostTruncated: json['hostTruncated'] as bool? ?? false,
       headerNamesTruncated: json['headerNamesTruncated'] as bool? ?? false,
+      headerValuesTruncated: json['headerValuesTruncated'] as bool? ?? false,
     );
   }
 
@@ -175,10 +202,13 @@ class HttpProtocolObservation {
     'version': version,
     if (host.isNotEmpty) 'host': host,
     if (headerNames.isNotEmpty) 'headerNames': headerNames,
+    if (headers.isNotEmpty)
+      'headers': headers.map((value) => value.toJson()).toList(),
     'headersComplete': headersComplete,
     if (targetTruncated) 'targetTruncated': targetTruncated,
     if (hostTruncated) 'hostTruncated': hostTruncated,
     if (headerNamesTruncated) 'headerNamesTruncated': headerNamesTruncated,
+    if (headerValuesTruncated) 'headerValuesTruncated': true,
   };
 }
 
@@ -187,11 +217,13 @@ class HttpResponseProtocolObservation {
   final int statusCode;
   final List<int> informationalStatusCodes;
   final List<String> headerNames;
+  final List<HttpHeaderObservation> headers;
   final bool headersComplete;
   final int observedBytes;
   final int observedAfterMilliseconds;
   final bool truncated;
   final bool headerNamesTruncated;
+  final bool headerValuesTruncated;
   final bool informationalStatusCodesTruncated;
 
   const HttpResponseProtocolObservation({
@@ -199,11 +231,13 @@ class HttpResponseProtocolObservation {
     this.statusCode = 0,
     this.informationalStatusCodes = const [],
     this.headerNames = const [],
+    this.headers = const [],
     this.headersComplete = false,
     this.observedBytes = 0,
     this.observedAfterMilliseconds = 0,
     this.truncated = false,
     this.headerNamesTruncated = false,
+    this.headerValuesTruncated = false,
     this.informationalStatusCodesTruncated = false,
   });
 
@@ -230,6 +264,7 @@ class HttpResponseProtocolObservation {
         maxLength: 128,
         lowerCase: true,
       ),
+      headers: _boundedProtocolHeaders(json['headers']),
       headersComplete: json['headersComplete'] as bool? ?? false,
       observedBytes: integer(json['observedBytes']).clamp(0, 32 * 1024),
       observedAfterMilliseconds: integer(
@@ -237,6 +272,7 @@ class HttpResponseProtocolObservation {
       ).clamp(0, 0x7fffffff),
       truncated: json['truncated'] as bool? ?? false,
       headerNamesTruncated: json['headerNamesTruncated'] as bool? ?? false,
+      headerValuesTruncated: json['headerValuesTruncated'] as bool? ?? false,
       informationalStatusCodesTruncated:
           json['informationalStatusCodesTruncated'] as bool? ?? false,
     );
@@ -248,12 +284,15 @@ class HttpResponseProtocolObservation {
     if (informationalStatusCodes.isNotEmpty)
       'informationalStatusCodes': informationalStatusCodes,
     if (headerNames.isNotEmpty) 'headerNames': headerNames,
+    if (headers.isNotEmpty)
+      'headers': headers.map((value) => value.toJson()).toList(),
     'headersComplete': headersComplete,
     'observedBytes': observedBytes,
     if (observedAfterMilliseconds != 0)
       'observedAfterMilliseconds': observedAfterMilliseconds,
     if (truncated) 'truncated': truncated,
     if (headerNamesTruncated) 'headerNamesTruncated': headerNamesTruncated,
+    if (headerValuesTruncated) 'headerValuesTruncated': true,
     if (informationalStatusCodesTruncated)
       'informationalStatusCodesTruncated': informationalStatusCodesTruncated,
   };

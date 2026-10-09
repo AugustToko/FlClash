@@ -25,35 +25,37 @@ const (
 var httpHeaderTerminator = []byte("\r\n\r\n")
 var httpLineTerminator = []byte("\r\n")
 
-// HTTPRequestObservation retains only bounded request-line metadata and header
-// names for one decrypted HTTP/1 transaction. Header values and bodies never
-// enter this contract.
+// HTTPRequestObservation retains bounded request metadata. Header values are
+// present only when the capture session explicitly authorized them.
 type HTTPRequestObservation struct {
-	Method               string   `json:"method"`
-	Target               string   `json:"target"`
-	Version              string   `json:"version"`
-	Host                 string   `json:"host,omitempty"`
-	HeaderNames          []string `json:"headerNames,omitempty"`
-	HeadersComplete      bool     `json:"headersComplete"`
-	TargetTruncated      bool     `json:"targetTruncated,omitempty"`
-	HostTruncated        bool     `json:"hostTruncated,omitempty"`
-	HeaderNamesTruncated bool     `json:"headerNamesTruncated,omitempty"`
+	Method                string                  `json:"method"`
+	Target                string                  `json:"target"`
+	Version               string                  `json:"version"`
+	Host                  string                  `json:"host,omitempty"`
+	HeaderNames           []string                `json:"headerNames,omitempty"`
+	Headers               []HTTPHeaderObservation `json:"headers,omitempty"`
+	HeadersComplete       bool                    `json:"headersComplete"`
+	TargetTruncated       bool                    `json:"targetTruncated,omitempty"`
+	HostTruncated         bool                    `json:"hostTruncated,omitempty"`
+	HeaderNamesTruncated  bool                    `json:"headerNamesTruncated,omitempty"`
+	HeaderValuesTruncated bool                    `json:"headerValuesTruncated,omitempty"`
 }
 
-// HTTPResponseObservation retains one final HTTP/1 response status and header
-// names. Informational responses are bounded; reason phrases, values and bodies
-// are discarded.
+// HTTPResponseObservation retains one bounded final response. Informational
+// responses are bounded; reason phrases remain intentionally excluded.
 type HTTPResponseObservation struct {
-	Version                           string   `json:"version,omitempty"`
-	StatusCode                        int      `json:"statusCode,omitempty"`
-	InformationalStatusCodes          []int    `json:"informationalStatusCodes,omitempty"`
-	HeaderNames                       []string `json:"headerNames,omitempty"`
-	HeadersComplete                   bool     `json:"headersComplete"`
-	ObservedBytes                     int      `json:"observedBytes"`
-	ObservedAfterMilliseconds         int64    `json:"observedAfterMilliseconds,omitempty"`
-	Truncated                         bool     `json:"truncated,omitempty"`
-	HeaderNamesTruncated              bool     `json:"headerNamesTruncated,omitempty"`
-	InformationalStatusCodesTruncated bool     `json:"informationalStatusCodesTruncated,omitempty"`
+	Version                           string                  `json:"version,omitempty"`
+	StatusCode                        int                     `json:"statusCode,omitempty"`
+	InformationalStatusCodes          []int                   `json:"informationalStatusCodes,omitempty"`
+	HeaderNames                       []string                `json:"headerNames,omitempty"`
+	Headers                           []HTTPHeaderObservation `json:"headers,omitempty"`
+	HeadersComplete                   bool                    `json:"headersComplete"`
+	ObservedBytes                     int                     `json:"observedBytes"`
+	ObservedAfterMilliseconds         int64                   `json:"observedAfterMilliseconds,omitempty"`
+	Truncated                         bool                    `json:"truncated,omitempty"`
+	HeaderNamesTruncated              bool                    `json:"headerNamesTruncated,omitempty"`
+	HeaderValuesTruncated             bool                    `json:"headerValuesTruncated,omitempty"`
+	InformationalStatusCodesTruncated bool                    `json:"informationalStatusCodesTruncated,omitempty"`
 }
 
 type httpRequestMetadataObserver struct {

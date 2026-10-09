@@ -36,26 +36,34 @@ type Config struct {
 	Dial                  func(context.Context, string, string) (net.Conn, error)
 	CaptureSession        func() string
 	CaptureSessionChanged func() <-chan struct{}
+	CapturePolicy         func() CapturePolicy
 	Observe               func(Observation)
 	Roots                 *x509.CertPool
 }
 
 type Observation struct {
-	SessionID                 string                       `json:"sessionId"`
-	ConnectionID              string                       `json:"connectionId"`
-	RuntimeID                 string                       `json:"runtimeId"`
-	Host                      string                       `json:"host"`
-	State                     string                       `json:"state"`
-	StartedAt                 time.Time                    `json:"startedAt"`
-	CompletedAt               *time.Time                   `json:"completedAt,omitempty"`
-	DownstreamTLSVersion      string                       `json:"downstreamTlsVersion,omitempty"`
-	UpstreamTLSVersion        string                       `json:"upstreamTlsVersion,omitempty"`
-	ALPN                      string                       `json:"alpn,omitempty"`
-	Uploaded                  uint64                       `json:"uploaded"`
-	Downloaded                uint64                       `json:"downloaded"`
-	FailureKind               string                       `json:"failureKind,omitempty"`
-	HTTPTransactions          []HTTPTransactionObservation `json:"httpTransactions,omitempty"`
-	HTTPTransactionsTruncated bool                         `json:"httpTransactionsTruncated,omitempty"`
+	SessionID                               string                       `json:"sessionId"`
+	ConnectionID                            string                       `json:"connectionId"`
+	RuntimeID                               string                       `json:"runtimeId"`
+	Host                                    string                       `json:"host"`
+	State                                   string                       `json:"state"`
+	StartedAt                               time.Time                    `json:"startedAt"`
+	CompletedAt                             *time.Time                   `json:"completedAt,omitempty"`
+	DownstreamTLSVersion                    string                       `json:"downstreamTlsVersion,omitempty"`
+	UpstreamTLSVersion                      string                       `json:"upstreamTlsVersion,omitempty"`
+	ALPN                                    string                       `json:"alpn,omitempty"`
+	Uploaded                                uint64                       `json:"uploaded"`
+	Downloaded                              uint64                       `json:"downloaded"`
+	FailureKind                             string                       `json:"failureKind,omitempty"`
+	DownstreamTLSCompletedAfterMilliseconds int64                        `json:"downstreamTlsCompletedAfterMilliseconds,omitempty"`
+	UpstreamDialCompletedAfterMilliseconds  int64                        `json:"upstreamDialCompletedAfterMilliseconds,omitempty"`
+	UpstreamTLSCompletedAfterMilliseconds   int64                        `json:"upstreamTlsCompletedAfterMilliseconds,omitempty"`
+	CapturePolicy                           *CapturePolicy               `json:"capturePolicy,omitempty"`
+	HTTPTransactions                        []HTTPTransactionObservation `json:"httpTransactions,omitempty"`
+	HTTPTransactionsTruncated               bool                         `json:"httpTransactionsTruncated,omitempty"`
+	HTTP2Streams                            []HTTP2StreamObservation     `json:"http2Streams,omitempty"`
+	HTTP2StreamsTruncated                   bool                         `json:"http2StreamsTruncated,omitempty"`
+	HTTP2GoAway                             *HTTP2GoAwayObservation      `json:"http2GoAway,omitempty"`
 }
 
 type Status struct {
@@ -72,25 +80,27 @@ type Status struct {
 }
 
 type Runtime struct {
-	config              Config
-	id                  string
-	address             string
-	expiresAt           time.Time
-	authHash            [32]byte
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	listener            net.Listener
-	mu                  sync.Mutex
-	clients             map[net.Conn]context.CancelFunc
-	accepted            uint64
-	completed           uint64
-	failed              uint64
-	uploaded            uint64
-	downloaded          uint64
-	observationSequence uint64
-	done                chan struct{}
-	workers             sync.WaitGroup
-	stopOnce            sync.Once
+	config               Config
+	id                   string
+	address              string
+	expiresAt            time.Time
+	authHash             [32]byte
+	ctx                  context.Context
+	cancel               context.CancelFunc
+	listener             net.Listener
+	mu                   sync.Mutex
+	clients              map[net.Conn]context.CancelFunc
+	accepted             uint64
+	completed            uint64
+	failed               uint64
+	uploaded             uint64
+	downloaded           uint64
+	observationSequence  uint64
+	captureBudgetMu      sync.Mutex
+	captureBodyBySession map[string]int
+	done                 chan struct{}
+	workers              sync.WaitGroup
+	stopOnce             sync.Once
 }
 
 func Start(config Config) (*Runtime, string, error) {
@@ -122,7 +132,8 @@ func Start(config Config) (*Runtime, string, error) {
 		address: listener.Addr().String(), expiresAt: expiresAt,
 		authHash: sha256.Sum256([]byte("Basic " + base64.StdEncoding.EncodeToString([]byte("flclash:"+password)))),
 		ctx:      ctx, cancel: cancel, listener: listener,
-		clients: make(map[net.Conn]context.CancelFunc), done: make(chan struct{}),
+		clients:              make(map[net.Conn]context.CancelFunc),
+		captureBodyBySession: make(map[string]int), done: make(chan struct{}),
 	}
 	context.AfterFunc(ctx, r.Stop)
 	go r.accept()
@@ -330,6 +341,59 @@ func (r *Runtime) captureSession() (session string) {
 	return session
 }
 
+func (r *Runtime) capturePolicy(session string) (policy CapturePolicy) {
+	if session == "" || r.config.CapturePolicy == nil {
+		return CapturePolicy{}
+	}
+	defer func() {
+		if recover() != nil {
+			policy = CapturePolicy{}
+		}
+	}()
+	return r.config.CapturePolicy().Normalize()
+}
+
+func (r *Runtime) reserveBodyCapture(
+	observation *runtimeObservation,
+	requested int,
+) int {
+	if observation == nil || requested <= 0 {
+		return 0
+	}
+	observation.bodyBudgetMu.Lock()
+	defer observation.bodyBudgetMu.Unlock()
+	connectionRemaining := observation.policy.ConnectionBodyLimit() -
+		observation.capturedBodyBytes
+	if connectionRemaining <= 0 {
+		return 0
+	}
+	if requested > connectionRemaining {
+		requested = connectionRemaining
+	}
+	sessionID := observation.value.SessionID
+	sessionLimit := observation.policy.SessionBodyLimit()
+	if sessionID == "" || sessionLimit <= 0 {
+		return 0
+	}
+	r.captureBudgetMu.Lock()
+	defer r.captureBudgetMu.Unlock()
+	for existing := range r.captureBodyBySession {
+		if existing != sessionID {
+			delete(r.captureBodyBySession, existing)
+		}
+	}
+	sessionRemaining := sessionLimit - r.captureBodyBySession[sessionID]
+	if sessionRemaining <= 0 {
+		return 0
+	}
+	if requested > sessionRemaining {
+		requested = sessionRemaining
+	}
+	observation.capturedBodyBytes += requested
+	r.captureBodyBySession[sessionID] += requested
+	return requested
+}
+
 func (r *Runtime) captureSessionChangeSignal() (signal <-chan struct{}) {
 	if r.config.CaptureSessionChanged == nil {
 		return nil
@@ -351,10 +415,13 @@ func (r *Runtime) publishObservation(value Observation) {
 }
 
 type runtimeObservation struct {
-	mu        sync.Mutex
-	publishMu sync.Mutex
-	value     Observation
-	finished  bool
+	mu                sync.Mutex
+	publishMu         sync.Mutex
+	bodyBudgetMu      sync.Mutex
+	value             Observation
+	policy            CapturePolicy
+	capturedBodyBytes int
+	finished          bool
 }
 
 func cloneHTTPRequestObservation(value *HTTPRequestObservation) *HTTPRequestObservation {
@@ -363,6 +430,7 @@ func cloneHTTPRequestObservation(value *HTTPRequestObservation) *HTTPRequestObse
 	}
 	result := *value
 	result.HeaderNames = append([]string(nil), value.HeaderNames...)
+	result.Headers = cloneHTTPHeaderObservations(value.Headers)
 	return &result
 }
 
@@ -373,11 +441,18 @@ func cloneHTTPResponseObservation(value *HTTPResponseObservation) *HTTPResponseO
 	result := *value
 	result.InformationalStatusCodes = append([]int(nil), value.InformationalStatusCodes...)
 	result.HeaderNames = append([]string(nil), value.HeaderNames...)
+	result.Headers = cloneHTTPHeaderObservations(value.Headers)
 	return &result
 }
 
 func cloneObservation(value Observation) Observation {
+	if value.CapturePolicy != nil {
+		policy := value.CapturePolicy.Normalize()
+		value.CapturePolicy = &policy
+	}
 	value.HTTPTransactions = cloneHTTPTransactionObservations(value.HTTPTransactions)
+	value.HTTP2Streams = cloneHTTP2StreamObservations(value.HTTP2Streams)
+	value.HTTP2GoAway = cloneHTTP2GoAwayObservation(value.HTTP2GoAway)
 	return value
 }
 
@@ -386,6 +461,7 @@ func (r *Runtime) beginObservation(host string) *runtimeObservation {
 	if session == "" {
 		return nil
 	}
+	policy := r.capturePolicy(session)
 	r.mu.Lock()
 	r.observationSequence++
 	sequence := r.observationSequence
@@ -394,8 +470,9 @@ func (r *Runtime) beginObservation(host string) *runtimeObservation {
 	value := Observation{
 		SessionID: session, ConnectionID: hex.EncodeToString(digest[:16]),
 		RuntimeID: r.id, Host: host, State: "running", StartedAt: time.Now().UTC(),
+		CapturePolicy: &policy,
 	}
-	observation := &runtimeObservation{value: value}
+	observation := &runtimeObservation{value: value, policy: policy}
 	r.publishObservation(cloneObservation(value))
 	return observation
 }
@@ -435,6 +512,32 @@ func (r *Runtime) publishHTTPTransactions(
 	observation.value.HTTPTransactions = cloneHTTPTransactionObservations(transactions)
 	observation.value.HTTPTransactionsTruncated =
 		observation.value.HTTPTransactionsTruncated || truncated
+	snapshot := cloneObservation(observation.value)
+	observation.publishMu.Lock()
+	observation.mu.Unlock()
+	r.publishObservation(snapshot)
+	observation.publishMu.Unlock()
+}
+
+func (r *Runtime) publishHTTP2Streams(
+	observation *runtimeObservation,
+	streams []HTTP2StreamObservation,
+	truncated bool,
+	goAway *HTTP2GoAwayObservation,
+) {
+	if observation == nil {
+		return
+	}
+	activeSession := r.captureSession()
+	observation.mu.Lock()
+	if observation.finished || observation.value.SessionID != activeSession {
+		observation.mu.Unlock()
+		return
+	}
+	observation.value.HTTP2Streams = cloneHTTP2StreamObservations(streams)
+	observation.value.HTTP2StreamsTruncated =
+		observation.value.HTTP2StreamsTruncated || truncated
+	observation.value.HTTP2GoAway = cloneHTTP2GoAwayObservation(goAway)
 	snapshot := cloneObservation(observation.value)
 	observation.publishMu.Lock()
 	observation.mu.Unlock()
@@ -549,9 +652,13 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 	defer rawUpstream.Close()
 	stopUpstream := context.AfterFunc(ctx, func() { _ = rawUpstream.Close() })
 	defer stopUpstream()
+	var upstreamDialCompletedAfterMilliseconds int64
+	if observation != nil {
+		upstreamDialCompletedAfterMilliseconds = elapsedMilliseconds(observation.startedAt())
+	}
 	upstream := tls.Client(rawUpstream, &tls.Config{
 		ServerName: host, RootCAs: r.config.Roots, MinVersion: tls.VersionTLS12,
-		NextProtos: []string{"http/1.1"}, SessionTicketsDisabled: true,
+		NextProtos: []string{"h2", "http/1.1"}, SessionTicketsDisabled: true,
 	})
 	failureKind = "upstream-tls"
 	_ = rawUpstream.SetDeadline(time.Now().Add(HandshakeTimeout))
@@ -564,13 +671,20 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 		return failure
 	}
 	peer := upstream.ConnectionState()
-	if len(peer.VerifiedChains) == 0 || (peer.NegotiatedProtocol != "" && peer.NegotiatedProtocol != "http/1.1") {
+	protocol := peer.NegotiatedProtocol
+	if protocol == "" {
+		protocol = "http/1.1"
+	}
+	if len(peer.VerifiedChains) == 0 ||
+		(protocol != "http/1.1" && protocol != "h2") {
 		failure = reject(conn, http.StatusBadGateway)
 		return failure
 	}
 	r.updateObservation(observation, func(value *Observation) {
 		value.UpstreamTLSVersion = tlsVersionName(peer.Version)
-		value.ALPN = peer.NegotiatedProtocol
+		value.UpstreamDialCompletedAfterMilliseconds = upstreamDialCompletedAfterMilliseconds
+		value.UpstreamTLSCompletedAfterMilliseconds = elapsedMilliseconds(value.StartedAt)
+		value.ALPN = protocol
 	})
 	failureKind = "leaf"
 	leaf, err := r.config.Leaf(ctx, host)
@@ -585,18 +699,22 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 	}
 	downstream := tls.Server(&bufferedConn{Conn: conn, reader: reader}, &tls.Config{
 		Certificates: []tls.Certificate{*leaf}, MinVersion: tls.VersionTLS12,
-		NextProtos: []string{"http/1.1"}, SessionTicketsDisabled: true,
+		NextProtos: []string{protocol}, SessionTicketsDisabled: true,
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			if strings.ToLower(hello.ServerName) != host || ctx.Err() != nil {
 				return nil, errors.New("inspection SNI does not match CONNECT host")
 			}
-			if len(hello.SupportedProtos) != 0 {
+			if len(hello.SupportedProtos) == 0 {
+				if protocol == "h2" {
+					return nil, errors.New("inspection client did not advertise negotiated HTTP/2")
+				}
+			} else {
 				found := false
-				for _, protocol := range hello.SupportedProtos {
-					found = found || protocol == "http/1.1"
+				for _, candidate := range hello.SupportedProtos {
+					found = found || candidate == protocol
 				}
 				if !found {
-					return nil, errors.New("inspection runtime supports HTTP/1.1 only")
+					return nil, errors.New("inspection client and upstream ALPN do not match")
 				}
 			}
 			return nil, r.config.Authorize(ctx, host)
@@ -611,11 +729,17 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 		return failure
 	}
 	downstreamState := downstream.ConnectionState()
+	downstreamProtocol := downstreamState.NegotiatedProtocol
+	if downstreamProtocol == "" {
+		downstreamProtocol = "http/1.1"
+	}
+	if downstreamProtocol != protocol {
+		failure = errors.New("inspection client and upstream protocol mismatch")
+		return failure
+	}
 	r.updateObservation(observation, func(value *Observation) {
 		value.DownstreamTLSVersion = tlsVersionName(downstreamState.Version)
-		if value.ALPN == "" {
-			value.ALPN = downstreamState.NegotiatedProtocol
-		}
+		value.DownstreamTLSCompletedAfterMilliseconds = elapsedMilliseconds(value.StartedAt)
 	})
 	failureKind = "authorization-revoked"
 	if err := r.config.Authorize(ctx, host); err != nil || ctx.Err() != nil {
@@ -627,15 +751,23 @@ func (r *Runtime) exchange(ctx context.Context, conn net.Conn) (failure error) {
 	_ = rawUpstream.SetDeadline(deadline)
 	failureKind = "relay"
 	uploaded, downloaded, failure = r.relay(
-		ctx, downstream, upstream, conn, rawUpstream, observation,
+		ctx, downstream, upstream, conn, rawUpstream, protocol, observation,
 	)
 	return failure
 }
 
-func (r *Runtime) watchHTTP1Timeline(
+type httpMetadataTimeline interface {
+	ObserveRequest([]byte)
+	ObserveResponse([]byte)
+	FinishRequest()
+	FinishResponse()
+	Abort()
+}
+
+func (r *Runtime) watchHTTPTimeline(
 	ctx context.Context,
 	observation *runtimeObservation,
-	timeline *http1MetadataTimeline,
+	timeline httpMetadataTimeline,
 	signal <-chan struct{},
 	done <-chan struct{},
 ) {
@@ -655,12 +787,23 @@ func (r *Runtime) watchHTTP1Timeline(
 	}
 }
 
+func (r *Runtime) watchHTTP1Timeline(
+	ctx context.Context,
+	observation *runtimeObservation,
+	timeline *http1MetadataTimeline,
+	signal <-chan struct{},
+	done <-chan struct{},
+) {
+	r.watchHTTPTimeline(ctx, observation, timeline, signal, done)
+}
+
 func (r *Runtime) relay(
 	ctx context.Context,
 	client *tls.Conn,
 	upstream *tls.Conn,
 	rawClient net.Conn,
 	rawUpstream net.Conn,
+	protocol string,
 	observation *runtimeObservation,
 ) (uint64, uint64, error) {
 	type copied struct {
@@ -674,19 +817,40 @@ func (r *Runtime) relay(
 	var requestMetadataReader *metadataObservingReader
 	var responseMetadataReader *metadataObservingReader
 	if observation != nil {
-		timeline := newHTTP1MetadataTimeline(
-			observation.startedAt(),
-			observation.host(),
-			func(transactions []HTTPTransactionObservation, truncated bool) {
-				if observation.activeFor(r.captureSession()) {
-					r.publishHTTPTransactions(observation, transactions, truncated)
-				}
-			},
-		)
+		var timeline httpMetadataTimeline
+		if protocol == "h2" {
+			timeline = newHTTP2MetadataTimeline(
+				observation.startedAt(),
+				observation.host(),
+				observation.policy,
+				func(requested int) int {
+					return r.reserveBodyCapture(observation, requested)
+				},
+				func(streams []HTTP2StreamObservation, truncated bool, goAway *HTTP2GoAwayObservation) {
+					if observation.activeFor(r.captureSession()) {
+						r.publishHTTP2Streams(observation, streams, truncated, goAway)
+					}
+				},
+			)
+		} else {
+			timeline = newHTTP1MetadataTimelineWithPolicy(
+				observation.startedAt(),
+				observation.host(),
+				observation.policy,
+				func(requested int) int {
+					return r.reserveBodyCapture(observation, requested)
+				},
+				func(transactions []HTTPTransactionObservation, truncated bool) {
+					if observation.activeFor(r.captureSession()) {
+						r.publishHTTPTransactions(observation, transactions, truncated)
+					}
+				},
+			)
+		}
 		timelineDone := make(chan struct{})
 		defer close(timelineDone)
 		changeSignal := r.captureSessionChangeSignal()
-		go r.watchHTTP1Timeline(
+		go r.watchHTTPTimeline(
 			ctx, observation, timeline, changeSignal, timelineDone,
 		)
 		requestMetadataReader = &metadataObservingReader{
@@ -708,7 +872,6 @@ func (r *Runtime) relay(
 			abort: timeline.Abort,
 		}
 		requestReader = requestMetadataReader
-
 		responseMetadataReader = &metadataObservingReader{
 			reader: upstream,
 			observe: func(data []byte) {

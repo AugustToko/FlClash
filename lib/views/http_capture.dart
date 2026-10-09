@@ -140,9 +140,113 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
     final notifier = ref.read(httpCaptureProvider.notifier);
     if (enabled) {
       await notifier.stop();
-    } else {
-      await notifier.start();
+      return;
     }
+    final policy = ref.read(httpCaptureProvider).capturePolicy;
+    if (!policy.isMetadataOnly && !await _confirmCaptureRisk()) {
+      return;
+    }
+    await notifier.start();
+  }
+
+  Future<bool> _confirmCaptureRisk() async {
+    final l = context.appLocalizations;
+    final confirmed = await dialogs.showMessage(
+      title: l.httpCaptureRiskTitle,
+      message: TextSpan(text: l.httpCaptureRiskMessage),
+    );
+    return confirmed == true;
+  }
+
+  void _updateCapturePolicy(TlsInspectionCapturePolicy policy) {
+    ref.read(httpCaptureProvider.notifier).updateCapturePolicy(policy);
+  }
+
+  Future<void> _setHeaderValues(
+    TlsInspectionCapturePolicy policy,
+    bool enabled,
+  ) async {
+    if (enabled && !await _confirmCaptureRisk()) {
+      return;
+    }
+    _updateCapturePolicy(
+      policy.copyWith(
+        headerValues: enabled,
+        sensitiveHeaderValues: enabled && policy.sensitiveHeaderValues,
+      ),
+    );
+  }
+
+  Future<void> _setSensitiveHeaderValues(
+    TlsInspectionCapturePolicy policy,
+    bool enabled,
+  ) async {
+    if (enabled && !await _confirmCaptureRisk()) {
+      return;
+    }
+    _updateCapturePolicy(policy.copyWith(sensitiveHeaderValues: enabled));
+  }
+
+  Future<void> _setBodyMode(
+    TlsInspectionCapturePolicy policy,
+    TlsInspectionCaptureBodyMode mode,
+  ) async {
+    if (mode != TlsInspectionCaptureBodyMode.none &&
+        !await _confirmCaptureRisk()) {
+      return;
+    }
+    _updateCapturePolicy(
+      policy.copyWith(
+        bodyMode: mode,
+        maxBodyBytes: mode == TlsInspectionCaptureBodyMode.none
+            ? 0
+            : policy.maxBodyBytes == 0
+            ? defaultInspectionBodyBytes
+            : policy.maxBodyBytes,
+      ),
+    );
+  }
+
+  Future<void> _editRedactedHeaders(TlsInspectionCapturePolicy policy) async {
+    final l = context.appLocalizations;
+    final controller = TextEditingController(
+      text: policy.redactedHeaderNames.join(', '),
+    );
+    final value = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.httpCaptureRedactedHeaders),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: l.httpCaptureRedactedHeadersHint,
+            helperText: l.httpCaptureRedactedHeadersDesc,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: Text(l.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || !mounted) {
+      return;
+    }
+    final names = value
+        .split(RegExp(r'[,\s]+'))
+        .map((item) => item.trim().toLowerCase())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+    _updateCapturePolicy(policy.copyWith(redactedHeaderNames: names));
   }
 
   String _exportFileName(DateTime value) {
@@ -242,6 +346,9 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
           final runtimeTransactions =
               inspected?.httpTransactions ??
               const <TlsInspectionRuntimeHttpTransaction>[];
+          final runtimeStreams =
+              inspected?.http2Streams ??
+              const <TlsInspectionRuntimeHttp2Stream>[];
           String completeness(bool value) =>
               value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
           String presence(bool value) =>
@@ -304,20 +411,23 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                   value: entry.source.label(sheetContext),
                 ),
                 if (runtimeTransactions.isNotEmpty ||
+                    runtimeStreams.isNotEmpty ||
                     entry.httpTimelineTruncated) ...[
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          l.httpCaptureTransactions,
+                          runtimeStreams.isNotEmpty
+                              ? l.httpCaptureHttp2Streams
+                              : l.httpCaptureTransactions,
                           style: sheetContext.textTheme.titleSmall?.toSoftBold,
                         ),
                       ),
                       Chip(
                         label: Text(
                           l.httpCaptureTransactionCount(
-                            runtimeTransactions.length,
+                            runtimeTransactions.length + runtimeStreams.length,
                           ),
                         ),
                       ),
@@ -357,8 +467,14 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                     const SizedBox(height: 8),
                     _HttpCaptureTransactionCard(transaction: transaction),
                   ],
+                  for (final stream in runtimeStreams) ...[
+                    const SizedBox(height: 8),
+                    _HttpCaptureStreamCard(stream: stream),
+                  ],
                 ],
-                if (http != null && runtimeTransactions.isEmpty) ...[
+                if (http != null &&
+                    runtimeTransactions.isEmpty &&
+                    runtimeStreams.isEmpty) ...[
                   if (http.method.isNotEmpty)
                     _HttpCaptureDetailRow(
                       label: l.httpCaptureRequestMethod,
@@ -378,6 +494,11 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                     _HttpCaptureDetailRow(
                       label: l.httpCaptureHeaderNames,
                       value: http.headerNames.join(', '),
+                    ),
+                  if (http.headers.isNotEmpty)
+                    _HttpCaptureHeaderValues(
+                      title: l.httpCaptureRequestHeaders,
+                      headers: http.headers,
                     ),
                   _HttpCaptureDetailRow(
                     label: l.httpCaptureHeadersComplete,
@@ -399,7 +520,9 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                       value: presence(true),
                     ),
                 ],
-                if (response != null && runtimeTransactions.isEmpty) ...[
+                if (response != null &&
+                    runtimeTransactions.isEmpty &&
+                    runtimeStreams.isEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
                     l.httpCaptureResponse,
@@ -425,6 +548,11 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                     _HttpCaptureDetailRow(
                       label: l.httpCaptureResponseHeaderNames,
                       value: response.headerNames.join(', '),
+                    ),
+                  if (response.headers.isNotEmpty)
+                    _HttpCaptureHeaderValues(
+                      title: l.httpCaptureResponseHeaders,
+                      headers: response.headers,
                     ),
                   _HttpCaptureDetailRow(
                     label: l.httpCaptureResponseHeadersComplete,
@@ -512,6 +640,33 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                       label: l.httpCaptureTlsAlpn,
                       value: inspected.alpn,
                     ),
+                  if (inspected.upstreamDialCompletedAfterMilliseconds > 0)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureConnectCompletedAfter,
+                      value:
+                          '${inspected.upstreamDialCompletedAfterMilliseconds} ms',
+                    ),
+                  if (inspected.upstreamTlsCompletedAfterMilliseconds > 0)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureUpstreamTlsCompletedAfter,
+                      value:
+                          '${inspected.upstreamTlsCompletedAfterMilliseconds} ms',
+                    ),
+                  if (inspected.downstreamTlsCompletedAfterMilliseconds > 0)
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureDownstreamTlsCompletedAfter,
+                      value:
+                          '${inspected.downstreamTlsCompletedAfterMilliseconds} ms',
+                    ),
+                  if (inspected.http2GoAway case final goAway?) ...[
+                    _HttpCaptureDetailRow(
+                      label: l.httpCaptureHttp2GoAway,
+                      value:
+                          '${l.httpCaptureStreamId(goAway.lastStreamId)} · '
+                          '${l.httpCaptureErrorCode(goAway.errorCode)} · '
+                          '${goAway.observedAfterMilliseconds} ms',
+                    ),
+                  ],
                   if (inspected.completedAt != null)
                     _HttpCaptureDetailRow(
                       label: l.httpCaptureRuntimeCompletedAt,
@@ -708,6 +863,168 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                     ),
                   ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCapturePolicyCard(BuildContext context, HttpCaptureState state) {
+    final l = context.appLocalizations;
+    final policy = state.capturePolicy;
+    final enabled = !state.enabled;
+    String bodyModeLabel(TlsInspectionCaptureBodyMode mode) => switch (mode) {
+      TlsInspectionCaptureBodyMode.none => l.httpCaptureBodyNone,
+      TlsInspectionCaptureBodyMode.text => l.httpCaptureBodyText,
+      TlsInspectionCaptureBodyMode.all => l.httpCaptureBodyAll,
+    };
+    return CommonCard(
+      type: CommonCardType.filled,
+      radius: AppCorner.lg,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.privacy_tip_outlined,
+                  color: context.colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.httpCapturePrivacy,
+                        style: context.textTheme.titleSmall?.toSoftBold,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        state.enabled
+                            ? l.httpCapturePolicyLocked
+                            : l.httpCapturePrivacyDesc,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Chip(
+                  avatar: Icon(
+                    policy.isMetadataOnly
+                        ? Icons.shield_outlined
+                        : Icons.warning_amber_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    policy.isMetadataOnly
+                        ? l.httpCaptureMetadataOnly
+                        : l.httpCaptureContentEnabled,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.httpCaptureHeaderValues),
+              subtitle: Text(l.httpCaptureHeaderValuesDesc),
+              value: policy.headerValues,
+              onChanged: enabled
+                  ? (value) => unawaited(_setHeaderValues(policy, value))
+                  : null,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.httpCaptureSensitiveHeaderValues),
+              subtitle: Text(l.httpCaptureSensitiveHeaderValuesDesc),
+              value: policy.sensitiveHeaderValues,
+              onChanged: enabled && policy.headerValues
+                  ? (value) =>
+                        unawaited(_setSensitiveHeaderValues(policy, value))
+                  : null,
+            ),
+            const SizedBox(height: 8),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 620;
+                final mode =
+                    DropdownButtonFormField<TlsInspectionCaptureBodyMode>(
+                      initialValue: policy.bodyMode,
+                      decoration: InputDecoration(
+                        labelText: l.httpCaptureBodyMode,
+                      ),
+                      items: [
+                        for (final value in TlsInspectionCaptureBodyMode.values)
+                          DropdownMenuItem(
+                            value: value,
+                            child: Text(bodyModeLabel(value)),
+                          ),
+                      ],
+                      onChanged: enabled
+                          ? (value) {
+                              if (value != null) {
+                                unawaited(_setBodyMode(policy, value));
+                              }
+                            }
+                          : null,
+                    );
+                final limit = DropdownButtonFormField<int>(
+                  initialValue: policy.capturesBodies
+                      ? policy.maxBodyBytes
+                      : defaultInspectionBodyBytes,
+                  decoration: InputDecoration(
+                    labelText: l.httpCaptureBodyLimit,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 4 * 1024, child: Text('4 KiB')),
+                    DropdownMenuItem(value: 16 * 1024, child: Text('16 KiB')),
+                    DropdownMenuItem(value: 64 * 1024, child: Text('64 KiB')),
+                  ],
+                  onChanged: enabled && policy.capturesBodies
+                      ? (value) {
+                          if (value != null) {
+                            _updateCapturePolicy(
+                              policy.copyWith(maxBodyBytes: value),
+                            );
+                          }
+                        }
+                      : null,
+                );
+                if (compact) {
+                  return Column(
+                    children: [mode, const SizedBox(height: 12), limit],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: mode),
+                    const SizedBox(width: 12),
+                    Expanded(child: limit),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.visibility_off_outlined),
+              title: Text(l.httpCaptureRedactedHeaders),
+              subtitle: Text(
+                policy.redactedHeaderNames.isEmpty
+                    ? l.httpCaptureRedactedHeadersDesc
+                    : policy.redactedHeaderNames.join(', '),
+              ),
+              trailing: const Icon(Icons.edit_outlined),
+              enabled: enabled,
+              onTap: enabled
+                  ? () => unawaited(_editRedactedHeaders(policy))
+                  : null,
             ),
           ],
         ),
@@ -979,6 +1296,8 @@ class _HttpCaptureViewState extends ConsumerState<HttpCaptureView> {
                         children: [
                           _buildCaptureCard(context, state),
                           const SizedBox(height: 12),
+                          _buildCapturePolicyCard(context, state),
+                          const SizedBox(height: 12),
                           _buildSummary(context, filtered),
                           const SizedBox(height: 12),
                           _buildFilters(context, profileId),
@@ -1033,16 +1352,100 @@ class _HttpCaptureTransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.appLocalizations;
-    final request = transaction.request;
-    final response = transaction.response;
+    return _HttpCaptureExchangeCard(
+      badge: '${transaction.sequence}',
+      title: '${l.httpCaptureTransaction} #${transaction.sequence}',
+      request: transaction.request,
+      requestBody: transaction.requestBody,
+      response: transaction.response,
+      responseBody: transaction.responseBody,
+      requestObservedAfterMilliseconds:
+          transaction.requestObservedAfterMilliseconds,
+      requestCompletedAfterMilliseconds:
+          transaction.requestCompletedAfterMilliseconds,
+      responseCompletedAfterMilliseconds:
+          transaction.responseCompletedAfterMilliseconds,
+    );
+  }
+}
+
+class _HttpCaptureStreamCard extends StatelessWidget {
+  final TlsInspectionRuntimeHttp2Stream stream;
+
+  const _HttpCaptureStreamCard({required this.stream});
+
+  String _stateLabel(BuildContext context) {
+    final l = context.appLocalizations;
+    return switch (stream.state) {
+      'open' => l.httpCaptureStreamOpen,
+      'request-ended' => l.httpCaptureStreamRequestEnded,
+      'response-ended' => l.httpCaptureStreamResponseEnded,
+      'closed' => l.httpCaptureStreamClosed,
+      'reset' => l.httpCaptureStreamReset,
+      _ => stream.state,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    return _HttpCaptureExchangeCard(
+      badge: '${stream.streamId}',
+      title: '${l.httpCaptureHttp2Stream} ${stream.streamId}',
+      subtitle: [
+        _stateLabel(context),
+        if (stream.resetCode != 0) l.httpCaptureErrorCode(stream.resetCode),
+      ].join(' · '),
+      request: stream.request,
+      requestBody: stream.requestBody,
+      response: stream.response,
+      responseBody: stream.responseBody,
+      requestObservedAfterMilliseconds: stream.requestObservedAfterMilliseconds,
+      requestCompletedAfterMilliseconds:
+          stream.requestCompletedAfterMilliseconds,
+      responseCompletedAfterMilliseconds:
+          stream.responseCompletedAfterMilliseconds,
+    );
+  }
+}
+
+class _HttpCaptureExchangeCard extends StatelessWidget {
+  final String badge;
+  final String title;
+  final String subtitle;
+  final HttpProtocolObservation request;
+  final TlsInspectionRuntimeHttpBody? requestBody;
+  final HttpResponseProtocolObservation? response;
+  final TlsInspectionRuntimeHttpBody? responseBody;
+  final int requestObservedAfterMilliseconds;
+  final int requestCompletedAfterMilliseconds;
+  final int responseCompletedAfterMilliseconds;
+
+  const _HttpCaptureExchangeCard({
+    required this.badge,
+    required this.title,
+    this.subtitle = '',
+    required this.request,
+    this.requestBody,
+    this.response,
+    this.responseBody,
+    required this.requestObservedAfterMilliseconds,
+    required this.requestCompletedAfterMilliseconds,
+    required this.responseCompletedAfterMilliseconds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final currentResponse = response;
     String completeness(bool value) =>
         value ? l.httpCaptureComplete : l.httpCaptureIncomplete;
     String presence(bool value) =>
         value ? l.httpCapturePresent : l.httpCaptureNotPresent;
     final summary = [
       '${request.method} ${request.target}'.trim(),
-      if (response != null && response.statusCode != 0)
-        '→ ${response.statusCode}',
+      if (currentResponse != null && currentResponse.statusCode != 0)
+        '→ ${currentResponse.statusCode}',
     ].join(' ');
     return CommonCard(
       type: CommonCardType.filled,
@@ -1056,15 +1459,16 @@ class _HttpCaptureTransactionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 32,
+                  constraints: const BoxConstraints(minWidth: 32),
                   height: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: context.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(AppCorner.sm),
                   ),
                   child: Text(
-                    '${transaction.sequence}',
+                    badge,
                     style: context.textTheme.labelLarge?.copyWith(
                       color: context.colorScheme.onPrimaryContainer,
                     ),
@@ -1076,9 +1480,18 @@ class _HttpCaptureTransactionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${l.httpCaptureTransaction} #${transaction.sequence}',
+                        title,
                         style: context.textTheme.titleSmall?.toSoftBold,
                       ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: context.textTheme.labelMedium?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                       if (summary.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         SelectableText(
@@ -1091,11 +1504,26 @@ class _HttpCaptureTransactionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+            _HttpCaptureTimingWaterfall(
+              requestObservedAfterMilliseconds:
+                  requestObservedAfterMilliseconds,
+              requestCompletedAfterMilliseconds:
+                  requestCompletedAfterMilliseconds,
+              responseObservedAfterMilliseconds:
+                  currentResponse?.observedAfterMilliseconds ?? 0,
+              responseCompletedAfterMilliseconds:
+                  responseCompletedAfterMilliseconds,
+            ),
             _HttpCaptureDetailRow(
               label: l.httpCaptureRequestObservedAfter,
-              value: '${transaction.requestObservedAfterMilliseconds} ms',
+              value: '$requestObservedAfterMilliseconds ms',
             ),
+            if (requestCompletedAfterMilliseconds > 0)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureRequestCompletedAfter,
+                value: '$requestCompletedAfterMilliseconds ms',
+              ),
             if (request.version.isNotEmpty)
               _HttpCaptureDetailRow(
                 label: l.httpCaptureHttpVersion,
@@ -1105,6 +1533,11 @@ class _HttpCaptureTransactionCard extends StatelessWidget {
               _HttpCaptureDetailRow(
                 label: l.httpCaptureHeaderNames,
                 value: request.headerNames.join(', '),
+              ),
+            if (request.headers.isNotEmpty)
+              _HttpCaptureHeaderValues(
+                title: l.httpCaptureRequestHeaders,
+                headers: request.headers,
               ),
             _HttpCaptureDetailRow(
               label: l.httpCaptureHeadersComplete,
@@ -1125,55 +1558,344 @@ class _HttpCaptureTransactionCard extends StatelessWidget {
                 label: l.httpCaptureHeaderNamesTruncated,
                 value: presence(true),
               ),
-            if (response != null) ...[
+            if (request.headerValuesTruncated)
+              _HttpCaptureDetailRow(
+                label: l.httpCaptureHeaderValuesTruncated,
+                value: presence(true),
+              ),
+            if (request.headers.isNotEmpty)
+              _HttpCaptureCookiePreview(
+                title: l.httpCaptureRequestCookies,
+                headers: request.headers,
+                request: true,
+              ),
+            if (requestBody != null)
+              _HttpCaptureBodyPreview(
+                title: l.httpCaptureRequestBody,
+                body: requestBody!,
+              ),
+            if (currentResponse != null) ...[
               const Divider(),
-              if (response.statusCode != 0)
+              if (currentResponse.statusCode != 0)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureResponseStatus,
-                  value: '${response.statusCode}',
+                  value: '${currentResponse.statusCode}',
                 ),
-              if (response.version.isNotEmpty)
+              if (currentResponse.version.isNotEmpty)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureResponseHttpVersion,
-                  value: response.version,
+                  value: currentResponse.version,
                 ),
-              if (response.informationalStatusCodes.isNotEmpty)
+              if (currentResponse.informationalStatusCodes.isNotEmpty)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureInformationalStatusCodes,
-                  value: response.informationalStatusCodes.join(', '),
+                  value: currentResponse.informationalStatusCodes.join(', '),
                 ),
-              if (response.headerNames.isNotEmpty)
+              if (currentResponse.headerNames.isNotEmpty)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureResponseHeaderNames,
-                  value: response.headerNames.join(', '),
+                  value: currentResponse.headerNames.join(', '),
+                ),
+              if (currentResponse.headers.isNotEmpty)
+                _HttpCaptureHeaderValues(
+                  title: l.httpCaptureResponseHeaders,
+                  headers: currentResponse.headers,
                 ),
               _HttpCaptureDetailRow(
                 label: l.httpCaptureResponseObservedAfter,
-                value: '${response.observedAfterMilliseconds} ms',
+                value: '${currentResponse.observedAfterMilliseconds} ms',
               ),
+              if (responseCompletedAfterMilliseconds > 0)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureResponseCompletedAfter,
+                  value: '$responseCompletedAfterMilliseconds ms',
+                ),
               _HttpCaptureDetailRow(
                 label: l.httpCaptureResponseHeadersComplete,
-                value: completeness(response.headersComplete),
+                value: completeness(currentResponse.headersComplete),
               ),
-              if (response.truncated)
+              if (currentResponse.truncated)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureResponseTruncated,
                   value: presence(true),
                 ),
-              if (response.headerNamesTruncated)
+              if (currentResponse.headerNamesTruncated)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureResponseHeaderNamesTruncated,
                   value: presence(true),
                 ),
-              if (response.informationalStatusCodesTruncated)
+              if (currentResponse.headerValuesTruncated)
+                _HttpCaptureDetailRow(
+                  label: l.httpCaptureHeaderValuesTruncated,
+                  value: presence(true),
+                ),
+              if (currentResponse.informationalStatusCodesTruncated)
                 _HttpCaptureDetailRow(
                   label: l.httpCaptureInformationalStatusCodesTruncated,
                   value: presence(true),
+                ),
+              if (currentResponse.headers.isNotEmpty)
+                _HttpCaptureCookiePreview(
+                  title: l.httpCaptureResponseCookies,
+                  headers: currentResponse.headers,
+                  request: false,
+                ),
+              if (responseBody != null)
+                _HttpCaptureBodyPreview(
+                  title: l.httpCaptureResponseBody,
+                  body: responseBody!,
                 ),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HttpCaptureTimingWaterfall extends StatelessWidget {
+  final int requestObservedAfterMilliseconds;
+  final int requestCompletedAfterMilliseconds;
+  final int responseObservedAfterMilliseconds;
+  final int responseCompletedAfterMilliseconds;
+
+  const _HttpCaptureTimingWaterfall({
+    required this.requestObservedAfterMilliseconds,
+    required this.requestCompletedAfterMilliseconds,
+    required this.responseObservedAfterMilliseconds,
+    required this.responseCompletedAfterMilliseconds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final send = requestCompletedAfterMilliseconds > 0
+        ? requestCompletedAfterMilliseconds - requestObservedAfterMilliseconds
+        : 0;
+    final waitStart = requestCompletedAfterMilliseconds > 0
+        ? requestCompletedAfterMilliseconds
+        : requestObservedAfterMilliseconds;
+    final wait = responseObservedAfterMilliseconds > waitStart
+        ? responseObservedAfterMilliseconds - waitStart
+        : 0;
+    final receive =
+        responseCompletedAfterMilliseconds > responseObservedAfterMilliseconds
+        ? responseCompletedAfterMilliseconds - responseObservedAfterMilliseconds
+        : 0;
+    final total = requestObservedAfterMilliseconds + send + wait + receive;
+    if (total <= 0) {
+      return const SizedBox.shrink();
+    }
+    Widget segment(int value, Color color) => Expanded(
+      flex: value.clamp(1, 0x7fffffff).toInt(),
+      child: Container(height: 8, color: color),
+    );
+    final labels = <String>[
+      if (send > 0) '${l.httpCaptureTimingSend} $send ms',
+      if (wait > 0) '${l.httpCaptureTimingWait} $wait ms',
+      if (receive > 0) '${l.httpCaptureTimingReceive} $receive ms',
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: Row(
+              children: [
+                if (requestObservedAfterMilliseconds > 0)
+                  segment(
+                    requestObservedAfterMilliseconds,
+                    context.colorScheme.surfaceContainerHighest,
+                  ),
+                if (send > 0) segment(send, context.colorScheme.primary),
+                if (wait > 0) segment(wait, context.colorScheme.tertiary),
+                if (receive > 0)
+                  segment(receive, context.colorScheme.secondary),
+              ],
+            ),
+          ),
+          if (labels.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              labels.join(' · '),
+              style: context.textTheme.labelSmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HttpCaptureHeaderValues extends StatelessWidget {
+  final String title;
+  final List<HttpHeaderObservation> headers;
+
+  const _HttpCaptureHeaderValues({required this.title, required this.headers});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: 8),
+      title: Text(title),
+      subtitle: Text(l.httpCaptureHeaderValueCount(headers.length)),
+      children: [
+        for (final header in headers)
+          ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            title: SelectableText(header.name),
+            subtitle: SelectableText(
+              header.redacted
+                  ? l.httpCaptureRedacted
+                  : header.value.isEmpty
+                  ? l.httpCaptureEmptyValue
+                  : header.value,
+            ),
+            trailing: header.truncated
+                ? Tooltip(
+                    message: l.httpCaptureTruncated,
+                    child: const Icon(Icons.content_cut_outlined, size: 18),
+                  )
+                : null,
+          ),
+      ],
+    );
+  }
+}
+
+class _HttpCaptureCookiePreview extends StatelessWidget {
+  final String title;
+  final List<HttpHeaderObservation> headers;
+  final bool request;
+
+  const _HttpCaptureCookiePreview({
+    required this.title,
+    required this.headers,
+    required this.request,
+  });
+
+  List<(String, String)> _cookies() {
+    final result = <(String, String)>[];
+    final target = request ? 'cookie' : 'set-cookie';
+    for (final header in headers.where(
+      (value) => value.name == target && !value.redacted,
+    )) {
+      final parts = request ? header.value.split(';') : <String>[header.value];
+      for (final part in parts) {
+        final separator = part.indexOf('=');
+        if (separator <= 0) {
+          continue;
+        }
+        result.add((
+          part.substring(0, separator).trim(),
+          part.substring(separator + 1).trim(),
+        ));
+      }
+    }
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final values = _cookies();
+    if (values.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      title: Text(title),
+      subtitle: Text('${values.length}'),
+      children: [
+        for (final value in values)
+          _HttpCaptureDetailRow(label: value.$1, value: value.$2),
+      ],
+    );
+  }
+}
+
+class _HttpCaptureBodyPreview extends StatelessWidget {
+  final String title;
+  final TlsInspectionRuntimeHttpBody body;
+
+  const _HttpCaptureBodyPreview({required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.appLocalizations;
+    final bytes = body.decodedBytes;
+    final formFields = body.formFields;
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: 8),
+      title: Text(title),
+      subtitle: Text(
+        [
+          body.kind.toUpperCase(),
+          if (body.contentType.isNotEmpty) body.contentType,
+          '${body.capturedBytes}/${body.observedBytes} B',
+          if (body.truncated) l.httpCaptureTruncated,
+        ].join(' · '),
+      ),
+      children: [
+        if (body.omittedReason.isNotEmpty)
+          _HttpCaptureDetailRow(
+            label: l.httpCaptureOmitted,
+            value: body.omittedReason,
+          )
+        else if (body.kind == 'form' && formFields.isNotEmpty)
+          for (final field in formFields.entries)
+            _HttpCaptureDetailRow(label: field.key, value: field.value)
+        else if (body.kind == 'image' && bytes != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppCorner.md),
+              child: Image.memory(
+                bytes,
+                height: 220,
+                width: double.infinity,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(l.httpCaptureImagePreviewFailed),
+                ),
+              ),
+            ),
+          )
+        else if (body.prettyText.isNotEmpty)
+          Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxHeight: 360),
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(AppCorner.md),
+            ),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                body.prettyText,
+                style: context.textTheme.bodySmall?.copyWith(
+                  fontFamily: 'JetBrainsMono',
+                ),
+              ),
+            ),
+          )
+        else
+          _HttpCaptureDetailRow(
+            label: l.httpCaptureBodyEncoding,
+            value: body.encoding.isEmpty
+                ? l.httpCaptureNotPresent
+                : body.encoding,
+          ),
+      ],
     );
   }
 }

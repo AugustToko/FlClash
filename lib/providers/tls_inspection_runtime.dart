@@ -218,8 +218,12 @@ class TlsInspectionRuntimeNotifier extends Notifier<TlsInspectionRuntimeState> {
           details: {
             'status': status,
             'localOnly': true,
-            'mode': 'loopback-connect-http1',
-            'capturesPayload': false,
+            'mode': runtime?.mode ?? 'loopback-connect-http1-h2',
+            'capturesPayload': runtime?.capturePolicy.capturesBodies ?? false,
+            'capturePolicy':
+                (runtime?.capturePolicy ??
+                        TlsInspectionCapturePolicy.metadataOnly)
+                    .toJson(),
             'changesSystemProxy': false,
             if (runtime != null) ...{
               'active': runtime.active,

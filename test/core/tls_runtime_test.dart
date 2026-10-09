@@ -32,10 +32,11 @@ Map<String, Object?> _status() => {
   'authorityFingerprintSha256': _fingerprint,
   'policyDigest': _digest,
   'runtimeProofId': _runtimeProofId,
-  'mode': 'loopback-connect-http1',
+  'mode': 'loopback-connect-http1-h2',
   'capacity': 16,
   'connectionLifetimeSeconds': 120,
   'capturesPayload': false,
+  'capturePolicy': TlsInspectionCapturePolicy.metadataOnly.toJson(),
   'changesSystemProxy': false,
 };
 
@@ -129,6 +130,8 @@ void main() {
       expect(value.matches(_authority(), _cache(), _generation), isFalse);
       expect(value.active, 0);
       expect(value.downloaded, 200);
+      expect(value.supportsHttp2, isTrue);
+      expect(value.capturePolicy.isMetadataOnly, isTrue);
     },
   );
 
@@ -405,6 +408,108 @@ void main() {
     expect(TlsInspectionRuntimeObservation.fromJson(encoded).toJson(), encoded);
   });
 
+  test('runtime HTTP/2 streams enforce explicit header and body policy', () {
+    final started = DateTime.utc(2026, 10, 9, 12);
+    final value = TlsInspectionRuntimeObservation.fromJson({
+      'sessionId': 'http-capture:http2-policy',
+      'connectionId': _id,
+      'runtimeId': _generation,
+      'host': 'api.example.com',
+      'state': 'completed',
+      'startedAt': started.toIso8601String(),
+      'completedAt': started.add(const Duration(seconds: 1)).toIso8601String(),
+      'downstreamTlsVersion': 'TLS 1.3',
+      'upstreamTlsVersion': 'TLS 1.3',
+      'alpn': 'h2',
+      'uploaded': 128,
+      'downloaded': 256,
+      'upstreamDialCompletedAfterMilliseconds': 3,
+      'upstreamTlsCompletedAfterMilliseconds': 8,
+      'downstreamTlsCompletedAfterMilliseconds': 11,
+      'capturePolicy': const TlsInspectionCapturePolicy(
+        headerValues: true,
+        redactedHeaderNames: ['x-private'],
+        bodyMode: TlsInspectionCaptureBodyMode.text,
+        maxBodyBytes: 4096,
+      ).toJson(),
+      'http2Streams': [
+        {
+          'sequence': 1,
+          'streamId': 1,
+          'state': 'closed',
+          'requestObservedAfterMilliseconds': 12,
+          'requestCompletedAfterMilliseconds': 18,
+          'responseCompletedAfterMilliseconds': 45,
+          'request': {
+            'method': 'POST',
+            'target': '/submit',
+            'version': 'HTTP/2',
+            'host': 'api.example.com',
+            'headerNames': ['content-type', 'authorization', 'x-private'],
+            'headers': [
+              {
+                'name': 'content-type',
+                'value': 'application/x-www-form-urlencoded',
+              },
+              {'name': 'authorization', 'redacted': true},
+              {'name': 'x-private', 'redacted': true},
+            ],
+            'headersComplete': true,
+          },
+          'requestBody': {
+            'kind': 'form',
+            'contentType': 'application/x-www-form-urlencoded',
+            'encoding': 'utf8',
+            'text': 'name=flclash',
+            'capturedBytes': 12,
+            'observedBytes': 12,
+          },
+          'response': {
+            'version': 'HTTP/2',
+            'statusCode': 200,
+            'headerNames': ['content-type'],
+            'headers': [
+              {'name': 'content-type', 'value': 'application/json'},
+            ],
+            'headersComplete': true,
+            'observedBytes': 24,
+            'observedAfterMilliseconds': 30,
+          },
+          'responseBody': {
+            'kind': 'json',
+            'contentType': 'application/json',
+            'encoding': 'utf8',
+            'text': '{"ok":true}',
+            'capturedBytes': 11,
+            'observedBytes': 11,
+          },
+        },
+      ],
+      'http2GoAway': {
+        'lastStreamId': 1,
+        'errorCode': 0,
+        'observedAfterMilliseconds': 50,
+      },
+    });
+
+    expect(value.alpn, 'h2');
+    expect(value.http2Streams, hasLength(1));
+    expect(value.http2Streams.single.streamId, 1);
+    expect(value.http2Streams.single.request.headers[1].redacted, isTrue);
+    expect(value.http2Streams.single.requestBody?.formFields, {
+      'name': 'flclash',
+    });
+    expect(
+      value.http2Streams.single.responseBody?.prettyText,
+      contains('"ok"'),
+    );
+    expect(value.http2GoAway?.lastStreamId, 1);
+    expect(
+      TlsInspectionRuntimeObservation.fromJson(value.toJson()).toJson(),
+      value.toJson(),
+    );
+  });
+
   test('runtime v6 timeline rejects malformed correlation', () {
     final started = DateTime.utc(2026, 10, 7, 2);
     Map<String, Object?> base() => {
@@ -626,7 +731,7 @@ void main() {
     'completedAt': '2020-01-01T00:00:00Z',
     'downstreamTlsVersion': 'TLS 1.1',
     'upstreamTlsVersion': 'TLS 1.4',
-    'alpn': 'h2',
+    'alpn': 'h3',
     'uploaded': -1,
     'downloaded': '200',
     'failureKind': 'raw error text',

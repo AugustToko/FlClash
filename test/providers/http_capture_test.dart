@@ -850,11 +850,40 @@ void main() {
     );
   });
 
+  test('capture policy is immutable while active and reaches Core', () async {
+    final policies = <TlsInspectionCapturePolicy>[];
+    final scope = container(
+      coreStatus: CoreStatus.connected,
+      coreControl: (enabled, sessionId, policy) async {
+        policies.add(policy);
+        return enabled;
+      },
+    );
+    addTearDown(scope.dispose);
+    final notifier = scope.read(httpCaptureProvider.notifier);
+    const configured = TlsInspectionCapturePolicy(
+      headerValues: true,
+      bodyMode: TlsInspectionCaptureBodyMode.text,
+      maxBodyBytes: 4096,
+    );
+
+    notifier.updateCapturePolicy(configured);
+    expect(scope.read(httpCaptureProvider).capturePolicy, configured);
+    await notifier.start();
+    expect(policies.single, configured);
+
+    notifier.updateCapturePolicy(TlsInspectionCapturePolicy.metadataOnly);
+    expect(scope.read(httpCaptureProvider).capturePolicy, configured);
+
+    await notifier.stop();
+    expect(policies.last, TlsInspectionCapturePolicy.metadataOnly);
+  });
+
   test('capture session toggles the Core passive observer', () async {
     final calls = <({bool enabled, String sessionId})>[];
     final scope = container(
       coreStatus: CoreStatus.connected,
-      coreControl: (enabled, sessionId) async {
+      coreControl: (enabled, sessionId, policy) async {
         calls.add((enabled: enabled, sessionId: sessionId));
         return enabled;
       },
@@ -884,7 +913,7 @@ void main() {
     final calls = <({bool enabled, String sessionId})>[];
     final scope = container(
       coreStatus: CoreStatus.connected,
-      coreControl: (enabled, sessionId) {
+      coreControl: (enabled, sessionId, policy) {
         calls.add((enabled: enabled, sessionId: sessionId));
         return enabled ? enableResult.future : Future<bool>.value(false);
       },
@@ -912,7 +941,7 @@ void main() {
     final calls = <({bool enabled, String sessionId})>[];
     final scope = container(
       coreStatus: CoreStatus.connected,
-      coreControl: (enabled, sessionId) async {
+      coreControl: (enabled, sessionId, policy) async {
         calls.add((enabled: enabled, sessionId: sessionId));
         if (enabled) {
           return true;
@@ -944,7 +973,7 @@ void main() {
     final scope = container(
       coreStatus: CoreStatus.connected,
       coreDisableRetryDelay: Duration.zero,
-      coreControl: (enabled, sessionId) async {
+      coreControl: (enabled, sessionId, policy) async {
         calls.add((enabled: enabled, sessionId: sessionId));
         if (enabled) {
           return true;

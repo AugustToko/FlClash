@@ -82,6 +82,7 @@ _MockCoreHandlerInterface _coreInterface() {
     () => coreInterface.setHttpObservationEnabled(
       any(),
       sessionId: any(named: 'sessionId'),
+      policy: TlsInspectionCapturePolicy.metadataOnly,
     ),
   ).thenAnswer(
     (invocation) async => invocation.positionalArguments.first as bool,
@@ -416,6 +417,7 @@ void main() {
       () => coreInterface.setHttpObservationEnabled(
         true,
         sessionId: any(named: 'sessionId'),
+        policy: TlsInspectionCapturePolicy.metadataOnly,
       ),
     ).called(1);
 
@@ -435,6 +437,7 @@ void main() {
       () => coreInterface.setHttpObservationEnabled(
         any(),
         sessionId: any(named: 'sessionId'),
+        policy: TlsInspectionCapturePolicy.metadataOnly,
       ),
     ).thenAnswer(
       (invocation) async => invocation.positionalArguments.first as bool,

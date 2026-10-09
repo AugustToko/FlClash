@@ -29,16 +29,17 @@ type TLSInspectionRuntimeStopParams struct {
 }
 
 type TLSInspectionRuntimeStatus struct {
-	Runtime                    inspectionruntime.Status `json:"runtime"`
-	Generation                 string                   `json:"generation"`
-	AuthorityFingerprintSHA256 string                   `json:"authorityFingerprintSha256"`
-	PolicyDigest               string                   `json:"policyDigest"`
-	RuntimeProofID             string                   `json:"runtimeProofId,omitempty"`
-	Mode                       string                   `json:"mode"`
-	Capacity                   int                      `json:"capacity"`
-	ConnectionLifetimeSeconds  int64                    `json:"connectionLifetimeSeconds"`
-	CapturesPayload            bool                     `json:"capturesPayload"`
-	ChangesSystemProxy         bool                     `json:"changesSystemProxy"`
+	Runtime                    inspectionruntime.Status        `json:"runtime"`
+	Generation                 string                          `json:"generation"`
+	AuthorityFingerprintSHA256 string                          `json:"authorityFingerprintSha256"`
+	PolicyDigest               string                          `json:"policyDigest"`
+	RuntimeProofID             string                          `json:"runtimeProofId,omitempty"`
+	Mode                       string                          `json:"mode"`
+	Capacity                   int                             `json:"capacity"`
+	ConnectionLifetimeSeconds  int64                           `json:"connectionLifetimeSeconds"`
+	CapturesPayload            bool                            `json:"capturesPayload"`
+	CapturePolicy              inspectionruntime.CapturePolicy `json:"capturePolicy"`
+	ChangesSystemProxy         bool                            `json:"changesSystemProxy"`
 }
 
 type TLSInspectionRuntimeStartResult struct {
@@ -93,10 +94,13 @@ func stopTLSInspectionRuntimeLocked() {
 }
 
 func tlsInspectionRuntimeStatusLocked() TLSInspectionRuntimeStatus {
+	policy := currentHTTPObservationPolicy()
 	result := TLSInspectionRuntimeStatus{
 		Runtime: inspectionruntime.Status{State: "stopped"},
-		Mode:    "loopback-connect-http1", Capacity: inspectionruntime.MaxClients,
+		Mode:    "loopback-connect-http1-h2", Capacity: inspectionruntime.MaxClients,
 		ConnectionLifetimeSeconds: int64(inspectionruntime.ConnectionLifetime / time.Second),
+		CapturesPayload:           policy.BodyMode != inspectionruntime.CaptureBodyNone,
+		CapturePolicy:             policy,
 	}
 	if tlsInspectionRuntime != nil {
 		result.Runtime = tlsInspectionRuntime.Status()
@@ -159,6 +163,7 @@ func startTLSInspectionRuntime(params *TLSInspectionRuntimeStartParams) (*TLSIns
 			return observer.SessionID()
 		},
 		CaptureSessionChanged: httpObservationChangeSignal,
+		CapturePolicy:         currentHTTPObservationPolicy,
 		Observe: func(value inspectionruntime.Observation) {
 			sendMessage(Message{Type: InspectionRuntimeMessage, Data: value})
 		},

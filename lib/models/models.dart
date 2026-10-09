@@ -5,6 +5,7 @@ export 'common.dart';
 export 'config.dart';
 export 'core.dart';
 export 'http_capture.dart';
+export 'http_inspection.dart';
 export 'logbook.dart';
 export 'profile.dart';
 export 'state.dart';

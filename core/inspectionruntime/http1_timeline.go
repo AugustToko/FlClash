@@ -19,10 +19,14 @@ const (
 // HTTPTransactionObservation is one bounded request/response metadata pair on
 // an inspected HTTP/1 connection. Sequence is contiguous and one-based.
 type HTTPTransactionObservation struct {
-	Sequence                         int                      `json:"sequence"`
-	RequestObservedAfterMilliseconds int64                    `json:"requestObservedAfterMilliseconds"`
-	Request                          HTTPRequestObservation   `json:"request"`
-	Response                         *HTTPResponseObservation `json:"response,omitempty"`
+	Sequence                           int                      `json:"sequence"`
+	RequestObservedAfterMilliseconds   int64                    `json:"requestObservedAfterMilliseconds"`
+	RequestCompletedAfterMilliseconds  int64                    `json:"requestCompletedAfterMilliseconds,omitempty"`
+	ResponseCompletedAfterMilliseconds int64                    `json:"responseCompletedAfterMilliseconds,omitempty"`
+	Request                            HTTPRequestObservation   `json:"request"`
+	RequestBody                        *HTTPBodyObservation     `json:"requestBody,omitempty"`
+	Response                           *HTTPResponseObservation `json:"response,omitempty"`
+	ResponseBody                       *HTTPBodyObservation     `json:"responseBody,omitempty"`
 }
 
 type httpBodyMode uint8
@@ -38,11 +42,15 @@ type httpBodyPlan struct {
 	mode              httpBodyMode
 	length            int64
 	terminalAfterBody bool
+	contentType       string
+	contentEncoding   string
 }
 
 type httpFramingHeaders struct {
 	contentLength     *int64
 	transferCodings   []string
+	contentType       string
+	contentEncoding   string
 	connectionClose   bool
 	connectionKeep    bool
 	connectionUpgrade bool
@@ -54,6 +62,8 @@ type httpRequestStreamState struct {
 	mode              httpBodyMode
 	remaining         int64
 	chunked           httpChunkedBodySkipper
+	body              *bodyCaptureAccumulator
+	transactionIndex  int
 	terminalAfterBody bool
 	stopped           bool
 }
@@ -63,6 +73,8 @@ type httpResponseStreamState struct {
 	mode                   httpBodyMode
 	remaining              int64
 	chunked                httpChunkedBodySkipper
+	body                   *bodyCaptureAccumulator
+	transactionIndex       int
 	terminalAfterBody      bool
 	informational          []int
 	informationalTruncated bool
@@ -78,6 +90,8 @@ type http1MetadataTimeline struct {
 	request      httpRequestStreamState
 	response     httpResponseStreamState
 	transactions []HTTPTransactionObservation
+	policy       CapturePolicy
+	reserveBody  func(int) int
 	truncated    bool
 	stopped      bool
 	publish      func([]HTTPTransactionObservation, bool)
@@ -88,16 +102,34 @@ func newHTTP1MetadataTimeline(
 	expectedHost string,
 	publish func([]HTTPTransactionObservation, bool),
 ) *http1MetadataTimeline {
+	return newHTTP1MetadataTimelineWithPolicy(
+		startedAt,
+		expectedHost,
+		CapturePolicy{},
+		nil,
+		publish,
+	)
+}
+
+func newHTTP1MetadataTimelineWithPolicy(
+	startedAt time.Time,
+	expectedHost string,
+	policy CapturePolicy,
+	reserveBody func(int) int,
+	publish func([]HTTPTransactionObservation, bool),
+) *http1MetadataTimeline {
 	return &http1MetadataTimeline{
 		startedAt:    startedAt,
 		expectedHost: expectedHost,
 		request: httpRequestStreamState{
-			header: make([]byte, 0, 1024),
+			header: make([]byte, 0, 1024), transactionIndex: -1,
 		},
 		response: httpResponseStreamState{
-			header: make([]byte, 0, 1024),
+			header: make([]byte, 0, 1024), transactionIndex: -1,
 		},
 		transactions: make([]HTTPTransactionObservation, 0, 4),
+		policy:       policy.Normalize(),
+		reserveBody:  reserveBody,
 		publish:      publish,
 	}
 }
@@ -112,7 +144,9 @@ func cloneHTTPTransactionObservations(
 	for index, value := range values {
 		result[index] = value
 		result[index].Request = *cloneHTTPRequestObservation(&value.Request)
+		result[index].RequestBody = cloneHTTPBodyObservation(value.RequestBody)
 		result[index].Response = cloneHTTPResponseObservation(value.Response)
+		result[index].ResponseBody = cloneHTTPBodyObservation(value.ResponseBody)
 	}
 	return result
 }
@@ -188,7 +222,8 @@ func (t *http1MetadataTimeline) FinishResponse() {
 		return
 	}
 	if t.response.mode == httpBodyUntilClose {
-		changed := t.stopNormallyLocked()
+		changed := t.completeResponseBodyLocked(false)
+		changed = t.stopNormallyLocked() || changed
 		if changed {
 			t.publishLocked()
 			return
@@ -262,6 +297,8 @@ func (t *http1MetadataTimeline) observeRequestLocked(data []byte) bool {
 				!validHTTPTransactionRequest(block, true, request, t.expectedHost) {
 				return t.failClosedLocked() || changed
 			}
+			request.Headers, request.HeaderValuesTruncated =
+				captureHTTP1HeaderValues(block, true, t.policy)
 			resetHTTPMetadataHeader(&t.request.header)
 			t.appendRequestLocked(request)
 			changed = true
@@ -274,13 +311,11 @@ func (t *http1MetadataTimeline) observeRequestLocked(data []byte) bool {
 				clearHTTPRequestStreamState(&t.request)
 				return true
 			}
-			t.request.mode = plan.mode
-			t.request.remaining = plan.length
-			t.request.terminalAfterBody = plan.terminalAfterBody
-			if plan.mode == httpBodyChunked {
-				t.request.chunked.reset()
+			if t.beginRequestBodyLocked(plan) {
+				changed = true
 			}
 			if plan.mode == httpBodyNone {
+				resetHTTPRequestBodyState(&t.request)
 				if plan.terminalAfterBody {
 					t.request.stopped = true
 					clearHTTPRequestStreamState(&t.request)
@@ -293,19 +328,26 @@ func (t *http1MetadataTimeline) observeRequestLocked(data []byte) bool {
 			if consumed > t.request.remaining {
 				consumed = t.request.remaining
 			}
+			t.request.body.Observe(data[:int(consumed)])
 			data = data[consumed:]
 			t.request.remaining -= consumed
 			if t.request.remaining != 0 {
 				continue
 			}
 			terminal := t.request.terminalAfterBody
+			if t.completeRequestBodyLocked(false) {
+				changed = true
+			}
 			resetHTTPRequestBodyState(&t.request)
 			if terminal {
 				t.request.stopped = true
 				return changed
 			}
 		case httpBodyChunked:
-			rest, complete, invalid := t.request.chunked.consume(data)
+			rest, complete, invalid := t.request.chunked.consumeObserved(
+				data,
+				t.request.body.Observe,
+			)
 			data = rest
 			if invalid {
 				return t.failClosedLocked() || changed
@@ -314,6 +356,9 @@ func (t *http1MetadataTimeline) observeRequestLocked(data []byte) bool {
 				continue
 			}
 			terminal := t.request.terminalAfterBody
+			if t.completeRequestBodyLocked(false) {
+				changed = true
+			}
 			resetHTTPRequestBodyState(&t.request)
 			if terminal {
 				t.request.stopped = true
@@ -356,6 +401,8 @@ func (t *http1MetadataTimeline) observeResponseLocked(data []byte) bool {
 				block,
 				method,
 			)
+			headerValues, headerValuesTruncated :=
+				captureHTTP1HeaderValues(block, true, t.policy)
 			resetHTTPMetadataHeader(&t.response.header)
 			t.response.observedHeaderBytes = boundedHTTPObservedBytes(
 				t.response.observedHeaderBytes,
@@ -383,21 +430,18 @@ func (t *http1MetadataTimeline) observeResponseLocked(data []byte) bool {
 				t.response.informationalTruncated
 			response.ObservedBytes = t.response.observedHeaderBytes
 			response.ObservedAfterMilliseconds = elapsedMilliseconds(t.startedAt)
+			response.Headers = headerValues
+			response.HeaderValuesTruncated = headerValuesTruncated
 			resetHTTPResponseHeaderState(&t.response)
 			if !t.attachResponseLocked(response) {
 				return t.failClosedLocked() || changed
 			}
 			changed = true
-			t.response.mode = plan.mode
-			t.response.remaining = plan.length
-			t.response.terminalAfterBody = plan.terminalAfterBody
-			if plan.mode == httpBodyChunked {
-				t.response.chunked.reset()
-			}
-			if plan.mode == httpBodyUntilClose {
-				return t.stopNormallyLocked() || changed
+			if t.beginResponseBodyLocked(plan) {
+				changed = true
 			}
 			if plan.mode == httpBodyNone {
+				resetHTTPResponseBodyState(&t.response)
 				if plan.terminalAfterBody {
 					return t.stopNormallyLocked() || changed
 				}
@@ -408,18 +452,25 @@ func (t *http1MetadataTimeline) observeResponseLocked(data []byte) bool {
 			if consumed > t.response.remaining {
 				consumed = t.response.remaining
 			}
+			t.response.body.Observe(data[:int(consumed)])
 			data = data[consumed:]
 			t.response.remaining -= consumed
 			if t.response.remaining != 0 {
 				continue
 			}
 			terminal := t.response.terminalAfterBody
+			if t.completeResponseBodyLocked(false) {
+				changed = true
+			}
 			resetHTTPResponseBodyState(&t.response)
 			if terminal {
 				return t.stopNormallyLocked() || changed
 			}
 		case httpBodyChunked:
-			rest, complete, invalid := t.response.chunked.consume(data)
+			rest, complete, invalid := t.response.chunked.consumeObserved(
+				data,
+				t.response.body.Observe,
+			)
 			data = rest
 			if invalid {
 				return t.failClosedLocked() || changed
@@ -428,12 +479,16 @@ func (t *http1MetadataTimeline) observeResponseLocked(data []byte) bool {
 				continue
 			}
 			terminal := t.response.terminalAfterBody
+			if t.completeResponseBodyLocked(false) {
+				changed = true
+			}
 			resetHTTPResponseBodyState(&t.response)
 			if terminal {
 				return t.stopNormallyLocked() || changed
 			}
 		case httpBodyUntilClose:
-			return changed
+			t.response.body.Observe(data)
+			data = nil
 		default:
 			return t.failClosedLocked() || changed
 		}
@@ -452,6 +507,85 @@ func (t *http1MetadataTimeline) appendRequestLocked(
 		RequestObservedAfterMilliseconds: elapsedMilliseconds(t.startedAt),
 		Request:                          *cloneHTTPRequestObservation(request),
 	})
+	t.request.transactionIndex = len(t.transactions) - 1
+}
+
+func (t *http1MetadataTimeline) beginRequestBodyLocked(plan httpBodyPlan) bool {
+	t.request.mode = plan.mode
+	t.request.remaining = plan.length
+	t.request.terminalAfterBody = plan.terminalAfterBody
+	t.request.body = newBodyCaptureAccumulator(
+		t.policy,
+		plan.contentType,
+		plan.contentEncoding,
+		t.reserveBody,
+	)
+	if plan.mode == httpBodyChunked {
+		t.request.chunked.reset()
+	}
+	if plan.mode == httpBodyNone {
+		return t.completeRequestBodyLocked(false)
+	}
+	return false
+}
+
+func (t *http1MetadataTimeline) completeRequestBodyLocked(truncated bool) bool {
+	index := t.request.transactionIndex
+	if index < 0 || index >= len(t.transactions) {
+		return false
+	}
+	body := t.request.body.Finish()
+	if body != nil {
+		body.Truncated = body.Truncated || truncated
+		t.transactions[index].RequestBody = body
+	}
+	t.transactions[index].RequestCompletedAfterMilliseconds =
+		elapsedMilliseconds(t.startedAt)
+	if t.request.body != nil {
+		t.request.body.Clear()
+	}
+	t.request.body = nil
+	t.request.transactionIndex = -1
+	return true
+}
+
+func (t *http1MetadataTimeline) beginResponseBodyLocked(plan httpBodyPlan) bool {
+	t.response.mode = plan.mode
+	t.response.remaining = plan.length
+	t.response.terminalAfterBody = plan.terminalAfterBody
+	t.response.body = newBodyCaptureAccumulator(
+		t.policy,
+		plan.contentType,
+		plan.contentEncoding,
+		t.reserveBody,
+	)
+	if plan.mode == httpBodyChunked {
+		t.response.chunked.reset()
+	}
+	if plan.mode == httpBodyNone {
+		return t.completeResponseBodyLocked(false)
+	}
+	return false
+}
+
+func (t *http1MetadataTimeline) completeResponseBodyLocked(truncated bool) bool {
+	index := t.response.transactionIndex
+	if index < 0 || index >= len(t.transactions) {
+		return false
+	}
+	body := t.response.body.Finish()
+	if body != nil {
+		body.Truncated = body.Truncated || truncated
+		t.transactions[index].ResponseBody = body
+	}
+	t.transactions[index].ResponseCompletedAfterMilliseconds =
+		elapsedMilliseconds(t.startedAt)
+	if t.response.body != nil {
+		t.response.body.Clear()
+	}
+	t.response.body = nil
+	t.response.transactionIndex = -1
+	return true
 }
 
 func (t *http1MetadataTimeline) nextResponseMethodLocked() (string, bool) {
@@ -474,6 +608,7 @@ func (t *http1MetadataTimeline) attachResponseLocked(
 			continue
 		}
 		t.transactions[index].Response = cloneHTTPResponseObservation(response)
+		t.response.transactionIndex = index
 		return true
 	}
 	return false
@@ -534,6 +669,12 @@ func (t *http1MetadataTimeline) finishPartialResponseLocked() bool {
 
 func (t *http1MetadataTimeline) failClosedLocked() bool {
 	changed := !t.truncated
+	if t.request.transactionIndex >= 0 {
+		changed = t.completeRequestBodyLocked(true) || changed
+	}
+	if t.response.transactionIndex >= 0 {
+		changed = t.completeResponseBodyLocked(true) || changed
+	}
 	t.truncated = true
 	t.clearLocked()
 	t.stopped = true
@@ -544,6 +685,12 @@ func (t *http1MetadataTimeline) failClosedLocked() bool {
 
 func (t *http1MetadataTimeline) stopNormallyLocked() bool {
 	changed := false
+	if t.response.transactionIndex >= 0 {
+		changed = t.completeResponseBodyLocked(false)
+	}
+	if t.request.transactionIndex >= 0 {
+		changed = t.completeRequestBodyLocked(true) || changed
+	}
 	if t.hasPendingResponseLocked() && !t.truncated {
 		t.truncated = true
 		changed = true
@@ -608,6 +755,11 @@ func resetHTTPRequestBodyState(state *httpRequestStreamState) {
 	state.mode = httpBodyNone
 	state.remaining = 0
 	state.chunked.clear()
+	if state.body != nil {
+		state.body.Clear()
+	}
+	state.body = nil
+	state.transactionIndex = -1
 	state.terminalAfterBody = false
 }
 
@@ -621,6 +773,11 @@ func resetHTTPResponseBodyState(state *httpResponseStreamState) {
 	state.mode = httpBodyNone
 	state.remaining = 0
 	state.chunked.clear()
+	if state.body != nil {
+		state.body.Clear()
+	}
+	state.body = nil
+	state.transactionIndex = -1
 	state.terminalAfterBody = false
 }
 
@@ -628,7 +785,12 @@ func clearHTTPRequestStreamState(state *httpRequestStreamState) {
 	clearHTTPMetadataBuffer(state.header)
 	state.header = nil
 	state.chunked.clear()
+	if state.body != nil {
+		state.body.Clear()
+	}
+	state.body = nil
 	state.remaining = 0
+	state.transactionIndex = -1
 	state.terminalAfterBody = false
 }
 
@@ -636,7 +798,12 @@ func clearHTTPResponseStreamState(state *httpResponseStreamState) {
 	clearHTTPMetadataBuffer(state.header)
 	state.header = nil
 	state.chunked.clear()
+	if state.body != nil {
+		state.body.Clear()
+	}
+	state.body = nil
 	state.remaining = 0
+	state.transactionIndex = -1
 	state.terminalAfterBody = false
 	state.informational = nil
 	state.informationalTruncated = false
@@ -792,6 +959,8 @@ func parseHTTPRequestEnvelope(
 	if !valid {
 		return nil, httpBodyPlan{}, false
 	}
+	plan.contentType = headers.contentType
+	plan.contentEncoding = headers.contentEncoding
 	return value, plan, true
 }
 
@@ -826,6 +995,8 @@ func parseHTTPResponseEnvelope(
 	if !valid {
 		return nil, httpBodyPlan{}, false, false
 	}
+	plan.contentType = headers.contentType
+	plan.contentEncoding = headers.contentEncoding
 	return value, plan, false, true
 }
 
@@ -857,6 +1028,14 @@ func parseHTTPFramingHeaders(lines [][]byte) (httpFramingHeaders, bool) {
 				return httpFramingHeaders{}, false
 			}
 			result.transferCodings = append(result.transferCodings, codings...)
+		case "content-type":
+			if result.contentType == "" {
+				result.contentType = value
+			}
+		case "content-encoding":
+			if result.contentEncoding == "" {
+				result.contentEncoding = value
+			}
 		case "connection":
 			tokens, valid := parseHTTPCommaTokens(value)
 			if !valid {
@@ -1169,6 +1348,13 @@ func (s *httpChunkedBodySkipper) clear() {
 func (s *httpChunkedBodySkipper) consume(
 	data []byte,
 ) (rest []byte, complete bool, invalid bool) {
+	return s.consumeObserved(data, nil)
+}
+
+func (s *httpChunkedBodySkipper) consumeObserved(
+	data []byte,
+	observe func([]byte),
+) (rest []byte, complete bool, invalid bool) {
 	for len(data) > 0 {
 		switch s.phase {
 		case httpChunkSize:
@@ -1200,6 +1386,9 @@ func (s *httpChunkedBodySkipper) consume(
 			consumed := int64(len(data))
 			if consumed > s.remaining {
 				consumed = s.remaining
+			}
+			if observe != nil && consumed > 0 {
+				observe(data[:int(consumed)])
 			}
 			data = data[consumed:]
 			s.remaining -= consumed

@@ -127,10 +127,11 @@ class _RuntimeCore extends CoreHandlerInterface {
     'authorityFingerprintSha256': running ? _fingerprint : '',
     'policyDigest': running ? _digest : '',
     if (running) 'runtimeProofId': _runtimeProof,
-    'mode': 'loopback-connect-http1',
+    'mode': 'loopback-connect-http1-h2',
     'capacity': 16,
     'connectionLifetimeSeconds': 120,
     'capturesPayload': false,
+    'capturePolicy': TlsInspectionCapturePolicy.metadataOnly.toJson(),
     'changesSystemProxy': false,
   };
 
