@@ -5,7 +5,7 @@ on:
     branches:
       - feat/http2-stream-capture-policy-20261009
     paths:
-      - http2-ui-integration.patch.gz.b64
+      - '.http2-ui-patch/**'
       - http2-ui-integration.trigger
   workflow_dispatch:
 
@@ -31,10 +31,16 @@ jobs:
       - name: Verify and apply integration patch
         run: |
           set -euo pipefail
+          expected_encoded=f83ee227d6576e985fd245435612f2aacd31d07aea7f4879e83f9e5bcded6524
           expected_patch=7f1bd18babc2f5dd1e370719d14a9c6a98ab673c684b2c4bac929060559055ec
-          actual_encoded="$(sha256sum http2-ui-integration.patch.gz.b64 | cut -d' ' -f1)"
+          parts=(.http2-ui-patch/part-*)
+          test "${#parts[@]}" -eq 8
+          printf '%s\n' "${parts[@]}"
+          cat "${parts[@]}" > /tmp/http2-ui-integration.b64
+          actual_encoded="$(sha256sum /tmp/http2-ui-integration.b64 | cut -d' ' -f1)"
           echo "encoded_sha256=$actual_encoded"
-          base64 --decode http2-ui-integration.patch.gz.b64 | gunzip > /tmp/http2-ui-integration.patch
+          test "$actual_encoded" = "$expected_encoded"
+          base64 --decode /tmp/http2-ui-integration.b64 | gunzip > /tmp/http2-ui-integration.patch
           actual_patch="$(sha256sum /tmp/http2-ui-integration.patch | cut -d' ' -f1)"
           echo "patch_sha256=$actual_patch"
           test "$actual_patch" = "$expected_patch"
@@ -107,6 +113,7 @@ jobs:
       - name: Commit integrated surface
         run: |
           set -euo pipefail
+          rm -rf .http2-ui-patch
           rm -f http2-ui-integration.patch.gz.b64
           rm -f http2-ui-integration.trigger
           rm -f .github/workflows/apply-http2-ui-integration.yml
