@@ -1,0 +1,59 @@
+name: Bootstrap Surge v0.9.0 DNS migration
+
+on:
+  push:
+    branches:
+      - bootstrap/surge-v090-dns-20261016
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bootstrap-surge-v090-dns
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify validated patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/bootstrap/surge-v090-dns/part-* > /tmp/surge-v090-dns.patch.gz.b64
+          printf '%s  %s\n' \
+            '1bc65910436f1dd451b6e833115fdf1e327459e15c0ad54b1c77b60bb7342125' \
+            /tmp/surge-v090-dns.patch.gz.b64 \
+            | sha256sum -c -
+          base64 -d /tmp/surge-v090-dns.patch.gz.b64 \
+            | gzip -dc \
+            > /tmp/surge-v090-dns.patch
+
+      - name: Apply patch to the fixed v0.9.0 base
+        shell: bash
+        env:
+          BASE_SHA: 03f955382409a4a7ac1f3f92e46d9fcc6d39f106
+          EXPECTED_TREE: d36cedd88e46381a3bf30a5b135f57adf7c544b4
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --detach "$BASE_SHA"
+          git am --3way /tmp/surge-v090-dns.patch
+          actual_tree="$(git rev-parse 'HEAD^{tree}')"
+          test "$actual_tree" = "$EXPECTED_TREE"
+          git diff --check "$BASE_SHA..HEAD"
+
+      - name: Publish exact feature tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin \
+            HEAD:refs/heads/feat/surge-v090-foundation-20261016 \
+            --force-with-lease=refs/heads/feat/surge-v090-foundation-20261016:
