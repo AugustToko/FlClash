@@ -28,6 +28,8 @@ abstract mixin class CoreEventListener {
 
   void onRequest(TrackerInfo connection) {}
 
+  void onDns(DnsQuery dnsQuery) {}
+
   void onLoaded(String providerName) {}
 
   void onCrash(String message) {}
@@ -38,6 +40,10 @@ abstract mixin class CoreEventListener {
     bool skipped,
     String? error,
   ) {}
+
+  void onRouteChanged(RouteSnapshot snapshot) {}
+
+  void onDialerLoop(String proxyName) {}
 }
 
 class CoreEventManager {
@@ -57,6 +63,9 @@ class CoreEventManager {
             case CoreEventType.request:
               listener.onRequest(TrackerInfo.fromJson(event.data));
               break;
+            case CoreEventType.dns:
+              listener.onDns(DnsQuery.fromJson(event.data));
+              break;
             case CoreEventType.loaded:
               listener.onLoaded(event.data);
               break;
@@ -71,6 +80,14 @@ class CoreEventManager {
                 data['skipped'] as bool? ?? false,
                 data['error'] as String?,
               );
+              break;
+            case CoreEventType.routeChanged:
+              listener.onRouteChanged(
+                RouteSnapshot.fromJson(Map<String, Object?>.from(event.data)),
+              );
+              break;
+            case CoreEventType.dialerLoop:
+              listener.onDialerLoop(event.data as String);
               break;
           }
         } catch (error) {

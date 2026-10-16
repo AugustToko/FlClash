@@ -1,9 +1,9 @@
-import 'dart:ui';
-
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/widgets/scroll.dart';
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:super_sliver_list/super_sliver_list.dart';
 
 const _metricsAxis = AxisDirection.down;
 
@@ -182,6 +182,237 @@ void main() {
         physics.createBallisticSimulation(_metrics(pixels: 50), 500),
         isA<ClampingScrollSimulation>(),
       );
+    });
+
+    test('carries no momentum into the next fling under iOS physics', () {
+      const bouncing = BouncingScrollPhysics();
+      expect(bouncing.carriedMomentum(3000), greaterThan(3000));
+      expect(physics.applyTo(bouncing).carriedMomentum(3000), 0);
+    });
+  });
+
+  group('FollowEndScrollPhysics', () {
+    var following = true;
+    final physics = FollowEndScrollPhysics(isFollowing: () => following);
+
+    setUp(() => following = true);
+
+    double adjust({required double oldPixels, double newMax = 160}) {
+      return physics.adjustPositionForNewDimensions(
+        oldPosition: _metrics(pixels: oldPixels),
+        newPosition: _metrics(pixels: oldPixels, maxScrollExtent: newMax),
+        isScrolling: false,
+        velocity: 0,
+      );
+    }
+
+    test('moves a following position at its end to the new end', () {
+      expect(adjust(oldPixels: 100), 160);
+      expect(adjust(oldPixels: 100, newMax: 40), 40);
+    });
+
+    test('counts a position past its end as at the end', () {
+      expect(adjust(oldPixels: double.maxFinite), 160);
+    });
+
+    test('leaves a position off its end where it is', () {
+      expect(adjust(oldPixels: 60), 60);
+    });
+
+    test('leaves a position that stopped following where it is', () {
+      following = false;
+      expect(adjust(oldPixels: 100), 100);
+    });
+
+    test('applyTo keeps following', () {
+      final applied = physics.applyTo(const ClampingScrollPhysics());
+      expect(applied, isA<FollowEndScrollPhysics>());
+      expect(
+        applied.adjustPositionForNewDimensions(
+          oldPosition: _metrics(pixels: 100),
+          newPosition: _metrics(pixels: 100, maxScrollExtent: 160),
+          isScrolling: false,
+          velocity: 0,
+        ),
+        160,
+      );
+    });
+  });
+
+  testWidgets('zero-height dividers do not lengthen a separated list', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SuperListView.separated(
+          controller: controller,
+          itemCount: 200,
+          extentEstimation: zeroDividerExtentEstimation,
+          separatorBuilder: (_, _) => const Divider(height: 0),
+          itemBuilder: (_, index) =>
+              SizedBox(height: 100, child: Text('$index')),
+        ),
+      ),
+    );
+    final viewport = controller.position.viewportDimension;
+
+    expect(controller.position.maxScrollExtent, 200 * 100 - viewport);
+
+    controller.jumpTo(controller.position.maxScrollExtent);
+    await tester.pump();
+
+    expect(controller.position.maxScrollExtent, 200 * 100 - viewport);
+    expect(controller.offset, controller.position.maxScrollExtent);
+  });
+
+  group('RowSnapScrollPhysics', () {
+    const extent = 48.0;
+
+    Future<RowSnapScrollController> pumpList(
+      WidgetTester tester, {
+      RowSnapScrollController? controller,
+      double itemExtent = extent,
+    }) async {
+      if (controller == null) {
+        controller = RowSnapScrollController();
+        addTearDown(controller.dispose);
+      }
+      controller.itemExtent = itemExtent;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 300,
+              child: ListView.builder(
+                controller: controller,
+                physics: const RowSnapScrollPhysics(),
+                itemExtent: itemExtent,
+                itemCount: 50,
+                itemBuilder: (_, index) => Text('item $index'),
+              ),
+            ),
+          ),
+        ),
+      );
+      return controller;
+    }
+
+    const wheelRest = Duration(milliseconds: 250);
+
+    bool onRow(double pixels) => pixels % extent == 0;
+
+    testWidgets('a fling keeps its momentum and then rests on a row', (
+      tester,
+    ) async {
+      final controller = await pumpList(tester);
+      await tester.fling(find.byType(ListView), const Offset(0, -100), 3000);
+      await tester.pumpAndSettle();
+
+      expect(controller.offset, greaterThan(extent * 3));
+      expect(onRow(controller.offset), isTrue, reason: '${controller.offset}');
+    });
+
+    testWidgets('a drag released without velocity settles on a row', (
+      tester,
+    ) async {
+      final controller = await pumpList(tester);
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(ListView)),
+      );
+      await gesture.moveBy(const Offset(0, -20));
+      await gesture.moveBy(const Offset(0, -50));
+      await tester.pump(const Duration(seconds: 1));
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(onRow(controller.offset), isTrue, reason: '${controller.offset}');
+    });
+
+    testWidgets('a wheel tick shorter than a row still advances one', (
+      tester,
+    ) async {
+      final controller = await pumpList(tester);
+      final center = tester.getCenter(find.byType(ListView));
+      await tester.sendEventToBinding(
+        PointerScrollEvent(position: center, scrollDelta: const Offset(0, 10)),
+      );
+      await tester.pump(wheelRest);
+      await tester.pumpAndSettle();
+      expect(controller.offset, extent);
+
+      await tester.sendEventToBinding(
+        PointerScrollEvent(position: center, scrollDelta: const Offset(0, -10)),
+      );
+      await tester.pump(wheelRest);
+      await tester.pumpAndSettle();
+      expect(controller.offset, 0);
+    });
+
+    testWidgets('the wheel scrolls freely and settles once it rests', (
+      tester,
+    ) async {
+      final controller = await pumpList(tester);
+      final center = tester.getCenter(find.byType(ListView));
+      for (var i = 1; i <= 7; i++) {
+        await tester.sendEventToBinding(
+          PointerScrollEvent(
+            position: center,
+            scrollDelta: const Offset(0, 10),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(controller.offset, i * 10);
+      }
+      await tester.pump(wheelRest);
+      await tester.pumpAndSettle();
+      expect(controller.offset, extent * 2);
+    });
+
+    testWidgets('the end of the list is a stop of its own', (tester) async {
+      final controller = await pumpList(tester);
+      final max = controller.position.maxScrollExtent;
+      controller.jumpTo(max);
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(ListView)),
+      );
+      await gesture.moveBy(const Offset(0, 20));
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump(const Duration(seconds: 1));
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(controller.offset, (max / extent).floor() * extent);
+      expect(onRow(controller.offset), isTrue);
+    });
+
+    testWidgets('a new row height moves the stops with it', (tester) async {
+      const taller = 60.0;
+      final controller = await pumpList(tester);
+      controller.jumpTo(extent * 2);
+      await pumpList(tester, controller: controller, itemExtent: taller);
+      await tester.pumpAndSettle();
+      expect(controller.offset, taller * 2);
+
+      await tester.sendEventToBinding(
+        PointerScrollEvent(
+          position: tester.getCenter(find.byType(ListView)),
+          scrollDelta: const Offset(0, 10),
+        ),
+      );
+      await tester.pump(wheelRest);
+      await tester.pumpAndSettle();
+      expect(controller.offset, taller * 3);
+    });
+
+    testWidgets('the end of the list stays reachable', (tester) async {
+      final controller = await pumpList(tester);
+      controller.jumpTo(controller.position.maxScrollExtent - 30);
+      await tester.fling(find.byType(ListView), const Offset(0, -300), 2000);
+      await tester.pumpAndSettle();
+
+      expect(controller.offset, controller.position.maxScrollExtent);
     });
   });
 

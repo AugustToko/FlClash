@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
@@ -61,6 +62,12 @@ final _toggleCases = <_ToggleCase>[
     'dns hijacking',
     const DNSHijackingItem(),
     (c) => c.read(vpnSettingProvider).dnsHijacking,
+  ),
+  _ToggleCase(
+    'bypass private route',
+    const BypassPrivateRouteItem(),
+    (c) => c.read(networkSettingProvider).bypassPrivateRoute,
+    initial: true,
   ),
 ];
 
@@ -128,19 +135,6 @@ void main() {
       expect(container.read(patchClashConfigProvider).tun.stack, target);
     });
 
-    testWidgets('the route mode picker writes the chosen mode', (tester) async {
-      await pumpItem(tester, const RouteModeItem());
-      final initial = container.read(networkSettingProvider).routeMode;
-      final target = RouteMode.values.firstWhere((item) => item != initial);
-
-      await tester.tap(find.byType(ListTile).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(_routeModeLabel(target)).last);
-      await tester.pumpAndSettle();
-
-      expect(container.read(networkSettingProvider).routeMode, target);
-    });
-
     testWidgets('the interface name mode picker writes the chosen mode', (
       tester,
     ) async {
@@ -164,82 +158,89 @@ void main() {
     });
   });
 
-  group('interface name visibility', () {
-    testWidgets('is hidden unless the mode is custom', (tester) async {
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) =>
-                state.copyWith(interfaceNameMode: InterfaceNameMode.follow),
-          );
-
-      await pumpItem(tester, const InterfaceNameItem());
-
-      expect(find.byType(ListTile), findsNothing);
-    });
-
-    testWidgets('is shown when the mode is custom', (tester) async {
-      container
-          .read(patchClashConfigProvider.notifier)
-          .update(
-            (state) =>
-                state.copyWith(interfaceNameMode: InterfaceNameMode.custom),
-          );
-
-      await pumpItem(tester, const InterfaceNameItem());
-
-      expect(find.byType(ListTile), findsOneWidget);
-    });
-  });
-
   group('network options items', () {
-    test('interface name rows appear only on desktop', () {
-      final desktopTypes = networkOptionsItems(
-        isDesktop: true,
+    List<Type> types({
+      required bool isDesktop,
+      bool isCustomInterfaceName = true,
+    }) {
+      return networkOptionsItems(
+        isDesktop: isDesktop,
         isMacOS: false,
-      ).map((item) => item.runtimeType);
+        isCustomInterfaceName: isCustomInterfaceName,
+      ).map((item) => item.runtimeType).toList();
+    }
+
+    test('interface name rows appear only on desktop', () {
+      final desktopTypes = types(isDesktop: true);
       expect(desktopTypes, contains(InterfaceNameModeItem));
       expect(desktopTypes, contains(InterfaceNameItem));
 
-      final androidTypes = networkOptionsItems(
-        isDesktop: false,
-        isMacOS: false,
-      ).map((item) => item.runtimeType);
+      final androidTypes = types(isDesktop: false);
       expect(androidTypes, isNot(contains(InterfaceNameModeItem)));
       expect(androidTypes, isNot(contains(InterfaceNameItem)));
     });
-  });
 
-  group('route address visibility', () {
-    testWidgets('is hidden while bypassing private addresses', (tester) async {
-      container
-          .read(networkSettingProvider.notifier)
-          .update(
-            (state) => state.copyWith(routeMode: RouteMode.bypassPrivate),
-          );
-
-      await pumpItem(tester, const RouteAddressItem());
-
-      expect(find.byType(ListTile), findsNothing);
-    });
-
-    testWidgets('is shown for every other route mode', (tester) async {
-      container
-          .read(networkSettingProvider.notifier)
-          .update((state) => state.copyWith(routeMode: RouteMode.config));
-
-      await pumpItem(tester, const RouteAddressItem());
-
-      expect(find.byType(ListTile), findsOneWidget);
+    test('the interface name row is listed only for the custom mode', () {
+      expect(
+        types(isDesktop: true, isCustomInterfaceName: false),
+        isNot(contains(InterfaceNameItem)),
+      );
     });
   });
-}
 
-String _routeModeLabel(RouteMode mode) {
-  return switch (mode) {
-    RouteMode.config => 'Use config',
-    RouteMode.bypassPrivate => 'Bypass private addresses',
-  };
+  group('tun settings', () {
+    List<Widget> items({
+      bool isLinux = false,
+      bool isWindows = false,
+      bool isMipsStack = true,
+    }) {
+      return tunItems(
+        isLinux: isLinux,
+        isWindows: isWindows,
+        isMipsStack: isMipsStack,
+      );
+    }
+
+    test('every platform gets the same route rows', () {
+      final types = items().map((item) => item.runtimeType);
+      expect(types, contains(BypassPrivateRouteItem));
+      expect(types, contains(RouteAddressItem));
+      expect(items(), hasLength(5));
+      expect(items(isMipsStack: false), hasLength(4));
+    });
+
+    test('strict route is offered where sing-tun enforces it', () {
+      expect(items(isWindows: true), hasLength(6));
+      expect(items(isLinux: true), hasLength(6));
+    });
+
+    testWidgets('a number shows the core default and resets to it', (
+      tester,
+    ) async {
+      await pumpItem(tester, items().first);
+      final l = currentAppLocalizations;
+      expect(find.text('9000'), findsOneWidget);
+
+      await tester.tap(find.text('MTU'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '1400');
+      await tester.tap(find.text(l.submit));
+      await tester.pumpAndSettle();
+      expect(container.read(patchClashConfigProvider).tun.mtu, 1400);
+
+      await tester.tap(find.text('MTU'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.reset));
+      await tester.pumpAndSettle();
+      expect(container.read(patchClashConfigProvider).tun.mtu, 9000);
+    });
+
+    test('keep-alive rows stay off Android and the mark is Linux only', () {
+      expect(outboundItems(isDesktop: false, isLinux: false), isEmpty);
+      expect(outboundItems(isDesktop: true, isLinux: false), hasLength(3));
+      expect(outboundItems(isDesktop: true, isLinux: true), hasLength(4));
+    });
+  });
 }
 
 String _interfaceNameModeLabel(InterfaceNameMode mode) {

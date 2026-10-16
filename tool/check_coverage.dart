@@ -28,6 +28,7 @@ const _groupFloors = <String, double>{
   'manager': 68.0,
   'views': 66.0,
   'enum': 86.0,
+  'icons': 90.0,
   'pages': 71.0,
   'plugins': 67.0,
   'lib': 20.0,
@@ -71,7 +72,7 @@ void main(List<String> arguments) {
   final reportPath = arguments.isNotEmpty ? arguments.first : _defaultReport;
   var minimum = 0.0;
   if (arguments.length > 1) {
-    // A typo here used to come back as an unhandled FormatException and a Dart
+    // A typo would otherwise surface as an unhandled FormatException and a Dart
     // stack trace, which reads as a broken tool rather than a wrong argument.
     final parsed = double.tryParse(arguments[1]);
     if (parsed == null) {

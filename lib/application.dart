@@ -6,13 +6,17 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/window.dart';
 import 'package:fl_clash/bootstrap.dart';
 import 'package:fl_clash/common/system_dns.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/hotkey_manager.dart';
 import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/widgets/focus.dart';
+import 'package:fl_clash/widgets/keyboard_inset_hold.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,6 +26,7 @@ Widget buildManagerStack({
   required bool isDesktop,
   required Future<void> Function(List<ConnectivityResult> results)
   onConnectivityChanged,
+  Stream<ProcessSignal>? terminateSignals,
   required Widget child,
 }) {
   final platformApp = isDesktop
@@ -37,6 +42,7 @@ Widget buildManagerStack({
   );
   final platformState = isDesktop
       ? WindowManager(
+          terminateSignals: terminateSignals,
           child: TrayManager(
             child: HotKeyManager(child: ProxyManager(child: state)),
           ),
@@ -56,9 +62,24 @@ class Application extends ConsumerStatefulWidget {
   ConsumerState<Application> createState() => ApplicationState();
 }
 
+const _actionIconTheme = ActionIconThemeData(
+  backButtonIconBuilder: _backButtonIcon,
+  closeButtonIconBuilder: _closeButtonIcon,
+);
+
+Widget _backButtonIcon(BuildContext context) =>
+    GlyphIcon(AppGlyphs.backFor(Theme.of(context).platform));
+
+Widget _closeButtonIcon(BuildContext context) =>
+    const GlyphIcon(AppGlyphs.close);
+
 class ApplicationState extends ConsumerState<Application> {
   Timer? _autoUpdateProfilesTaskTimer;
   bool _preHasVpn = false;
+  // Windows can only watch SIGINT and SIGHUP.
+  final _terminateSignals = system.isDesktop && !system.isWindows
+      ? ProcessSignal.sigterm.watch()
+      : null;
 
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -85,7 +106,9 @@ class ApplicationState extends ConsumerState<Application> {
       }
       _autoUpdateProfilesTask();
       _initLink();
-      unawaited(app?.initShortcuts());
+      if (!safeModeBuild) {
+        unawaited(app?.initShortcuts());
+      }
     });
   }
 
@@ -113,7 +136,7 @@ class ApplicationState extends ConsumerState<Application> {
       );
       if (res != true) return;
       unawaited(
-        ref.read(profilesActionProvider.notifier).addProfileFormURL(url),
+        ref.read(profilesActionProvider.notifier).addProfileFromLink(url),
       );
     });
   }
@@ -121,6 +144,7 @@ class ApplicationState extends ConsumerState<Application> {
   void _autoUpdateProfilesTask() {
     _autoUpdateProfilesTaskTimer = Timer(const Duration(minutes: 20), () async {
       await ref.read(profilesActionProvider.notifier).autoUpdateProfiles();
+      await ref.read(resourcesActionProvider.notifier).autoUpdate();
       if (!mounted) {
         return;
       }
@@ -136,7 +160,7 @@ class ApplicationState extends ConsumerState<Application> {
     unawaited(ref.read(systemActionProvider.notifier).updateLocalIp());
     final hasVpn = results.contains(ConnectivityResult.vpn);
     if (_preHasVpn == hasVpn) {
-      ref.read(checkIpNumProvider.notifier).add();
+      ref.read(routeTrackerProvider.notifier).bumpHostEpoch();
     }
     _preHasVpn = hasVpn;
   }
@@ -149,6 +173,14 @@ class ApplicationState extends ConsumerState<Application> {
           appSettingProvider.select((state) => state.locale),
         );
         final themeProps = ref.watch(themeSettingProvider);
+        final fontFamilyFallback = appFontFamilyFallback(
+          platform: defaultTargetPlatform,
+          locales: [
+            ?getLocaleForString(locale),
+            ...WidgetsBinding.instance.platformDispatcher.locales,
+          ],
+          fontFamily: themeProps.fontFamily,
+        );
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: globalState.navigatorKey,
@@ -158,18 +190,11 @@ class ApplicationState extends ConsumerState<Application> {
             ...GlobalMaterialLocalizations.delegates,
           ],
           builder: (context, child) {
-            // The bridge's legacy Theme swaps in its own default IconTheme color,
-            // which material_ui IconButton.filled reads as custom and loses onPrimary.
-            // ignore: deprecated_member_use
-            return MaterialUiCompatibilityBridge(
-              child: IconTheme(
-                data: Theme.of(context).iconTheme,
-                child: buildManagerStack(
-                  isDesktop: system.isDesktop,
-                  onConnectivityChanged: _handleConnectivityChanged,
-                  child: child!,
-                ),
-              ),
+            return buildManagerStack(
+              isDesktop: system.isDesktop,
+              onConnectivityChanged: _handleConnectivityChanged,
+              terminateSignals: _terminateSignals,
+              child: RemoteFocusAdapter(enabled: system.isTV, child: child!),
             );
           },
           scrollBehavior: const BaseScrollBehavior(),
@@ -180,16 +205,20 @@ class ApplicationState extends ConsumerState<Application> {
           theme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
+            actionIconTheme: _actionIconTheme,
             colorScheme: _getAppColorScheme(brightness: Brightness.light),
+            fontFamily: themeProps.fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
           ).withAppShapes,
           darkTheme: ThemeData(
             useMaterial3: true,
             pageTransitionsTheme: _pageTransitionsTheme,
-            colorScheme: _getAppColorScheme(
-              brightness: Brightness.dark,
-            ).toPureBlack(themeProps.pureBlack),
+            actionIconTheme: _actionIconTheme,
+            colorScheme: _getAppColorScheme(brightness: Brightness.dark),
+            fontFamily: themeProps.fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
           ).withAppShapes,
-          home: child!,
+          home: KeyboardInsetHold(child: child!),
         );
       },
       child: const HomePage(),

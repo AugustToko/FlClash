@@ -32,32 +32,76 @@ ColorScheme genColorScheme(
   Brightness brightness, {
   Color? color,
   bool ignoreConfig = false,
+  bool? pureBlack,
 }) {
   final themeSetting = ref.watch(
     themeSettingProvider.select(
       (state) => (
         primaryColor: state.primaryColor,
         schemeVariant: state.schemeVariant,
+        pureBlack: state.pureBlack,
       ),
     ),
   );
   final dynamicColor = ref.watch(dynamicColorProvider);
+  final Color seedColor;
   if (color == null &&
       (ignoreConfig == true || themeSetting.primaryColor == null)) {
     final seed = switch (brightness) {
       Brightness.light => dynamicColor.lightSeed,
       Brightness.dark => dynamicColor.darkSeed,
     };
-    return ColorScheme.fromSeed(
-      seedColor: seed ?? dynamicColor.accentColor,
-      brightness: brightness,
-      dynamicSchemeVariant: themeSetting.schemeVariant,
-    );
+    seedColor = seed ?? dynamicColor.accentColor;
+  } else {
+    seedColor = color ?? Color(themeSetting.primaryColor!);
   }
-  return ColorScheme.fromSeed(
-    seedColor: color ?? Color(themeSetting.primaryColor!),
+  return _cachedColorScheme(
+    seedColor,
+    brightness,
+    themeSetting.schemeVariant,
+    pureBlack ?? themeSetting.pureBlack,
+  );
+}
+
+const _maxCachedColorSchemes = 64;
+
+final _colorSchemes =
+    <(Color, Brightness, DynamicSchemeVariant, bool), ColorScheme>{};
+
+ColorScheme _cachedColorScheme(
+  Color seedColor,
+  Brightness brightness,
+  DynamicSchemeVariant variant,
+  bool pureBlack,
+) {
+  final key = (seedColor, brightness, variant, pureBlack);
+  final colorScheme =
+      _colorSchemes.remove(key) ??
+      ColorScheme.fromSeed(
+        seedColor: seedColor,
+        brightness: brightness,
+        dynamicSchemeVariant: variant,
+      ).toPureBlack(pureBlack);
+  _colorSchemes[key] = colorScheme;
+  if (_colorSchemes.length > _maxCachedColorSchemes) {
+    _colorSchemes.remove(_colorSchemes.keys.first);
+  }
+  return colorScheme;
+}
+
+typedef WindowBlurRequest = ({bool enabled, Brightness brightness, Color tint});
+
+@riverpod
+WindowBlurRequest windowBlurRequest(Ref ref) {
+  final enabled =
+      feature.sidebarBlur &&
+      ref.watch(themeSettingProvider.select((state) => state.sidebarBlur));
+  final brightness = ref.watch(currentBrightnessProvider);
+  final colorScheme = ref.watch(genColorSchemeProvider(brightness));
+  return (
+    enabled: enabled,
     brightness: brightness,
-    dynamicSchemeVariant: themeSetting.schemeVariant,
+    tint: colorScheme.surfaceContainer,
   );
 }
 

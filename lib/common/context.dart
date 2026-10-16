@@ -31,14 +31,24 @@ extension BuildContextExtension on BuildContext {
     }
   }
 
-  double get sheetTopPadding {
-    final sheetType = SheetProvider.of(this)!.type;
-    if (sheetType == SheetType.bottomSheet) {
-      return sheetAppBarHeight;
-    } else {
-      return 10;
-    }
-  }
+  bool get isInBottomSheet =>
+      SheetProvider.of(this)?.type == SheetType.bottomSheet;
+
+  /// How far a page's app bar reaches over the top of its body.
+  ///
+  /// Where a page builds the body it hands its scaffold, outside that body,
+  /// this is where the bar will end: a toolbar below the status bar.
+  double get appBarInset =>
+      FloatingBarScope.of(this) ??
+      (isInBottomSheet
+          ? sheetAppBarHeight
+          : MediaQuery.paddingOf(this).top + pageToolbarHeight);
+
+  /// Where a scaffold body's content starts: a gap clear of the bar; a bottom
+  /// sheet's header already trails its own gap.
+  double get contentTopPadding =>
+      TopInsetScope.of(this) ??
+      (isInBottomSheet ? sheetAppBarHeight : appBarInset + 12);
 
   void showNotifier(
     String text, {
@@ -79,6 +89,26 @@ extension BuildContextExtension on BuildContext {
       disableAnimations ? Duration.zero : duration;
 
   TextTheme get textTheme => Theme.of(this).textTheme;
+
+  /// Tighter than Material's 24 dp line so a row with a subtitle stays compact.
+  TextStyle? get listTitleStyle => textTheme.bodyLarge?.copyWith(
+    height: 22 / 16,
+    color: colorScheme.onSurface,
+  );
+
+  TextStyle? get listSubtitleStyle => textTheme.bodyMedium?.copyWith(
+    height: 20 / 14,
+    color: colorScheme.onSurfaceVariant,
+  );
+
+  TextStyle? get listCaptionStyle => textTheme.bodySmall
+      ?.adjustSize(1)
+      .copyWith(color: colorScheme.onSurfaceVariant);
+
+  TextStyle? get sectionHeaderStyle => textTheme.labelLarge?.copyWith(
+    fontWeight: FontWeight.w600,
+    color: colorScheme.onSurfaceVariant.opacity80,
+  );
 
   AppLocalizations get appLocalizations => AppLocalizations.of(this);
 

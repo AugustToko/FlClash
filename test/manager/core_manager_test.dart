@@ -9,10 +9,12 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/core_manager.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/action.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
+import 'package:fl_clash/providers/route_state.dart';
 import 'package:fl_clash/providers/state.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
@@ -44,13 +46,13 @@ class _FakePathProvider extends PathProviderPlatform {
 const _nullProfileSetupState = SetupState(
   profileId: null,
   profileLastUpdateDate: null,
-  overwriteType: OverwriteType.standard,
+  profileType: ProfileType.file,
+  extendType: ExtendType.standard,
   rules: [],
   proxyGroups: [],
   addedRules: [],
   script: null,
-  overrideDns: false,
-  dns: Dns(),
+  overrides: ProfileOverrides(),
 );
 
 const _crash = CoreEvent(type: CoreEventType.crash, data: 'boom');
@@ -69,6 +71,21 @@ CoreEvent _geoUpdate({
       'error': error,
     },
   );
+}
+
+class _ApplyRecordingSetupAction extends SetupAction {
+  int updates = 0;
+  int applies = 0;
+
+  @override
+  Future<void> updateConfigDebounce() async {
+    updates++;
+  }
+
+  @override
+  void applyProfileDebounce({bool silence = false, bool force = false}) {
+    applies++;
+  }
 }
 
 _MockCoreHandlerInterface _coreInterface() {
@@ -239,6 +256,8 @@ void main() {
   testWidgets('the log stream follows the openLogs setting', (tester) async {
     final coreInterface = _coreInterface();
     final container = await _pumpCoreManager(tester, coreInterface);
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
 
     verify(() => coreInterface.stopLog()).called(1);
     verifyNever(() => coreInterface.startLog());
@@ -260,6 +279,87 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('the log stream waits for the core and is restored on '
+      'every connection', (tester) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(tester, coreInterface);
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(openLogs: true));
+    await tester.pump();
+
+    verifyNever(() => coreInterface.startLog());
+    verifyNever(() => coreInterface.stopLog());
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
+
+    verify(() => coreInterface.startLog()).called(1);
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    await tester.pump();
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connecting;
+    await tester.pump();
+
+    verifyNever(() => coreInterface.startLog());
+
+    container.read(coreStatusProvider.notifier).value = CoreStatus.connected;
+    await tester.pump();
+
+    verify(() => coreInterface.startLog()).called(1);
+    verifyNever(() => coreInterface.stopLog());
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a setting the Core patches live is not re-applied', (
+    tester,
+  ) async {
+    final setupAction = _ApplyRecordingSetupAction();
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [setupActionProvider.overrideWith(() => setupAction)],
+    );
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(mode: Mode.global, mixedPort: 8899));
+    await tester.pump();
+
+    expect(setupAction.updates, 1);
+    expect(setupAction.applies, 0);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a setting only a setup carries re-applies the profile', (
+    tester,
+  ) async {
+    final setupAction = _ApplyRecordingSetupAction();
+    final container = await _pumpCoreManager(
+      tester,
+      _coreInterface(),
+      overrides: [setupActionProvider.overrideWith(() => setupAction)],
+    );
+
+    container
+        .read(patchClashConfigProvider.notifier)
+        .update((state) => state.copyWith(hosts: const {'a.test': '1.1.1.1'}));
+    await tester.pump();
+    container
+        .read(networkSettingProvider.notifier)
+        .update(
+          (state) => state.copyWith(appendSystemDns: !state.appendSystemDns),
+        );
+    await tester.pump();
+
+    expect(setupAction.applies, 2);
+    expect(setupAction.updates, 0);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('core logs are recorded for the logs view', (tester) async {
     final coreInterface = _coreInterface();
     final container = await _pumpCoreManager(tester, coreInterface);
@@ -276,6 +376,35 @@ void main() {
       container.read(logsProvider).list.map((log) => log.payload),
       contains('hello'),
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('core dns queries are recorded and counted', (tester) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(tester, coreInterface);
+
+    for (final domain in ['alpha.test', 'beta.test']) {
+      coreEventManager.sendEvent(
+        CoreEvent(
+          type: CoreEventType.dns,
+          data: {
+            'domain': domain,
+            'type': 'A',
+            'answers': ['1.1.1.1'],
+            'delay': 3,
+            'time': '2026-09-18T04:30:01Z',
+          },
+        ),
+      );
+    }
+    await tester.pump();
+
+    expect(
+      container.read(dnsQueriesProvider).list.map((query) => query.domain),
+      ['alpha.test', 'beta.test'],
+    );
+    expect(container.read(dnsQueryCountProvider), 2);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -302,6 +431,31 @@ void main() {
 
     expect(container.read(isUpdatingProvider(key)), isFalse);
     expect(find.text('background failure'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('route events reach the route tracker', (tester) async {
+    final coreInterface = _coreInterface();
+    final container = await _pumpCoreManager(tester, coreInterface);
+
+    coreEventManager.sendEvent(
+      const CoreEvent(
+        type: CoreEventType.routeChanged,
+        data: {
+          'core-epoch': 7,
+          'picks-version': 42,
+          'picks': {'Proxy': 'HK-01'},
+        },
+      ),
+    );
+    await tester.pump();
+
+    final route = container.read(routeTrackerProvider);
+    expect(route.coreEpoch, 7);
+    expect(route.picksVersion, 42);
+    expect(route.picks, {'Proxy': 'HK-01'});
+    expect(route.synced, isTrue);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

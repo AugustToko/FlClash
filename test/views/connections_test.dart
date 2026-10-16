@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
@@ -83,6 +85,11 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> pumpPastArrivalHold(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(commonDuration);
+  }
+
   Future<void> teardownView(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
@@ -101,6 +108,26 @@ void main() {
     await teardownView(tester);
   });
 
+  testWidgets('shows the empty state until core answers', (tester) async {
+    final pending = Completer<List<TrackerInfo>>();
+    when(core.getConnections).thenAnswer((_) => pending.future);
+
+    await pumpConnections(tester);
+    expect(find.byType(NullStatus), findsOneWidget);
+
+    pending.complete([_tracker(id: 'a', host: 'alpha.test')]);
+    await tester.pump();
+    expect(find.byType(NullStatus), findsOneWidget);
+
+    await pumpPastArrivalHold(tester);
+
+    expect(find.byType(NullStatus), findsNothing);
+    expect(find.textContaining('alpha.test'), findsWidgets);
+    expect(tester.takeException(), null);
+
+    await teardownView(tester);
+  });
+
   testWidgets('renders one row per reported connection', (tester) async {
     when(core.getConnections).thenAnswer(
       (_) async => [
@@ -110,8 +137,7 @@ void main() {
     );
 
     await pumpConnections(tester);
-    await tester.pump(commonDuration);
-    await tester.pump(commonDuration);
+    await pumpPastArrivalHold(tester);
 
     expect(find.byType(NullStatus), findsNothing);
     expect(find.textContaining('alpha.test'), findsWidgets);
@@ -138,6 +164,7 @@ void main() {
     );
 
     await pumpConnections(tester);
+    await pumpPastArrivalHold(tester);
 
     double topOf(String host) =>
         tester.getTopLeft(find.textContaining(host).first).dy;

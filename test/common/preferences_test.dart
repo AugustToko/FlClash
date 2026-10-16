@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _sharedState = SharedState(
   stopTip: 'stop',
   startTip: 'start',
+  localNetworkTip: 'local',
   currentProfileName: 'profile',
   stopText: 'stopped',
   onlyStatisticsProxy: true,
@@ -48,7 +49,6 @@ void main() {
       const config = Config(
         themeProps: defaultThemeProps,
         currentProfileId: 42,
-        overrideDns: true,
         excludeSSIDs: ['home'],
       );
 
@@ -57,7 +57,6 @@ void main() {
 
       expect(restored, isNotNull);
       expect(restored!.currentProfileId, 42);
-      expect(restored.overrideDns, isTrue);
       expect(restored.excludeSSIDs, ['home']);
     });
 

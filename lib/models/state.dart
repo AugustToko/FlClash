@@ -53,7 +53,6 @@ abstract class MessageActionState with _$MessageActionState {
 @freezed
 abstract class AppBarState with _$AppBarState {
   const factory AppBarState({
-    @Default([]) List<Widget> actions,
     AppBarSearchState? searchState,
     AppBarEditState? editState,
   }) = _AppBarState;
@@ -63,7 +62,6 @@ abstract class AppBarState with _$AppBarState {
 abstract class AppBarSearchState with _$AppBarSearchState {
   const factory AppBarSearchState({
     required Function(String) onSearch,
-    @Default(true) bool autoAddSearch,
     @Default(null) String? query,
   }) = _AppBarSearchState;
 }
@@ -93,14 +91,6 @@ abstract class ProfilesState with _$ProfilesState {
 }
 
 @freezed
-abstract class NetworkDetectionState with _$NetworkDetectionState {
-  const factory NetworkDetectionState({
-    required bool isLoading,
-    required IpInfo? ipInfo,
-  }) = _NetworkDetectionState;
-}
-
-@freezed
 abstract class TrayState with _$TrayState {
   const factory TrayState({
     required Mode mode,
@@ -112,6 +102,8 @@ abstract class TrayState with _$TrayState {
     required List<Group> groups,
     required Map<String, String> selectedMap,
     required bool showTrayTitle,
+    required bool safeMode,
+    @Default({}) Map<HotAction, HotKeyAction> hotKeys,
   }) = _TrayState;
 }
 
@@ -301,20 +293,13 @@ abstract class SelectedProxyState with _$SelectedProxyState {
 }
 
 @freezed
-abstract class VpnState with _$VpnState {
-  const factory VpnState({
-    required TunStack stack,
-    required VpnProps vpnProps,
-  }) = _VpnState;
-}
-
-@freezed
 abstract class SharedState with _$SharedState {
   const factory SharedState({
     SetupParams? setupParams,
     VpnOptions? vpnOptions,
     required String stopTip,
     required String startTip,
+    required String localNetworkTip,
     required String currentProfileName,
     required String stopText,
     required bool onlyStatisticsProxy,
@@ -348,14 +333,20 @@ abstract class MakeRealProfileState with _$MakeRealProfileState {
     required int profileId,
     required Map<String, dynamic> rawConfig,
     required PatchClashConfig realPatchConfig,
-    required bool overrideDns,
+    @Default(ProfileOverrides()) ProfileOverrides overrides,
+
+    /// Set for a subscription, whose own DNS values an emptied entry replaces.
+    @Default(false) bool keepEmptyDnsOverrides,
     required bool appendSystemDns,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> rules,
     required List<Rule> addedRules,
     required String defaultUA,
     @Default([]) List<String> authentication,
+    @Default({}) Map<String, dynamic> injectedProxyProviders,
+    @Default({}) Map<String, dynamic> injectedRuleProviders,
     String? matchTarget,
+    @Default(false) bool safeMode,
   }) = _MakeRealProfileState;
 }
 
@@ -366,8 +357,11 @@ abstract class MigrationData with _$MigrationData {
     @Default([]) List<Rule> rules,
     @Default([]) List<Script> scripts,
     @Default([]) List<Profile> profiles,
-    @Default([]) List<ProfileRuleLink> links,
+    @Default([]) List<DisabledRule> disabledRules,
     @Default([]) List<ProxyGroup> proxyGroups,
+    @Default([]) List<ClashProvider> clashProviders,
+    @Default([]) List<CustomProxy> customProxies,
+    @Default([]) List<ProxyDialer> proxyDialers,
   }) = _MigrationData;
 }
 
@@ -376,13 +370,17 @@ abstract class SetupState with _$SetupState {
   const factory SetupState({
     required int? profileId,
     required int? profileLastUpdateDate,
-    required OverwriteType overwriteType,
+    required ProfileType profileType,
+    required ExtendType extendType,
     required List<Rule> rules,
     required List<ProxyGroup> proxyGroups,
     required List<Rule> addedRules,
     required Script? script,
-    required bool overrideDns,
-    required Dns dns,
+    required ProfileOverrides overrides,
+    @Default([]) List<ClashProvider> clashProviders,
+    @Default({}) Map<String, int> profileProviders,
+    @Default([]) List<CustomProxy> appProxies,
+    @Default({}) Map<int, String> proxyDialers,
     String? matchTarget,
   }) = _SetupState;
 }

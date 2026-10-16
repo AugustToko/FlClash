@@ -7,11 +7,13 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/profiles/edit.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   final String root;
@@ -35,6 +37,13 @@ class _NoopSetupAction extends SetupAction {
   void autoApplyProfile() {}
 }
 
+class _RecordingProfilesAction extends ProfilesAction {
+  final put = <Profile>[];
+
+  @override
+  void putProfile(Profile profile) => put.add(profile);
+}
+
 Profile _urlProfile() =>
     Profile.normal(label: 'test', url: 'https://example.com/sub');
 
@@ -43,6 +52,7 @@ Profile _urlProfile() =>
 Future<FocusNode> pumpEditProfile(
   WidgetTester tester, {
   Profile? profile,
+  List<Override> overrides = const [],
 }) async {
   tester.view.physicalSize = const Size(900, 800);
   tester.view.devicePixelRatio = 1;
@@ -50,7 +60,10 @@ Future<FocusNode> pumpEditProfile(
   addTearDown(tester.view.resetDevicePixelRatio);
 
   final container = ProviderContainer(
-    overrides: [setupActionProvider.overrideWith(() => _NoopSetupAction())],
+    overrides: [
+      setupActionProvider.overrideWith(() => _NoopSetupAction()),
+      ...overrides,
+    ],
   );
   addTearDown(container.dispose);
   // Unmount the widget tree before the container is disposed so State.dispose
@@ -60,6 +73,7 @@ Future<FocusNode> pumpEditProfile(
     await tester.pumpWidget(const SizedBox());
   });
   globalState.container = container;
+  container.read(viewSizeProvider.notifier).value = const Size(900, 800);
 
   final outsideFocus = FocusNode();
   addTearDown(outsideFocus.dispose);
@@ -68,6 +82,7 @@ Future<FocusNode> pumpEditProfile(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        navigatorKey: globalState.navigatorKey,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           ...GlobalMaterialLocalizations.delegates,
@@ -113,9 +128,9 @@ Future<FocusNode> pumpEditProfile(
   return outsideFocus;
 }
 
-bool _isFabFocused() {
+bool _isInAppBar() {
   final context = FocusManager.instance.primaryFocus?.context;
-  return context?.findAncestorWidgetOfExactType<FloatingActionButton>() != null;
+  return context?.findAncestorWidgetOfExactType<AppBar>() != null;
 }
 
 bool _isTextFieldFocused() {
@@ -126,9 +141,11 @@ bool _isTextFieldFocused() {
 void main() {
   late Directory tempDir;
 
-  setUpAll(() {
+  setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('edit_profile_focus_test');
     PathProviderPlatform.instance = _FakePathProvider(tempDir.path);
+    // A path resolved inside one test's fake zone never wakes a later test.
+    await appPath.dataDir.future;
   });
 
   tearDownAll(() {
@@ -137,16 +154,70 @@ void main() {
     } catch (_) {}
   });
 
-  testWidgets('tabbing into the edit page starts with the form', (
+  testWidgets('tabbing into the edit page reaches the form past its bar', (
     tester,
   ) async {
     final outsideFocus = await pumpEditProfile(tester);
     expect(FocusManager.instance.primaryFocus, outsideFocus);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await tester.pump();
-
+    for (var i = 0; i < 4 && !_isTextFieldFocused(); i++) {
+      if (i > 0) {
+        expect(_isInAppBar(), isTrue);
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+    }
     expect(_isTextFieldFocused(), isTrue);
-    expect(_isFabFocused(), isFalse);
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byTooltip('Save'), findsOneWidget);
   });
+
+  testWidgets('a custom profile edits only its name', (tester) async {
+    final action = _RecordingProfilesAction();
+    final profile = Profile.custom(label: 'Mine');
+    await pumpEditProfile(
+      tester,
+      profile: profile,
+      overrides: [profilesActionProvider.overrideWith(() => action)],
+    );
+
+    expect(find.byType(TextFormField), findsOneWidget);
+    expect(find.text(currentAppLocalizations.autoUpdate), findsNothing);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, currentAppLocalizations.name),
+      'Renamed',
+    );
+    await tester.tap(find.byTooltip(currentAppLocalizations.save));
+    await tester.pumpAndSettle();
+
+    expect(action.put.single, profile.copyWith(label: 'Renamed'));
+  });
+
+  testWidgets(
+    'the profile file row shows its size and update time without chips',
+    (tester) async {
+      await pumpEditProfile(tester);
+      final row = find.widgetWithText(
+        DecorationListItem,
+        currentAppLocalizations.profile,
+      );
+      for (var i = 0; i < 20 && row.evaluate().isEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(of: row, matching: find.byType(LastUpdateTimeText)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.text(0.traffic.show)),
+        findsOneWidget,
+      );
+      expect(find.byType(MetaChip), findsNothing);
+    },
+  );
 }

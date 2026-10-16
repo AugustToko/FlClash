@@ -80,16 +80,6 @@ class AppPath {
     return join(mHomeDirPath, 'database.sqlite');
   }
 
-  Future<String> get backupFilePath async {
-    final mHomeDirPath = await homeDirPath;
-    return join(mHomeDirPath, 'backup.zip');
-  }
-
-  Future<String> get restoreDirPath async {
-    final mHomeDirPath = await homeDirPath;
-    return join(mHomeDirPath, 'restore');
-  }
-
   Future<String> get tempFilePath async {
     final mTempDir = await tempDir.future;
     return join(mTempDir.path, 'temp$uniqueId');
@@ -127,6 +117,19 @@ class AppPath {
   Future<String> getScriptPath(String fileName) async {
     final path = await scriptsDirPath;
     return join(path, '$fileName.js');
+  }
+
+  Future<String> get providerCacheRootPath async {
+    final directory = await homeDirPath;
+    return join(directory, providersDirectoryName);
+  }
+
+  Future<String> getProviderCachePath(String fileName) async {
+    return join(
+      await providerCacheRootPath,
+      rulesProviderDirectoryName,
+      fileName,
+    );
   }
 
   Future<String> getProvidersRootPath() async {

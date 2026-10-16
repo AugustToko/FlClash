@@ -3,6 +3,7 @@ import 'package:fl_clash/common/theme.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/manager/status_manager.dart';
 import 'package:fl_clash/providers/action.dart';
@@ -13,6 +14,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../helpers/glyph_finders.dart';
 
 class _MockCoreHandlerInterface extends Mock implements CoreHandlerInterface {}
 
@@ -93,8 +96,8 @@ void main() {
       find.text(currentAppLocalizations.geoSkipped(GeoResource.MMDB.name)),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.check_circle_outline), findsNothing);
-    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.byGlyph(AppGlyphs.checkCircle), findsNothing);
+    expect(find.byGlyph(AppGlyphs.error), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -141,6 +144,38 @@ void main() {
     await tester.pump();
 
     expect(container.read(isUpdatingProvider(key)), isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('a request the Core turns down leaves a running update be', (
+    tester,
+  ) async {
+    final coreInterface = _MockCoreHandlerInterface();
+    var requests = 0;
+    when(() => coreInterface.updateGeoData('MMDB')).thenAnswer(
+      (_) async => requests++ == 0 ? '' : 'geo update already in progress',
+    );
+    final container = await _pumpGeoResourceAction(tester, coreInterface);
+    final action = container.read(geoResourceActionProvider.notifier);
+    final key = GeoResource.MMDB.updatingKey;
+
+    await action.updateGeoResource(GeoResource.MMDB);
+    await expectLater(
+      action.updateGeoResource(GeoResource.MMDB, announceSuccess: false),
+      throwsA(isA<MessageException>()),
+    );
+
+    expect(container.read(isUpdatingProvider(key)), isTrue);
+
+    action.handleCoreUpdate('MMDB', false, false, null);
+    await tester.pump();
+
+    expect(container.read(isUpdatingProvider(key)), isFalse);
+    expect(
+      find.text(currentAppLocalizations.geoUpdated(GeoResource.MMDB.name)),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -211,7 +246,32 @@ void main() {
     await tester.pump();
 
     expect(find.text('download failed'), findsOneWidget);
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.error), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('an update that announces no success still reports failure', (
+    tester,
+  ) async {
+    final coreInterface = _MockCoreHandlerInterface();
+    when(() => coreInterface.updateGeoData(any())).thenAnswer((_) async => '');
+    final container = await _pumpGeoResourceAction(tester, coreInterface);
+    final action = container.read(geoResourceActionProvider.notifier);
+    final key = GeoResource.MMDB.updatingKey;
+
+    await action.updateGeoResource(GeoResource.MMDB, announceSuccess: false);
+    await action.updateGeoResource(GeoResource.ASN, announceSuccess: false);
+    action.handleCoreUpdate('MMDB', false, false, null);
+    action.handleCoreUpdate('ASN', false, false, 'download failed');
+    await tester.pump();
+
+    expect(container.read(isUpdatingProvider(key)), isFalse);
+    expect(
+      find.text(currentAppLocalizations.geoUpdated(GeoResource.MMDB.name)),
+      findsNothing,
+    );
+    expect(find.text('download failed'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

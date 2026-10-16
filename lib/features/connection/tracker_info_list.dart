@@ -49,7 +49,7 @@ class TrackerInfoList extends StatelessWidget {
   final bool shrinkWrap;
   final ScrollPhysics? physics;
   final EdgeInsetsGeometry? padding;
-  final Widget? Function(TrackerInfo trackerInfo)? trailingBuilder;
+  final Widget? Function(TrackerInfo trackerInfo)? actionBuilder;
 
   const TrackerInfoList({
     super.key,
@@ -60,7 +60,7 @@ class TrackerInfoList extends StatelessWidget {
     this.shrinkWrap = false,
     this.physics,
     this.padding,
-    this.trailingBuilder,
+    this.actionBuilder,
   });
 
   @override
@@ -72,12 +72,14 @@ class TrackerInfoList extends StatelessWidget {
       controller: controller,
       padding: padding,
       itemCount: trackerInfos.length,
+      extentEstimation: zeroDividerExtentEstimation,
       separatorBuilder: (_, _) => const Divider(height: 0),
       itemBuilder: (_, index) => _buildTrackerInfoItem(
         context,
         trackerInfos[index],
+        isLive: false,
         detailTitle: detailTitle,
-        trailingBuilder: trailingBuilder,
+        actionBuilder: actionBuilder,
       ),
     );
   }
@@ -90,7 +92,7 @@ class TrackerInfoAnimatedList extends StatelessWidget {
   final String detailTitle;
   final ScrollController? controller;
   final EdgeInsetsGeometry? padding;
-  final Widget? Function(TrackerInfo trackerInfo)? trailingBuilder;
+  final Widget? Function(TrackerInfo trackerInfo)? actionBuilder;
 
   const TrackerInfoAnimatedList({
     super.key,
@@ -98,7 +100,7 @@ class TrackerInfoAnimatedList extends StatelessWidget {
     required this.detailTitle,
     this.controller,
     this.padding,
-    this.trailingBuilder,
+    this.actionBuilder,
   });
 
   @override
@@ -112,8 +114,9 @@ class TrackerInfoAnimatedList extends StatelessWidget {
       itemBuilder: (context, trackerInfo) => _buildTrackerInfoItem(
         context,
         trackerInfo,
+        isLive: true,
         detailTitle: detailTitle,
-        trailingBuilder: trailingBuilder,
+        actionBuilder: actionBuilder,
       ),
     );
   }
@@ -122,16 +125,18 @@ class TrackerInfoAnimatedList extends StatelessWidget {
 Widget _buildTrackerInfoItem(
   BuildContext context,
   TrackerInfo trackerInfo, {
+  required bool isLive,
   required String detailTitle,
-  required Widget? Function(TrackerInfo trackerInfo)? trailingBuilder,
+  required Widget? Function(TrackerInfo trackerInfo)? actionBuilder,
 }) {
   return TrackerInfoItem(
     key: Key(trackerInfo.id),
     trackerInfo: trackerInfo,
+    isLive: isLive,
     onClickKeyword: (value) {
       context.commonScaffoldState?.addKeyword(value);
     },
-    trailing: trailingBuilder?.call(trackerInfo),
+    action: actionBuilder?.call(trackerInfo),
     detailTitle: detailTitle,
   );
 }

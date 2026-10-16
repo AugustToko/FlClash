@@ -6,6 +6,8 @@ import com.google.gson.annotations.SerializedName
 data class SharedState(
     val startTip: String = "Starting VPN...",
     val stopTip: String = "Stopping VPN...",
+    val localNetworkTip: String =
+        "Local network permission denied: using the gvisor stack, LAN is unreachable.",
     val crashlytics: Boolean = true,
     val currentProfileName: String = "FlClash",
     val stopText: String = "Stop",
@@ -20,4 +22,6 @@ data class SetupParams(
     val testUrl: String,
     @SerializedName("selected-map")
     val selectedMap: Map<String, String>,
+    @SerializedName("skip-cert-verify")
+    val skipCertVerify: Boolean = false,
 )

@@ -1,7 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:collection/collection.dart';
 import 'package:fl_clash/common/common.dart';
@@ -19,9 +19,12 @@ const packageName = 'com.follow.clash';
 final unixSocketPath = '/tmp/FlClashSocket_${Random().nextInt(10000)}.sock';
 final windowsPipeName = '\\\\.\\pipe\\FlClashCore_${_randomPipeId()}';
 const helperPort = 47890;
+const helperPortKey =
+    'SYSTEM\\CurrentControlSet\\Services\\$appHelperService\\Runtime';
+const helperPortValue = 'Port';
 const helperSocketPath = '/run/flclash/helper.sock';
 const helperProtocolVersionHeader = 'x-flclash-helper-protocol';
-const helperProtocolVersion = '6';
+final helperProtocolVersion = Platform.isWindows ? '8' : '6';
 const maxTextScale = 1.4;
 const minTextScale = 0.8;
 final baseInfoEdgeInsets = EdgeInsets.symmetric(
@@ -30,13 +33,22 @@ final baseInfoEdgeInsets = EdgeInsets.symmetric(
 );
 final listHeaderPadding = EdgeInsets.only(
   left: 16.mAp,
-  right: 8.mAp,
+  right: 16.mAp,
   top: 24.mAp,
   bottom: 8.mAp,
 );
+
+const listRowMinHeight = 56.0;
+const listRowVerticalPadding = 10.0;
+const pageToolbarHeight = 64.0;
+const sheetToolbarHeight = 48.0;
 const sheetAppBarHeight = 68.0;
 
 const watchExecution = false;
+
+const safeModeBuild = bool.fromEnvironment('SAFE_MODE');
+
+const disclaimerVersion = 1;
 
 String _randomPipeId() {
   final random = Random.secure();
@@ -46,8 +58,12 @@ String _randomPipeId() {
   ).join();
 }
 
-final defaultTextScaleFactor =
-    WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+/// Depends on [context]'s text scaler, so the caller rebuilds when the system
+/// font scale changes.
+double systemTextScaleOf(BuildContext context) {
+  MediaQuery.textScalerOf(context);
+  return WidgetsBinding.instance.platformDispatcher.textScaleFactor;
+}
 
 /// How long the Core may spend on one delay test. It spends this twice in the
 /// worst case - once queueing for a slot, once on the probe itself - so the
@@ -56,19 +72,47 @@ const delayTestTimeoutDuration = Duration(seconds: 8);
 
 const delayTestGuardDuration = Duration(seconds: 30);
 
+const delayTimedOutValue = -1;
+
+const probeTimeoutDuration = Duration(seconds: 10);
+
+const downloadTimeoutDuration = Duration(seconds: 20);
+
+/// A healthy source answers within a second; past this the outbound is down.
+const outboundIpTimeoutDuration = Duration(seconds: 6);
+
+/// The Core may spend a method's own timeout twice, once queueing for a probe
+/// slot and once on the request, before the transport is considered
+/// unresponsive. [budgetFactor] covers methods that spend it more than once.
+Duration coreGuardFor(int timeout, {int budgetFactor = 2}) =>
+    Duration(milliseconds: timeout * budgetFactor) + const Duration(seconds: 5);
+
+Duration probeGuardDuration(ProbeParams params) => coreGuardFor(params.timeout);
+
+/// Kept in step with serviceSweepBudgetFactor in core/service_check.go.
+const serviceSweepBudgetFactor = 6;
+
 const coreConnectionWaitDuration = Duration(seconds: 10);
 
 /// Keep at or below the Core's delay-test concurrency (`delayTestConcurrency`
-/// in core/common.go).
-const maxConcurrentDelayTests = 16;
+/// in core/delay.go).
+const maxConcurrentDelayTests = 32;
+const maxConcurrentImports = 4;
+const maxConcurrentIconLoads = 8;
 const animateDuration = Duration(milliseconds: 100);
 const midDuration = Duration(milliseconds: 200);
 const commonDuration = Duration(milliseconds: 300);
+
+const renderThrottleDuration = Duration(milliseconds: 300);
 const defaultUpdateDuration = Duration(days: 1);
 const MMDB = 'GEOIP.metadb';
 const ASN = 'ASN.mmdb';
 const GEOIP = 'GEOIP.dat';
 const GEOSITE = 'GEOSITE.dat';
+
+/// The macOS sidebar material is the finished look; the Windows accent
+/// effects need a tint over them to keep the rail readable.
+final double kSidebarBlurOpacity = system.isMacOS ? 0 : 0.5;
 final double kHeaderHeight = getWindowHeaderHeight(
   isDesktop: system.isDesktop,
   isMacOS: system.isMacOS,
@@ -77,6 +121,7 @@ const profilesDirectoryName = 'profiles';
 const providersDirectoryName = 'providers';
 const proxiesProviderDirectoryName = 'proxies';
 const rulesProviderDirectoryName = 'rules';
+
 const localhost = '127.0.0.1';
 const clashConfigKey = 'clash_config';
 const configKey = 'config';
@@ -88,11 +133,25 @@ const repository = 'chen08209/FlClash';
 const maxMobileWidth = 600;
 const maxLaptopWidth = 840;
 const defaultTestUrl = 'https://www.gstatic.com/generate_204';
-final commonFilter = ImageFilter.blur(
-  sigmaX: 5,
-  sigmaY: 5,
-  tileMode: TileMode.clamp,
-);
+
+const shareLinkSchemes = {
+  'hysteria',
+  'hysteria2',
+  'hy2',
+  'hysteria2+realm',
+  'hy2+realm',
+  'tuic',
+  'trojan',
+  'vless',
+  'vmess',
+  'ss',
+  'ssr',
+  'socks',
+  'socks5',
+  'socks5h',
+  'anytls',
+  'mierus',
+};
 
 const stringListEquality = ListEquality<String>();
 const intListEquality = ListEquality<int>();
@@ -100,6 +159,9 @@ const ruleListEquality = ListEquality<Rule>();
 const scriptListEquality = ListEquality<Script>();
 const profileListEquality = ListEquality<Profile>();
 const proxyGroupsEquality = ListEquality<ProxyGroup>();
+const customProxiesEquality = ListEquality<CustomProxy>();
+const clashProviderListEquality = ListEquality<ClashProvider>();
+const iconSetListEquality = ListEquality<IconSet>();
 const hotKeyActionListEquality = ListEquality<HotKeyAction>();
 const stringAndStringMapEntryListEquality =
     ListEquality<MapEntry<String, String>>();
@@ -111,15 +173,12 @@ const profilesStoreKey = PageStorageKey<String>('profiles');
 
 const defaultPrimaryColor = 0XFFD8C0C3;
 
-double getWidgetHeight(num lines) {
-  final space = 14.mAp;
-  return max(lines * (80.ap + space) - space, 0);
-}
-
 const maxLogsLength = 5000;
 const maxRequestsLength = 2000;
+const maxDnsQueriesLength = 3000;
 const pausedMaxLogsLength = maxLogsLength * 2;
 const pausedMaxRequestsLength = maxRequestsLength * 2;
+const pausedMaxDnsQueriesLength = maxDnsQueriesLength * 2;
 
 const trafficSampleLength = 30;
 

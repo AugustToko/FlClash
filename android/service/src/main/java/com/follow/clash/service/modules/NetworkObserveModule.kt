@@ -34,6 +34,7 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
     }
     private val mainHandler = Handler(Looper.getMainLooper())
     private var currentDnsList = listOf<String>()
+    private var currentNetwork: Network? = null
 
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
@@ -47,13 +48,13 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             networkInfos[network] = NetworkInfo()
-            updateDns()
+            scheduleUpdateDns()
         }
 
         override fun onLosing(network: Network, maxMsToLive: Int) {
             val info = networkInfos[network] ?: return
             info.losingUntilMillis = System.currentTimeMillis() + maxMsToLive
-            updateDns()
+            scheduleUpdateDns()
             if (maxMsToLive > 0) {
                 mainHandler.postDelayed({
                     if (networkInfos.containsKey(network)) {
@@ -65,13 +66,22 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
 
         override fun onLost(network: Network) {
             networkInfos.remove(network)
-            updateDns()
+            scheduleUpdateDns()
         }
 
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
             networkInfos[network]?.dnsList = linkProperties.dnsServers
-            updateDns()
+            scheduleUpdateDns()
         }
+    }
+
+    private val updateDnsTask = Runnable(::updateDns)
+
+    // A switch arrives as a burst, and a network that just came up has no DNS
+    // until its link properties follow; the Core flushes its cache per list.
+    private fun scheduleUpdateDns() {
+        mainHandler.removeCallbacks(updateDnsTask)
+        mainHandler.postDelayed(updateDnsTask, DNS_UPDATE_DELAY_MILLIS)
     }
 
     override fun start() {
@@ -100,18 +110,24 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
 
     @Synchronized
     private fun updateDns() {
-        val dnsList = networkInfos.asSequence()
-            .minByOrNull(::networkPriority)
+        val preferred = networkInfos.entries.minByOrNull(::networkPriority)
+        val dnsList = preferred
             ?.value
             ?.dnsList
             .orEmpty()
             .map { address -> address.asSocketAddressText(DNS_PORT) }
             .distinct()
-        if (dnsList == currentDnsList) {
-            return
+        if (dnsList != currentDnsList) {
+            currentDnsList = dnsList
+            Core.updateDNS(dnsList.joinToString(","))
         }
-        currentDnsList = dnsList
-        Core.updateDNS(dnsList.joinToString(","))
+        val network = preferred?.key ?: return
+        // Sockets protected onto the network we left stay bound to it; closing
+        // them makes apps reconnect now instead of after a TCP timeout.
+        if (currentNetwork != null && currentNetwork != network) {
+            Core.resetNetwork()
+        }
+        currentNetwork = network
     }
 
     override fun stop() {
@@ -121,11 +137,13 @@ internal class NetworkObserveModule(private val service: Service) : ServiceModul
         } finally {
             networkInfos.clear()
             updateDns()
+            currentNetwork = null
         }
     }
 }
 
 private const val DNS_PORT = 53
+private const val DNS_UPDATE_DELAY_MILLIS = 200L
 
 private fun InetAddress.asSocketAddressText(port: Int): String = when (this) {
     is Inet6Address -> "[$hostAddress]:$port"
