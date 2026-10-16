@@ -584,6 +584,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "Режим разработчика включён.",
     ),
+    "diagnostics": MessageLookupByLibrary.simpleMessage("Диагностика"),
     "dialerProxy": MessageLookupByLibrary.simpleMessage(
       "Прокси для подключения",
     ),
@@ -718,12 +719,55 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "Доступна новая версия",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage(
+      "Дополнительные записи",
+    ),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Ответы"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage(
+      "Авторитетные записи",
+    ),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("Диагностика DNS"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Запрос DNS через работающий Core и просмотр записей",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("Перехват DNS"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("Режим DNS"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage(
+      "Записи не возвращены",
+    ),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Добавленные здесь параметры заменяют DNS всех профилей из URL и файлов; остальные остаются такими, как в профиле. DNS пользовательского профиля задаётся в его содержимом.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS-запросы"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage(
+      "Ошибка DNS-запроса",
+    ),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("Домен или IP-адрес"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("Ответ DNS"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Тип записи"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Резолвер"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Активный резолвер Core",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "DNS прямого подключения",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "DNS прокси-сервера",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("Системный DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Флаги ответа"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Выполнить запрос"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "Активный резолвер Core недоступен, использован системный DNS",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "В ответе нет записей",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "Ответ был усечён",
+    ),
     "docked": MessageLookupByLibrary.simpleMessage("Закреплённая"),
     "domain": MessageLookupByLibrary.simpleMessage("Домен"),
     "download": MessageLookupByLibrary.simpleMessage("Загрузка"),

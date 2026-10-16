@@ -17,6 +17,7 @@ import 'config/advanced.dart';
 import 'config/custom_resources.dart';
 import 'developer.dart';
 import 'disclaimer.dart';
+import 'dns_diagnostics.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -44,6 +45,13 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (enableDeveloperMode) const _DeveloperItem(),
         const _InfoItem(),
       ],
+    );
+  }
+
+  List<Widget> _getDiagnosticsList() {
+    return generateSection(
+      title: context.appLocalizations.diagnostics,
+      items: const [_DnsDiagnosticsItem()],
     );
   }
 
@@ -85,6 +93,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           );
         },
       ),
+      ..._getDiagnosticsList(),
       ..._getSettingList(),
       ..._getOtherList(appSetting.developerMode),
     ];
@@ -101,6 +110,21 @@ class _ToolViewState extends ConsumerState<ToolsView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DnsDiagnosticsItem extends StatelessWidget {
+  const _DnsDiagnosticsItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.dns),
+      title: Text(context.appLocalizations.dnsDiagnostics),
+      subtitle: Text(context.appLocalizations.dnsDiagnosticsDesc),
+      widget: const DnsDiagnosticsView(),
+      forceFull: true,
     );
   }
 }

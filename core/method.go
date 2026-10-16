@@ -219,6 +219,8 @@ var methodHandlers = map[CoreMethod]methodHandler{
 	dumpRuleSetMethod:              withFallible(handleDumpRuleSet),
 	compileRuleSetMethod:           withFallible(handleCompileRuleSet),
 	clearEffectMethod:              withMessage(handleClearEffect),
+	analyzeDomainMethod:            withFallible(handleAnalyzeDomain),
+	queryDnsMethod:                 withFallible(handleDNSQuery),
 }
 
 func watchRouteHandler(call *MethodCall) (any, error) {
