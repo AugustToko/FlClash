@@ -5,3 +5,5 @@ export 'event.dart';
 export 'lib.dart';
 export 'method.dart';
 export 'service.dart';
+export 'dns_diagnostic.dart';
+export 'domain_analysis.dart';

@@ -210,6 +210,24 @@ class CoreController {
     return _interface.watchRoute(watch);
   }
 
+  Future<CoreDomainAnalysis> analyzeDomain(String host) {
+    return _interface.analyzeDomain(host);
+  }
+
+  Future<CoreDnsQueryResult> queryDns({
+    required String name,
+    DnsDiagnosticQueryType queryType = DnsDiagnosticQueryType.a,
+    DnsDiagnosticResolver resolver = DnsDiagnosticResolver.defaultResolver,
+    Duration timeout = const Duration(seconds: 5),
+  }) {
+    return _interface.queryDns(
+      name: name,
+      queryType: queryType,
+      resolver: resolver,
+      timeout: timeout,
+    );
+  }
+
   Future<List<TrackerInfo>> getConnections() async {
     return _interface.getConnections();
   }

@@ -563,6 +563,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "Developer mode is enabled.",
     ),
+    "diagnostics": MessageLookupByLibrary.simpleMessage("Diagnostics"),
     "dialerProxy": MessageLookupByLibrary.simpleMessage("Dialer proxy"),
     "dialerProxyDesc": MessageLookupByLibrary.simpleMessage(
       "Dialer proxy is the outbound used to reach the NTP server.",
@@ -691,12 +692,49 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "New version found",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("Additional"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("Answers"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("Authority"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS diagnostics"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "Query the running Core and inspect DNS records",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS hijacking"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("No records returned"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "Entries added here replace the DNS of every URL and file profile; anything not added keeps the profile\'s own setting. Custom profiles set their DNS in their content.",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS queries"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS query failed"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage(
+      "Domain or IP address",
+    ),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS response"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("Record type"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("Resolver"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "Active Core resolver",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage(
+      "Direct outbound DNS",
+    ),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage(
+      "Proxy server DNS",
+    ),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("System DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("Response flags"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("Run query"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "The active Core resolver was unavailable, so system DNS was used",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "The response contains no answer records",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage(
+      "The response was truncated",
+    ),
     "docked": MessageLookupByLibrary.simpleMessage("Docked"),
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),

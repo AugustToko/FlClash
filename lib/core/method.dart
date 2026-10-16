@@ -28,6 +28,8 @@ enum CoreMethod {
   probe,
   outboundIp,
   serviceCheck,
+  analyzeDomain,
+  queryDns,
   getConnections,
   getConnectionCount,
   closeConnections,

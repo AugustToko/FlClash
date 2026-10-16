@@ -60,6 +60,8 @@ const (
 	compileRuleSetMethod           CoreMethod = "compileRuleSet"
 	clearEffectMethod              CoreMethod = "clearEffect"
 	watchRouteMethod               CoreMethod = "watchRoute"
+	analyzeDomainMethod            CoreMethod = "analyzeDomain"
+	queryDnsMethod                 CoreMethod = "queryDns"
 )
 
 type MessageType string
@@ -84,6 +86,57 @@ type Message struct {
 type InitParams struct {
 	HomeDir string `json:"home-dir"`
 	Version int    `json:"version"`
+}
+
+type DomainAnalysisParams struct {
+	Host string `json:"host"`
+}
+
+type DomainAnalysisResult struct {
+	Input             string `json:"input"`
+	NormalizedHost    string `json:"normalizedHost"`
+	IsIP              bool   `json:"isIP"`
+	PublicSuffix      string `json:"publicSuffix"`
+	RegistrableDomain string `json:"registrableDomain"`
+	ICANNSuffix       bool   `json:"icannSuffix"`
+}
+
+type DNSQueryParams struct {
+	Name      string `json:"name"`
+	QueryType string `json:"queryType"`
+	Resolver  string `json:"resolver"`
+	TimeoutMS int    `json:"timeoutMs"`
+}
+
+type DNSDiagnosticRecord struct {
+	Section string `json:"section"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Class   string `json:"class"`
+	TTL     uint32 `json:"ttl"`
+	Data    string `json:"data"`
+}
+
+type DNSQueryResult struct {
+	Input              string                `json:"input"`
+	Name               string                `json:"name"`
+	QuestionName       string                `json:"questionName"`
+	QueryType          string                `json:"queryType"`
+	RequestedResolver  string                `json:"requestedResolver"`
+	Resolver           string                `json:"resolver"`
+	DurationMS         int64                 `json:"durationMs"`
+	RCode              int                   `json:"rcode"`
+	Status             string                `json:"status"`
+	Authoritative      bool                  `json:"authoritative"`
+	Truncated          bool                  `json:"truncated"`
+	RecursionAvailable bool                  `json:"recursionAvailable"`
+	AuthenticatedData  bool                  `json:"authenticatedData"`
+	CheckingDisabled   bool                  `json:"checkingDisabled"`
+	Complete           bool                  `json:"complete"`
+	Answers            []DNSDiagnosticRecord `json:"answers"`
+	Authority          []DNSDiagnosticRecord `json:"authority"`
+	Additional         []DNSDiagnosticRecord `json:"additional"`
+	Warnings           []string              `json:"warnings"`
 }
 
 type DecryptConfigParams struct {

@@ -477,6 +477,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "developerModeEnableTip": MessageLookupByLibrary.simpleMessage(
       "開発者モードが有効になりました。",
     ),
+    "diagnostics": MessageLookupByLibrary.simpleMessage("診断"),
     "dialerProxy": MessageLookupByLibrary.simpleMessage("ダイヤラープロキシ"),
     "dialerProxyDesc": MessageLookupByLibrary.simpleMessage(
       "ダイヤラープロキシは NTP サーバーへの接続に使用するアウトバウンドです。",
@@ -585,12 +586,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "新しいバージョンが見つかりました",
     ),
+    "dnsAdditionalSection": MessageLookupByLibrary.simpleMessage("追加"),
+    "dnsAnswerSection": MessageLookupByLibrary.simpleMessage("回答"),
+    "dnsAuthoritySection": MessageLookupByLibrary.simpleMessage("権威"),
+    "dnsDiagnostics": MessageLookupByLibrary.simpleMessage("DNS 診断"),
+    "dnsDiagnosticsDesc": MessageLookupByLibrary.simpleMessage(
+      "実行中の Core で DNS を照会し、レコードを確認します",
+    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNSハイジャック"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNSモード"),
+    "dnsNoRecords": MessageLookupByLibrary.simpleMessage("レコードが返されませんでした"),
     "dnsOverrideDesc": MessageLookupByLibrary.simpleMessage(
       "ここで追加した項目は、すべての URL・ファイルプロファイルの DNS を上書きします。追加していない項目はプロファイル自身の設定のままです。カスタムプロファイルの DNS はその内容で設定します。",
     ),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNSクエリ"),
+    "dnsQueryFailed": MessageLookupByLibrary.simpleMessage("DNS 照会に失敗しました"),
+    "dnsQueryName": MessageLookupByLibrary.simpleMessage("ドメインまたは IP アドレス"),
+    "dnsQueryResult": MessageLookupByLibrary.simpleMessage("DNS 応答"),
+    "dnsRecordType": MessageLookupByLibrary.simpleMessage("レコードタイプ"),
+    "dnsResolver": MessageLookupByLibrary.simpleMessage("リゾルバー"),
+    "dnsResolverDefault": MessageLookupByLibrary.simpleMessage(
+      "現在の Core リゾルバー",
+    ),
+    "dnsResolverDirect": MessageLookupByLibrary.simpleMessage("直接接続 DNS"),
+    "dnsResolverProxy": MessageLookupByLibrary.simpleMessage("プロキシサーバー DNS"),
+    "dnsResolverSystem": MessageLookupByLibrary.simpleMessage("システム DNS"),
+    "dnsResponseFlags": MessageLookupByLibrary.simpleMessage("応答フラグ"),
+    "dnsRunQuery": MessageLookupByLibrary.simpleMessage("照会を実行"),
+    "dnsWarningDefaultResolverUnavailable":
+        MessageLookupByLibrary.simpleMessage(
+          "現在の Core リゾルバーが利用できないため、システム DNS を使用しました",
+        ),
+    "dnsWarningNoAnswer": MessageLookupByLibrary.simpleMessage(
+      "応答に回答レコードがありません",
+    ),
+    "dnsWarningTruncated": MessageLookupByLibrary.simpleMessage("応答が切り詰められました"),
     "docked": MessageLookupByLibrary.simpleMessage("固定"),
     "domain": MessageLookupByLibrary.simpleMessage("ドメイン"),
     "download": MessageLookupByLibrary.simpleMessage("ダウンロード"),

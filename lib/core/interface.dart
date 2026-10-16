@@ -5,6 +5,8 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 
 import 'desktop/model.dart';
+import 'dns_diagnostic.dart';
+import 'domain_analysis.dart';
 import 'method.dart';
 
 mixin CoreInterface {
@@ -49,6 +51,15 @@ mixin CoreInterface {
   Future<OutboundIpResult?> outboundIp(OutboundIpParams params);
 
   Future<List<ServiceCheckItem>> serviceCheck(ServiceCheckParams params);
+
+  Future<CoreDomainAnalysis> analyzeDomain(String host);
+
+  Future<CoreDnsQueryResult> queryDns({
+    required String name,
+    DnsDiagnosticQueryType queryType = DnsDiagnosticQueryType.a,
+    DnsDiagnosticResolver resolver = DnsDiagnosticResolver.defaultResolver,
+    Duration timeout = const Duration(seconds: 5),
+  });
 
   Future<String> updateConfig(UpdateParams updateParams);
 
@@ -566,6 +577,47 @@ abstract class CoreHandlerInterface with CoreInterface {
                     ServiceCheckItem.fromJson(item as Map<String, dynamic>),
               )
               .toList();
+  }
+
+  @override
+  Future<CoreDomainAnalysis> analyzeDomain(String host) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.analyzeDomain,
+      arguments: {'host': host},
+    );
+    if (data == null) {
+      throw const CoreMethodException(
+        code: 'empty_result',
+        message: 'Core returned an empty domain analysis result',
+      );
+    }
+    return CoreDomainAnalysis.fromJson(data);
+  }
+
+  @override
+  Future<CoreDnsQueryResult> queryDns({
+    required String name,
+    DnsDiagnosticQueryType queryType = DnsDiagnosticQueryType.a,
+    DnsDiagnosticResolver resolver = DnsDiagnosticResolver.defaultResolver,
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    final data = await _invokeMethod<Map<String, dynamic>>(
+      method: CoreMethod.queryDns,
+      arguments: {
+        'name': name,
+        'queryType': queryType.wireName,
+        'resolver': resolver.wireName,
+        'timeoutMs': timeout.inMilliseconds,
+      },
+      timeout: timeout + const Duration(seconds: 2),
+    );
+    if (data == null) {
+      throw const CoreMethodException(
+        code: 'empty_result',
+        message: 'Core returned an empty DNS diagnostic result',
+      );
+    }
+    return CoreDnsQueryResult.fromJson(data);
   }
 
   @override
